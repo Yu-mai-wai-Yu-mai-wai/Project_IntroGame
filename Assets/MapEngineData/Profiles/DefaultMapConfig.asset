@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e36d0cebf40b1c459622c04865cdc4b, type: 3}
+  m_Name: DefaultMapConfig
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.MapConfigSO
+  seed: 12345
+  useRandomSeed: 0
+  totalFloors: 15
+  mapWidth: 7
+  startingNodesCount: 3
+  pathCount: 6
+  minEliteGap: 2
+  floorSpacingY: 2.5
+  columnSpacingX: 2
+  depthZOffset: 0.2
+  biomeProfile: {fileID: 11400000, guid: 49a547a2cab912a44a5fe3c2c0148ecd, type: 2}
+  nodeProfiles:
+  - {fileID: 11400000, guid: e44e44e5443545e4e96291440c93bf7c, type: 2}
+  - {fileID: 11400000, guid: e4d462b80d1cb334d941d1885be0be2e, type: 2}
+  - {fileID: 11400000, guid: 76f045cf0cb3a29499faa75fbf5c134d, type: 2}
+  - {fileID: 11400000, guid: a45b477c838e2314e83a3093acdd85ad, type: 2}
+  - {fileID: 11400000, guid: 5812a3ff709248840b87370bb6513d4f, type: 2}
+  - {fileID: 11400000, guid: 3780cdf1235b59144acbd0e16dd92240, type: 2}
+  floorOverrides: []
