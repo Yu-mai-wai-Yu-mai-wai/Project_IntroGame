@@ -35,12 +35,45 @@ namespace TawanOS.MapEngine
             this.Profile = profile;
             transform.position = worldPosition;
 
-            if (iconRenderer != null && profile != null && profile.icon != null)
+            if (iconRenderer != null)
             {
-                iconRenderer.sprite = profile.icon;
+                if (profile != null && profile.icon != null)
+                {
+                    iconRenderer.sprite = profile.icon;
+                }
+                else if (iconRenderer.sprite == null)
+                {
+                    iconRenderer.sprite = GetFallbackCircleSprite();
+                }
             }
 
             UpdateVisualState();
+        }
+
+        private static Sprite fallbackCircleSprite;
+        private static Sprite GetFallbackCircleSprite()
+        {
+            if (fallbackCircleSprite == null)
+            {
+                int res = 64;
+                Texture2D tex = new Texture2D(res, res, TextureFormat.RGBA32, false);
+                Color[] colors = new Color[res * res];
+                float radius = res * 0.45f;
+                Vector2 center = new Vector2(res * 0.5f, res * 0.5f);
+
+                for (int y = 0; y < res; y++)
+                {
+                    for (int x = 0; x < res; x++)
+                    {
+                        float dist = Vector2.Distance(new Vector2(x, y), center);
+                        colors[y * res + x] = dist <= radius ? Color.white : Color.clear;
+                    }
+                }
+                tex.SetPixels(colors);
+                tex.Apply();
+                fallbackCircleSprite = Sprite.Create(tex, new Rect(0, 0, res, res), new Vector2(0.5f, 0.5f), 100f);
+            }
+            return fallbackCircleSprite;
         }
 
         public void UpdateVisualState()
