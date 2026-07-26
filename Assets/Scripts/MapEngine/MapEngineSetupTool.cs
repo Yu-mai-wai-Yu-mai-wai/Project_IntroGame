@@ -13,6 +13,11 @@ namespace TawanOS.MapEngine
         [MenuItem("Window/TawanOS Map Engine Setup")]
         public static void SetupTestSceneAndProfiles()
         {
+            if (Application.isPlaying)
+            {
+                EditorUtility.DisplayDialog("Cannot Setup in Play Mode", "Please exit Play Mode before running the Setup Tool.", "OK");
+                return;
+            }
             string baseFolder = "Assets/MapEngineData";
             if (!AssetDatabase.IsValidFolder(baseFolder))
             {
