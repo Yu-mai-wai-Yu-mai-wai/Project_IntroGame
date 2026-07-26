@@ -73,6 +73,18 @@ namespace TawanOS.MapEngine
 
                 AssetDatabase.CreateAsset(config, configPath);
             }
+            else
+            {
+                config.biomeProfile = biome;
+                if (config.nodeProfiles == null) config.nodeProfiles = new List<NodeProfileSO>();
+                if (!config.nodeProfiles.Contains(enemyProfile)) config.nodeProfiles.Add(enemyProfile);
+                if (!config.nodeProfiles.Contains(eliteProfile)) config.nodeProfiles.Add(eliteProfile);
+                if (!config.nodeProfiles.Contains(restProfile)) config.nodeProfiles.Add(restProfile);
+                if (!config.nodeProfiles.Contains(treasureProfile)) config.nodeProfiles.Add(treasureProfile);
+                if (!config.nodeProfiles.Contains(storeProfile)) config.nodeProfiles.Add(storeProfile);
+                if (!config.nodeProfiles.Contains(bossProfile)) config.nodeProfiles.Add(bossProfile);
+                EditorUtility.SetDirty(config);
+            }
 
             // 4. Create Node Prefab
             GameObject nodeGo = new GameObject("NodePrefab");
@@ -140,7 +152,7 @@ namespace TawanOS.MapEngine
             soManager.FindProperty("nodePrefab").objectReferenceValue = nodePrefab.GetComponent<MapNodeView>();
             soManager.FindProperty("pathPrefab").objectReferenceValue = pathPrefab.GetComponent<MapPathRenderer>();
             soManager.FindProperty("playerMarkerPrefab").objectReferenceValue = markerPrefab.GetComponent<PlayerMarker>();
-            soManager.ApplyModifiedProperties();
+            soManager.ApplyModifiedPropertiesWithoutUndo();
 
             // Save Scene
             string scenePath = "Assets/Scenes/MapTestScene.unity";

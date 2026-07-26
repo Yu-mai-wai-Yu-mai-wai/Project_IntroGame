@@ -38,9 +38,25 @@ namespace TawanOS.MapEngine
 
         private void Start()
         {
+            if (config == null)
+            {
+#if UNITY_EDITOR
+                string configPath = "Assets/MapEngineData/Profiles/DefaultMapConfig.asset";
+                config = UnityEditor.AssetDatabase.LoadAssetAtPath<MapConfigSO>(configPath);
+                if (config != null)
+                {
+                    Debug.Log("[MapManager] Auto-loaded DefaultMapConfig.asset");
+                }
+#endif
+            }
+
             if (autoGenerateOnStart && config != null)
             {
                 InitializeEngine();
+            }
+            else if (config == null)
+            {
+                Debug.LogError("[MapManager] MapConfigSO is unassigned! Please assign MapConfigSO in Inspector or run Setup Tool.");
             }
         }
 
