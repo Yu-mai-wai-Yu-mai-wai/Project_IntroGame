@@ -18,10 +18,31 @@ namespace TawanOS.MapEngine
             {
                 lineRenderer = GetComponent<LineRenderer>();
             }
+            EnsureValidMaterial();
+        }
+
+        public void EnsureValidMaterial()
+        {
+            if (lineRenderer == null) lineRenderer = GetComponent<LineRenderer>();
+            if (lineRenderer != null)
+            {
+                if (lineRenderer.sharedMaterial == null || lineRenderer.sharedMaterial.shader == null || lineRenderer.sharedMaterial.shader.name == "Hidden/InternalErrorShader")
+                {
+                    Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") 
+                                 ?? Shader.Find("Sprites/Default") 
+                                 ?? Shader.Find("Unlit/Color")
+                                 ?? Shader.Find("GUI/Text Shader");
+                    if (shader != null)
+                    {
+                        lineRenderer.material = new Material(shader);
+                    }
+                }
+            }
         }
 
         public void SetupPath(Vector3 start, Vector3 end, Vector2Int sourcePos, Vector2Int targetPos, BiomeProfileSO biome)
         {
+            EnsureValidMaterial();
             this.SourcePos = sourcePos;
             this.TargetPos = targetPos;
 

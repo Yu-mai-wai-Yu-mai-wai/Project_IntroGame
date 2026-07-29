@@ -27,4 +27,12 @@ namespace TawanOS.MapEngine
         Reachable,
         Visited
     }
+
+    public enum MapOrientation
+    {
+        BottomToTop,
+        TopToBottom,
+        LeftToRight,
+        RightToLeft
+    }
 }

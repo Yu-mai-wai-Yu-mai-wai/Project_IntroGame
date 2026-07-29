@@ -17,11 +17,19 @@ MonoBehaviour:
   totalFloors: 15
   mapWidth: 7
   startingNodesCount: 3
+  preBossNodesCount: 2
   pathCount: 6
+  extraPaths: 2
   minEliteGap: 2
+  minEliteFloor: 5
+  isUIMode: 0
+  preventConsecutiveRestSites: 1
+  preventConsecutiveShops: 1
+  orientation: 0
   floorSpacingY: 2.5
   columnSpacingX: 2
   depthZOffset: 0.2
+  nodePositionJitter: 0.35
   biomeProfile: {fileID: 11400000, guid: 49a547a2cab912a44a5fe3c2c0148ecd, type: 2}
   nodeProfiles:
   - {fileID: 11400000, guid: e44e44e5443545e4e96291440c93bf7c, type: 2}

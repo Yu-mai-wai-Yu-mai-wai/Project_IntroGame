@@ -20,13 +20,26 @@ namespace TawanOS.MapEngine
         public int totalFloors = 15;
         public int mapWidth = 7;
         public int startingNodesCount = 3;
+        public int preBossNodesCount = 2;
         public int pathCount = 6;
+        public int extraPaths = 2;
         public int minEliteGap = 2;
+        public int minEliteFloor = 5;
 
-        [Header("Visual Spacing (2.5D World Space)")]
+        [Header("Mode & Canvas UI")]
+        public bool isUIMode = false;
+
+        [Header("Generation Rules")]
+        public bool preventConsecutiveRestSites = true;
+        public bool preventConsecutiveShops = true;
+
+        [Header("Visual Spacing & Orientation")]
+        public MapOrientation orientation = MapOrientation.BottomToTop;
         public float floorSpacingY = 2.5f;
         public float columnSpacingX = 2.0f;
         public float depthZOffset = 0.2f;
+        [Range(0f, 0.8f)]
+        public float nodePositionJitter = 0.35f;
 
         [Header("Profiles")]
         public BiomeProfileSO biomeProfile;

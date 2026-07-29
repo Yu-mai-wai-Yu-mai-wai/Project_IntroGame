@@ -1,24 +1,27 @@
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
 namespace TawanOS.MapEngine
 {
     public class MapManager : MonoBehaviour, IMapRenderer
     {
         [Header("Configuration")]
-        [SerializeField] private MapConfigSO config;
-        [SerializeField] private bool autoGenerateOnStart = true;
-        [SerializeField] private bool loadSavedMapIfAvailable = true;
+        public MapConfigSO config;
+        public bool autoGenerateOnStart = true;
+        public bool loadSavedMapIfAvailable = true;
 
         [Header("Prefabs")]
-        [SerializeField] private MapNodeView nodePrefab;
-        [SerializeField] private MapPathRenderer pathPrefab;
-        [SerializeField] private PlayerMarker playerMarkerPrefab;
-        [SerializeField] private MapTooltipView tooltipView;
+        public MapNodeView nodePrefab;
+        public MapPathRenderer pathPrefab;
+        public PlayerMarker playerMarkerPrefab;
+        public MapTooltipView tooltipView;
 
-        [Header("Parents / Hierarchy")]
-        [SerializeField] private Transform nodesParent;
-        [SerializeField] private Transform pathsParent;
+        [Header("Parents / Hierarchy / UI ScrollRect")]
+        public Transform nodesParent;
+        public Transform pathsParent;
+        public UnityEngine.UI.ScrollRect mapScrollRect;
+        public MapScrollController scrollController;
 
         public MapGraphData CurrentGraph { get; private set; }
 
@@ -108,7 +111,7 @@ namespace TawanOS.MapEngine
 
                 foreach (var nodeBlueprint in floorList)
                 {
-                    Vector3 worldPos = CalculateWorldPosition(nodeBlueprint.gridPosition, startX, configData);
+                    Vector3 worldPos = CalculateWorldPosition(nodeBlueprint, startX, configData);
 
                     MapNodeView nodeView = nodePool != null ? nodePool.Get() : Instantiate(nodePrefab, nodeParentTransform);
                     nodeView.Setup(nodeBlueprint, configData.GetProfileForType(nodeBlueprint.type), worldPos);
@@ -148,12 +151,27 @@ namespace TawanOS.MapEngine
             SetupPlayerMarker(graphData);
         }
 
-        private Vector3 CalculateWorldPosition(Vector2Int gridPos, float startX, MapConfigSO configData)
+        private Vector3 CalculateWorldPosition(NodeBlueprint nodeBlueprint, float startX, MapConfigSO configData)
         {
-            float x = startX + gridPos.x * configData.columnSpacingX;
-            float y = gridPos.y * configData.floorSpacingY;
-            float z = gridPos.y * configData.depthZOffset; // 2.5D Depth Layering
-            return new Vector3(x, y, z);
+            Vector2Int gridPos = nodeBlueprint.gridPosition;
+            Vector2 offset = nodeBlueprint.positionOffset;
+
+            float baseColsX = startX + gridPos.x * configData.columnSpacingX + offset.x;
+            float baseFloorsY = gridPos.y * configData.floorSpacingY + offset.y;
+            float baseDepthZ = gridPos.y * configData.depthZOffset;
+
+            switch (configData.orientation)
+            {
+                case MapOrientation.TopToBottom:
+                    return new Vector3(baseColsX, -baseFloorsY, baseDepthZ);
+                case MapOrientation.LeftToRight:
+                    return new Vector3(baseFloorsY, baseColsX, baseDepthZ);
+                case MapOrientation.RightToLeft:
+                    return new Vector3(-baseFloorsY, baseColsX, baseDepthZ);
+                case MapOrientation.BottomToTop:
+                default:
+                    return new Vector3(baseColsX, baseFloorsY, baseDepthZ);
+            }
         }
 
         private void SetupPlayerMarker(MapGraphData graphData)
@@ -191,6 +209,9 @@ namespace TawanOS.MapEngine
             {
                 playerMarker.MoveToPosition(clickedView.transform.position);
             }
+
+            // Auto-scroll to player floor smoothly
+            ScrollToFloor(nodeData.gridPosition.y);
 
             // Step 2: Update all other nodes on same floor to Disabled if not visited
             var sameFloorNodes = CurrentGraph.GetNodesOnFloor(nodeData.gridPosition.y);
@@ -272,11 +293,66 @@ namespace TawanOS.MapEngine
             pathRenderers.Clear();
         }
 
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                ResetAndRegenerate();
+            }
+        }
+
         public void ResetAndRegenerate()
         {
             if (saveSystem != null) saveSystem.ClearSavedMap();
             GenerateNewMap();
             RenderMap(CurrentGraph, config);
+            ScrollToFloor(0);
+        }
+
+        public void ScrollToFloor(int floorIndex)
+        {
+            if (config == null || config.totalFloors <= 0) return;
+
+            if (mapScrollRect != null)
+            {
+                float targetPos = Mathf.Clamp01((float)floorIndex / (float)config.totalFloors);
+                if (config.orientation == MapOrientation.LeftToRight || config.orientation == MapOrientation.RightToLeft)
+                {
+                    mapScrollRect.DOHorizontalNormalizedPos(targetPos, 0.5f).SetEase(Ease.OutCubic);
+                }
+                else
+                {
+                    mapScrollRect.DOVerticalNormalizedPos(targetPos, 0.5f).SetEase(Ease.OutCubic);
+                }
+            }
+            else if (scrollController != null)
+            {
+                scrollController.ScrollToFloor(floorIndex);
+            }
+            else if (Camera.main != null)
+            {
+                float targetCoord = floorIndex * config.floorSpacingY;
+                Vector3 targetPos = Camera.main.transform.position;
+
+                switch (config.orientation)
+                {
+                    case MapOrientation.TopToBottom:
+                        targetPos.y = -targetCoord;
+                        break;
+                    case MapOrientation.LeftToRight:
+                        targetPos.x = targetCoord;
+                        break;
+                    case MapOrientation.RightToLeft:
+                        targetPos.x = -targetCoord;
+                        break;
+                    case MapOrientation.BottomToTop:
+                    default:
+                        targetPos.y = targetCoord;
+                        break;
+                }
+
+                Camera.main.transform.DOMove(targetPos, 0.6f).SetEase(Ease.OutCubic);
+            }
         }
     }
 }

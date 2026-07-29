@@ -1,21 +1,29 @@
 using System.IO;
 using UnityEngine;
+using Newtonsoft.Json;
 
 namespace TawanOS.MapEngine
 {
     public class MapSaveManager : IMapSaveSystem
     {
         private readonly string saveFilePath;
+        private readonly JsonSerializerSettings jsonSettings;
 
         public MapSaveManager()
         {
             saveFilePath = Path.Combine(Application.persistentDataPath, "map_save.json");
+            jsonSettings = new JsonSerializerSettings
+            {
+                Formatting = Formatting.Indented,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                NullValueHandling = NullValueHandling.Ignore
+            };
         }
 
         public void SaveMap(MapGraphData data)
         {
             if (data == null) return;
-            string json = JsonUtility.ToJson(data, true);
+            string json = JsonConvert.SerializeObject(data, jsonSettings);
             File.WriteAllText(saveFilePath, json);
             PlayerPrefs.SetString("MapSaveData", json);
             PlayerPrefs.Save();
@@ -33,7 +41,7 @@ namespace TawanOS.MapEngine
 
                 if (!string.IsNullOrEmpty(json))
                 {
-                    return JsonUtility.FromJson<MapGraphData>(json);
+                    return JsonConvert.DeserializeObject<MapGraphData>(json, jsonSettings);
                 }
             }
             return null;
