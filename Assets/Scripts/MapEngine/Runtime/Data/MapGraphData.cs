@@ -45,5 +45,15 @@ namespace TawanOS.MapEngine
             }
             return new List<NodeBlueprint>();
         }
+
+        public List<NodeBlueprint> GetAllNodes()
+        {
+            List<NodeBlueprint> all = new List<NodeBlueprint>();
+            foreach (var floor in floors)
+            {
+                if (floor != null) all.AddRange(floor);
+            }
+            return all;
+        }
     }
 }

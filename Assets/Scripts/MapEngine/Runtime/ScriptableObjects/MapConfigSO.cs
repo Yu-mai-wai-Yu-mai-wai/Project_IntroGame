@@ -51,5 +51,13 @@ namespace TawanOS.MapEngine
             var profile = nodeProfiles.Find(p => p != null && p.type == type);
             return profile;
         }
+
+        private void OnValidate()
+        {
+            if (useRandomSeed)
+            {
+                seed = UnityEngine.Random.Range(10000, 999999);
+            }
+        }
     }
 }

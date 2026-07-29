@@ -23,6 +23,8 @@ namespace TawanOS.MapEngine
         public UnityEngine.UI.ScrollRect mapScrollRect;
         public MapScrollController scrollController;
 
+        public static MapManager Instance { get; private set; }
+
         public MapGraphData CurrentGraph { get; private set; }
 
         private IMapGenerator generator;
@@ -35,6 +37,7 @@ namespace TawanOS.MapEngine
 
         private void Awake()
         {
+            Instance = this;
             generator = new MapGraphGenerator();
             saveSystem = new MapSaveManager();
         }
@@ -99,8 +102,7 @@ namespace TawanOS.MapEngine
         {
             if (graphData == null || configData == null) return;
 
-            nodeViewMap.Clear();
-            pathRenderers.Clear();
+            ClearMap();
 
             // Render Nodes in 2.5D World Space
             for (int y = 0; y < graphData.floors.Count; y++)
@@ -287,8 +289,47 @@ namespace TawanOS.MapEngine
 
         public void ClearMap()
         {
+            foreach (var kvp in nodeViewMap)
+            {
+                if (kvp.Value != null)
+                {
+                    kvp.Value.OnNodeClicked -= HandleNodeClicked;
+                    kvp.Value.OnNodeHoverEnter -= HandleNodeHoverEnter;
+                    kvp.Value.OnNodeHoverExit -= HandleNodeHoverExit;
+                }
+            }
+
             if (nodePool != null) nodePool.ReturnAll();
             if (pathPool != null) pathPool.ReturnAll();
+
+            if (nodeParentTransform != null)
+            {
+                for (int i = nodeParentTransform.childCount - 1; i >= 0; i--)
+                {
+                    Transform child = nodeParentTransform.GetChild(i);
+                    if (child != null && child.gameObject.activeSelf)
+                    {
+                        var view = child.GetComponent<MapNodeView>();
+                        if (view != null && nodePool != null) nodePool.Return(view);
+                        else Destroy(child.gameObject);
+                    }
+                }
+            }
+
+            if (pathParentTransform != null)
+            {
+                for (int i = pathParentTransform.childCount - 1; i >= 0; i--)
+                {
+                    Transform child = pathParentTransform.GetChild(i);
+                    if (child != null && child.gameObject.activeSelf)
+                    {
+                        var renderer = child.GetComponent<MapPathRenderer>();
+                        if (renderer != null && pathPool != null) pathPool.Return(renderer);
+                        else Destroy(child.gameObject);
+                    }
+                }
+            }
+
             nodeViewMap.Clear();
             pathRenderers.Clear();
         }
