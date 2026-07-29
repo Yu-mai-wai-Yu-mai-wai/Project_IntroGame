@@ -162,6 +162,8 @@ namespace TawanOS.MapEngine
             var scrollCtrl = camGo.AddComponent<MapScrollController>();
             scrollCtrl.config = config;
             cam.orthographic = false;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.11f, 0.09f, 0.08f, 1f);
             cam.fieldOfView = 60;
             camGo.transform.position = new Vector3(0, 0, -18);
             camGo.transform.rotation = Quaternion.identity;
@@ -172,12 +174,15 @@ namespace TawanOS.MapEngine
             light.type = LightType.Directional;
             lightGo.transform.rotation = Quaternion.Euler(50, -30, 0);
 
-            // Setup Background Sprite (Parchment Art)
+            // Setup Background Sprite (Parchment Art scaled to fit full map)
             GameObject bgMapGo = new GameObject("MapBackground");
             var bgMapSr = bgMapGo.AddComponent<SpriteRenderer>();
             bgMapSr.sortingOrder = -10;
-            bgMapGo.transform.position = new Vector3(0, 18, 5f);
-            bgMapGo.transform.localScale = new Vector3(3.5f, 6.5f, 1f);
+
+            float totalMapHeight = config.totalFloors * config.floorSpacingY;
+            float totalMapWidth = config.mapWidth * config.columnSpacingX;
+            bgMapGo.transform.position = new Vector3(0, totalMapHeight * 0.5f, 5f);
+            bgMapGo.transform.localScale = new Vector3(Mathf.Max(6.0f, totalMapWidth * 0.45f), (totalMapHeight / 4.0f) + 6.0f, 1f);
             
             Texture2D bgTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/MapEngineData/Textures/MapBackground.jpg");
             if (bgTex != null)
@@ -195,12 +200,17 @@ namespace TawanOS.MapEngine
             manager.playerMarkerPrefab = markerPrefab.GetComponent<PlayerMarker>();
             manager.scrollController = scrollCtrl;
 
-            // Setup UI Canvas & Reset Button
+            // Setup UI Canvas & Legend UI Panel & Reset Button
             GameObject canvasGo = new GameObject("UICanvas");
             Canvas canvas = canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvasGo.AddComponent<UnityEngine.UI.CanvasScaler>();
             canvasGo.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+            // Node Explanation UI Legend Panel
+            GameObject legendGo = new GameObject("MapLegendUI");
+            legendGo.transform.SetParent(canvasGo.transform, false);
+            legendGo.AddComponent<MapLegendUI>();
 
             GameObject btnGo = new GameObject("ResetButton");
             btnGo.transform.SetParent(canvasGo.transform, false);

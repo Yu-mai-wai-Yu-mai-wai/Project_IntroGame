@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e36d0cebf40b1c459622c04865cdc4b, type: 3}
   m_Name: DefaultMapConfig
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.MapConfigSO
-  seed: 706927
+  seed: 846726
   useRandomSeed: 0
   totalFloors: 15
   mapWidth: 7
