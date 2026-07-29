@@ -22,7 +22,7 @@ MonoBehaviour:
   extraPaths: 2
   minEliteGap: 2
   minEliteFloor: 5
-  isUIMode: 0
+  isUIMode: 1
   preventConsecutiveRestSites: 1
   preventConsecutiveShops: 1
   orientation: 0
