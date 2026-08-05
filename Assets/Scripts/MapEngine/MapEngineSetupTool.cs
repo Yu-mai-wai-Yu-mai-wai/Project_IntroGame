@@ -90,21 +90,25 @@ namespace TawanOS.MapEngine
             // 4. Create Node Prefab
             GameObject nodeGo = new GameObject("NodePrefab");
             var nodeView = nodeGo.AddComponent<MapNodeView>();
-            var col2d = nodeGo.AddComponent<BoxCollider2D>();
-            col2d.size = new Vector2(1.5f, 1.5f);
+            var col3d = nodeGo.AddComponent<SphereCollider>();
+            if (col3d != null) col3d.radius = 0.8f;
 
             GameObject bgGo = new GameObject("Background");
             bgGo.transform.SetParent(nodeGo.transform, false);
             var bgSr = bgGo.AddComponent<SpriteRenderer>();
-            bgSr.sortingOrder = 0;
+            if (bgSr != null) bgSr.sortingOrder = 0;
 
             GameObject iconGo = new GameObject("Icon");
             iconGo.transform.SetParent(nodeGo.transform, false);
             var iconSr = iconGo.AddComponent<SpriteRenderer>();
-            iconSr.sortingOrder = 1;
+            if (iconSr != null) iconSr.sortingOrder = 1;
             
-            nodeView.backgroundRenderer = bgSr;
-            nodeView.iconRenderer = iconSr;
+            if (nodeView != null)
+            {
+                nodeView.backgroundRenderer = bgSr;
+                nodeView.iconRenderer = iconSr;
+            }
+            nodeGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
             string nodePrefabPath = baseFolder + "/Prefabs/MapNodePrefab.prefab";
             GameObject nodePrefab = PrefabUtility.SaveAsPrefabAsset(nodeGo, nodePrefabPath);
@@ -113,24 +117,77 @@ namespace TawanOS.MapEngine
             // 5. Create Path Prefab
             GameObject pathGo = new GameObject("PathPrefab");
             var pathView = pathGo.AddComponent<MapPathRenderer>();
-            var lr = pathGo.GetComponent<LineRenderer>();
-            lr.startWidth = 0.12f;
-            lr.endWidth = 0.12f;
-            Shader lineShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") 
-                             ?? Shader.Find("Sprites/Default") 
-                             ?? Shader.Find("Unlit/Color")
-                             ?? Shader.Find("GUI/Text Shader");
-            if (lineShader != null) lr.material = new Material(lineShader);
+            var lr = pathGo.GetComponent<LineRenderer>() ?? pathGo.AddComponent<LineRenderer>();
+            if (lr != null)
+            {
+                lr.startWidth = 0.15f;
+                lr.endWidth = 0.15f;
+                Shader lineShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") 
+                                 ?? Shader.Find("Sprites/Default") 
+                                 ?? Shader.Find("Unlit/Color")
+                                 ?? Shader.Find("GUI/Text Shader");
+                if (lineShader != null) lr.material = new Material(lineShader);
+            }
 
             string pathPrefabPath = baseFolder + "/Prefabs/MapPathPrefab.prefab";
             GameObject pathPrefab = PrefabUtility.SaveAsPrefabAsset(pathGo, pathPrefabPath);
             Object.DestroyImmediate(pathGo);
 
-            // 6. Create Player Marker Prefab
+            // 6. Create 3D Player Marker Prefab (using hands.fbx)
             GameObject markerGo = new GameObject("PlayerMarkerPrefab");
             markerGo.AddComponent<PlayerMarker>();
-            var markerSr = markerGo.AddComponent<SpriteRenderer>();
-            markerSr.color = Color.magenta;
+
+            string handsFbxPath = "Assets/ProjectAsset/hands.fbx";
+            GameObject handsModelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(handsFbxPath);
+            if (handsModelAsset != null)
+            {
+                GameObject handsInstance = (GameObject)PrefabUtility.InstantiatePrefab(handsModelAsset, markerGo.transform);
+                handsInstance.name = "Hands3DModel";
+                handsInstance.transform.localPosition = Vector3.zero;
+                handsInstance.transform.localRotation = Quaternion.Euler(0, 180, 0);
+                handsInstance.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+
+                // Assign Materials if found
+                var renderers = handsInstance.GetComponentsInChildren<Renderer>();
+                Material handSkinMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/ProjectAsset/Mat_HandSkin.mat");
+                Material glassMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/ProjectAsset/Mat_Glass.mat");
+                Material fingernailMat = AssetDatabase.LoadAssetAtPath<Material>("Assets/ProjectAsset/Mat_Fingernail.mat");
+
+                foreach (var r in renderers)
+                {
+                    if (r != null)
+                    {
+                        r.enabled = true;
+                        if (r.sharedMaterials != null && r.sharedMaterials.Length > 0)
+                        {
+                            Material[] mats = new Material[r.sharedMaterials.Length];
+                            for (int m = 0; m < mats.Length; m++)
+                            {
+                                string matName = r.sharedMaterials[m] != null ? r.sharedMaterials[m].name.ToLower() : "";
+                                if (matName.Contains("glass")) mats[m] = glassMat ?? r.sharedMaterials[m];
+                                else if (matName.Contains("nail")) mats[m] = fingernailMat ?? r.sharedMaterials[m];
+                                else mats[m] = handSkinMat ?? r.sharedMaterials[m];
+                            }
+                            r.sharedMaterials = mats;
+                        }
+                    }
+                }
+
+                // Add a Glass Point Light to illuminate the spirit glass and hand
+                GameObject markerLightGo = new GameObject("GlassPointLight");
+                markerLightGo.transform.SetParent(markerGo.transform, false);
+                markerLightGo.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+                Light markerLight = markerLightGo.AddComponent<Light>();
+                markerLight.type = LightType.Point;
+                markerLight.range = 8f;
+                markerLight.intensity = 3.5f;
+                markerLight.color = new Color(0.4f, 0.9f, 1.0f); // Mystical Cyan Glow
+            }
+            else
+            {
+                var markerSr = markerGo.AddComponent<SpriteRenderer>();
+                markerSr.color = Color.magenta;
+            }
 
             string markerPrefabPath = baseFolder + "/Prefabs/PlayerMarkerPrefab.prefab";
             GameObject markerPrefab = PrefabUtility.SaveAsPrefabAsset(markerGo, markerPrefabPath);
@@ -152,7 +209,7 @@ namespace TawanOS.MapEngine
                 eventSystemGo.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
             }
 
-            // Setup Camera
+            // Setup Top-Down Angled 3D Camera looking down at Ouija Board Table
             GameObject camGo = new GameObject("Main Camera");
             camGo.tag = "MainCamera";
             Camera cam = camGo.AddComponent<Camera>();
@@ -163,26 +220,37 @@ namespace TawanOS.MapEngine
             scrollCtrl.config = config;
             cam.orthographic = false;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.11f, 0.09f, 0.08f, 1f);
-            cam.fieldOfView = 60;
-            camGo.transform.position = new Vector3(0, 0, -18);
-            camGo.transform.rotation = Quaternion.identity;
+            cam.backgroundColor = new Color(0.06f, 0.05f, 0.07f, 1f);
+            cam.fieldOfView = 55;
+            camGo.transform.position = new Vector3(0, 11f, -6f);
+            camGo.transform.rotation = Quaternion.Euler(58f, 0f, 0f);
 
             // Setup Directional Light
             GameObject lightGo = new GameObject("Directional Light");
             Light light = lightGo.AddComponent<Light>();
             light.type = LightType.Directional;
-            lightGo.transform.rotation = Quaternion.Euler(50, -30, 0);
+            light.intensity = 1.3f;
+            lightGo.transform.rotation = Quaternion.Euler(60, -30, 0);
 
-            // Setup Background Sprite (Parchment Art scaled to fit full map)
-            GameObject bgMapGo = new GameObject("MapBackground");
+            // Setup Point Light focused on table
+            GameObject pointLightGo = new GameObject("Table Light");
+            Light pLight = pointLightGo.AddComponent<Light>();
+            pLight.type = LightType.Point;
+            pLight.range = 25f;
+            pLight.intensity = 2f;
+            pLight.color = new Color(1f, 0.95f, 0.85f);
+            pointLightGo.transform.position = new Vector3(0f, 6f, 2f);
+
+            // Setup 3D Table Plane (Parchment Ouija Board flat on XZ ground plane)
+            GameObject bgMapGo = new GameObject("MapBackgroundTable");
             var bgMapSr = bgMapGo.AddComponent<SpriteRenderer>();
             bgMapSr.sortingOrder = -10;
 
             float totalMapHeight = config.totalFloors * config.floorSpacingY;
             float totalMapWidth = config.mapWidth * config.columnSpacingX;
-            bgMapGo.transform.position = new Vector3(0, totalMapHeight * 0.5f, 5f);
-            bgMapGo.transform.localScale = new Vector3(Mathf.Max(6.0f, totalMapWidth * 0.45f), (totalMapHeight / 4.0f) + 6.0f, 1f);
+            bgMapGo.transform.position = new Vector3(0, 0f, (totalMapHeight * 0.5f) - 1f);
+            bgMapGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            bgMapGo.transform.localScale = new Vector3(Mathf.Max(12.0f, totalMapWidth * 1.5f), (totalMapHeight * 1.15f), 1f);
             
             Texture2D bgTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/MapEngineData/Textures/MapBackground.jpg");
             if (bgTex != null)

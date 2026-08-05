@@ -104,12 +104,27 @@ namespace TawanOS.MapEngine
 
             ClearMap();
 
-            // Render Nodes in 2.5D World Space
+            float totalWidth = (configData.mapWidth - 1) * configData.columnSpacingX;
+            float startX = -totalWidth * 0.5f;
+
+            // Render Start Base Node (Floor -1) if available
+            if (graphData.startNode != null)
+            {
+                Vector3 startWorldPos = CalculateWorldPosition(graphData.startNode, startX, configData);
+                MapNodeView startNodeView = nodePool != null ? nodePool.Get() : Instantiate(nodePrefab, nodeParentTransform);
+                startNodeView.Setup(graphData.startNode, configData.GetProfileForType(graphData.startNode.type), startWorldPos);
+                
+                startNodeView.OnNodeClicked += HandleNodeClicked;
+                startNodeView.OnNodeHoverEnter += HandleNodeHoverEnter;
+                startNodeView.OnNodeHoverExit += HandleNodeHoverExit;
+
+                nodeViewMap[graphData.startNode.gridPosition] = startNodeView;
+            }
+
+            // Render Nodes in 2.5D/3D World Space
             for (int y = 0; y < graphData.floors.Count; y++)
             {
                 var floorList = graphData.floors[y];
-                float totalWidth = (configData.mapWidth - 1) * configData.columnSpacingX;
-                float startX = -totalWidth * 0.5f;
 
                 foreach (var nodeBlueprint in floorList)
                 {
@@ -126,7 +141,7 @@ namespace TawanOS.MapEngine
                 }
             }
 
-            // Render Paths (Quadratic Bezier Dotted Lines)
+            // Render Paths (Quadratic Bezier Dotted Lines including Start Base Connections)
             foreach (var kvp in nodeViewMap)
             {
                 var sourceView = kvp.Value;
@@ -149,8 +164,26 @@ namespace TawanOS.MapEngine
                 }
             }
 
+            // Record & Log Post-Randomization Exact Node World Positions
+            NodeWorldPositions.Clear();
+            foreach (var kvp in nodeViewMap)
+            {
+                NodeWorldPositions[kvp.Key] = kvp.Value.transform.position;
+            }
+
             // Setup Player Marker Position
             SetupPlayerMarker(graphData);
+        }
+
+        public Dictionary<Vector2Int, Vector3> NodeWorldPositions { get; private set; } = new Dictionary<Vector2Int, Vector3>();
+
+        public Vector3 GetExactNodeWorldPosition(Vector2Int gridPos)
+        {
+            if (NodeWorldPositions.TryGetValue(gridPos, out var pos))
+            {
+                return pos;
+            }
+            return Vector3.zero;
         }
 
         private Vector3 CalculateWorldPosition(NodeBlueprint nodeBlueprint, float startX, MapConfigSO configData)
@@ -159,6 +192,22 @@ namespace TawanOS.MapEngine
             Vector2 offset = nodeBlueprint.positionOffset;
 
             float baseColsX = startX + gridPos.x * configData.columnSpacingX + offset.x;
+
+            if (configData != null && configData.use3DTableMode)
+            {
+                if (gridPos.y == -1)
+                {
+                    return new Vector3(0f, configData.tableHeightY + 0.05f, -2.5f) + configData.startNodeOffset;
+                }
+                float baseFloorsZ = gridPos.y * configData.floorSpacingY + offset.y;
+                return new Vector3(baseColsX, configData.tableHeightY + 0.05f, baseFloorsZ);
+            }
+
+            if (gridPos.y == -1)
+            {
+                return new Vector3(0f, -2.2f, -0.2f) + configData.startNodeOffset;
+            }
+
             float baseFloorsY = gridPos.y * configData.floorSpacingY + offset.y;
             float baseDepthZ = gridPos.y * configData.depthZOffset;
 
@@ -185,14 +234,23 @@ namespace TawanOS.MapEngine
                 playerMarker = Instantiate(playerMarkerPrefab, transform);
             }
 
-            if (graphData.currentPlayerPosition.x >= 0 && nodeViewMap.TryGetValue(graphData.currentPlayerPosition, out var currentView))
+            Vector2Int targetGridPos = graphData.currentPlayerPosition;
+            if (targetGridPos.x >= 0 || targetGridPos.y == -1)
             {
-                playerMarker.SetPositionImmediate(currentView.transform.position);
+                if (nodeViewMap.TryGetValue(targetGridPos, out var currentView))
+                {
+                    playerMarker.SetPositionImmediate(currentView.transform.position);
+                    return;
+                }
+            }
+
+            if (graphData.startNode != null && nodeViewMap.TryGetValue(graphData.startNode.gridPosition, out var startView))
+            {
+                playerMarker.SetPositionImmediate(startView.transform.position);
             }
             else
             {
-                // Position at bottom center as starting default
-                playerMarker.SetPositionImmediate(new Vector3(0, -1f, 0));
+                playerMarker.SetPositionImmediate(new Vector3(0, -2.2f, 0));
             }
         }
 
@@ -206,10 +264,13 @@ namespace TawanOS.MapEngine
             nodeData.visibility = NodeVisibility.Visited;
             CurrentGraph.currentPlayerPosition = nodeData.gridPosition;
 
-            // Move Player Marker smoothly
+            // Move Player Marker smoothly to recorded exact node world position
             if (playerMarker != null)
             {
-                playerMarker.MoveToPosition(clickedView.transform.position);
+                Vector3 targetWorldPos = GetExactNodeWorldPosition(nodeData.gridPosition);
+                if (targetWorldPos == Vector3.zero) targetWorldPos = clickedView.transform.position;
+                playerMarker.MoveToPosition(targetWorldPos);
+                Debug.Log($"[MapManager] Moving 3D Spirit Glass to Node Grid{nodeData.gridPosition} at Recorded WorldPos: {targetWorldPos}");
             }
 
             // Auto-scroll to player floor smoothly
@@ -347,6 +408,18 @@ namespace TawanOS.MapEngine
             if (saveSystem != null) saveSystem.ClearSavedMap();
             GenerateNewMap();
             RenderMap(CurrentGraph, config);
+            if (playerMarker != null)
+            {
+                playerMarker.ResetMarker();
+                if (CurrentGraph != null && CurrentGraph.startNode != null && nodeViewMap.TryGetValue(CurrentGraph.startNode.gridPosition, out var startNodeView))
+                {
+                    playerMarker.SetPositionImmediate(startNodeView.transform.position);
+                }
+                else if (CurrentGraph != null && nodeViewMap.TryGetValue(CurrentGraph.currentPlayerPosition, out var currentView))
+                {
+                    playerMarker.SetPositionImmediate(currentView.transform.position);
+                }
+            }
             ScrollToFloor(0);
         }
 
@@ -372,6 +445,14 @@ namespace TawanOS.MapEngine
             }
             else if (Camera.main != null)
             {
+                if (config != null && config.use3DTableMode)
+                {
+                    float targetZ = floorIndex * config.floorSpacingY;
+                    Vector3 targetCamPos = new Vector3(0f, config.cameraHeightY, targetZ - config.cameraZDistance);
+                    Camera.main.transform.DOMove(targetCamPos, 0.6f).SetEase(Ease.OutCubic);
+                    return;
+                }
+
                 float targetCoord = floorIndex * config.floorSpacingY;
                 Vector3 targetPos = Camera.main.transform.position;
 

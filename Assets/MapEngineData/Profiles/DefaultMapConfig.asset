@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e36d0cebf40b1c459622c04865cdc4b, type: 3}
   m_Name: DefaultMapConfig
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.MapConfigSO
-  seed: 846726
+  seed: 515980
   useRandomSeed: 0
   totalFloors: 15
   mapWidth: 7
@@ -30,6 +30,15 @@ MonoBehaviour:
   columnSpacingX: 2
   depthZOffset: 0.2
   nodePositionJitter: 0.35
+  use3DTableMode: 1
+  tableHeightY: 0
+  cameraHeightY: 12
+  cameraAnglePitch: 58
+  cameraZDistance: 8
+  player3DScale: {x: 0.5, y: 0.5, z: 0.5}
+  player3DRotation: {x: 0, y: 180, z: 0}
+  renderStartPointLines: 1
+  startNodeOffset: {x: 0, y: -2.5, z: 0}
   biomeProfile: {fileID: 11400000, guid: 49a547a2cab912a44a5fe3c2c0148ecd, type: 2}
   nodeProfiles:
   - {fileID: 11400000, guid: e44e44e5443545e4e96291440c93bf7c, type: 2}

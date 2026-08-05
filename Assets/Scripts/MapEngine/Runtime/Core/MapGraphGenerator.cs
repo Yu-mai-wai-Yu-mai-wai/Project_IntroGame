@@ -17,9 +17,23 @@ namespace TawanOS.MapEngine
             List<int> startingCols = GetRandomStartingColumns(config.mapWidth, config.startingNodesCount, random);
             foreach (int col in startingCols)
             {
-                var startNode = new NodeBlueprint(new Vector2Int(col, 0), NodeType.MinorEnemy);
-                graph.floors[0].Add(startNode);
+                var startNodeObj = new NodeBlueprint(new Vector2Int(col, 0), NodeType.MinorEnemy);
+                graph.floors[0].Add(startNodeObj);
             }
+
+            // Step 1b: Create Start Base Anchor Node at Floor -1 (Center Start)
+            int centerStartX = config.mapWidth / 2;
+            var baseStartNode = new NodeBlueprint(new Vector2Int(centerStartX, -1), NodeType.RestSite);
+            baseStartNode.status = NodeStatus.Visited;
+            baseStartNode.visibility = NodeVisibility.Visited;
+
+            foreach (var nodeOnFloor0 in graph.floors[0])
+            {
+                baseStartNode.AddOutgoingConnection(nodeOnFloor0.gridPosition);
+                nodeOnFloor0.AddIncomingConnection(baseStartNode.gridPosition);
+            }
+            graph.startNode = baseStartNode;
+            graph.currentPlayerPosition = baseStartNode.gridPosition;
 
             // Step 2: Pick pre-boss nodes on Floor (totalFloors - 1) (exact count: config.preBossNodesCount)
             int preBossY = config.totalFloors - 1;

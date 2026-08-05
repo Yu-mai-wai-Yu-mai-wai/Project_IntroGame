@@ -41,6 +41,17 @@ namespace TawanOS.MapEngine
         [Range(0f, 0.8f)]
         public float nodePositionJitter = 0.35f;
 
+        [Header("3D Ouija Table & Model Settings")]
+        public bool use3DTableMode = true;
+        public float tableHeightY = 0f;
+        public float cameraHeightY = 12f;
+        public float cameraAnglePitch = 58f;
+        public float cameraZDistance = 8f;
+        public Vector3 player3DScale = new Vector3(0.5f, 0.5f, 0.5f);
+        public Vector3 player3DRotation = new Vector3(0f, 180f, 0f);
+        public bool renderStartPointLines = true;
+        public Vector3 startNodeOffset = new Vector3(0f, 0f, -2.5f);
+
         [Header("Profiles")]
         public BiomeProfileSO biomeProfile;
         public List<NodeProfileSO> nodeProfiles = new List<NodeProfileSO>();

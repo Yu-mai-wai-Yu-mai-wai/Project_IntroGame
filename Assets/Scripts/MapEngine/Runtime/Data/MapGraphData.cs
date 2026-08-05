@@ -11,6 +11,7 @@ namespace TawanOS.MapEngine
         public int totalFloors;
         public int mapWidth;
         public Vector2Int currentPlayerPosition = new Vector2Int(-1, -1);
+        public NodeBlueprint startNode;
         public List<List<NodeBlueprint>> floors = new List<List<NodeBlueprint>>();
 
         public MapGraphData() { }
@@ -29,6 +30,10 @@ namespace TawanOS.MapEngine
 
         public NodeBlueprint GetNode(Vector2Int pos)
         {
+            if (pos.y == -1)
+            {
+                return startNode;
+            }
             if (pos.y >= 0 && pos.y < floors.Count)
             {
                 var floorList = floors[pos.y];

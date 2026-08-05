@@ -44,7 +44,12 @@ namespace TawanOS.MapEngine
                 Vector3 scrollVector = Vector3.zero;
                 float sensitivity = scrollSensitivity * 0.02f;
 
-                if (config != null && (config.orientation == MapOrientation.LeftToRight || config.orientation == MapOrientation.RightToLeft))
+                if (config != null && config.use3DTableMode)
+                {
+                    // In 3D mode, mouse Y drag moves camera along Z axis
+                    scrollVector.z = -delta.y * sensitivity;
+                }
+                else if (config != null && (config.orientation == MapOrientation.LeftToRight || config.orientation == MapOrientation.RightToLeft))
                 {
                     scrollVector.x = -delta.x * sensitivity;
                 }
@@ -72,6 +77,16 @@ namespace TawanOS.MapEngine
         public void ScrollToFloor(int floorIndex)
         {
             if (config == null || targetTransform == null) return;
+
+            if (config.use3DTableMode)
+            {
+                float targetZ = floorIndex * config.floorSpacingY;
+                Vector3 targetCamPos = new Vector3(0f, config.cameraHeightY, targetZ - config.cameraZDistance);
+                velocity = Vector3.zero;
+                targetTransform.DOKill();
+                targetTransform.DOMove(targetCamPos, 0.6f).SetEase(Ease.OutCubic);
+                return;
+            }
 
             float targetCoord = floorIndex * config.floorSpacingY;
             Vector3 targetPos = targetTransform.position;
@@ -101,6 +116,17 @@ namespace TawanOS.MapEngine
         private void ClampPosition()
         {
             if (config == null || targetTransform == null) return;
+
+            if (config.use3DTableMode)
+            {
+                float maxFloorZ = (config.totalFloors - 1) * config.floorSpacingY;
+                Vector3 cPos = targetTransform.position;
+                cPos.x = 0f;
+                cPos.y = config.cameraHeightY;
+                cPos.z = Mathf.Clamp(cPos.z, -config.cameraZDistance - 3f, maxFloorZ - config.cameraZDistance + 3f);
+                targetTransform.position = cPos;
+                return;
+            }
 
             float maxFloorCoord = (config.totalFloors - 1) * config.floorSpacingY;
             Vector3 currentPos = targetTransform.position;
