@@ -225,23 +225,24 @@ namespace TawanOS.MapEngine
             camGo.transform.position = new Vector3(0, 11f, -6f);
             camGo.transform.rotation = Quaternion.Euler(58f, 0f, 0f);
 
-            // Setup Directional Light
+            // Setup Directional Light (Eerie Moonlight)
             GameObject lightGo = new GameObject("Directional Light");
             Light light = lightGo.AddComponent<Light>();
             light.type = LightType.Directional;
-            light.intensity = 1.3f;
-            lightGo.transform.rotation = Quaternion.Euler(60, -30, 0);
+            light.intensity = 1.1f;
+            light.color = new Color(0.7f, 0.85f, 1.0f); // Cool Moonlight
+            lightGo.transform.rotation = Quaternion.Euler(55, -35, 0);
 
-            // Setup Point Light focused on table
+            // Setup Ritual Table Light
             GameObject pointLightGo = new GameObject("Table Light");
             Light pLight = pointLightGo.AddComponent<Light>();
             pLight.type = LightType.Point;
-            pLight.range = 25f;
-            pLight.intensity = 2f;
-            pLight.color = new Color(1f, 0.95f, 0.85f);
+            pLight.range = 30f;
+            pLight.intensity = 2.5f;
+            pLight.color = new Color(1f, 0.85f, 0.6f); // Warm Candle Glow
             pointLightGo.transform.position = new Vector3(0f, 6f, 2f);
 
-            // Setup 3D Table Plane (Parchment Ouija Board flat on XZ ground plane)
+            // Setup 3D Table Plane (Thai Horror Ouija Spirit Board)
             GameObject bgMapGo = new GameObject("MapBackgroundTable");
             var bgMapSr = bgMapGo.AddComponent<SpriteRenderer>();
             bgMapSr.sortingOrder = -10;
@@ -257,6 +258,56 @@ namespace TawanOS.MapEngine
             {
                 Sprite bgSprite = Sprite.Create(bgTex, new Rect(0, 0, bgTex.width, bgTex.height), new Vector2(0.5f, 0.5f), 100f);
                 bgMapSr.sprite = bgSprite;
+            }
+
+            // Setup 3D Environment Decorations (NecroPOLY Dark Corners)
+            GameObject envGo = new GameObject("NecroPolyEnvironment");
+            
+            string treePath = "Assets/EmaceArt/NecroPOLY Dark Corners/Prefabs/Assets/Nature/Trees/EA_Environment_Nature_Tree_4a_PRE.prefab";
+            string lanternPath = "Assets/EmaceArt/NecroPOLY Dark Corners/Prefabs/Assets/Props/EA_Exterior_Lantern_Solid_01a_PRE.prefab";
+            string ruinPath = "Assets/EmaceArt/NecroPOLY Dark Corners/Prefabs/Assets/Ruins/EA_Arch_Wall04_Ruin_01b_PRE.prefab";
+
+            GameObject treeAsset = AssetDatabase.LoadAssetAtPath<GameObject>(treePath);
+            GameObject lanternAsset = AssetDatabase.LoadAssetAtPath<GameObject>(lanternPath);
+            GameObject ruinAsset = AssetDatabase.LoadAssetAtPath<GameObject>(ruinPath);
+
+            // Flank table with Spooky Trees along Z-axis
+            if (treeAsset != null)
+            {
+                for (float z = 0; z <= totalMapHeight; z += 7f)
+                {
+                    // Left flank trees
+                    GameObject tLeft = (GameObject)PrefabUtility.InstantiatePrefab(treeAsset, envGo.transform);
+                    tLeft.transform.position = new Vector3(-totalMapWidth * 0.95f - 2.5f, 0f, z);
+                    tLeft.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
+
+                    // Right flank trees
+                    GameObject tRight = (GameObject)PrefabUtility.InstantiatePrefab(treeAsset, envGo.transform);
+                    tRight.transform.position = new Vector3(totalMapWidth * 0.95f + 2.5f, 0f, z + 3f);
+                    tRight.transform.localScale = new Vector3(1.3f, 1.3f, 1.3f);
+                }
+            }
+
+            // Place Ancient Lanterns near start and along flanks
+            if (lanternAsset != null)
+            {
+                GameObject l1 = (GameObject)PrefabUtility.InstantiatePrefab(lanternAsset, envGo.transform);
+                l1.transform.position = new Vector3(-totalMapWidth * 0.7f, 0f, -2f);
+                
+                GameObject l2 = (GameObject)PrefabUtility.InstantiatePrefab(lanternAsset, envGo.transform);
+                l2.transform.position = new Vector3(totalMapWidth * 0.7f, 0f, -2f);
+
+                GameObject l3 = (GameObject)PrefabUtility.InstantiatePrefab(lanternAsset, envGo.transform);
+                l3.transform.position = new Vector3(0f, 0f, totalMapHeight + 3f);
+            }
+
+            // Place Ancient Ruins behind Boss Node at the top
+            if (ruinAsset != null)
+            {
+                GameObject ruin = (GameObject)PrefabUtility.InstantiatePrefab(ruinAsset, envGo.transform);
+                ruin.transform.position = new Vector3(0f, 0f, totalMapHeight + 5f);
+                ruin.transform.rotation = Quaternion.Euler(0, 180, 0);
+                ruin.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
             }
 
             // Setup MapManager

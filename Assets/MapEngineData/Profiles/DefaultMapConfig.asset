@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e36d0cebf40b1c459622c04865cdc4b, type: 3}
   m_Name: DefaultMapConfig
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.MapConfigSO
-  seed: 515980
+  seed: 737445
   useRandomSeed: 0
   totalFloors: 15
   mapWidth: 7
@@ -25,7 +25,7 @@ MonoBehaviour:
   isUIMode: 1
   preventConsecutiveRestSites: 1
   preventConsecutiveShops: 1
-  orientation: 0
+  orientation: 3
   floorSpacingY: 2.5
   columnSpacingX: 2
   depthZOffset: 0.2
