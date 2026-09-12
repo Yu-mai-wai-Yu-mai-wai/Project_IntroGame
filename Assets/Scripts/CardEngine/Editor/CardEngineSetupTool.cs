@@ -17,12 +17,29 @@ namespace TawanOS.CardEngine
         {
             EditorApplication.delayCall += () =>
             {
+                if (!Directory.Exists("Assets/TextMesh Pro"))
+                {
+                    ImportTMPEssentialsSilently();
+                }
+
                 if (!File.Exists("Assets/Scenes/CombatTestScene.unity") && !Application.isPlaying)
                 {
                     Debug.Log("[CardEngineSetupTool] Auto-initializing CombatTestScene and Starter Data...");
                     SetupTestSceneAndCards(false);
                 }
             };
+        }
+
+        [MenuItem("Tools/TawanOS/Card Engine/Import TMP Essential Resources Silently")]
+        public static void ImportTMPEssentialsSilently()
+        {
+            string pkgPath = "Library/PackageCache/com.unity.ugui@b95364aab964/Package Resources/TMP Essential Resources.unitypackage";
+            if (File.Exists(pkgPath))
+            {
+                AssetDatabase.ImportPackage(pkgPath, false);
+                AssetDatabase.Refresh();
+                Debug.Log("<color=green>[CardEngineSetupTool] TMP Essential Resources successfully imported silently!</color>");
+            }
         }
 
         [MenuItem("Tools/TawanOS/Card Engine/Setup Test Scene & Cards")]
