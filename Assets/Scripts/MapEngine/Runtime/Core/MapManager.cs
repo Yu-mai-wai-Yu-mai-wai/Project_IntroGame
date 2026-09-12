@@ -26,6 +26,7 @@ namespace TawanOS.MapEngine
         public static MapManager Instance { get; private set; }
 
         public MapGraphData CurrentGraph { get; private set; }
+        public event System.Action<NodeType> OnCombatNodeEntered;
 
         private IMapGenerator generator;
         private IMapSaveSystem saveSystem;
@@ -316,6 +317,11 @@ namespace TawanOS.MapEngine
 
             saveSystem.SaveMap(CurrentGraph);
             Debug.Log($"[MapManager] Selected Node: {nodeData.type} at Floor {nodeData.gridPosition.y}, Column {nodeData.gridPosition.x}");
+
+            if (nodeData.type == NodeType.MinorEnemy || nodeData.type == NodeType.EliteEnemy || nodeData.type == NodeType.Boss)
+            {
+                OnCombatNodeEntered?.Invoke(nodeData.type);
+            }
         }
 
         private void HandleNodeHoverEnter(MapNodeView view)

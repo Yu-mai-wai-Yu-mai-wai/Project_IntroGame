@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae89d501da270bf47bfa4b1beb2d1ec3, type: 3}
+  m_Name: Card_KumanThongFamiliar
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
+  cardId: c_kuman
+  cardNameThai: "\u0E01\u0E38\u0E21\u0E32\u0E23\u0E17\u0E2D\u0E07\u0E40\u0E23\u0E35\u0E22\u0E01\u0E17\u0E23\u0E31\u0E1E\u0E22\u0E4C"
+  cardNameEng: Kuman Thong
+  descriptionFormat: "\u0E2D\u0E31\u0E0D\u0E40\u0E0A\u0E34\u0E0D\u0E01\u0E38\u0E21\u0E32\u0E23\u0E17\u0E2D\u0E07
+    (HP 10, \u0E42\u0E08\u0E21\u0E15\u0E35 4 \u0E15\u0E48\u0E2D\u0E40\u0E17\u0E34\u0E23\u0E4C\u0E19)"
+  magicSchool: 0
+  cardType: 2
+  targetType: 0
+  meritCost: 2
+  corruptionGain: 0
+  baseValue: 0
+  durability: 0
+  familiarHealth: 10
+  familiarDamage: 4
+  artwork: {fileID: 0}
+  frameBorder: {fileID: 0}
+  sfxPlay: {fileID: 0}
+  vfxPrefab: {fileID: 0}

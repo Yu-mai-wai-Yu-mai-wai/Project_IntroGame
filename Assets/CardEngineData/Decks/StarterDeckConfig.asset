@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 342c4b1c1483a084eb7d1f7f1e14b713, type: 3}
+  m_Name: StarterDeckConfig
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.DeckConfigSO
+  deckId: starter_deck
+  deckName: "\u0E2A\u0E33\u0E23\u0E31\u0E1A\u0E2B\u0E21\u0E2D\u0E18\u0E23\u0E23\u0E21\u0E1E\u0E37\u0E49\u0E19\u0E10\u0E32\u0E19"
+  defaultDrawCount: 5
+  maxHandSize: 10
+  startingCards:
+  - {fileID: 11400000, guid: e4d36f007acf0374fab76b1832ffe25b, type: 2}
+  - {fileID: 11400000, guid: e4d36f007acf0374fab76b1832ffe25b, type: 2}
+  - {fileID: 11400000, guid: e4d36f007acf0374fab76b1832ffe25b, type: 2}
+  - {fileID: 11400000, guid: 4c1d1b1c0055e9845bffc89a4fccec48, type: 2}
+  - {fileID: 11400000, guid: 4c1d1b1c0055e9845bffc89a4fccec48, type: 2}
+  - {fileID: 11400000, guid: da3cf66dfe9ad974a9be3be6f972621e, type: 2}
+  - {fileID: 11400000, guid: a03c4f38da72230498778d9b08825d9a, type: 2}
+  - {fileID: 11400000, guid: 590c715d50d99f644aba158de2bd5604, type: 2}
+  - {fileID: 11400000, guid: 49d7fa5674517d94b820e9edd264b574, type: 2}
+  - {fileID: 11400000, guid: d82b8c5762bd8eb40bd9549e06a15984, type: 2}
