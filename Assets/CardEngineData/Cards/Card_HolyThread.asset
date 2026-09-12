@@ -26,7 +26,7 @@ MonoBehaviour:
   durability: 0
   familiarHealth: 0
   familiarDamage: 0
-  artwork: {fileID: 0}
+  artwork: {fileID: 21300000, guid: 9e61d0e39d3e4fb418be54cf6fdbd5e9, type: 3}
   frameBorder: {fileID: 0}
   sfxPlay: {fileID: 0}
   vfxPrefab: {fileID: 0}
