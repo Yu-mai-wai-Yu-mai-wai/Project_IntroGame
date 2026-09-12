@@ -22,6 +22,11 @@ namespace TawanOS.CardEngine
                     ImportTMPEssentialsSilently();
                 }
 
+                if (!File.Exists("Assets/Fonts/Charm-Bold SDF.asset"))
+                {
+                    SetupThaiFonts();
+                }
+
                 if (!File.Exists("Assets/Scenes/CombatTestScene.unity") && !Application.isPlaying)
                 {
                     Debug.Log("[CardEngineSetupTool] Auto-initializing CombatTestScene and Starter Data...");
@@ -40,6 +45,119 @@ namespace TawanOS.CardEngine
                 AssetDatabase.Refresh();
                 Debug.Log("<color=green>[CardEngineSetupTool] TMP Essential Resources successfully imported silently!</color>");
             }
+        }
+
+        [MenuItem("Tools/TawanOS/Card Engine/Setup Thai Fonts & Fallbacks")]
+        public static void SetupThaiFonts()
+        {
+            Font charmFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Charm-Bold.ttf");
+            Font sarabunFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Sarabun-Regular.ttf");
+
+            if (charmFont == null || sarabunFont == null)
+            {
+                Debug.LogError("[CardEngineSetupTool] TTF Fonts not found in Assets/Fonts!");
+                return;
+            }
+
+            TMP_FontAsset charmSdf = GetOrCreateTMPFontAsset(charmFont, "Assets/Fonts/Charm-Bold SDF.asset");
+            TMP_FontAsset sarabunSdf = GetOrCreateTMPFontAsset(sarabunFont, "Assets/Fonts/Sarabun-Regular SDF.asset");
+
+            if (charmSdf == null || sarabunSdf == null)
+            {
+                Debug.LogError("[CardEngineSetupTool] Failed to create TMP Font Assets!");
+                return;
+            }
+
+            // 1. Ingest into TMP Settings Fallback list
+            TMP_Settings settings = Resources.Load<TMP_Settings>("TMP Settings");
+            if (settings != null)
+            {
+                SerializedObject so = new SerializedObject(settings);
+                SerializedProperty fallbacks = so.FindProperty("m_fallbackFontAssets");
+                if (fallbacks != null)
+                {
+                    AddFallbackIfMissing(fallbacks, sarabunSdf);
+                    AddFallbackIfMissing(fallbacks, charmSdf);
+                    so.ApplyModifiedProperties();
+                    EditorUtility.SetDirty(settings);
+                }
+            }
+
+            // 2. Ingest into default LiberationSans SDF Fallback table
+            TMP_FontAsset defaultFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset");
+            if (defaultFont != null)
+            {
+                if (defaultFont.fallbackFontAssetTable == null) defaultFont.fallbackFontAssetTable = new List<TMP_FontAsset>();
+                if (!defaultFont.fallbackFontAssetTable.Contains(sarabunSdf)) defaultFont.fallbackFontAssetTable.Add(sarabunSdf);
+                if (!defaultFont.fallbackFontAssetTable.Contains(charmSdf)) defaultFont.fallbackFontAssetTable.Add(charmSdf);
+                EditorUtility.SetDirty(defaultFont);
+            }
+
+            // 3. Update CardViewPrefab directly
+            string prefabPath = "Assets/CardEngineData/Prefabs/CardViewPrefab.prefab";
+            GameObject prefabGo = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefabGo != null)
+            {
+                CardView view = prefabGo.GetComponent<CardView>();
+                if (view != null)
+                {
+                    if (view.nameThaiText != null)
+                    {
+                        view.nameThaiText.font = charmSdf;
+                        view.nameThaiText.fontSize = 15;
+                    }
+                    if (view.descText != null)
+                    {
+                        view.descText.font = sarabunSdf;
+                        view.descText.fontSize = 11.5f;
+                    }
+                    EditorUtility.SetDirty(prefabGo);
+                }
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("<color=green>[CardEngineSetupTool] Thai Fonts (Charm & Sarabun) successfully created and assigned!</color>");
+        }
+
+        private static void AddFallbackIfMissing(SerializedProperty listProp, TMP_FontAsset fontAsset)
+        {
+            for (int i = 0; i < listProp.arraySize; i++)
+            {
+                if (listProp.GetArrayElementAtIndex(i).objectReferenceValue == fontAsset)
+                    return;
+            }
+            int index = listProp.arraySize;
+            listProp.InsertArrayElementAtIndex(index);
+            listProp.GetArrayElementAtIndex(index).objectReferenceValue = fontAsset;
+        }
+
+        private static TMP_FontAsset GetOrCreateTMPFontAsset(Font font, string path)
+        {
+            TMP_FontAsset existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
+            if (existing != null) return existing;
+
+            UnityEngine.TextCore.LowLevel.FontEngine.InitializeFontEngine();
+            TMP_FontAsset fontAsset = TMP_FontAsset.CreateFontAsset(font, 90, 9, UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA, 1024, 1024, AtlasPopulationMode.Dynamic);
+            if (fontAsset == null) return null;
+
+            string fileName = Path.GetFileNameWithoutExtension(path);
+            fontAsset.name = fileName;
+            AssetDatabase.CreateAsset(fontAsset, path);
+
+            if (fontAsset.material != null)
+            {
+                fontAsset.material.name = fileName + " Material";
+                AssetDatabase.AddObjectToAsset(fontAsset.material, fontAsset);
+            }
+            if (fontAsset.atlasTextures != null && fontAsset.atlasTextures.Length > 0 && fontAsset.atlasTextures[0] != null)
+            {
+                fontAsset.atlasTextures[0].name = fileName + " Atlas";
+                AssetDatabase.AddObjectToAsset(fontAsset.atlasTextures[0], fontAsset);
+            }
+
+            AssetDatabase.SaveAssets();
+            return fontAsset;
         }
 
         [MenuItem("Tools/TawanOS/Card Engine/Setup Test Scene & Cards")]
@@ -254,11 +372,13 @@ namespace TawanOS.CardEngine
 
             var view = cardGo.AddComponent<CardView>();
 
-            // Title Thai
+            // Title Thai (Sacred Occult / Talisman Calligraphy)
             GameObject titleGo = new GameObject("NameThaiText");
             titleGo.transform.SetParent(cardGo.transform, false);
             var titleText = titleGo.AddComponent<TextMeshProUGUI>();
-            titleText.fontSize = 14;
+            var charmFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
+            if (charmFont != null) titleText.font = charmFont;
+            titleText.fontSize = 15;
             titleText.alignment = TextAlignmentOptions.Center;
             titleText.color = Color.white;
             var titleRt = titleGo.GetComponent<RectTransform>();
@@ -280,11 +400,13 @@ namespace TawanOS.CardEngine
             costRt.anchorMax = new Vector2(0.35f, 0.98f);
             view.costText = costText;
 
-            // Description Text
+            // Description Text (Clean Readable Thai)
             GameObject descGo = new GameObject("DescText");
             descGo.transform.SetParent(cardGo.transform, false);
             var descText = descGo.AddComponent<TextMeshProUGUI>();
-            descText.fontSize = 11;
+            var sarabunFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            if (sarabunFont != null) descText.font = sarabunFont;
+            descText.fontSize = 11.5f;
             descText.alignment = TextAlignmentOptions.Center;
             descText.color = new Color(0.85f, 0.85f, 0.85f);
             var descRt = descGo.GetComponent<RectTransform>();
