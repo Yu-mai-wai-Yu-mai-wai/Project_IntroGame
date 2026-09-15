@@ -13,6 +13,8 @@ namespace TawanOS.CardEngine
         public TMP_Text meritValueText;
         public Slider corruptionSlider;
         public TMP_Text corruptionText;
+        public GameObject playerShieldRoot;
+        public TMP_Text playerShieldText;
 
         [Header("Piles & Turns")]
         public TMP_Text drawCountText;
@@ -38,6 +40,7 @@ namespace TawanOS.CardEngine
                 CombatManager.Instance.OnPhaseChanged += HandlePhaseChanged;
                 CombatManager.Instance.OnMeritChanged += HandleMeritChanged;
                 CombatManager.Instance.OnCorruptionChanged += HandleCorruptionChanged;
+                CombatManager.Instance.OnShieldChanged += HandleShieldChanged;
                 CombatManager.Instance.OnCurseBackfireTriggered += HandleCurseBackfire;
                 CombatManager.Instance.OnCombatEnded += HandleCombatEnded;
             }
@@ -65,6 +68,7 @@ namespace TawanOS.CardEngine
                 CombatManager.Instance.OnPhaseChanged -= HandlePhaseChanged;
                 CombatManager.Instance.OnMeritChanged -= HandleMeritChanged;
                 CombatManager.Instance.OnCorruptionChanged -= HandleCorruptionChanged;
+                CombatManager.Instance.OnShieldChanged -= HandleShieldChanged;
                 CombatManager.Instance.OnCurseBackfireTriggered -= HandleCurseBackfire;
                 CombatManager.Instance.OnCombatEnded -= HandleCombatEnded;
             }
@@ -102,8 +106,16 @@ namespace TawanOS.CardEngine
         {
             if (meritValueText != null)
             {
-                meritValueText.text = $"{current} / {max}";
+                meritValueText.text = $"กุศล: {current} / {max}";
             }
+        }
+
+        private void HandleShieldChanged(int current, bool toPlayer)
+        {
+            if (!toPlayer) return;
+
+            if (playerShieldRoot != null) playerShieldRoot.SetActive(current > 0);
+            if (playerShieldText != null) playerShieldText.text = $"{current}";
         }
 
         private void HandleCorruptionChanged(int current, int max)
@@ -115,7 +127,7 @@ namespace TawanOS.CardEngine
             }
             if (corruptionText != null)
             {
-                corruptionText.text = $"{current} / {max}";
+                corruptionText.text = $"มลทิน: {current} / {max}";
             }
         }
 
@@ -154,7 +166,7 @@ namespace TawanOS.CardEngine
 
             if (playerKhwanText != null)
             {
-                playerKhwanText.text = $"{state.playerKhwan} / {state.maxPlayerKhwan}";
+                playerKhwanText.text = $"ขวัญ: {state.playerKhwan} / {state.maxPlayerKhwan}";
             }
         }
 
@@ -164,11 +176,11 @@ namespace TawanOS.CardEngine
 
             if (drawCountText != null)
             {
-                drawCountText.text = $"{CardManager.Instance.DrawPile.Count}";
+                drawCountText.text = $"สำรับ: {CardManager.Instance.DrawPile.Count}";
             }
             if (discardCountText != null)
             {
-                discardCountText.text = $"{CardManager.Instance.DiscardPile.Count}";
+                discardCountText.text = $"ทิ้ง: {CardManager.Instance.DiscardPile.Count}";
             }
         }
     }

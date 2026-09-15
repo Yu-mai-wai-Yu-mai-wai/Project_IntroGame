@@ -20,10 +20,13 @@ namespace TawanOS.CardEngine
         public CombatPhase CurrentPhase => currentPhase;
         public int CurrentMerit => state.currentMerit;
         public int CurrentCorruption => state.currentCorruption;
+        public int CurrentPlayerShield => state.playerShield;
+        public int CurrentEnemyShield => state.enemyShield;
 
         public event Action<CombatPhase> OnPhaseChanged;
         public event Action<int, int> OnMeritChanged;
         public event Action<int, int> OnCorruptionChanged;
+        public event Action<int, bool> OnShieldChanged;
         public event Action OnCurseBackfireTriggered;
         public event Action<bool> OnCombatEnded;
 
@@ -54,6 +57,10 @@ namespace TawanOS.CardEngine
             state.currentMerit = 1;
             state.currentCorruption = 0;
             state.turnNumber = 1;
+            state.playerShield = 0;
+            state.enemyShield = 0;
+            state.playerStatuses.Clear();
+            state.enemyStatuses.Clear();
 
             if (CardManager.Instance != null && CardManager.Instance.defaultDeckConfig != null)
             {
@@ -75,6 +82,10 @@ namespace TawanOS.CardEngine
         private IEnumerator TurnStartRoutine()
         {
             yield return new WaitForSeconds(0.3f);
+
+            // Shield does not carry over into the player's own turn (StS-style block reset)
+            state.playerShield = 0;
+            OnShieldChanged?.Invoke(state.playerShield, true);
 
             // Merit scaling: Turn 1 = 1, Turn 2 = 2, ... up to 6
             state.currentMerit = Mathf.Clamp(state.turnNumber, 1, state.maxMerit);
@@ -99,6 +110,10 @@ namespace TawanOS.CardEngine
         private IEnumerator EnemyTurnRoutine()
         {
             yield return new WaitForSeconds(0.5f);
+
+            // Enemy shield does not carry over into the enemy's own turn
+            state.enemyShield = 0;
+            OnShieldChanged?.Invoke(state.enemyShield, false);
 
             if (nextEnemyMove != null && EffectResolver.Instance != null)
             {
@@ -127,6 +142,19 @@ namespace TawanOS.CardEngine
 
             SetPhase(CombatPhase.RoundEndStatusTick);
             yield return new WaitForSeconds(0.3f);
+
+            // Tick duration-based statuses (Bleeding deals damage here) and amulet durability
+            TickStatusDurations(onPlayer: true);
+            TickStatusDurations(onPlayer: false);
+            if (EffectResolver.Instance != null)
+            {
+                EffectResolver.Instance.TickAmuletDurability();
+            }
+
+            if (currentPhase == CombatPhase.Defeat || currentPhase == CombatPhase.Victory)
+            {
+                yield break;
+            }
 
             // Discard unplayed cards
             if (CardManager.Instance != null)
@@ -168,9 +196,34 @@ namespace TawanOS.CardEngine
 
         public void TakeDamage(int amount, bool toPlayer)
         {
+            TakeDamageInternal(amount, toPlayer, allowReflect: true);
+        }
+
+        private void TakeDamageInternal(int amount, bool toPlayer, bool allowReflect)
+        {
+            if (amount <= 0) return;
+
+            // KhumPhai (คุ้มภัย): halves incoming damage on the defender
+            if (HasStatus(StatusEffectType.KhumPhai, toPlayer))
+            {
+                amount = Mathf.Max(0, Mathf.RoundToInt(amount * 0.5f));
+            }
+
+            // MontSaThon (มนต์สะท้อน): reflects half of the (already reduced) damage back once
+            if (allowReflect && amount > 0 && HasStatus(StatusEffectType.MontSaThon, toPlayer))
+            {
+                int reflected = Mathf.RoundToInt(amount * 0.5f);
+                if (reflected > 0)
+                {
+                    TakeDamageInternal(reflected, !toPlayer, allowReflect: false);
+                }
+            }
+
             if (toPlayer)
             {
-                state.playerKhwan = Mathf.Max(0, state.playerKhwan - amount);
+                int remaining = AbsorbShield(amount, ref state.playerShield);
+                OnShieldChanged?.Invoke(state.playerShield, true);
+                state.playerKhwan = Mathf.Max(0, state.playerKhwan - remaining);
                 if (state.playerKhwan <= 0)
                 {
                     EndCombat(false);
@@ -178,10 +231,73 @@ namespace TawanOS.CardEngine
             }
             else
             {
-                state.enemyKhwan = Mathf.Max(0, state.enemyKhwan - amount);
+                int remaining = AbsorbShield(amount, ref state.enemyShield);
+                OnShieldChanged?.Invoke(state.enemyShield, false);
+                state.enemyKhwan = Mathf.Max(0, state.enemyKhwan - remaining);
                 if (state.enemyKhwan <= 0)
                 {
                     EndCombat(true);
+                }
+            }
+        }
+
+        private int AbsorbShield(int incomingDamage, ref int shield)
+        {
+            if (shield <= 0) return incomingDamage;
+            int absorbed = Mathf.Min(shield, incomingDamage);
+            shield -= absorbed;
+            return incomingDamage - absorbed;
+        }
+
+        public void AddShield(int amount, bool toPlayer)
+        {
+            if (amount <= 0) return;
+
+            if (toPlayer) state.playerShield += amount;
+            else state.enemyShield += amount;
+
+            OnShieldChanged?.Invoke(toPlayer ? state.playerShield : state.enemyShield, toPlayer);
+        }
+
+        public bool HasStatus(StatusEffectType type, bool onPlayer)
+        {
+            var list = onPlayer ? state.playerStatuses : state.enemyStatuses;
+            return list.Exists(s => s.type == type);
+        }
+
+        public void ApplyStatus(StatusEffectType type, int duration, bool toPlayer)
+        {
+            if (duration <= 0) return;
+            var list = toPlayer ? state.playerStatuses : state.enemyStatuses;
+            var existing = list.Find(s => s.type == type);
+            if (existing != null)
+            {
+                existing.duration = Mathf.Max(existing.duration, duration);
+            }
+            else
+            {
+                list.Add(new ActiveStatus(type, duration));
+            }
+        }
+
+        private void TickStatusDurations(bool onPlayer)
+        {
+            var list = onPlayer ? state.playerStatuses : state.enemyStatuses;
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                if (list[i].type == StatusEffectType.BleedingCurse)
+                {
+                    TakeDamageInternal(3, toPlayer: onPlayer, allowReflect: false);
+                    if (currentPhase == CombatPhase.Defeat || currentPhase == CombatPhase.Victory)
+                    {
+                        return;
+                    }
+                }
+
+                list[i].duration--;
+                if (list[i].duration <= 0)
+                {
+                    list.RemoveAt(i);
                 }
             }
         }

@@ -1,19 +1,20 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using DG.Tweening;
 
 namespace TawanOS.CardEngine
 {
     public class BoardSlotView : MonoBehaviour
     {
-        public enum SlotType
+        public enum SlotSide
         {
-            AmuletSlot,     // ช่องวางเครื่องราง (ซ้าย 3 ช่อง)
-            FamiliarSlot    // ช่องวางบริวาร (หน้า 3 ช่อง)
+            Player, // Functional: mirrors CombatManager.State.activeBoardCards
+            Enemy   // Visual placeholder only - not wired to any game state yet
         }
 
         [Header("Slot Identity")]
-        public SlotType slotType = SlotType.FamiliarSlot;
+        public SlotSide side = SlotSide.Player;
         public int slotIndex = 0;
 
         [Header("UI Elements")]
@@ -28,32 +29,33 @@ namespace TawanOS.CardEngine
 
         private void Start()
         {
-            if (EffectResolver.Instance != null)
+            if (side == SlotSide.Player && EffectResolver.Instance != null)
             {
                 EffectResolver.Instance.OnSlotOccupied += HandleSlotOccupied;
+                EffectResolver.Instance.OnSlotCleared += HandleSlotCleared;
             }
             ClearSlot();
         }
 
         private void OnDestroy()
         {
-            if (EffectResolver.Instance != null)
+            if (side == SlotSide.Player && EffectResolver.Instance != null)
             {
                 EffectResolver.Instance.OnSlotOccupied -= HandleSlotOccupied;
+                EffectResolver.Instance.OnSlotCleared -= HandleSlotCleared;
             }
         }
 
         private void HandleSlotOccupied(CardInstance card, int targetIndex)
         {
             if (targetIndex != slotIndex) return;
+            OccupySlot(card);
+        }
 
-            bool isMatchingType = (slotType == SlotType.AmuletSlot && card.cardType == CardType.Amulet) ||
-                                  (slotType == SlotType.FamiliarSlot && card.cardType == CardType.Familiar);
-
-            if (isMatchingType)
-            {
-                OccupySlot(card);
-            }
+        private void HandleSlotCleared(int targetIndex)
+        {
+            if (targetIndex != slotIndex) return;
+            ClearSlot();
         }
 
         public void OccupySlot(CardInstance card)
@@ -71,14 +73,9 @@ namespace TawanOS.CardEngine
 
             if (statBadgeText != null)
             {
-                if (slotType == SlotType.AmuletSlot)
-                {
-                    statBadgeText.text = $"ความคงทน: {card.currentDurability}";
-                }
-                else
-                {
-                    statBadgeText.text = $"HP:{card.familiarHealth} | ATK:{card.familiarDamage}";
-                }
+                statBadgeText.text = card.cardType == CardType.Amulet
+                    ? $"ความคงทน: {card.currentDurability}"
+                    : $"HP:{card.familiarHealth} | ATK:{card.familiarDamage}";
             }
         }
 
@@ -87,6 +84,17 @@ namespace TawanOS.CardEngine
             currentCard = null;
             if (occupiedRoot != null) occupiedRoot.SetActive(false);
             if (emptyRoot != null) emptyRoot.SetActive(true);
+
+            // Remove the physical 3D card that was dropped into this slot, if any
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = transform.GetChild(i);
+                if (child.GetComponent<CardView3D>() != null)
+                {
+                    child.DOKill();
+                    Destroy(child.gameObject);
+                }
+            }
         }
     }
 }

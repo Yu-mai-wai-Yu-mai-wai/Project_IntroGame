@@ -12,6 +12,10 @@ namespace TawanOS.CardEngine
         public event Action<int, bool> OnShieldGranted;
         public event Action<StatusEffectType, int, bool> OnStatusApplied;
         public event Action<CardInstance, int> OnSlotOccupied;
+        public event Action<int> OnSlotCleared;
+
+        public const int MaxBoardSlots = 5;
+        private const int StatusDebuffDefaultDuration = 2;
 
         private void Awake()
         {
@@ -33,10 +37,8 @@ namespace TawanOS.CardEngine
                     ExecuteIncantation(card, target);
                     break;
                 case CardType.Amulet:
-                    PlaceAmulet(card);
-                    break;
                 case CardType.Familiar:
-                    SummonFamiliar(card);
+                    PlaceBoardCard(card);
                     break;
             }
         }
@@ -46,7 +48,7 @@ namespace TawanOS.CardEngine
             if (card.targetType == TargetType.SingleEnemy || card.targetType == TargetType.AllEnemies)
             {
                 // Deal damage to enemy
-                int damage = card.baseValue;
+                int damage = ApplyDamageStatusModifier(card.baseValue, attackerIsPlayer: true);
                 if (CombatManager.Instance != null)
                 {
                     CombatManager.Instance.TakeDamage(damage, toPlayer: false);
@@ -55,38 +57,70 @@ namespace TawanOS.CardEngine
             }
             else if (card.targetType == TargetType.Self)
             {
-                // Grant shield or restore Khwan
+                // Grant shield (Khwan itself can only be restored at a temple, per design)
                 int shield = card.baseValue;
+                CombatManager.Instance?.AddShield(shield, toPlayer: true);
                 OnShieldGranted?.Invoke(shield, true);
             }
         }
 
-        private void PlaceAmulet(CardInstance card)
+        private int ApplyDamageStatusModifier(int baseDamage, bool attackerIsPlayer)
+        {
+            if (CombatManager.Instance == null) return baseDamage;
+
+            // KhwanPhawa (ขวัญผวา): reduces the afflicted attacker's outgoing damage by 25%
+            if (CombatManager.Instance.HasStatus(StatusEffectType.KhwanPhawa, attackerIsPlayer))
+            {
+                baseDamage = Mathf.Max(0, Mathf.RoundToInt(baseDamage * 0.75f));
+            }
+            return baseDamage;
+        }
+
+        private void PlaceBoardCard(CardInstance card)
         {
             if (CombatManager.Instance == null) return;
 
-            var list = CombatManager.Instance.State.activeAmulets;
-            if (list.Count >= 3)
+            var list = CombatManager.Instance.State.activeBoardCards;
+            if (list.Count >= MaxBoardSlots)
             {
                 // Replace oldest slot (Ponytail: FIFO slot replacement)
                 list.RemoveAt(0);
             }
             list.Add(card);
-            OnSlotOccupied?.Invoke(card, list.Count - 1);
+            ResyncSlots(list);
         }
 
-        private void SummonFamiliar(CardInstance card)
+        private void ResyncSlots(List<CardInstance> list)
+        {
+            for (int i = 0; i < MaxBoardSlots; i++)
+            {
+                if (i < list.Count)
+                {
+                    OnSlotOccupied?.Invoke(list[i], i);
+                }
+                else
+                {
+                    OnSlotCleared?.Invoke(i);
+                }
+            }
+        }
+
+        public void TickAmuletDurability()
         {
             if (CombatManager.Instance == null) return;
 
-            var list = CombatManager.Instance.State.activeFamiliars;
-            if (list.Count >= 3)
+            var list = CombatManager.Instance.State.activeBoardCards;
+            for (int i = list.Count - 1; i >= 0; i--)
             {
-                // Inscryption Sacrifice: replace first slot
-                list.RemoveAt(0);
+                if (list[i].cardType != CardType.Amulet) continue;
+
+                list[i].currentDurability--;
+                if (list[i].currentDurability <= 0)
+                {
+                    list.RemoveAt(i);
+                }
             }
-            list.Add(card);
-            OnSlotOccupied?.Invoke(card, list.Count - 1);
+            ResyncSlots(list);
         }
 
         public void ResolveEnemyIntent(EnemyIntent intent, int value, StatusEffectType status = StatusEffectType.KhwanPhawa)
@@ -95,14 +129,16 @@ namespace TawanOS.CardEngine
             {
                 case EnemyIntent.Attack:
                 case EnemyIntent.HeavyAttack:
+                    int damage = ApplyDamageStatusModifier(value, attackerIsPlayer: false);
                     if (CombatManager.Instance != null)
                     {
-                        CombatManager.Instance.TakeDamage(value, toPlayer: true);
+                        CombatManager.Instance.TakeDamage(damage, toPlayer: true);
                     }
-                    OnDamageDealt?.Invoke(value, true);
+                    OnDamageDealt?.Invoke(damage, true);
                     break;
 
                 case EnemyIntent.Defend:
+                    CombatManager.Instance?.AddShield(value, toPlayer: false);
                     OnShieldGranted?.Invoke(value, false);
                     break;
 
@@ -111,11 +147,12 @@ namespace TawanOS.CardEngine
                     break;
 
                 default:
+                    int fallbackDamage = ApplyDamageStatusModifier(value, attackerIsPlayer: false);
                     if (CombatManager.Instance != null)
                     {
-                        CombatManager.Instance.TakeDamage(value, toPlayer: true);
+                        CombatManager.Instance.TakeDamage(fallbackDamage, toPlayer: true);
                     }
-                    OnDamageDealt?.Invoke(value, true);
+                    OnDamageDealt?.Invoke(fallbackDamage, true);
                     break;
             }
         }
@@ -124,32 +161,32 @@ namespace TawanOS.CardEngine
         {
             if (CombatManager.Instance == null) return;
 
-            var familiars = CombatManager.Instance.State.activeFamiliars;
-            for (int i = familiars.Count - 1; i >= 0; i--)
+            var board = CombatManager.Instance.State.activeBoardCards;
+            for (int i = board.Count - 1; i >= 0; i--)
             {
-                var fam = familiars[i];
-                if (fam.familiarDamage > 0)
+                var card = board[i];
+                if (card.cardType == CardType.Familiar && card.familiarDamage > 0)
                 {
-                    CombatManager.Instance.TakeDamage(fam.familiarDamage, toPlayer: false);
-                    OnDamageDealt?.Invoke(fam.familiarDamage, false);
+                    int damage = ApplyDamageStatusModifier(card.familiarDamage, attackerIsPlayer: true);
+                    CombatManager.Instance.TakeDamage(damage, toPlayer: false);
+                    OnDamageDealt?.Invoke(damage, false);
                 }
             }
         }
 
         public void ApplyStatusEffect(StatusEffectType status, int duration, bool toPlayer)
         {
+            CombatManager.Instance?.ApplyStatus(status, duration, toPlayer);
             OnStatusApplied?.Invoke(status, duration, toPlayer);
         }
 
         public void TriggerCurseBackfire()
         {
-            int backfireDamage = 10;
-            if (CombatManager.Instance != null)
-            {
-                CombatManager.Instance.TakeDamage(backfireDamage, toPlayer: true);
-            }
-            OnDamageDealt?.Invoke(backfireDamage, true);
-            Debug.LogWarning("[EffectResolver] Curse backfire triggered! Player took 10 damage.");
+            // Per design: crossing the Corruption threshold inflicts a random debuff, not fixed damage
+            var values = (StatusEffectType[])Enum.GetValues(typeof(StatusEffectType));
+            var chosen = values[UnityEngine.Random.Range(0, values.Length)];
+            ApplyStatusEffect(chosen, StatusDebuffDefaultDuration, toPlayer: true);
+            Debug.LogWarning($"[EffectResolver] Curse backfire triggered! Player afflicted with {chosen} for {StatusDebuffDefaultDuration} turns.");
         }
     }
 }

@@ -288,8 +288,9 @@ namespace TawanOS.CardEngine
             handCtrl.cardPrefab = cardPrefab;
             handCtrl.handContainer = handContainer.transform;
 
-            // Board Slots Container (Amulets on left flank, Familiars in front line)
-            BuildBoardSlots(canvasGo.transform);
+            // Card Table (3D object in the scene) + 5-slot board row per side (also 3D, sitting on the table)
+            BuildCombatTable();
+            BuildBoardSlots();
 
             // Enemy Combat View
             BuildEnemyView(canvasGo.transform, enemyPrai);
@@ -502,44 +503,62 @@ namespace TawanOS.CardEngine
             return hud;
         }
 
-        private static void BuildBoardSlots(Transform canvasParent)
+        private static void BuildCombatTable()
+        {
+            // Placeholder table: a plain 3D cube object sitting in the scene between the
+            // camera and the enemy portrait, until real table artwork exists.
+            GameObject tableGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            tableGo.name = "CombatTable";
+            tableGo.transform.position = new Vector3(0f, -1.5f, 5f);
+            tableGo.transform.localScale = new Vector3(11f, 1f, 5f);
+
+            var renderer = tableGo.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.material.color = new Color(0.22f, 0.14f, 0.08f); // dark wood
+            }
+        }
+
+        private static void BuildBoardSlots()
         {
             GameObject slotsRoot = new GameObject("BoardSlots");
-            slotsRoot.transform.SetParent(canvasParent, false);
 
-            // 3 Amulet Slots on Left Flank
-            for (int i = 0; i < 3; i++)
+            // Enemy row sits toward the far edge of the table, player row toward the near edge
+            BuildSlotRow(slotsRoot.transform, BoardSlotView.SlotSide.Enemy, tableZ: 6.3f,
+                new Color(0.4f, 0.15f, 0.15f));
+
+            BuildSlotRow(slotsRoot.transform, BoardSlotView.SlotSide.Player, tableZ: 3.7f,
+                new Color(0.2f, 0.3f, 0.4f));
+        }
+
+        private static void BuildSlotRow(Transform parent, BoardSlotView.SlotSide side, float tableZ, Color slotColor)
+        {
+            const int slotCount = EffectResolver.MaxBoardSlots;
+            const float spacing = 1.8f;
+            const float tableTopY = -0.95f; // just above CombatTable's top surface (table center y=-1.5, height=1)
+            float startX = -spacing * (slotCount - 1) / 2f;
+
+            GameObject rowGo = new GameObject($"{side}SlotRow");
+            rowGo.transform.SetParent(parent, false);
+
+            for (int i = 0; i < slotCount; i++)
             {
-                GameObject slotGo = new GameObject($"AmuletSlot_{i}");
-                slotGo.transform.SetParent(slotsRoot.transform, false);
-                var img = slotGo.AddComponent<Image>();
-                img.color = new Color(0.2f, 0.3f, 0.4f, 0.5f);
-                var rt = slotGo.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0, 0.5f);
-                rt.anchorMax = new Vector2(0, 0.5f);
-                rt.sizeDelta = new Vector2(80, 80);
-                rt.anchoredPosition = new Vector2(60, (i - 1) * 95);
+                // Flat 3D marker lying on the table surface, not a UI element
+                GameObject slotGo = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                slotGo.name = $"{side}Slot_{i}";
+                slotGo.transform.SetParent(rowGo.transform, false);
+                slotGo.transform.position = new Vector3(startX + i * spacing, tableTopY, tableZ);
+                slotGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+                slotGo.transform.localScale = new Vector3(1.4f, 1.4f, 1f);
+
+                var renderer = slotGo.GetComponent<Renderer>();
+                if (renderer != null)
+                {
+                    renderer.material.color = slotColor;
+                }
 
                 var slotView = slotGo.AddComponent<BoardSlotView>();
-                slotView.slotType = BoardSlotView.SlotType.AmuletSlot;
-                slotView.slotIndex = i;
-            }
-
-            // 3 Familiar Slots in Front Line
-            for (int i = 0; i < 3; i++)
-            {
-                GameObject slotGo = new GameObject($"FamiliarSlot_{i}");
-                slotGo.transform.SetParent(slotsRoot.transform, false);
-                var img = slotGo.AddComponent<Image>();
-                img.color = new Color(0.4f, 0.25f, 0.2f, 0.5f);
-                var rt = slotGo.GetComponent<RectTransform>();
-                rt.anchorMin = new Vector2(0.5f, 0.35f);
-                rt.anchorMax = new Vector2(0.5f, 0.35f);
-                rt.sizeDelta = new Vector2(100, 110);
-                rt.anchoredPosition = new Vector2((i - 1) * 125, 0);
-
-                var slotView = slotGo.AddComponent<BoardSlotView>();
-                slotView.slotType = BoardSlotView.SlotType.FamiliarSlot;
+                slotView.side = side;
                 slotView.slotIndex = i;
             }
         }

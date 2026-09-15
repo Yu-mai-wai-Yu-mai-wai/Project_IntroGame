@@ -4,6 +4,19 @@ using System.Collections.Generic;
 namespace TawanOS.CardEngine
 {
     [Serializable]
+    public class ActiveStatus
+    {
+        public StatusEffectType type;
+        public int duration;
+
+        public ActiveStatus(StatusEffectType type, int duration)
+        {
+            this.type = type;
+            this.duration = duration;
+        }
+    }
+
+    [Serializable]
     public class CombatStateData
     {
         public int playerKhwan;
@@ -18,11 +31,15 @@ namespace TawanOS.CardEngine
         public int turnNumber;
         public CombatPhase currentPhase;
 
+        public int playerShield;
+        public int enemyShield;
+
         public List<CardInstance> drawPile = new List<CardInstance>();
         public List<CardInstance> handCards = new List<CardInstance>();
         public List<CardInstance> discardPile = new List<CardInstance>();
-        public List<CardInstance> activeAmulets = new List<CardInstance>();
-        public List<CardInstance> activeFamiliars = new List<CardInstance>();
+        public List<CardInstance> activeBoardCards = new List<CardInstance>();
+        public List<ActiveStatus> playerStatuses = new List<ActiveStatus>();
+        public List<ActiveStatus> enemyStatuses = new List<ActiveStatus>();
 
         public CombatStateData()
         {
@@ -37,6 +54,8 @@ namespace TawanOS.CardEngine
             incenseCurrency = 0;
             turnNumber = 1;
             currentPhase = CombatPhase.BattleInit;
+            playerShield = 0;
+            enemyShield = 0;
         }
     }
 }
