@@ -36,6 +36,15 @@ namespace TawanOS.CardEngine
         Defeat
     }
 
+    // Simplified player turn used to test drawing: Draw -> Main -> End, then the next turn starts.
+    public enum TurnPhase
+    {
+        None,
+        Draw,
+        Main,
+        End
+    }
+
     public enum EnemyIntent
     {
         Attack,

@@ -68,6 +68,14 @@ namespace TawanOS.CardEngine
             }
 
             PickNextEnemyMove();
+
+            // Simplified Draw/Main/End test loop replaces the full turn flow when present
+            if (TurnPhaseController.Instance != null && TurnPhaseController.Instance.isActiveAndEnabled)
+            {
+                TurnPhaseController.Instance.BeginTurns();
+                return;
+            }
+
             SetPhase(CombatPhase.TurnStartDraw);
             StartCoroutine(TurnStartRoutine());
         }
@@ -101,6 +109,12 @@ namespace TawanOS.CardEngine
 
         public void EndPlayerTurn()
         {
+            if (TurnPhaseController.Instance != null && TurnPhaseController.Instance.isActiveAndEnabled)
+            {
+                TurnPhaseController.Instance.RequestEndTurn();
+                return;
+            }
+
             if (currentPhase != CombatPhase.PlayerTurn) return;
 
             SetPhase(CombatPhase.EnemyIntentExecution);

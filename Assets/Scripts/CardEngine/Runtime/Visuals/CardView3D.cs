@@ -26,6 +26,7 @@ namespace TawanOS.CardEngine
         private Vector3 dragStartWorld;
         private Vector3 dragStartLocalPosition;
         private bool isDragging;
+        private bool isPlacedOnBoard;
 
         private void Awake()
         {
@@ -48,18 +49,21 @@ namespace TawanOS.CardEngine
             }
         }
 
-        public void SetRestingTransform(Vector3 localPos, Quaternion localRot)
+        // applyImmediately=false records the resting pose only, so the caller can animate to it
+        // (used for the draw fly-in from the deck).
+        public void SetRestingTransform(Vector3 localPos, Quaternion localRot, bool applyImmediately = true)
         {
-            if (isDragging) return;
+            if (isDragging || isPlacedOnBoard) return;
             originalLocalPosition = localPos;
             originalLocalRotation = localRot;
+            if (!applyImmediately) return;
             transform.localPosition = localPos;
             transform.localRotation = localRot;
         }
 
         private void OnMouseEnter()
         {
-            if (isDragging) return;
+            if (isDragging || isPlacedOnBoard) return;
 
             transform.DOKill();
             transform.DOLocalMove(originalLocalPosition + new Vector3(0, hoverLift, -hoverPullToCamera), 0.15f);
@@ -68,7 +72,7 @@ namespace TawanOS.CardEngine
 
         private void OnMouseExit()
         {
-            if (isDragging) return;
+            if (isDragging || isPlacedOnBoard) return;
 
             transform.DOKill();
             transform.DOLocalMove(originalLocalPosition, 0.15f);
@@ -78,6 +82,7 @@ namespace TawanOS.CardEngine
 
         private void OnMouseDown()
         {
+            if (isPlacedOnBoard) return;
             isDragging = true;
             if (mainCamera == null) mainCamera = Camera.main;
             transform.DOKill();
@@ -87,6 +92,7 @@ namespace TawanOS.CardEngine
 
         private void OnMouseDrag()
         {
+            if (isPlacedOnBoard) return;
             Vector3 mouseWorld = GetMouseWorldAtCardDepth();
             Vector3 worldDelta = mouseWorld - dragStartWorld;
             Vector3 localDelta = transform.parent != null
@@ -97,6 +103,7 @@ namespace TawanOS.CardEngine
 
         private void OnMouseUp()
         {
+            if (isPlacedOnBoard) return;
             isDragging = false;
 
             if (transform.localPosition.y > originalLocalPosition.y + playDropThresholdY)
@@ -146,14 +153,17 @@ namespace TawanOS.CardEngine
 
             transform.SetParent(targetSlot.transform, worldPositionStays: true);
             transform.DOKill();
-            transform.DOLocalMove(Vector3.zero, 0.3f).SetEase(Ease.OutQuad);
-            // World-space rotation, not local: the slot itself is tilted flat on the table, so
-            // resetting to LOCAL identity would inherit that tilt. Targeting world identity keeps
-            // the card standing upright/facing the camera, same as it looked in hand.
-            transform.DORotateQuaternion(Quaternion.identity, 0.3f);
+            transform.DOLocalMove(Vector3.zero, 0.3f).SetEase(Ease.OutQuad)
+                .OnComplete(() => transform.localPosition = Vector3.zero);
+            // Local rotation identity: the card inherits the slot's tilt and lies flat on the table.
+            transform.DOLocalRotateQuaternion(Quaternion.identity, 0.3f)
+                .OnComplete(() => transform.localRotation = Quaternion.identity);
             transform.DOScale(baseLocalScale, 0.3f);
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
 
             // The card has been committed to the board; it no longer drags/hovers like a hand card
+            isPlacedOnBoard = true;
             enabled = false;
         }
 
@@ -168,6 +178,7 @@ namespace TawanOS.CardEngine
             foreach (BoardSlotView slot in slots)
             {
                 if (slot.side != BoardSlotView.SlotSide.Player) continue;
+                if (slot.GetComponent<DeckPileView3D>() != null) continue; // the deck is not a board slot
                 if (slot.transform.childCount > 0) continue; // already occupied by a physical card
 
                 Vector2 slotScreenPos = mainCamera.WorldToScreenPoint(slot.transform.position);

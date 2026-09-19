@@ -16,11 +16,21 @@ namespace TawanOS.CardEngine
         public float arcAngle = 5f;
         public float curveDepth = 0.15f;
 
+        [Header("Draw Animation")]
+        [Tooltip("Optional. Cards fly from this deck pile into the hand. Auto-found in the scene if empty.")]
+        public DeckPileView3D deckPile;
+        public float drawFlyDuration = 0.45f;
+        public float drawStagger = 0.12f;
+
         private readonly List<CardView3D> activeViews = new List<CardView3D>();
+        // Views drawn since the last layout pass; they fly in from the deck instead of sliding.
+        private readonly List<CardView3D> newlyDrawn = new List<CardView3D>();
+        private bool layoutDirty;
 
         private void Start()
         {
             if (handContainer == null) handContainer = transform;
+            if (deckPile == null) deckPile = FindFirstObjectByType<DeckPileView3D>();
 
             if (CardManager.Instance != null)
             {
@@ -47,6 +57,24 @@ namespace TawanOS.CardEngine
             CardView3D view = Instantiate(cardPrefab, handContainer);
             view.Bind(card);
             activeViews.Add(view);
+
+            if (deckPile != null)
+            {
+                // Start lying flat on top of the deck pile; the layout pass flies it into the hand
+                view.transform.position = deckPile.DrawSpawnPosition;
+                view.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+                newlyDrawn.Add(view);
+            }
+
+            // Several cards are drawn in the same frame at turn start: lay them out once so the
+            // stagger delays are not restarted by each draw.
+            layoutDirty = true;
+        }
+
+        private void LateUpdate()
+        {
+            if (!layoutDirty) return;
+            layoutDirty = false;
             UpdateHandLayout();
         }
 
@@ -84,7 +112,9 @@ namespace TawanOS.CardEngine
 
         public void UpdateHandLayout()
         {
-            activeViews.RemoveAll(v => v == null);
+            // Drop null views and any card that has left the hand (e.g. reparented onto a board slot),
+            // so the layout never drags a placed card back to its old hand position/rotation.
+            activeViews.RemoveAll(v => v == null || v.transform.parent != handContainer);
             int count = activeViews.Count;
             if (count == 0) return;
 
@@ -107,10 +137,25 @@ namespace TawanOS.CardEngine
                 Quaternion targetRot = Quaternion.Euler(0, 0, angle);
 
                 var view = activeViews[i];
-                view.SetRestingTransform(targetPos, targetRot);
-                view.transform.DOLocalMove(targetPos, 0.2f).SetEase(Ease.OutQuad);
-                view.transform.DOLocalRotateQuaternion(targetRot, 0.2f);
+                int drawOrder = newlyDrawn.IndexOf(view);
+                view.transform.DOKill();
+
+                if (drawOrder >= 0)
+                {
+                    float delay = drawOrder * drawStagger;
+                    view.SetRestingTransform(targetPos, targetRot, applyImmediately: false);
+                    view.transform.DOLocalMove(targetPos, drawFlyDuration).SetDelay(delay).SetEase(Ease.OutCubic);
+                    view.transform.DOLocalRotateQuaternion(targetRot, drawFlyDuration).SetDelay(delay).SetEase(Ease.OutCubic);
+                }
+                else
+                {
+                    view.SetRestingTransform(targetPos, targetRot);
+                    view.transform.DOLocalMove(targetPos, 0.2f).SetEase(Ease.OutQuad);
+                    view.transform.DOLocalRotateQuaternion(targetRot, 0.2f);
+                }
             }
+
+            newlyDrawn.Clear();
         }
     }
 }
