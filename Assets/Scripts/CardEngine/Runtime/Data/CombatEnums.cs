@@ -42,7 +42,8 @@ namespace TawanOS.CardEngine
         None,
         Draw,
         Main,
-        End
+        End,
+        Enemy
     }
 
     public enum EnemyIntent
@@ -53,6 +54,15 @@ namespace TawanOS.CardEngine
         DebuffCurse,
         BuffSelf,
         SummonMinion
+    }
+
+    // How an enemy that owns a card deck weighs its options while playing cards
+    public enum EnemyCardPlayStyle
+    {
+        Balanced,
+        Aggressive,     // prefers damage cards and familiars
+        Defensive,      // prefers shield cards
+        Random
     }
 
     public enum StatusEffectType

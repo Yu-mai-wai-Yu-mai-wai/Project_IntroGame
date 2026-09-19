@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f29241bc0ecb7e9499d405e7e9f4215c, type: 3}
+  m_Name: NewEnemyProfile
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.EnemyProfileSO
+  enemyId: enemy_prai
+  enemyName: "\u0E1C\u0E35\u0E1E\u0E23\u0E32\u0E22"
+  portrait: {fileID: 0}
+  maxKhwan: 30
+  deck:
+  - {fileID: 11400000, guid: e4d36f007acf0374fab76b1832ffe25b, type: 2}
+  - {fileID: 11400000, guid: e4d36f007acf0374fab76b1832ffe25b, type: 2}
+  - {fileID: 11400000, guid: 4c1d1b1c0055e9845bffc89a4fccec48, type: 2}
+  - {fileID: 11400000, guid: 4c1d1b1c0055e9845bffc89a4fccec48, type: 2}
+  - {fileID: 11400000, guid: da3cf66dfe9ad974a9be3be6f972621e, type: 2}
+  - {fileID: 11400000, guid: d82b8c5762bd8eb40bd9549e06a15984, type: 2}
+  - {fileID: 11400000, guid: 49d7fa5674517d94b820e9edd264b574, type: 2}
+  - {fileID: 11400000, guid: a03c4f38da72230498778d9b08825d9a, type: 2}
+  - {fileID: 11400000, guid: 590c715d50d99f644aba158de2bd5604, type: 2}
+  startingHandSize: 5
+  drawPerTurn: 1
+  maxHandSize: 10
+  maxCardsPerTurn: 6
+  moves: []
+  aiStates:
+  - stateName: Opening
+    selection: 1
+    playStyle: 2
+    moves:
+    - intent: 2
+      baseValue: 6
+      statusEffect: 0
+      weight: 1
+      moveDescription: "\u0E15\u0E31\u0E49\u0E07\u0E01\u0E32\u0E23\u0E4C\u0E14"
+    - intent: 3
+      baseValue: 6
+      statusEffect: 0
+      weight: 1
+      moveDescription: "\u0E2A\u0E32\u0E1B\u0E43\u0E2B\u0E49\u0E02\u0E27\u0E31\u0E0D\u0E1C\u0E27\u0E32"
+    transitions:
+    - condition: 3
+      threshold: 2
+      targetState: Aggressive
+  - stateName: Aggressive
+    selection: 0
+    playStyle: 1
+    moves:
+    - intent: 0
+      baseValue: 6
+      statusEffect: 0
+      weight: 3
+      moveDescription: "\u0E42\u0E08\u0E21\u0E15\u0E35\u0E2A\u0E30\u0E40\u0E17\u0E37\u0E2D\u0E19\u0E02\u0E27\u0E31\u0E0D"
+    - intent: 2
+      baseValue: 5
+      statusEffect: 0
+      weight: 1
+      moveDescription: "\u0E15\u0E31\u0E49\u0E07\u0E01\u0E32\u0E23\u0E4C\u0E14"
+    transitions:
+    - condition: 0
+      threshold: 0.4
+      targetState: Enraged
+  - stateName: Enraged
+    selection: 0
+    playStyle: 1
+    moves:
+    - intent: 1
+      baseValue: 12
+      statusEffect: 0
+      weight: 2
+      moveDescription: "\u0E04\u0E25\u0E31\u0E48\u0E07\u0E42\u0E08\u0E21\u0E15\u0E35\u0E23\u0E38\u0E19\u0E41\u0E23\u0E07"
+    - intent: 0
+      baseValue: 8
+      statusEffect: 0
+      weight: 2
+      moveDescription: "\u0E42\u0E08\u0E21\u0E15\u0E35\u0E2A\u0E30\u0E40\u0E17\u0E37\u0E2D\u0E19\u0E02\u0E27\u0E31\u0E0D"
+    transitions: []
+  initialAIState: Opening
+  isBoss: 0
+  phase2Profile: {fileID: 0}

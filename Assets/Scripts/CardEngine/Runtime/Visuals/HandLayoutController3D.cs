@@ -26,6 +26,13 @@ namespace TawanOS.CardEngine
         // Views drawn since the last layout pass; they fly in from the deck instead of sliding.
         private readonly List<CardView3D> newlyDrawn = new List<CardView3D>();
         private bool layoutDirty;
+        private bool simultaneousDraw;
+
+        // The next batch of drawn cards flies in all at once instead of staggered (opening hand)
+        public void BeginSimultaneousDraw()
+        {
+            simultaneousDraw = true;
+        }
 
         private void Start()
         {
@@ -142,7 +149,7 @@ namespace TawanOS.CardEngine
 
                 if (drawOrder >= 0)
                 {
-                    float delay = drawOrder * drawStagger;
+                    float delay = simultaneousDraw ? 0f : drawOrder * drawStagger;
                     view.SetRestingTransform(targetPos, targetRot, applyImmediately: false);
                     view.transform.DOLocalMove(targetPos, drawFlyDuration).SetDelay(delay).SetEase(Ease.OutCubic);
                     view.transform.DOLocalRotateQuaternion(targetRot, drawFlyDuration).SetDelay(delay).SetEase(Ease.OutCubic);
@@ -155,6 +162,7 @@ namespace TawanOS.CardEngine
                 }
             }
 
+            if (newlyDrawn.Count > 0) simultaneousDraw = false;
             newlyDrawn.Clear();
         }
     }

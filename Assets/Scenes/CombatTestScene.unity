@@ -2185,35 +2185,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1298102423}
-  - component: {fileID: 1298102422}
+  - component: {fileID: 1298102424}
   m_Layer: 0
-  m_Name: HandContainer
+  m_Name: EHandContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &1298102422
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1298102421}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d336eba5e479038449585cf33dc4bd0b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.HandLayoutController3D
-  cardPrefab: {fileID: 8038836874958016398, guid: 756f410208e9b5d42ba5c829d28ace38, type: 3}
-  handContainer: {fileID: 1298102423}
-  cardSpacing: 0.9
-  maxTotalWidth: 6
-  arcAngle: 5
-  curveDepth: 0.15
-  deckPile: {fileID: 0}
-  drawFlyDuration: 0.45
-  drawStagger: 0.12
+  m_IsActive: 1
 --- !u!4 &1298102423
 Transform:
   m_ObjectHideFlags: 0
@@ -2223,12 +2202,40 @@ Transform:
   m_GameObject: {fileID: 1298102421}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 4.72, z: -2.35}
+  m_LocalPosition: {x: 0, y: 2.48, z: 11.13}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1298102424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1298102421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f618c35e47856084ba977d826ed1d727, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.EnemyHandView3D
+  cardPrefab: {fileID: 0}
+  showFaces: 0
+  backColor: {r: 0.25, g: 0.1, b: 0.15, a: 1}
+  handAnchor: {fileID: 1298102423}
+  offset: {x: 0, y: 1.5, z: 3}
+  autoMirrorPlayerAnchor: 1
+  cardSpacing: 0.9
+  maxTotalWidth: 6
+  arcAngle: 5
+  curveDepth: 0.15
+  drawFlyDuration: 0.45
+  drawStagger: 0.12
+  playFlyDuration: 0.4
+  playLingerTime: 0.6
+  pileCardSize: {x: 0.7, y: 1}
+  thicknessPerCard: 0.02
 --- !u!1 &1305718491
 GameObject:
   m_ObjectHideFlags: 0
@@ -2627,10 +2634,14 @@ MonoBehaviour:
     handCards: []
     discardPile: []
     activeBoardCards: []
+    enemyBoardCards: []
+    enemyMerit: 0
+    enemyCorruption: 0
     playerStatuses: []
     enemyStatuses: []
   currentPhase: 0
-  currentEnemyProfile: {fileID: 11400000, guid: 0dcca0e7068694d4e8e84167d7894090, type: 2}
+  firstTurnMerit: 2
+  currentEnemyProfile: {fileID: 11400000, guid: 738c6c36a65257743a398863269831ad, type: 2}
   nextEnemyMove:
     intent: 0
     baseValue: 6
@@ -2652,7 +2663,7 @@ MonoBehaviour:
   defaultDeckConfig: {fileID: 11400000, guid: 170a726a556f6664fb9d91877a8647cf, type: 2}
   defaultDrawCount: 5
   maxHandSize: 10
-  costSystemEnabled: 0
+  costSystemEnabled: 1
 --- !u!4 &1425064175
 Transform:
   m_ObjectHideFlags: 0
@@ -2681,10 +2692,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.TurnPhaseController
   drawCount: 1
-  firstTurnDrawCount: 5
+  openingHandSize: 5
   drawPhaseStartDelay: 0.3
   discardHandAtEnd: 0
   endPhaseDelay: 0.6
+  enemyActsAfterEnd: 1
   endTurnKey: 32
   showDebugLabel: 1
 --- !u!21 &1560884015
@@ -2905,13 +2917,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1659541804}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.38877705, y: -0, z: -0, w: 0.92133194}
-  m_LocalPosition: {x: 0, y: 7.6, z: -3.96}
+  m_LocalRotation: {x: 0.22736144, y: -0, z: -0, w: 0.9738105}
+  m_LocalPosition: {x: 0, y: 6.9, z: -6.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 45.757, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 26.284, y: 0, z: 0}
 --- !u!114 &1659541807
 MonoBehaviour:
   m_ObjectHideFlags: 0

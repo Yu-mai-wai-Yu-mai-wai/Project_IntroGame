@@ -39,7 +39,7 @@ namespace TawanOS.CardEngine
             CardData = card;
             if (card == null) return;
 
-            if (nameLabel != null) nameLabel.text = card.cardNameThai;
+            RefreshLabel();
 
             if (cardRenderer != null)
             {
@@ -47,6 +47,16 @@ namespace TawanOS.CardEngine
                     ? new Color(0.85f, 0.8f, 0.55f)
                     : new Color(0.35f, 0.1f, 0.15f);
             }
+        }
+
+        // Familiars also show their live Khwan (HP) and attack under the name
+        public void RefreshLabel()
+        {
+            if (nameLabel == null || CardData == null) return;
+
+            nameLabel.text = CardData.cardType == CardType.Familiar
+                ? $"{CardData.cardNameThai}\n{CardData.familiarHealth}/{CardData.familiarDamage}"
+                : CardData.cardNameThai;
         }
 
         // applyImmediately=false records the resting pose only, so the caller can animate to it

@@ -59,6 +59,11 @@ namespace TawanOS.CardEngine
 
             UpdateStats();
             UpdatePileCounts();
+
+            if (CombatManager.Instance != null)
+            {
+                HandleMeritChanged(CombatManager.Instance.CurrentMerit, CombatManager.Instance.State.maxMerit);
+            }
         }
 
         private void OnDestroy()

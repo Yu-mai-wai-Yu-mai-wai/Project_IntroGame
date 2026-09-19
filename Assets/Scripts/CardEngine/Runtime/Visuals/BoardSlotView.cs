@@ -48,14 +48,38 @@ namespace TawanOS.CardEngine
 
         private void HandleSlotOccupied(CardInstance card, int targetIndex)
         {
+            RemoveCardNoLongerOnBoard();
             if (targetIndex != slotIndex) return;
             OccupySlot(card);
         }
 
         private void HandleSlotCleared(int targetIndex)
         {
+            RemoveCardNoLongerOnBoard();
             if (targetIndex != slotIndex) return;
+            if (HasLiveBoardCard()) return; // see RemoveCardNoLongerOnBoard
             ClearSlot();
+        }
+
+        // The board list is compacted (index i = i-th card played) while the physical card sits in
+        // whichever slot the player dropped it on, so a slot index in a resync event does not say which
+        // physical slot to empty. Clearing by index used to destroy cards that were still on the board
+        // (e.g. a familiar dropped on slot 3 vanished when only one card was in the list). Instead, a
+        // slot's physical card is removed only once it has left the board list.
+        private void RemoveCardNoLongerOnBoard()
+        {
+            if (side != SlotSide.Player) return;
+
+            var card = GetComponentInChildren<CardView3D>();
+            if (card == null || HasLiveBoardCard()) return;
+            ClearSlot();
+        }
+
+        private bool HasLiveBoardCard()
+        {
+            var card = GetComponentInChildren<CardView3D>();
+            if (card == null || CombatManager.Instance == null) return false;
+            return CombatManager.Instance.State.activeBoardCards.Contains(card.CardData);
         }
 
         public void OccupySlot(CardInstance card)
