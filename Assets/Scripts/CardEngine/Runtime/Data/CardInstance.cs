@@ -19,8 +19,10 @@ namespace TawanOS.CardEngine
         public int familiarHealth;
         public int familiarDamage;
         public TargetType targetType;
+        public Sprite cardBackground;
         public Sprite artwork;
         public Sprite frameBorder;
+        public string customTypeText;
         public string descriptionFormat;
 
         public CardInstance()
@@ -45,10 +47,37 @@ namespace TawanOS.CardEngine
                 familiarHealth = template.familiarHealth;
                 familiarDamage = template.familiarDamage;
                 targetType = template.targetType;
+                cardBackground = template.cardBackground != null ? template.cardBackground : template.frameBorder;
                 artwork = template.artwork;
                 frameBorder = template.frameBorder;
+                customTypeText = template.GetFormattedTypeText();
                 descriptionFormat = template.descriptionFormat;
             }
+        }
+
+        public string GetFormattedTypeText()
+        {
+            if (!string.IsNullOrEmpty(customTypeText)) return customTypeText;
+
+            string typeStr = cardType switch
+            {
+                CardType.Incantation => "อาคม",
+                CardType.Amulet => "เครื่องราง",
+                CardType.Familiar => "ภูติรับใช้",
+                _ => cardType.ToString()
+            };
+
+            string targetStr = targetType switch
+            {
+                TargetType.SingleEnemy => "ศัตรูเดี่ยว",
+                TargetType.AllEnemies => "ศัตรูทั้งหมด",
+                TargetType.Self => "ตนเอง",
+                TargetType.FriendlyMinion => "บริวารฝ่ายเรา",
+                TargetType.NoTarget => "ไร้เป้าหมาย",
+                _ => targetType.ToString()
+            };
+
+            return $"{typeStr} • {targetStr}";
         }
     }
 }

@@ -16,6 +16,8 @@ namespace TawanOS.CardEngine
         public MagicSchool magicSchool = MagicSchool.WhiteMagic;
         public CardType cardType = CardType.Incantation;
         public TargetType targetType = TargetType.SingleEnemy;
+        [Tooltip("ข้อความระบุ 'ประเภท • รูปแบบ' เช่น 'อาคม • โจมตี' (หากเว้นว่าง ระบบจะสร้างอัตโนมัติ)")]
+        public string customTypeText = "";
 
         [Header("Costs & Thresholds")]
         [Range(0, 6)] public int meritCost = 1;
@@ -28,9 +30,38 @@ namespace TawanOS.CardEngine
         public int familiarDamage = 4;
 
         [Header("Visuals & Audio")]
+        [Tooltip("ภาพพื้นหลังการ์ดเต็มใบที่ Art วาด (วางพื้นหลังได้เลย)")]
+        public Sprite cardBackground;
+        [Tooltip("รูปภาพประกอบการ์ดตรงกลาง")]
         public Sprite artwork;
         public Sprite frameBorder;
         public AudioClip sfxPlay;
         public GameObject vfxPrefab;
+
+        public string GetFormattedTypeText()
+        {
+            if (!string.IsNullOrEmpty(customTypeText))
+                return customTypeText;
+
+            string typeStr = cardType switch
+            {
+                CardType.Incantation => "อาคม",
+                CardType.Amulet => "เครื่องราง",
+                CardType.Familiar => "ภูติรับใช้",
+                _ => cardType.ToString()
+            };
+
+            string targetStr = targetType switch
+            {
+                TargetType.SingleEnemy => "ศัตรูเดี่ยว",
+                TargetType.AllEnemies => "ศัตรูทั้งหมด",
+                TargetType.Self => "ตนเอง",
+                TargetType.FriendlyMinion => "บริวารฝ่ายเรา",
+                TargetType.NoTarget => "ไร้เป้าหมาย",
+                _ => targetType.ToString()
+            };
+
+            return $"{typeStr} • {targetStr}";
+        }
     }
 }

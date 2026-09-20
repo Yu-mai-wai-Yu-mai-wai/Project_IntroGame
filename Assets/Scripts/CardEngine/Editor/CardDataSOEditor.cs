@@ -58,52 +58,55 @@ namespace TawanOS.CardEngine
 
             Rect cardRect = GUILayoutUtility.GetRect(cardWidth, cardHeight);
 
-            // 1. Base Card Frame & Border
-            bool isWhiteMagic = card.magicSchool == MagicSchool.WhiteMagic;
-            Color borderColor = isWhiteMagic ? new Color(0.9f, 0.75f, 0.35f) : new Color(0.85f, 0.25f, 0.35f);
-            Color cardBgColor = isWhiteMagic ? new Color(0.12f, 0.10f, 0.08f) : new Color(0.10f, 0.06f, 0.10f);
+            // 1. Full Card Background (วาดภาพเต็มใบจากทีม Art หรือ Fallback)
+            Sprite bgSprite = card.cardBackground != null ? card.cardBackground : card.frameBorder;
+            if (bgSprite != null && bgSprite.texture != null)
+            {
+                GUI.DrawTexture(cardRect, bgSprite.texture, ScaleMode.StretchToFill);
+            }
+            else
+            {
+                // Fallback background matching Art team color palette
+                Color baseBg = new Color(0.53f, 0.53f, 0.53f); // Clean card gray
+                EditorGUI.DrawRect(cardRect, baseBg);
+                // Top header darker gray
+                EditorGUI.DrawRect(new Rect(cardRect.x, cardRect.y, cardRect.width, 46), new Color(0.44f, 0.44f, 0.44f));
+                // Center art box light gray
+                EditorGUI.DrawRect(new Rect(cardRect.x, cardRect.y + 46, cardRect.width, 134), new Color(0.84f, 0.84f, 0.84f));
+                // Divider line
+                EditorGUI.DrawRect(new Rect(cardRect.x + 10, cardRect.y + 180, cardRect.width - 20, 1.5f), new Color(0.75f, 0.75f, 0.75f));
+            }
 
-            EditorGUI.DrawRect(cardRect, borderColor); // Outer border
-            Rect innerRect = new Rect(cardRect.x + 3, cardRect.y + 3, cardRect.width - 6, cardRect.height - 6);
-            EditorGUI.DrawRect(innerRect, cardBgColor); // Inner background
-
-            // 2. Header Bar: Name Thai & Eng
-            Rect headerRect = new Rect(innerRect.x + 6, innerRect.y + 6, innerRect.width - 12, 34);
-            EditorGUI.DrawRect(headerRect, new Color(0.2f, 0.18f, 0.22f, 0.8f));
-
+            // 2. Header Bar: Name Thai (Top-Left)
+            Rect nameRect = new Rect(cardRect.x + 12, cardRect.y + 10, cardRect.width - 60, 30);
             GUIStyle nameThaiStyle = new GUIStyle(EditorStyles.boldLabel)
             {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 13,
+                alignment = TextAnchor.MiddleLeft,
+                fontSize = 15,
                 normal = { textColor = Color.white }
             };
-            GUI.Label(new Rect(headerRect.x, headerRect.y + 1, headerRect.width, 18), card.cardNameThai, nameThaiStyle);
+            GUI.Label(nameRect, string.IsNullOrEmpty(card.cardNameThai) ? "ชื่อการ์ด" : card.cardNameThai, nameThaiStyle);
 
-            GUIStyle nameEngStyle = new GUIStyle(EditorStyles.miniLabel)
+            // 3. Cost Badge Circle (Top-Right "0")
+            Rect costCircleRect = new Rect(cardRect.xMax - 42, cardRect.y + 6, 32, 32);
+            bool isWhiteMagic = card.magicSchool == MagicSchool.WhiteMagic;
+            string costStr = isWhiteMagic ? $"{card.meritCost}" : $"+{card.corruptionGain}";
+            
+            // Draw circle background if no background sprite
+            if (bgSprite == null)
             {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 9,
-                normal = { textColor = new Color(0.75f, 0.75f, 0.75f) }
-            };
-            GUI.Label(new Rect(headerRect.x, headerRect.y + 17, headerRect.width, 14), card.cardNameEng, nameEngStyle);
-
-            // 3. Cost Gem Badge (Top-Left)
-            Rect costRect = new Rect(cardRect.x - 6, cardRect.y - 6, 32, 32);
-            Color costBg = isWhiteMagic ? new Color(0.95f, 0.75f, 0.1f) : new Color(0.85f, 0.15f, 0.15f);
-            EditorGUI.DrawRect(costRect, costBg);
+                EditorGUI.DrawRect(costCircleRect, new Color(0.2f, 0.2f, 0.2f, 0.85f));
+            }
             GUIStyle costStyle = new GUIStyle(EditorStyles.boldLabel)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 14,
-                normal = { textColor = Color.black }
+                fontSize = 15,
+                normal = { textColor = Color.white }
             };
-            string costText = isWhiteMagic ? $"{card.meritCost}" : $"+{card.corruptionGain}";
-            GUI.Label(costRect, costText, costStyle);
+            GUI.Label(costCircleRect, costStr, costStyle);
 
-            // 4. Artwork Box (Center)
-            Rect artRect = new Rect(innerRect.x + 10, innerRect.y + 46, innerRect.width - 20, 130);
-            EditorGUI.DrawRect(artRect, new Color(0.06f, 0.05f, 0.07f)); // Art backing
-
+            // 4. Artwork Box ("รูป" - Center)
+            Rect artRect = new Rect(cardRect.x + 8, cardRect.y + 48, cardRect.width - 16, 130);
             if (card.artwork != null && card.artwork.texture != null)
             {
                 GUI.DrawTexture(artRect, card.artwork.texture, ScaleMode.ScaleToFit);
@@ -113,41 +116,52 @@ namespace TawanOS.CardEngine
                 GUIStyle placeholderStyle = new GUIStyle(EditorStyles.centeredGreyMiniLabel)
                 {
                     alignment = TextAnchor.MiddleCenter,
-                    wordWrap = true
+                    wordWrap = true,
+                    fontSize = 11,
+                    normal = { textColor = new Color(0.35f, 0.35f, 0.35f) }
                 };
-                GUI.Label(artRect, "🖼️ ไม่มีรูปภาพ\n(ลาก Sprite มาใส่ในช่อง Artwork)", placeholderStyle);
+                GUI.Label(artRect, "รูป\n(ลาก Sprite มาใส่ในช่อง Artwork)", placeholderStyle);
             }
 
-            // 5. Stat Badge (Familiar HP/ATK or Amulet Durability)
+            // 5. Stat Badge (Familiar HP/ATK or Amulet Durability overlay if active)
             if (card.cardType == CardType.Familiar)
             {
-                Rect statBadge = new Rect(innerRect.x + 10, artRect.yMax - 22, innerRect.width - 20, 20);
+                Rect statBadge = new Rect(artRect.x, artRect.yMax - 20, artRect.width, 20);
                 EditorGUI.DrawRect(statBadge, new Color(0, 0, 0, 0.75f));
                 GUIStyle statStyle = new GUIStyle(EditorStyles.boldLabel)
                 {
                     alignment = TextAnchor.MiddleCenter,
-                    fontSize = 11,
+                    fontSize = 10,
                     normal = { textColor = new Color(0.4f, 0.9f, 0.4f) }
                 };
-                GUI.Label(statBadge, $"ขวัญ (HP): {card.familiarHealth}  |  โจมตี (ATK): {card.familiarDamage}", statStyle);
+                GUI.Label(statBadge, $"HP: {card.familiarHealth} | ATK: {card.familiarDamage}", statStyle);
             }
             else if (card.cardType == CardType.Amulet)
             {
-                Rect statBadge = new Rect(innerRect.x + 10, artRect.yMax - 22, innerRect.width - 20, 20);
+                Rect statBadge = new Rect(artRect.x, artRect.yMax - 20, artRect.width, 20);
                 EditorGUI.DrawRect(statBadge, new Color(0, 0, 0, 0.75f));
                 GUIStyle statStyle = new GUIStyle(EditorStyles.boldLabel)
                 {
                     alignment = TextAnchor.MiddleCenter,
-                    fontSize = 11,
+                    fontSize = 10,
                     normal = { textColor = new Color(0.4f, 0.7f, 1f) }
                 };
                 GUI.Label(statBadge, $"ความคงทน: {card.durability} ครั้ง", statStyle);
             }
 
-            // 6. Description Text Box (Bottom)
-            Rect descRect = new Rect(innerRect.x + 8, innerRect.y + 184, innerRect.width - 16, 114);
-            EditorGUI.DrawRect(descRect, new Color(0.16f, 0.14f, 0.18f, 0.9f));
+            // 6. Card Type • Subtype Divider ("ประเภท • รูปแบบ")
+            Rect typeRect = new Rect(cardRect.x + 10, cardRect.y + 180, cardRect.width - 20, 24);
+            GUIStyle typeStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 11,
+                normal = { textColor = Color.white }
+            };
+            string typeDisplay = card.GetFormattedTypeText();
+            GUI.Label(typeRect, string.IsNullOrEmpty(typeDisplay) ? "ประเภท • รูปแบบ" : typeDisplay, typeStyle);
 
+            // 7. Description Box ("คำอธิบาย")
+            Rect descRect = new Rect(cardRect.x + 14, cardRect.y + 208, cardRect.width - 28, 92);
             string formattedDesc = "";
             try
             {
@@ -161,10 +175,10 @@ namespace TawanOS.CardEngine
             GUIStyle descStyle = new GUIStyle(EditorStyles.wordWrappedLabel)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 11,
-                normal = { textColor = new Color(0.9f, 0.9f, 0.9f) }
+                fontSize = 12,
+                normal = { textColor = Color.white }
             };
-            GUI.Label(new Rect(descRect.x + 6, descRect.y + 6, descRect.width - 12, descRect.height - 12), formattedDesc, descStyle);
+            GUI.Label(descRect, string.IsNullOrEmpty(formattedDesc) ? "คำอธิบาย" : formattedDesc, descStyle);
 
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
@@ -182,11 +196,23 @@ namespace TawanOS.CardEngine
             string uniquePath = AssetDatabase.GenerateUniqueAssetPath(folder + "/Card_NewCustomCard.asset");
             CardDataSO newCard = ScriptableObject.CreateInstance<CardDataSO>();
             newCard.cardId = "card_" + System.Guid.NewGuid().ToString().Substring(0, 8);
-            newCard.cardNameThai = "การ์ดอาคมใหม่";
-            newCard.cardNameEng = "New Arcane Card";
-            newCard.descriptionFormat = "สร้างความเสียหาย {0} หน่วย";
+            newCard.cardNameThai = "ชื่อการ์ดใหม่";
+            newCard.cardNameEng = "New Card";
+            newCard.customTypeText = "อาคม • โจมตีเดี่ยว";
+            newCard.descriptionFormat = "สร้างความเสียหายสะเทือนขวัญ {0} หน่วย";
             newCard.baseValue = 10;
             newCard.meritCost = 1;
+
+            // Auto-assign Art's Card_Template_Base if present
+            Sprite defaultBg = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CardEngineData/Art/Card_Template_Base.png");
+            if (defaultBg == null)
+            {
+                defaultBg = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CardEngineData/Cards/CardImg/Card_Template_Base.png");
+            }
+            if (defaultBg != null)
+            {
+                newCard.cardBackground = defaultBg;
+            }
 
             AssetDatabase.CreateAsset(newCard, uniquePath);
             AssetDatabase.SaveAssets();

@@ -11,12 +11,16 @@ namespace TawanOS.CardEngine
         [Header("Card Data Reference")]
         public CardInstance CardData;
 
-        [Header("UI Components")]
+        [Header("UI Components (Art-Driven Card Layout)")]
+        [Tooltip("ภาพพื้นหลังการ์ดเต็มแผ่นที่ทีม Art วาดวางได้เลย")]
+        public Image cardBackgroundImage;
         public Image artworkImage;
         public Image frameBorderImage;
         public Image schoolBadge;
         public TMP_Text nameThaiText;
         public TMP_Text nameEngText;
+        [Tooltip("ประเภท • รูปแบบ (แสดงบนแถบคั่นกลาง)")]
+        public TMP_Text typeText;
         public TMP_Text costText;
         public TMP_Text descText;
         public GameObject familiarBadgeRoot;
@@ -48,14 +52,56 @@ namespace TawanOS.CardEngine
             CardData = card;
             if (card == null) return;
 
+            // 1. ภาพพื้นหลังการ์ดเต็มใบจาก Art
+            Sprite bg = card.cardBackground != null ? card.cardBackground : card.frameBorder;
+            if (cardBackgroundImage != null && bg != null)
+            {
+                cardBackgroundImage.sprite = bg;
+                cardBackgroundImage.gameObject.SetActive(true);
+            }
+            else if (frameBorderImage != null && bg != null)
+            {
+                frameBorderImage.sprite = bg;
+            }
+
+            // 2. ชื่อการ์ด
             if (nameThaiText != null) nameThaiText.text = card.cardNameThai;
             if (nameEngText != null) nameEngText.text = card.cardNameEng;
 
-            if (descText != null)
+            // 3. ประเภทการ์ด • รูปแบบ (แถบคั่นกลาง)
+            if (typeText != null)
             {
-                descText.text = string.Format(card.descriptionFormat ?? "", card.baseValue);
+                typeText.text = card.GetFormattedTypeText();
             }
 
+            // 4. รูปภาพการ์ดตรงกลาง
+            if (artworkImage != null)
+            {
+                if (card.artwork != null)
+                {
+                    artworkImage.sprite = card.artwork;
+                    artworkImage.gameObject.SetActive(true);
+                }
+                else
+                {
+                    artworkImage.gameObject.SetActive(false);
+                }
+            }
+
+            // 5. คำอธิบาย
+            if (descText != null)
+            {
+                try
+                {
+                    descText.text = string.Format(card.descriptionFormat ?? "", card.baseValue);
+                }
+                catch
+                {
+                    descText.text = card.descriptionFormat ?? "";
+                }
+            }
+
+            // 6. ต้นทุน / ตัวเลขมุมบนขวา
             if (costText != null)
             {
                 costText.text = card.magicSchool == MagicSchool.WhiteMagic
@@ -66,17 +112,7 @@ namespace TawanOS.CardEngine
                     : new Color(0.85f, 0.2f, 0.2f);
             }
 
-            if (artworkImage != null && card.artwork != null)
-            {
-                artworkImage.sprite = card.artwork;
-                artworkImage.gameObject.SetActive(true);
-            }
-
-            if (frameBorderImage != null && card.frameBorder != null)
-            {
-                frameBorderImage.sprite = card.frameBorder;
-            }
-
+            // 7. Familiar Badge (ถ้าเป็นการ์ดบริวาร)
             if (familiarBadgeRoot != null)
             {
                 bool isFamiliar = card.cardType == CardType.Familiar;
