@@ -13,6 +13,10 @@ namespace TawanOS.CardEngine
         public int defaultDrawCount = 5;
         public int maxHandSize = 10;
 
+        [Header("Debug/Testing")]
+        [Tooltip("Off = cards can be played for free, ignoring Merit cost and Corruption gain, while other systems are being tested.")]
+        public bool costSystemEnabled = false;
+
         private readonly List<CardInstance> drawPile = new List<CardInstance>();
         private readonly List<CardInstance> handCards = new List<CardInstance>();
         private readonly List<CardInstance> discardPile = new List<CardInstance>();
@@ -91,27 +95,27 @@ namespace TawanOS.CardEngine
         {
             if (card == null || !handCards.Contains(card)) return false;
 
-            if (CombatManager.Instance != null)
+            if (EffectResolver.Instance == null)
             {
-                // Validate Merit cost for White Magic
-                if (card.magicSchool == MagicSchool.WhiteMagic && !CombatManager.Instance.SpendMerit(card.meritCost))
-                {
-                    Debug.LogWarning($"[CardManager] Not enough Merit to play {card.cardNameThai} (Needs {card.meritCost})");
-                    return false;
-                }
+                Debug.LogWarning($"[CardManager] No EffectResolver in scene; cannot play {card.cardNameThai}");
+                return false;
+            }
 
-                // Add Corruption for Black Magic
-                if (card.magicSchool == MagicSchool.BlackMagic && card.corruptionGain > 0)
-                {
-                    CombatManager.Instance.AddCorruption(card.corruptionGain);
-                }
+            // Validate Merit cost for White Magic before spending anything
+            if (costSystemEnabled && CombatManager.Instance != null && card.magicSchool == MagicSchool.WhiteMagic
+                && !CombatManager.Instance.SpendMerit(card.meritCost))
+            {
+                Debug.LogWarning($"[CardManager] Not enough Merit to play {card.cardNameThai} (Needs {card.meritCost})");
+                return false;
             }
 
             handCards.Remove(card);
+            EffectResolver.Instance.ResolveCardEffect(card, target);
 
-            if (EffectResolver.Instance != null)
+            // Corruption is charged only once the Black Magic effect has actually resolved
+            if (costSystemEnabled && CombatManager.Instance != null && card.magicSchool == MagicSchool.BlackMagic && card.corruptionGain > 0)
             {
-                EffectResolver.Instance.ResolveCardEffect(card, target);
+                CombatManager.Instance.AddCorruption(card.corruptionGain);
             }
 
             // Amulet and Familiar remain on board if active, otherwise Incantation goes to discard

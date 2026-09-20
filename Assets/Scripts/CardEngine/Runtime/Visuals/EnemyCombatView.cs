@@ -12,6 +12,8 @@ namespace TawanOS.CardEngine
         public TMP_Text nameText;
         public Slider khwanSlider;
         public TMP_Text khwanText;
+        public GameObject shieldRoot;
+        public TMP_Text shieldText;
 
         [Header("Intent Telegraphing (+6 Bonus Criteria)")]
         public GameObject intentRoot;
@@ -30,6 +32,10 @@ namespace TawanOS.CardEngine
             {
                 CombatManager.Instance.OnPhaseChanged += HandlePhaseChanged;
             }
+            if (CombatManager.Instance != null)
+            {
+                CombatManager.Instance.OnShieldChanged += HandleShieldChanged;
+            }
             if (EffectResolver.Instance != null)
             {
                 EffectResolver.Instance.OnDamageDealt += HandleDamageDealt;
@@ -43,11 +49,20 @@ namespace TawanOS.CardEngine
             if (CombatManager.Instance != null)
             {
                 CombatManager.Instance.OnPhaseChanged -= HandlePhaseChanged;
+                CombatManager.Instance.OnShieldChanged -= HandleShieldChanged;
             }
             if (EffectResolver.Instance != null)
             {
                 EffectResolver.Instance.OnDamageDealt -= HandleDamageDealt;
             }
+        }
+
+        private void HandleShieldChanged(int current, bool toPlayer)
+        {
+            if (toPlayer) return;
+
+            if (shieldRoot != null) shieldRoot.SetActive(current > 0);
+            if (shieldText != null) shieldText.text = $"{current}";
         }
 
         private void HandlePhaseChanged(CombatPhase phase)
@@ -94,7 +109,7 @@ namespace TawanOS.CardEngine
 
             if (khwanText != null)
             {
-                khwanText.text = $"{state.enemyKhwan} / {state.maxEnemyKhwan}";
+                khwanText.text = $"ขวัญศัตรู: {state.enemyKhwan} / {state.maxEnemyKhwan}";
             }
 
             // Intent Telegraphing

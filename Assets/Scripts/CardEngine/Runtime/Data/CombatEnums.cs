@@ -36,6 +36,16 @@ namespace TawanOS.CardEngine
         Defeat
     }
 
+    // Simplified player turn used to test drawing: Draw -> Main -> End, then the next turn starts.
+    public enum TurnPhase
+    {
+        None,
+        Draw,
+        Main,
+        End,
+        Enemy
+    }
+
     public enum EnemyIntent
     {
         Attack,
@@ -44,6 +54,15 @@ namespace TawanOS.CardEngine
         DebuffCurse,
         BuffSelf,
         SummonMinion
+    }
+
+    // How an enemy that owns a card deck weighs its options while playing cards
+    public enum EnemyCardPlayStyle
+    {
+        Balanced,
+        Aggressive,     // prefers damage cards and familiars
+        Defensive,      // prefers shield cards
+        Random
     }
 
     public enum StatusEffectType
