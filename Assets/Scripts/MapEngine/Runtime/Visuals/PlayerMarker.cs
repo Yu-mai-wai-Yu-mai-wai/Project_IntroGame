@@ -10,6 +10,7 @@ namespace TawanOS.MapEngine
         [SerializeField] private Vector3 offset = new Vector3(0, 0.02f, 0);
         [SerializeField] private Vector3 modelLocalOffset = Vector3.zero;
         [SerializeField] private Vector3 modelLocalRotation = new Vector3(0, 180f, 0);
+        [SerializeField] private Vector3 defaultFacingDirection = new Vector3(-1f, 0f, 0f);
         [SerializeField] private Vector3 hoverArcOffset = Vector3.zero;
         [SerializeField] private float tiltAmount = 0f;
 
@@ -23,11 +24,19 @@ namespace TawanOS.MapEngine
                 sr.sprite = GetFallbackMarkerSprite();
             }
             ApplyModelLocalTransform();
+            if (defaultFacingDirection.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(defaultFacingDirection.normalized);
+            }
         }
 
         private void Start()
         {
             ApplyModelLocalTransform();
+            if (defaultFacingDirection.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(defaultFacingDirection.normalized);
+            }
         }
 
         private void OnValidate()
@@ -103,10 +112,18 @@ namespace TawanOS.MapEngine
             return fallbackMarkerSprite;
         }
 
-        public void SetPositionImmediate(Vector3 targetWorldPos)
+        public void SetPositionImmediate(Vector3 targetWorldPos, Vector3? facingDirection = null)
         {
             ResetMarker();
             transform.position = targetWorldPos + offset;
+            Vector3 dir = facingDirection.HasValue && facingDirection.Value.sqrMagnitude > 0.001f 
+                ? facingDirection.Value 
+                : defaultFacingDirection;
+            dir.y = 0f;
+            if (dir.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(dir.normalized);
+            }
         }
 
         public void ResetMarker()
@@ -116,7 +133,16 @@ namespace TawanOS.MapEngine
                 StopCoroutine(moveCoroutine);
                 moveCoroutine = null;
             }
-            transform.localRotation = Quaternion.identity;
+            if (defaultFacingDirection.sqrMagnitude > 0.001f)
+            {
+                Vector3 dir = defaultFacingDirection;
+                dir.y = 0f;
+                transform.rotation = Quaternion.LookRotation(dir.normalized);
+            }
+            else
+            {
+                transform.localRotation = Quaternion.identity;
+            }
             gameObject.SetActive(true);
             ApplyModelLocalTransform();
 
@@ -140,7 +166,13 @@ namespace TawanOS.MapEngine
 
             float startTime = Time.time;
             float duration = Mathf.Clamp(journeyLength / moveSpeed, 0.3f, 1.2f);
-            Quaternion startRot = Quaternion.identity;
+            Quaternion startRot = transform.rotation;
+
+            Vector3 moveDir = target - startPos;
+            moveDir.y = 0f;
+            Quaternion targetRot = moveDir.sqrMagnitude > 0.001f 
+                ? Quaternion.LookRotation(moveDir.normalized) 
+                : startRot;
 
             while (Time.time - startTime < duration)
             {
@@ -152,21 +184,14 @@ namespace TawanOS.MapEngine
                 Vector3 currentPos = Vector3.Lerp(startPos, target, smoothT) + new Vector3(0, arcHeight, 0);
                 transform.position = currentPos;
 
-                if (tiltAmount > 0f)
-                {
-                    float tilt = Mathf.Sin(smoothT * Mathf.PI) * tiltAmount;
-                    transform.localRotation = startRot * Quaternion.Euler(tilt, 0, 0);
-                }
-                else
-                {
-                    transform.localRotation = Quaternion.identity;
-                }
+                // Smoothly rotate the hand to face the movement direction
+                transform.rotation = Quaternion.Slerp(startRot, targetRot, smoothT);
 
                 yield return null;
             }
 
             transform.position = target;
-            transform.localRotation = Quaternion.identity;
+            transform.rotation = targetRot;
         }
     }
 }

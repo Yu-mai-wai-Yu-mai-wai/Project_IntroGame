@@ -123,7 +123,7 @@ namespace TawanOS.MapEngine
                 nodeView.backgroundRenderer = bgSr;
                 nodeView.iconRenderer = iconSr;
             }
-            nodeGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            nodeGo.transform.rotation = Quaternion.Euler(90f, 180f, 0f);
 
             string nodePrefabPath = baseFolder + "/Prefabs/MapNodePrefab.prefab";
             GameObject nodePrefab = PrefabUtility.SaveAsPrefabAsset(nodeGo, nodePrefabPath);
@@ -154,7 +154,8 @@ namespace TawanOS.MapEngine
 
             // 6. Create 3D Player Marker Prefab (using hands.fbx)
             GameObject markerGo = new GameObject("PlayerMarkerPrefab");
-            markerGo.AddComponent<PlayerMarker>();
+            markerGo.transform.rotation = Quaternion.LookRotation(new Vector3(-1f, 0f, 0f));
+            var markerComponent = markerGo.AddComponent<PlayerMarker>();
 
             string handsFbxPath = "Assets/ProjectAsset/hands.fbx";
             GameObject handsModelAsset = AssetDatabase.LoadAssetAtPath<GameObject>(handsFbxPath);
@@ -201,6 +202,11 @@ namespace TawanOS.MapEngine
                 markerLight.range = 8f;
                 markerLight.intensity = 3.5f;
                 markerLight.color = new Color(0.4f, 0.9f, 1.0f); // Mystical Cyan Glow
+
+                if (markerComponent != null)
+                {
+                    markerComponent.ApplyModelLocalTransform();
+                }
             }
             else
             {
@@ -243,10 +249,10 @@ namespace TawanOS.MapEngine
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.04f, 0.03f, 0.03f, 1f);
             cam.fieldOfView = 55;
-            camGo.transform.position = new Vector3(-14.0f, 7.5f, -8.5f);
-            camGo.transform.rotation = Quaternion.Euler(30f, 0f, 0f);
+            camGo.transform.position = new Vector3(15.0f, 7.5f, 8.5f);
+            camGo.transform.rotation = Quaternion.Euler(30f, 180f, 0f);
 
-            // Setup Directional Light (Eerie Moonlight / Twilight Canopy)
+            // Setup Directional Light (Eerie Moonlight / Twilight Canopy looking from camera side)
             GameObject lightGo = new GameObject("Directional Light");
             Light light = lightGo.AddComponent<Light>();
             light.type = LightType.Directional;
@@ -254,7 +260,7 @@ namespace TawanOS.MapEngine
             light.color = new Color(0.95f, 0.88f, 0.78f, 1f); // Warm pale ivory
             light.shadows = LightShadows.Soft;
             light.shadowStrength = 0.75f;
-            lightGo.transform.rotation = Quaternion.Euler(45f, -25f, 0f);
+            lightGo.transform.rotation = Quaternion.Euler(45f, 155f, 0f);
 
             // Setup Ritual Table Candle Light
             GameObject pointLightGo = new GameObject("Table Light");
@@ -265,7 +271,7 @@ namespace TawanOS.MapEngine
             pLight.color = new Color(1.0f, 0.85f, 0.62f, 1f); // Warm ritual candle amber
             pLight.shadows = LightShadows.Soft;
             pLight.shadowStrength = 0.8f;
-            pointLightGo.transform.position = new Vector3(-14.0f, 4.5f, -1.5f);
+            pointLightGo.transform.position = new Vector3(14.0f, 4.5f, 1.5f);
 
             // Setup 3D Environment (MapNavigate.fbx - PaperFloor + Sacred Forest Trees)
             string mapNavigatePath = "Assets/ProjectAsset/MapNavigate/MapNavigate.fbx";

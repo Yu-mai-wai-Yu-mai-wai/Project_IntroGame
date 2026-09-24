@@ -52,8 +52,9 @@ namespace TawanOS.MapEngine
                 {
                     if (config.orientation == MapOrientation.LeftToRight)
                     {
-                        // In LeftToRight 3D mode, mouse X drag moves camera along X axis
-                        scrollVector.x = -delta.x * sensitivity;
+                        // In LeftToRight 3D mode with flipped camera (facing -Z, Screen Right is -X):
+                        // Dragging mouse to the left (delta.x < 0) moves the camera to the right on screen (-X).
+                        scrollVector.x = delta.x * sensitivity;
                     }
                     else
                     {
@@ -98,19 +99,19 @@ namespace TawanOS.MapEngine
                     float targetX;
                     if (floorIndex < 0)
                     {
-                        targetX = minScrollX;
+                        targetX = 15.5f;
                     }
                     else if (floorIndex >= 7)
                     {
-                        targetX = maxScrollX;
+                        targetX = -18.6f;
                     }
                     else
                     {
-                        float[] floorXs = { -13.55f, -9.65f, -5.80f, -2.15f, 2.90f, 7.60f, 11.54f, 15.47f };
+                        float[] floorXs = { 11.54f, 7.60f, 2.90f, -2.15f, -5.80f, -9.65f, -13.55f, -18.60f };
                         targetX = floorXs[Mathf.Clamp(floorIndex, 0, floorXs.Length - 1)];
                     }
                     targetX = Mathf.Clamp(targetX, minScrollX, maxScrollX);
-                    targetCamPos = new Vector3(targetX, config.cameraHeightY, -config.cameraZDistance);
+                    targetCamPos = new Vector3(targetX, config.cameraHeightY, config.cameraZDistance);
                 }
                 else
                 {
@@ -159,7 +160,7 @@ namespace TawanOS.MapEngine
                 {
                     cPos.x = Mathf.Clamp(cPos.x, minScrollX, maxScrollX);
                     cPos.y = config.cameraHeightY;
-                    cPos.z = -config.cameraZDistance;
+                    cPos.z = config.cameraZDistance;
                 }
                 else
                 {

@@ -14,11 +14,11 @@ namespace TawanOS.MapEngine
 
         private static void RunOnce()
         {
-            string flagPath = "Temp/MapEngineSetupRunFlag_v3.txt";
+            string flagPath = "Temp/MapEngineSetupRunFlag_v4.txt";
             if (!System.IO.File.Exists(flagPath))
             {
                 System.IO.File.WriteAllText(flagPath, "done");
-                Debug.Log("[MapEngineAutoRunner] Triggering SetupTestSceneAndProfiles (v3)...");
+                Debug.Log("[MapEngineAutoRunner] Triggering SetupTestSceneAndProfiles (v4)...");
                 new MapSaveManager().ClearSavedMap();
                 MapEngineSetupTool.SetupTestSceneAndProfiles();
             }

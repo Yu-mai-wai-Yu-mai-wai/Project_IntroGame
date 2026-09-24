@@ -46,7 +46,7 @@ namespace TawanOS.MapEngine
             this.NodeData = nodeData;
             this.Profile = profile;
             transform.position = worldPosition;
-            transform.rotation = Quaternion.Euler(90f, 0f, 0f); // Lie flat on paper board
+            transform.rotation = Quaternion.Euler(90f, 180f, 0f); // Lie flat on paper board facing flipped camera
 
             baseScale = (nodeData.type == NodeType.Boss) ? new Vector3(1.3f, 1.3f, 1.3f) : Vector3.one;
             transform.localScale = baseScale;

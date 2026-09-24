@@ -231,28 +231,28 @@ namespace TawanOS.MapEngine
 
         public static readonly Dictionary<Vector2Int, string> TableNodeFbxNames = new Dictionary<Vector2Int, string>
         {
-            { new Vector2Int(0, -1), "Node.001" },
-            { new Vector2Int(1, -1), "Node.001" },
-            { new Vector2Int(0, 0),  "Node" },
-            { new Vector2Int(1, 0),  "Node.003" },
-            { new Vector2Int(2, 0),  "Node.002" },
-            { new Vector2Int(0, 1),  "Node.004" },
-            { new Vector2Int(1, 1),  "Node.005" },
-            { new Vector2Int(0, 2),  "Node.006" },
-            { new Vector2Int(1, 2),  "Node.008" },
-            { new Vector2Int(2, 2),  "Node.007" },
+            { new Vector2Int(0, -1), "Node.018" },
+            { new Vector2Int(1, -1), "Node.018" },
+            { new Vector2Int(0, 0),  "Node.016" },
+            { new Vector2Int(1, 0),  "Node.017" },
+            { new Vector2Int(0, 1),  "Node.013" },
+            { new Vector2Int(1, 1),  "Node.015" },
+            { new Vector2Int(2, 1),  "Node.014" },
+            { new Vector2Int(0, 2),  "Node.010" },
+            { new Vector2Int(1, 2),  "Node.012" },
+            { new Vector2Int(2, 2),  "Node.011" },
             { new Vector2Int(0, 3),  "Node.009" },
             { new Vector2Int(1, 3),  "Node.009" },
-            { new Vector2Int(0, 4),  "Node.010" },
-            { new Vector2Int(1, 4),  "Node.012" },
-            { new Vector2Int(2, 4),  "Node.011" },
-            { new Vector2Int(0, 5),  "Node.013" },
-            { new Vector2Int(1, 5),  "Node.015" },
-            { new Vector2Int(2, 5),  "Node.014" },
-            { new Vector2Int(0, 6),  "Node.016" },
-            { new Vector2Int(1, 6),  "Node.017" },
-            { new Vector2Int(0, 7),  "Node.018" },
-            { new Vector2Int(1, 7),  "Node.018" },
+            { new Vector2Int(0, 4),  "Node.006" },
+            { new Vector2Int(1, 4),  "Node.008" },
+            { new Vector2Int(2, 4),  "Node.007" },
+            { new Vector2Int(0, 5),  "Node.004" },
+            { new Vector2Int(1, 5),  "Node.005" },
+            { new Vector2Int(0, 6),  "Node" },
+            { new Vector2Int(1, 6),  "Node.003" },
+            { new Vector2Int(2, 6),  "Node.002" },
+            { new Vector2Int(0, 7),  "Node.001" },
+            { new Vector2Int(1, 7),  "Node.001" },
         };
 
         public static readonly Dictionary<string, Vector3> TablePedestalWorldPositions = new Dictionary<string, Vector3>
@@ -326,7 +326,7 @@ namespace TawanOS.MapEngine
                 }
 
                 // Safety guard for 3D Table mode: lock Y strictly to table surface
-                float safeX = -18.6f + (gridPos.y + 1) * 4.2f;
+                float safeX = 15.466f - (gridPos.y + 1) * 4.26f;
                 float safeZ = (gridPos.x - 1) * 2.1f;
                 return new Vector3(safeX, configData.tableHeightY + 0.025f, safeZ);
             }
@@ -367,18 +367,18 @@ namespace TawanOS.MapEngine
             {
                 if (nodeViewMap.TryGetValue(targetGridPos, out var currentView))
                 {
-                    playerMarker.SetPositionImmediate(currentView.transform.position);
+                    playerMarker.SetPositionImmediate(currentView.transform.position, new Vector3(-1f, 0f, 0f));
                     return;
                 }
             }
 
             if (graphData.startNode != null && nodeViewMap.TryGetValue(graphData.startNode.gridPosition, out var startView))
             {
-                playerMarker.SetPositionImmediate(startView.transform.position);
+                playerMarker.SetPositionImmediate(startView.transform.position, new Vector3(-1f, 0f, 0f));
             }
             else
             {
-                playerMarker.SetPositionImmediate(new Vector3(0, -2.2f, 0));
+                playerMarker.SetPositionImmediate(new Vector3(15.466f, 0.025f, 0.029f), new Vector3(-1f, 0f, 0f));
             }
         }
 
@@ -550,10 +550,10 @@ namespace TawanOS.MapEngine
                 }
                 else if (CurrentGraph != null && nodeViewMap.TryGetValue(CurrentGraph.currentPlayerPosition, out var currentView))
                 {
-                    playerMarker.SetPositionImmediate(currentView.transform.position);
+                    playerMarker.SetPositionImmediate(currentView.transform.position, new Vector3(-1f, 0f, 0f));
                 }
             }
-            ScrollToFloor(0);
+            ScrollToFloor(-1);
         }
 
         public void ScrollToFloor(int floorIndex)
@@ -584,14 +584,14 @@ namespace TawanOS.MapEngine
                     if (config.orientation == MapOrientation.LeftToRight)
                     {
                         float targetX;
-                        if (floorIndex < 0) targetX = -18.6f;
-                        else if (floorIndex >= 7) targetX = 15.5f;
+                        if (floorIndex < 0) targetX = 15.5f;
+                        else if (floorIndex >= 7) targetX = -18.6f;
                         else
                         {
-                            float[] floorXs = { -13.55f, -9.65f, -5.80f, -2.15f, 2.90f, 7.60f, 11.54f, 15.47f };
+                            float[] floorXs = { 11.54f, 7.60f, 2.90f, -2.15f, -5.80f, -9.65f, -13.55f, -18.60f };
                             targetX = floorXs[Mathf.Clamp(floorIndex, 0, floorXs.Length - 1)];
                         }
-                        targetCamPos = new Vector3(targetX, config.cameraHeightY, -config.cameraZDistance);
+                        targetCamPos = new Vector3(targetX, config.cameraHeightY, config.cameraZDistance);
                     }
                     else
                     {
