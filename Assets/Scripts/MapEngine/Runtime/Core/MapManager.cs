@@ -80,6 +80,12 @@ namespace TawanOS.MapEngine
             if (loadSavedMapIfAvailable && saveSystem.HasSavedMap())
             {
                 CurrentGraph = saveSystem.LoadMap();
+                if (!IsValidGraphForConfig(CurrentGraph, config))
+                {
+                    Debug.LogWarning("[MapManager] Saved map is incompatible with current configuration. Clearing saved map and generating a fresh map.");
+                    saveSystem.ClearSavedMap();
+                    GenerateNewMap();
+                }
             }
             else
             {
@@ -97,6 +103,42 @@ namespace TawanOS.MapEngine
             if (config == null) return;
             CurrentGraph = generator.GenerateMap(config, config.seed);
             if (saveSystem != null) saveSystem.SaveMap(CurrentGraph);
+        }
+
+        public bool IsValidGraphForConfig(MapGraphData graph, MapConfigSO cfg)
+        {
+            if (graph == null || cfg == null) return false;
+            if (graph.floors == null || graph.floors.Count == 0) return false;
+
+            if (cfg.use3DTableMode)
+            {
+                if (graph.totalFloors != cfg.totalFloors || graph.mapWidth != cfg.mapWidth)
+                {
+                    return false;
+                }
+
+                for (int y = 0; y < graph.floors.Count; y++)
+                {
+                    if (y > cfg.totalFloors) return false;
+                    var floorList = graph.floors[y];
+                    if (floorList == null) continue;
+                    foreach (var node in floorList)
+                    {
+                        if (node == null) continue;
+                        if (node.gridPosition.x >= cfg.mapWidth || node.gridPosition.y > cfg.totalFloors) return false;
+                        if (!TableNodeFbxNames.ContainsKey(node.gridPosition)) return false;
+                    }
+                }
+            }
+            else
+            {
+                if (graph.totalFloors != cfg.totalFloors || graph.mapWidth != cfg.mapWidth)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public void RenderMap(MapGraphData graphData, MapConfigSO configData)
@@ -187,21 +229,106 @@ namespace TawanOS.MapEngine
             return Vector3.zero;
         }
 
+        public static readonly Dictionary<Vector2Int, string> TableNodeFbxNames = new Dictionary<Vector2Int, string>
+        {
+            { new Vector2Int(0, -1), "Node.001" },
+            { new Vector2Int(1, -1), "Node.001" },
+            { new Vector2Int(0, 0),  "Node" },
+            { new Vector2Int(1, 0),  "Node.003" },
+            { new Vector2Int(2, 0),  "Node.002" },
+            { new Vector2Int(0, 1),  "Node.004" },
+            { new Vector2Int(1, 1),  "Node.005" },
+            { new Vector2Int(0, 2),  "Node.006" },
+            { new Vector2Int(1, 2),  "Node.008" },
+            { new Vector2Int(2, 2),  "Node.007" },
+            { new Vector2Int(0, 3),  "Node.009" },
+            { new Vector2Int(1, 3),  "Node.009" },
+            { new Vector2Int(0, 4),  "Node.010" },
+            { new Vector2Int(1, 4),  "Node.012" },
+            { new Vector2Int(2, 4),  "Node.011" },
+            { new Vector2Int(0, 5),  "Node.013" },
+            { new Vector2Int(1, 5),  "Node.015" },
+            { new Vector2Int(2, 5),  "Node.014" },
+            { new Vector2Int(0, 6),  "Node.016" },
+            { new Vector2Int(1, 6),  "Node.017" },
+            { new Vector2Int(0, 7),  "Node.018" },
+            { new Vector2Int(1, 7),  "Node.018" },
+        };
+
+        public static readonly Dictionary<string, Vector3> TablePedestalWorldPositions = new Dictionary<string, Vector3>
+        {
+            { "Node.001", new Vector3(-18.608f, 0.025f, 0.0f) },
+            { "Node",     new Vector3(-13.546f, 0.025f, -2.121f) },
+            { "Node.003", new Vector3(-13.546f, 0.025f, 0.029f) },
+            { "Node.002", new Vector3(-13.546f, 0.025f, 2.179f) },
+            { "Node.004", new Vector3(-9.653f,  0.025f, -1.021f) },
+            { "Node.005", new Vector3(-9.653f,  0.025f, 1.129f) },
+            { "Node.006", new Vector3(-5.800f,  0.025f, -2.121f) },
+            { "Node.008", new Vector3(-5.800f,  0.025f, 0.029f) },
+            { "Node.007", new Vector3(-5.800f,  0.025f, 2.179f) },
+            { "Node.009", new Vector3(-2.146f,  0.025f, 0.0f) },
+            { "Node.010", new Vector3(2.929f,   0.025f, -2.121f) },
+            { "Node.012", new Vector3(2.878f,   0.025f, 0.0f) },
+            { "Node.011", new Vector3(2.929f,   0.025f, 2.179f) },
+            { "Node.013", new Vector3(7.622f,   0.025f, -2.121f) },
+            { "Node.015", new Vector3(7.571f,   0.025f, 0.0f) },
+            { "Node.014", new Vector3(7.622f,   0.025f, 2.179f) },
+            { "Node.016", new Vector3(11.540f,  0.025f, -1.021f) },
+            { "Node.017", new Vector3(11.540f,  0.025f, 1.129f) },
+            { "Node.018", new Vector3(15.466f,  0.025f, 0.029f) },
+        };
+
+        private Transform environmentTransform;
+        private Dictionary<string, Transform> pedestalCache;
+
         private Vector3 CalculateWorldPosition(NodeBlueprint nodeBlueprint, float startX, MapConfigSO configData)
         {
             Vector2Int gridPos = nodeBlueprint.gridPosition;
             Vector2 offset = nodeBlueprint.positionOffset;
-
             float baseColsX = startX + gridPos.x * configData.columnSpacingX + offset.x;
 
             if (configData != null && configData.use3DTableMode)
             {
-                if (gridPos.y == -1)
+                if (TableNodeFbxNames.TryGetValue(gridPos, out string nodeName))
                 {
-                    return new Vector3(0f, configData.tableHeightY + 0.05f, -2.5f) + configData.startNodeOffset;
+                    if (environmentTransform == null)
+                    {
+                        var env = GameObject.Find("MapNavigateEnvironment");
+                        if (env != null) environmentTransform = env.transform;
+                    }
+
+                    if (environmentTransform != null)
+                    {
+                        if (pedestalCache == null) pedestalCache = new Dictionary<string, Transform>();
+                        if (!pedestalCache.TryGetValue(nodeName, out Transform pedestal) || pedestal == null)
+                        {
+                            foreach (Transform t in environmentTransform.GetComponentsInChildren<Transform>(true))
+                            {
+                                if (t.name == nodeName)
+                                {
+                                    pedestal = t;
+                                    pedestalCache[nodeName] = t;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (pedestal != null)
+                        {
+                            return new Vector3(pedestal.position.x, pedestal.position.y + 0.025f, pedestal.position.z);
+                        }
+                    }
+
+                    if (TablePedestalWorldPositions.TryGetValue(nodeName, out Vector3 fallbackPos))
+                    {
+                        return fallbackPos;
+                    }
                 }
-                float baseFloorsZ = gridPos.y * configData.floorSpacingY + offset.y;
-                return new Vector3(baseColsX, configData.tableHeightY + 0.05f, baseFloorsZ);
+
+                // Safety guard for 3D Table mode: lock Y strictly to table surface
+                float safeX = -18.6f + (gridPos.y + 1) * 4.2f;
+                float safeZ = (gridPos.x - 1) * 2.1f;
+                return new Vector3(safeX, configData.tableHeightY + 0.025f, safeZ);
             }
 
             if (gridPos.y == -1)
@@ -453,8 +580,24 @@ namespace TawanOS.MapEngine
             {
                 if (config != null && config.use3DTableMode)
                 {
-                    float targetZ = floorIndex * config.floorSpacingY;
-                    Vector3 targetCamPos = new Vector3(0f, config.cameraHeightY, targetZ - config.cameraZDistance);
+                    Vector3 targetCamPos;
+                    if (config.orientation == MapOrientation.LeftToRight)
+                    {
+                        float targetX;
+                        if (floorIndex < 0) targetX = -18.6f;
+                        else if (floorIndex >= 7) targetX = 15.5f;
+                        else
+                        {
+                            float[] floorXs = { -13.55f, -9.65f, -5.80f, -2.15f, 2.90f, 7.60f, 11.54f, 15.47f };
+                            targetX = floorXs[Mathf.Clamp(floorIndex, 0, floorXs.Length - 1)];
+                        }
+                        targetCamPos = new Vector3(targetX, config.cameraHeightY, -config.cameraZDistance);
+                    }
+                    else
+                    {
+                        float targetZ = floorIndex * config.floorSpacingY;
+                        targetCamPos = new Vector3(0f, config.cameraHeightY, targetZ - config.cameraZDistance);
+                    }
                     Camera.main.transform.DOMove(targetCamPos, 0.6f).SetEase(Ease.OutCubic);
                     return;
                 }

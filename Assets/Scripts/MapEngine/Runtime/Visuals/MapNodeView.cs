@@ -22,6 +22,7 @@ namespace TawanOS.MapEngine
 
         private Tween scaleTween;
         private Tween pulseTween;
+        private Tween colorTween;
 
         private void Awake()
         {
@@ -37,6 +38,7 @@ namespace TawanOS.MapEngine
         {
             if (scaleTween != null && scaleTween.IsActive()) scaleTween.Kill();
             if (pulseTween != null && pulseTween.IsActive()) pulseTween.Kill();
+            if (colorTween != null && colorTween.IsActive()) colorTween.Kill();
         }
 
         public void Setup(NodeBlueprint nodeData, NodeProfileSO profile, Vector3 worldPosition)
@@ -44,27 +46,28 @@ namespace TawanOS.MapEngine
             this.NodeData = nodeData;
             this.Profile = profile;
             transform.position = worldPosition;
+            transform.rotation = Quaternion.Euler(90f, 0f, 0f); // Lie flat on paper board
 
-            baseScale = (nodeData.type == NodeType.Boss) ? new Vector3(1.5f, 1.5f, 1.5f) : Vector3.one;
+            baseScale = (nodeData.type == NodeType.Boss) ? new Vector3(1.3f, 1.3f, 1.3f) : Vector3.one;
             transform.localScale = baseScale;
-            hoverScale = baseScale * 1.25f;
+            hoverScale = baseScale * 1.2f;
 
             Sprite circleSprite = GetFallbackCircleSprite();
 
             if (backgroundRenderer != null)
             {
-                backgroundRenderer.sprite = circleSprite;
-                backgroundRenderer.sortingOrder = 0;
-                backgroundRenderer.transform.localPosition = Vector3.zero;
-                backgroundRenderer.transform.localScale = new Vector3(1.3f, 1.3f, 1f);
-                backgroundRenderer.color = profile != null ? profile.baseColor : new Color(0.12f, 0.12f, 0.16f, 0.95f);
+                // In 3D paper board mode, hide circular disc to reveal authentic paper texture
+                backgroundRenderer.enabled = false;
             }
 
             if (iconRenderer != null)
             {
                 iconRenderer.sortingOrder = 1;
-                iconRenderer.transform.localPosition = new Vector3(0f, 0f, -0.1f);
-                iconRenderer.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
+                iconRenderer.transform.localPosition = new Vector3(0f, 0f, -0.01f);
+                // 50% scale of stone pedestal (radius ~ 0.5)
+                iconRenderer.transform.localScale = (nodeData.type == NodeType.Boss) 
+                    ? new Vector3(0.7f, 0.7f, 1f) 
+                    : new Vector3(0.5f, 0.5f, 1f);
                 iconRenderer.color = Color.white;
 
                 if (profile != null && profile.icon != null)
@@ -117,34 +120,46 @@ namespace TawanOS.MapEngine
             switch (NodeData.status)
             {
                 case NodeStatus.Attainable:
-                    targetColor = Profile != null ? Profile.hoverColor : Color.cyan;
+                    targetColor = Profile != null ? Profile.hoverColor : new Color(1f, 0.85f, 0.4f, 1f);
                     bgColor = targetColor * 0.4f;
                     bgColor.a = 1f;
-                    pulseTween = transform.DOScale(baseScale * 1.15f, 0.7f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
+
+                    // Smooth breathing pulse animation
+                    pulseTween = transform.DOScale(baseScale * 1.15f, 0.75f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
+
+                    // Luminous glow pulse for attainable icon
+                    Color glowColor = Color.Lerp(targetColor, Color.white, 0.55f);
+                    if (iconRenderer != null)
+                    {
+                        colorTween = iconRenderer.DOColor(glowColor, 0.75f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
+                    }
                     break;
                 case NodeStatus.Visited:
                     targetColor = Profile != null ? Profile.visitedColor : new Color(0.9f, 0.75f, 0.2f);
                     bgColor = targetColor * 0.3f;
                     bgColor.a = 1f;
                     transform.localScale = baseScale;
+                    if (iconRenderer != null) iconRenderer.color = targetColor;
                     break;
                 case NodeStatus.Disabled:
                 case NodeStatus.Locked:
-                    targetColor = new Color(0.4f, 0.4f, 0.45f, 0.6f);
-                    bgColor = new Color(0.1f, 0.1f, 0.14f, 0.7f);
+                    targetColor = Profile != null 
+                        ? new Color(Profile.baseColor.r, Profile.baseColor.g, Profile.baseColor.b, 0.35f) 
+                        : new Color(0.353f, 0.094f, 0.063f, 0.35f);
+                    bgColor = new Color(0.1f, 0.1f, 0.14f, 0.2f);
                     transform.localScale = baseScale * 0.9f;
+                    if (iconRenderer != null) iconRenderer.color = targetColor;
                     break;
             }
 
-            if (iconRenderer != null) iconRenderer.color = targetColor;
             if (backgroundRenderer != null) backgroundRenderer.color = bgColor;
         }
 
         private void OnMouseEnter()
         {
-            if (NodeData.status == NodeStatus.Attainable)
+            if (NodeData != null && NodeData.status == NodeStatus.Attainable)
             {
-                if (pulseTween != null) pulseTween.Pause();
+                if (pulseTween != null && pulseTween.IsActive()) pulseTween.Pause();
                 scaleTween = transform.DOScale(hoverScale, animationSpeed).SetEase(Ease.OutBack);
                 OnNodeHoverEnter?.Invoke(this);
             }
@@ -152,11 +167,11 @@ namespace TawanOS.MapEngine
 
         private void OnMouseExit()
         {
-            if (NodeData.status == NodeStatus.Attainable)
+            if (NodeData != null && NodeData.status == NodeStatus.Attainable)
             {
                 scaleTween = transform.DOScale(baseScale, animationSpeed).OnComplete(() =>
                 {
-                    if (pulseTween != null) pulseTween.Play();
+                    if (pulseTween != null && pulseTween.IsActive()) pulseTween.Play();
                 });
                 OnNodeHoverExit?.Invoke(this);
             }

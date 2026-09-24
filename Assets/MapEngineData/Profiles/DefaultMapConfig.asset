@@ -14,31 +14,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.MapConfigSO
   seed: 737445
   useRandomSeed: 0
-  totalFloors: 15
-  mapWidth: 7
+  totalFloors: 7
+  mapWidth: 3
   startingNodesCount: 3
   preBossNodesCount: 2
-  pathCount: 6
-  extraPaths: 2
+  pathCount: 3
+  extraPaths: 1
   minEliteGap: 2
   minEliteFloor: 5
   isUIMode: 1
   preventConsecutiveRestSites: 1
   preventConsecutiveShops: 1
-  orientation: 3
-  floorSpacingY: 2.5
-  columnSpacingX: 2
-  depthZOffset: 0.2
-  nodePositionJitter: 0.35
+  orientation: 2
+  floorSpacingY: 3.9
+  columnSpacingX: 2.1
+  depthZOffset: 0
+  nodePositionJitter: 0.2
   use3DTableMode: 1
   tableHeightY: 0
-  cameraHeightY: 12
-  cameraAnglePitch: 58
-  cameraZDistance: 8
-  player3DScale: {x: 0.5, y: 0.5, z: 0.5}
+  cameraHeightY: 7.5
+  cameraAnglePitch: 30
+  cameraZDistance: 8.5
+  player3DScale: {x: 1, y: 1, z: 1}
   player3DRotation: {x: 0, y: 180, z: 0}
   renderStartPointLines: 1
-  startNodeOffset: {x: 0, y: -2.5, z: 0}
+  startNodeOffset: {x: 0, y: 0, z: 0}
   biomeProfile: {fileID: 11400000, guid: 49a547a2cab912a44a5fe3c2c0148ecd, type: 2}
   nodeProfiles:
   - {fileID: 11400000, guid: e44e44e5443545e4e96291440c93bf7c, type: 2}

@@ -11,6 +11,11 @@ namespace TawanOS.MapEngine
             int actualSeed = config.useRandomSeed ? UnityEngine.Random.Range(1, 999999) : seed;
             System.Random random = new System.Random(actualSeed);
 
+            if (config != null && config.use3DTableMode)
+            {
+                return GenerateTableMap(config, actualSeed, random);
+            }
+
             MapGraphData graph = new MapGraphData(actualSeed, config.totalFloors, config.mapWidth);
 
             // Step 1: Pick starting nodes on Floor 0 (exact count: config.startingNodesCount)
@@ -277,15 +282,22 @@ namespace TawanOS.MapEngine
 
         private NodeType? GetFloorOverride(int floorIndex, MapConfigSO config)
         {
-            var rule = config.floorOverrides.Find(r => r.floorIndex == floorIndex);
-            if (rule.floorIndex == floorIndex && rule.nodeType != NodeType.MinorEnemy)
+            if (config != null && config.floorOverrides != null)
             {
-                return rule.nodeType;
+                var rule = config.floorOverrides.Find(r => r.floorIndex == floorIndex);
+                if (rule.floorIndex == floorIndex && rule.nodeType != NodeType.MinorEnemy)
+                {
+                    return rule.nodeType;
+                }
             }
-            if (floorIndex == 0) return NodeType.MinorEnemy;
-            if (floorIndex == config.totalFloors / 2) return NodeType.Treasure;
-            if (floorIndex == config.totalFloors - 1) return NodeType.RestSite;
-            if (floorIndex == config.totalFloors) return NodeType.Boss;
+
+            if (config != null)
+            {
+                if (floorIndex == 0) return NodeType.MinorEnemy;
+                if (floorIndex == config.totalFloors / 2) return NodeType.Treasure;
+                if (floorIndex == config.totalFloors - 1) return NodeType.RestSite;
+                if (floorIndex == config.totalFloors) return NodeType.Boss;
+            }
             return null;
         }
 
@@ -294,7 +306,7 @@ namespace TawanOS.MapEngine
             bool hasIncomingRest = false;
             bool hasIncomingShop = false;
 
-            if (config.preventConsecutiveRestSites || config.preventConsecutiveShops)
+            if (node != null && node.incomingConnections != null && graph != null && config != null && (config.preventConsecutiveRestSites || config.preventConsecutiveShops))
             {
                 foreach (var incomingPos in node.incomingConnections)
                 {
@@ -310,6 +322,9 @@ namespace TawanOS.MapEngine
             NodeType rolledType = NodeType.MinorEnemy;
             bool isValid = false;
             int maxAttempts = 10;
+            int minElite = (config != null) ? config.minEliteFloor : 5;
+            bool checkRest = (config != null) && config.preventConsecutiveRestSites;
+            bool checkShop = (config != null) && config.preventConsecutiveShops;
 
             for (int attempt = 0; attempt < maxAttempts && !isValid; attempt++)
             {
@@ -323,19 +338,180 @@ namespace TawanOS.MapEngine
                 else
                 {
                     if (roll < 0.45) rolledType = NodeType.MinorEnemy;
-                    else if (roll < 0.65) rolledType = (floorIndex >= config.minEliteFloor) ? NodeType.EliteEnemy : NodeType.MinorEnemy;
+                    else if (roll < 0.65) rolledType = (floorIndex >= minElite) ? NodeType.EliteEnemy : NodeType.MinorEnemy;
                     else if (roll < 0.80) rolledType = NodeType.Treasure;
                     else if (roll < 0.90) rolledType = NodeType.Store;
                     else rolledType = NodeType.RestSite;
                 }
 
                 isValid = true;
-                if (config.preventConsecutiveRestSites && hasIncomingRest && rolledType == NodeType.RestSite) isValid = false;
-                if (config.preventConsecutiveShops && hasIncomingShop && rolledType == NodeType.Store) isValid = false;
+                if (checkRest && hasIncomingRest && rolledType == NodeType.RestSite) isValid = false;
+                if (checkShop && hasIncomingShop && rolledType == NodeType.Store) isValid = false;
             }
 
             if (!isValid) rolledType = NodeType.MinorEnemy; // Safe fallback
             return rolledType;
+        }
+
+        private MapGraphData GenerateTableMap(MapConfigSO config, int actualSeed, System.Random random)
+        {
+            // Total 8 floors (0 to 7) matching the 19 pedestals on the paper board
+            int totalFloors = 7;
+            int mapWidth = 3;
+            MapGraphData graph = new MapGraphData(actualSeed, totalFloors, mapWidth);
+
+            // Floor -1: Start Node (Node.001)
+            var baseStartNode = new NodeBlueprint(new Vector2Int(1, -1), NodeType.RestSite);
+            baseStartNode.status = NodeStatus.Visited;
+            baseStartNode.visibility = NodeVisibility.Visited;
+            baseStartNode.positionOffset = Vector2.zero;
+            graph.startNode = baseStartNode;
+            graph.currentPlayerPosition = baseStartNode.gridPosition;
+
+            // Floor 0: 3 nodes (Node, Node.003, Node.002)
+            var node0_0 = new NodeBlueprint(new Vector2Int(0, 0), NodeType.MinorEnemy);
+            var node1_0 = new NodeBlueprint(new Vector2Int(1, 0), NodeType.MinorEnemy);
+            var node2_0 = new NodeBlueprint(new Vector2Int(2, 0), NodeType.MinorEnemy);
+            graph.floors[0].Add(node0_0);
+            graph.floors[0].Add(node1_0);
+            graph.floors[0].Add(node2_0);
+
+            // Connect Floor -1 to Floor 0
+            baseStartNode.AddOutgoingConnection(node0_0.gridPosition);
+            node0_0.AddIncomingConnection(baseStartNode.gridPosition);
+            baseStartNode.AddOutgoingConnection(node1_0.gridPosition);
+            node1_0.AddIncomingConnection(baseStartNode.gridPosition);
+            baseStartNode.AddOutgoingConnection(node2_0.gridPosition);
+            node2_0.AddIncomingConnection(baseStartNode.gridPosition);
+
+            // Floor 1: 2 nodes (Node.004, Node.005)
+            var node0_1 = new NodeBlueprint(new Vector2Int(0, 1), NodeType.MinorEnemy);
+            var node1_1 = new NodeBlueprint(new Vector2Int(1, 1), NodeType.MinorEnemy);
+            graph.floors[1].Add(node0_1);
+            graph.floors[1].Add(node1_1);
+
+            // Connect Floor 0 to Floor 1
+            node0_0.AddOutgoingConnection(node0_1.gridPosition);
+            node0_1.AddIncomingConnection(node0_0.gridPosition);
+            node1_0.AddOutgoingConnection(node0_1.gridPosition);
+            node0_1.AddIncomingConnection(node1_0.gridPosition);
+            node1_0.AddOutgoingConnection(node1_1.gridPosition);
+            node1_1.AddIncomingConnection(node1_0.gridPosition);
+            node2_0.AddOutgoingConnection(node1_1.gridPosition);
+            node1_1.AddIncomingConnection(node2_0.gridPosition);
+
+            // Floor 2: 3 nodes (Node.006, Node.008, Node.007)
+            var node0_2 = new NodeBlueprint(new Vector2Int(0, 2), NodeType.MinorEnemy);
+            var node1_2 = new NodeBlueprint(new Vector2Int(1, 2), NodeType.MinorEnemy);
+            var node2_2 = new NodeBlueprint(new Vector2Int(2, 2), NodeType.MinorEnemy);
+            graph.floors[2].Add(node0_2);
+            graph.floors[2].Add(node1_2);
+            graph.floors[2].Add(node2_2);
+
+            // Connect Floor 1 to Floor 2
+            node0_1.AddOutgoingConnection(node0_2.gridPosition);
+            node0_2.AddIncomingConnection(node0_1.gridPosition);
+            node0_1.AddOutgoingConnection(node1_2.gridPosition);
+            node1_2.AddIncomingConnection(node0_1.gridPosition);
+            node1_1.AddOutgoingConnection(node1_2.gridPosition);
+            node1_2.AddIncomingConnection(node1_1.gridPosition);
+            node1_1.AddOutgoingConnection(node2_2.gridPosition);
+            node2_2.AddIncomingConnection(node1_1.gridPosition);
+
+            // Floor 3: 1 node (Node.009) - Midpoint Sanctuary/Treasure
+            var node1_3 = new NodeBlueprint(new Vector2Int(1, 3), NodeType.Treasure);
+            graph.floors[3].Add(node1_3);
+
+            // Connect Floor 2 to Floor 3
+            node0_2.AddOutgoingConnection(node1_3.gridPosition);
+            node1_3.AddIncomingConnection(node0_2.gridPosition);
+            node1_2.AddOutgoingConnection(node1_3.gridPosition);
+            node1_3.AddIncomingConnection(node1_2.gridPosition);
+            node2_2.AddOutgoingConnection(node1_3.gridPosition);
+            node1_3.AddIncomingConnection(node2_2.gridPosition);
+
+            // Floor 4: 3 nodes (Node.010, Node.012, Node.011)
+            var node0_4 = new NodeBlueprint(new Vector2Int(0, 4), NodeType.MinorEnemy);
+            var node1_4 = new NodeBlueprint(new Vector2Int(1, 4), NodeType.MinorEnemy);
+            var node2_4 = new NodeBlueprint(new Vector2Int(2, 4), NodeType.MinorEnemy);
+            graph.floors[4].Add(node0_4);
+            graph.floors[4].Add(node1_4);
+            graph.floors[4].Add(node2_4);
+
+            // Connect Floor 3 to Floor 4
+            node1_3.AddOutgoingConnection(node0_4.gridPosition);
+            node0_4.AddIncomingConnection(node1_3.gridPosition);
+            node1_3.AddOutgoingConnection(node1_4.gridPosition);
+            node1_4.AddIncomingConnection(node1_3.gridPosition);
+            node1_3.AddOutgoingConnection(node2_4.gridPosition);
+            node2_4.AddIncomingConnection(node1_3.gridPosition);
+
+            // Floor 5: 3 nodes (Node.013, Node.015, Node.014)
+            var node0_5 = new NodeBlueprint(new Vector2Int(0, 5), NodeType.MinorEnemy);
+            var node1_5 = new NodeBlueprint(new Vector2Int(1, 5), NodeType.MinorEnemy);
+            var node2_5 = new NodeBlueprint(new Vector2Int(2, 5), NodeType.MinorEnemy);
+            graph.floors[5].Add(node0_5);
+            graph.floors[5].Add(node1_5);
+            graph.floors[5].Add(node2_5);
+
+            // Connect Floor 4 to Floor 5
+            node0_4.AddOutgoingConnection(node0_5.gridPosition);
+            node0_5.AddIncomingConnection(node0_4.gridPosition);
+            node0_4.AddOutgoingConnection(node1_5.gridPosition);
+            node1_5.AddIncomingConnection(node0_4.gridPosition);
+            node1_4.AddOutgoingConnection(node1_5.gridPosition);
+            node1_5.AddIncomingConnection(node1_4.gridPosition);
+            node2_4.AddOutgoingConnection(node1_5.gridPosition);
+            node1_5.AddIncomingConnection(node2_4.gridPosition);
+            node2_4.AddOutgoingConnection(node2_5.gridPosition);
+            node2_5.AddIncomingConnection(node2_4.gridPosition);
+
+            // Floor 6: 2 nodes (Node.016, Node.017) - Pre-Boss Camp
+            var node0_6 = new NodeBlueprint(new Vector2Int(0, 6), NodeType.RestSite);
+            var node1_6 = new NodeBlueprint(new Vector2Int(1, 6), NodeType.RestSite);
+            graph.floors[6].Add(node0_6);
+            graph.floors[6].Add(node1_6);
+
+            // Connect Floor 5 to Floor 6
+            node0_5.AddOutgoingConnection(node0_6.gridPosition);
+            node0_6.AddIncomingConnection(node0_5.gridPosition);
+            node1_5.AddOutgoingConnection(node0_6.gridPosition);
+            node0_6.AddIncomingConnection(node1_5.gridPosition);
+            node1_5.AddOutgoingConnection(node1_6.gridPosition);
+            node1_6.AddIncomingConnection(node1_5.gridPosition);
+            node2_5.AddOutgoingConnection(node1_6.gridPosition);
+            node1_6.AddIncomingConnection(node2_5.gridPosition);
+
+            // Floor 7: 1 node (Node.018) - The Boss
+            var bossNode = new NodeBlueprint(new Vector2Int(1, 7), NodeType.Boss);
+            graph.floors[7].Add(bossNode);
+
+            // Connect Floor 6 to Boss
+            node0_6.AddOutgoingConnection(bossNode.gridPosition);
+            bossNode.AddIncomingConnection(node0_6.gridPosition);
+            node1_6.AddOutgoingConnection(bossNode.gridPosition);
+            bossNode.AddIncomingConnection(node1_6.gridPosition);
+
+            // Assign randomized node types for intermediate floors with incoming validation
+            int[] randomizedFloors = new int[] { 1, 2, 4, 5 };
+            foreach (int floor in randomizedFloors)
+            {
+                foreach (var node in graph.floors[floor])
+                {
+                    node.type = RollRandomNodeType(floor, node, graph, config, random);
+                }
+            }
+
+            // Zero out position offsets and initialize statuses
+            foreach (var node in graph.GetAllNodes())
+            {
+                node.positionOffset = Vector2.zero;
+            }
+            if (graph.startNode != null) graph.startNode.positionOffset = Vector2.zero;
+
+            InitializeVisibilityAndStatus(graph);
+
+            return graph;
         }
 
         private void InitializeVisibilityAndStatus(MapGraphData graph)

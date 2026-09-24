@@ -144,11 +144,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.PlayerMarker
   moveSpeed: 4
-  offset: {x: 0, y: 0.05, z: 0}
+  offset: {x: 0, y: 0.02, z: 0}
   modelLocalOffset: {x: 0, y: 0, z: 0}
   modelLocalRotation: {x: 0, y: 180, z: 0}
-  hoverArcOffset: {x: 0, y: 0.35, z: 0}
-  tiltAmount: 4
+  hoverArcOffset: {x: 0, y: 0, z: 0}
+  tiltAmount: 0
 --- !u!1001 &4121785079489215668
 PrefabInstance:
   m_ObjectHideFlags: 0

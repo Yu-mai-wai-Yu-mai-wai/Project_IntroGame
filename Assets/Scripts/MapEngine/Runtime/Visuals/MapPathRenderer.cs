@@ -26,6 +26,20 @@ namespace TawanOS.MapEngine
             if (lineRenderer == null) lineRenderer = GetComponent<LineRenderer>();
             if (lineRenderer != null)
             {
+                lineRenderer.alignment = LineAlignment.TransformZ;
+                lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                lineRenderer.receiveShadows = false;
+#if UNITY_EDITOR
+                if (lineRenderer.sharedMaterial == null || lineRenderer.sharedMaterial.shader == null || lineRenderer.sharedMaterial.shader.name == "Hidden/InternalErrorShader")
+                {
+                    Material stringMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/ProjectAsset/MapNavigate/String.mat");
+                    if (stringMat != null)
+                    {
+                        lineRenderer.sharedMaterial = stringMat;
+                        return;
+                    }
+                }
+#endif
                 if (lineRenderer.sharedMaterial == null || lineRenderer.sharedMaterial.shader == null || lineRenderer.sharedMaterial.shader.name == "Hidden/InternalErrorShader")
                 {
                     Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") 
@@ -50,25 +64,60 @@ namespace TawanOS.MapEngine
 
             lineRenderer.positionCount = pointsCount;
             lineRenderer.useWorldSpace = true;
+            lineRenderer.alignment = LineAlignment.TransformZ;
+            lineRenderer.startWidth = 0.07f;
+            lineRenderer.endWidth = 0.07f;
+            lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            lineRenderer.receiveShadows = false;
+
+            // Orient GameObject so that local +Z points directly along world +Y (Up)
+            // This ensures the LineRenderer ribbon lies 100% flat on the horizontal X-Z plane
+            transform.rotation = Quaternion.Euler(-90f, 0f, 0f);
 
             // Calculate Control Point P1 for Bezier Curve
             Vector3 midPoint = (start + end) * 0.5f;
             Vector3 direction = (end - start).normalized;
-            Vector3 perpendicular = new Vector3(-direction.y, direction.x, 0f);
+
+            // Detect whether path is on horizontal X-Z table surface or vertical X-Y canvas
+            bool isHorizontalPlane = Mathf.Abs(start.y - end.y) < 0.2f && (Mathf.Abs(direction.x) > 0.01f || Mathf.Abs(direction.z) > 0.01f);
+
+            Vector3 perpendicular;
+            if (isHorizontalPlane)
+            {
+                // Horizontal X-Z plane perpendicular
+                perpendicular = new Vector3(-direction.z, 0f, direction.x);
+            }
+            else
+            {
+                // Vertical X-Y plane perpendicular
+                perpendicular = new Vector3(-direction.y, direction.x, 0f);
+            }
             
             // Deterministic curve offset based on coordinates
             float sign = ((sourcePos.x + targetPos.y) % 2 == 0) ? 1f : -1f;
             Vector3 controlPoint = midPoint + perpendicular * (curveOffsetMagnitude * sign);
+
+            float flatY = Mathf.Max(start.y, end.y);
+            if (isHorizontalPlane)
+            {
+                start.y = flatY;
+                end.y = flatY;
+                controlPoint.y = flatY;
+            }
 
             // Generate Quadratic Bezier Points
             for (int i = 0; i < pointsCount; i++)
             {
                 float t = i / (float)(pointsCount - 1);
                 Vector3 point = CalculateQuadraticBezierPoint(t, start, controlPoint, end);
+                if (isHorizontalPlane)
+                {
+                    point.y = flatY;
+                }
                 lineRenderer.SetPosition(i, point);
             }
 
-            Color pathColor = biome != null ? biome.pathBaseColor : new Color(0.5f, 0.5f, 0.5f, 0.6f);
+            Color pathColor = biome != null ? biome.pathBaseColor : new Color(0.95f, 0.93f, 0.90f, 0.85f);
             SetColor(pathColor);
         }
 

@@ -7,11 +7,11 @@ namespace TawanOS.MapEngine
     {
         [Header("Movement & 3D Alignment Settings")]
         [SerializeField] private float moveSpeed = 4f;
-        [SerializeField] private Vector3 offset = new Vector3(0, 0.05f, 0);
+        [SerializeField] private Vector3 offset = new Vector3(0, 0.02f, 0);
         [SerializeField] private Vector3 modelLocalOffset = Vector3.zero;
         [SerializeField] private Vector3 modelLocalRotation = new Vector3(0, 180f, 0);
-        [SerializeField] private Vector3 hoverArcOffset = new Vector3(0, 0.35f, 0);
-        [SerializeField] private float tiltAmount = 4f;
+        [SerializeField] private Vector3 hoverArcOffset = Vector3.zero;
+        [SerializeField] private float tiltAmount = 0f;
 
         private Coroutine moveCoroutine;
 
@@ -140,27 +140,33 @@ namespace TawanOS.MapEngine
 
             float startTime = Time.time;
             float duration = Mathf.Clamp(journeyLength / moveSpeed, 0.3f, 1.2f);
-            Quaternion startRot = transform.localRotation;
+            Quaternion startRot = Quaternion.identity;
 
             while (Time.time - startTime < duration)
             {
                 float t = (Time.time - startTime) / duration;
                 float smoothT = Mathf.SmoothStep(0f, 1f, t);
 
-                // Slight arc height curve (lifting the glass slightly as it slides)
-                float arcHeight = Mathf.Sin(smoothT * Mathf.PI) * hoverArcOffset.y;
+                // Pure linear surface slide: flush against paper board without lifting
+                float arcHeight = hoverArcOffset.y > 0 ? Mathf.Sin(smoothT * Mathf.PI) * hoverArcOffset.y : 0f;
                 Vector3 currentPos = Vector3.Lerp(startPos, target, smoothT) + new Vector3(0, arcHeight, 0);
                 transform.position = currentPos;
 
-                // Subtle forward tilt during movement
-                float tilt = Mathf.Sin(smoothT * Mathf.PI) * tiltAmount;
-                transform.localRotation = startRot * Quaternion.Euler(tilt, 0, 0);
+                if (tiltAmount > 0f)
+                {
+                    float tilt = Mathf.Sin(smoothT * Mathf.PI) * tiltAmount;
+                    transform.localRotation = startRot * Quaternion.Euler(tilt, 0, 0);
+                }
+                else
+                {
+                    transform.localRotation = Quaternion.identity;
+                }
 
                 yield return null;
             }
 
             transform.position = target;
-            transform.localRotation = startRot;
+            transform.localRotation = Quaternion.identity;
         }
     }
 }

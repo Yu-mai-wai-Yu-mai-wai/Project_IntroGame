@@ -44,9 +44,9 @@ namespace TawanOS.MapEngine
         [Header("3D Ouija Table & Model Settings")]
         public bool use3DTableMode = true;
         public float tableHeightY = 0f;
-        public float cameraHeightY = 12f;
-        public float cameraAnglePitch = 58f;
-        public float cameraZDistance = 8f;
+        public float cameraHeightY = 7.5f;
+        public float cameraAnglePitch = 30f;
+        public float cameraZDistance = 8.5f;
         public Vector3 player3DScale = new Vector3(0.5f, 0.5f, 0.5f);
         public Vector3 player3DRotation = new Vector3(0f, 180f, 0f);
         public bool renderStartPointLines = true;

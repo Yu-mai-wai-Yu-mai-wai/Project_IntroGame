@@ -11,6 +11,10 @@ namespace TawanOS.MapEngine
         public float scrollSensitivity = 1.0f;
         public float inertiaDamping = 0.92f;
 
+        [Header("3D Table Scroll Bounds")]
+        public float minScrollX = -18.6f;
+        public float maxScrollX = 15.5f;
+
         private Vector3 lastMousePosition;
         private bool isDragging = false;
         private Vector3 velocity = Vector3.zero;
@@ -46,8 +50,16 @@ namespace TawanOS.MapEngine
 
                 if (config != null && config.use3DTableMode)
                 {
-                    // In 3D mode, mouse Y drag moves camera along Z axis
-                    scrollVector.z = -delta.y * sensitivity;
+                    if (config.orientation == MapOrientation.LeftToRight)
+                    {
+                        // In LeftToRight 3D mode, mouse X drag moves camera along X axis
+                        scrollVector.x = -delta.x * sensitivity;
+                    }
+                    else
+                    {
+                        // In BottomToTop 3D mode, mouse Y drag moves camera along Z axis
+                        scrollVector.z = -delta.y * sensitivity;
+                    }
                 }
                 else if (config != null && (config.orientation == MapOrientation.LeftToRight || config.orientation == MapOrientation.RightToLeft))
                 {
@@ -80,8 +92,31 @@ namespace TawanOS.MapEngine
 
             if (config.use3DTableMode)
             {
-                float targetZ = floorIndex * config.floorSpacingY;
-                Vector3 targetCamPos = new Vector3(0f, config.cameraHeightY, targetZ - config.cameraZDistance);
+                Vector3 targetCamPos;
+                if (config.orientation == MapOrientation.LeftToRight)
+                {
+                    float targetX;
+                    if (floorIndex < 0)
+                    {
+                        targetX = minScrollX;
+                    }
+                    else if (floorIndex >= 7)
+                    {
+                        targetX = maxScrollX;
+                    }
+                    else
+                    {
+                        float[] floorXs = { -13.55f, -9.65f, -5.80f, -2.15f, 2.90f, 7.60f, 11.54f, 15.47f };
+                        targetX = floorXs[Mathf.Clamp(floorIndex, 0, floorXs.Length - 1)];
+                    }
+                    targetX = Mathf.Clamp(targetX, minScrollX, maxScrollX);
+                    targetCamPos = new Vector3(targetX, config.cameraHeightY, -config.cameraZDistance);
+                }
+                else
+                {
+                    float targetZ = floorIndex * config.floorSpacingY;
+                    targetCamPos = new Vector3(0f, config.cameraHeightY, targetZ - config.cameraZDistance);
+                }
                 velocity = Vector3.zero;
                 targetTransform.DOKill();
                 targetTransform.DOMove(targetCamPos, 0.6f).SetEase(Ease.OutCubic);
@@ -119,11 +154,20 @@ namespace TawanOS.MapEngine
 
             if (config.use3DTableMode)
             {
-                float maxFloorZ = (config.totalFloors - 1) * config.floorSpacingY;
                 Vector3 cPos = targetTransform.position;
-                cPos.x = 0f;
-                cPos.y = config.cameraHeightY;
-                cPos.z = Mathf.Clamp(cPos.z, -config.cameraZDistance - 3f, maxFloorZ - config.cameraZDistance + 3f);
+                if (config.orientation == MapOrientation.LeftToRight)
+                {
+                    cPos.x = Mathf.Clamp(cPos.x, minScrollX, maxScrollX);
+                    cPos.y = config.cameraHeightY;
+                    cPos.z = -config.cameraZDistance;
+                }
+                else
+                {
+                    float maxFloorZ = (config.totalFloors - 1) * config.floorSpacingY;
+                    cPos.x = 0f;
+                    cPos.y = config.cameraHeightY;
+                    cPos.z = Mathf.Clamp(cPos.z, -config.cameraZDistance - 3f, maxFloorZ - config.cameraZDistance + 3f);
+                }
                 targetTransform.position = cPos;
                 return;
             }

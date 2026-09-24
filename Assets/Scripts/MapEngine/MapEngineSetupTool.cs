@@ -33,13 +33,17 @@ namespace TawanOS.MapEngine
                 AssetDatabase.CreateFolder(baseFolder, "Prefabs");
             }
 
-            // 1. Create Node Profiles
-            var enemyProfile = CreateOrGetProfile(baseFolder + "/Profiles/EnemyProfile.asset", NodeType.MinorEnemy, "Minor Enemy", "A basic monster blocking your path.", Color.red, "crossed-swords.png");
-            var eliteProfile = CreateOrGetProfile(baseFolder + "/Profiles/EliteProfile.asset", NodeType.EliteEnemy, "Elite Enemy", "A powerful elite monster guarding rare rewards.", new Color(1f, 0.2f, 0.4f), "alien-skull.png");
-            var restProfile = CreateOrGetProfile(baseFolder + "/Profiles/RestProfile.asset", NodeType.RestSite, "Rest Site", "Rest by the campfire to heal or upgrade cards.", Color.green, "campfire.png");
-            var treasureProfile = CreateOrGetProfile(baseFolder + "/Profiles/TreasureProfile.asset", NodeType.Treasure, "Treasure Chest", "A mystery chest filled with relics and gold.", Color.yellow, "chest.png");
-            var storeProfile = CreateOrGetProfile(baseFolder + "/Profiles/StoreProfile.asset", NodeType.Store, "Shop Merchant", "Buy cards, relics, or remove unwanted cards.", Color.cyan, "shopping-cart.png");
-            var bossProfile = CreateOrGetProfile(baseFolder + "/Profiles/BossProfile.asset", NodeType.Boss, "Boss", "The final boss of this act!", new Color(0.6f, 0.1f, 0.8f), "dragon-head.png");
+            // 1. Create Node Profiles (Authentic Thai Crimson Ink Stamp on Paper Board)
+            Color crimsonBase = new Color(0.3529f, 0.0941f, 0.0627f, 1f);
+            Color crimsonHover = new Color(0.5568f, 0.1490f, 0.0941f, 1f);
+            Color crimsonVisited = new Color(0.1725f, 0.0784f, 0.0627f, 1f);
+
+            var enemyProfile = CreateOrGetProfile(baseFolder + "/Profiles/EnemyProfile.asset", NodeType.MinorEnemy, "Forest Shadow", "Vengeful spirits haunting the sacred path.", crimsonBase, "NarrowIcon.png");
+            var eliteProfile = CreateOrGetProfile(baseFolder + "/Profiles/EliteProfile.asset", NodeType.EliteEnemy, "Ancient Shrine Guardian", "A cursed guardian of the ancient ruins holding powerful relics.", crimsonBase, "TempleIcon.png");
+            var restProfile = CreateOrGetProfile(baseFolder + "/Profiles/RestProfile.asset", NodeType.RestSite, "Spirit Lantern", "Consecrated sanctuary to light incense and soothe your soul.", crimsonBase, "ShrineIcon.png");
+            var treasureProfile = CreateOrGetProfile(baseFolder + "/Profiles/TreasureProfile.asset", NodeType.Treasure, "Sacred Offering", "Ancient treasure chest left behind by past practitioners.", crimsonBase, "ShrineIcon.png");
+            var storeProfile = CreateOrGetProfile(baseFolder + "/Profiles/StoreProfile.asset", NodeType.Store, "Bodhi Tree Merchant", "An enigmatic merchant trading talismans and sacred offerings.", crimsonBase, "Tree1.png");
+            var bossProfile = CreateOrGetProfile(baseFolder + "/Profiles/BossProfile.asset", NodeType.Boss, "The Sovereign Spirit", "The ancient overlord reigning over the temple grounds.", crimsonBase, "TempleIcon.png");
 
             // 2. Create Biome Profile
             string biomePath = baseFolder + "/Profiles/DefaultBiome.asset";
@@ -56,13 +60,24 @@ namespace TawanOS.MapEngine
             if (config == null)
             {
                 config = ScriptableObject.CreateInstance<MapConfigSO>();
-                config.seed = 12345;
-                config.totalFloors = 15;
-                config.mapWidth = 7;
+                config.seed = 737445;
+                config.totalFloors = 7;
+                config.mapWidth = 3;
                 config.startingNodesCount = 3;
-                config.pathCount = 6;
-                config.floorSpacingY = 2.5f;
-                config.columnSpacingX = 2.0f;
+                config.pathCount = 3;
+                config.extraPaths = 1;
+                config.orientation = MapOrientation.LeftToRight;
+                config.floorSpacingY = 3.9f;
+                config.columnSpacingX = 2.1f;
+                config.depthZOffset = 0f;
+                config.nodePositionJitter = 0.2f;
+                config.use3DTableMode = true;
+                config.cameraHeightY = 7.5f;
+                config.cameraAnglePitch = 30f;
+                config.cameraZDistance = 8.5f;
+                config.player3DScale = Vector3.one;
+                config.player3DRotation = new Vector3(0, 180, 0);
+                config.startNodeOffset = Vector3.zero;
                 config.biomeProfile = biome;
 
                 config.nodeProfiles.Add(enemyProfile);
@@ -120,14 +135,18 @@ namespace TawanOS.MapEngine
             var lr = pathGo.GetComponent<LineRenderer>() ?? pathGo.AddComponent<LineRenderer>();
             if (lr != null)
             {
-                lr.startWidth = 0.15f;
-                lr.endWidth = 0.15f;
+                lr.alignment = LineAlignment.TransformZ;
+                lr.startWidth = 0.07f;
+                lr.endWidth = 0.07f;
+                lr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                lr.receiveShadows = false;
                 Shader lineShader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default") 
                                  ?? Shader.Find("Sprites/Default") 
                                  ?? Shader.Find("Unlit/Color")
                                  ?? Shader.Find("GUI/Text Shader");
                 if (lineShader != null) lr.material = new Material(lineShader);
             }
+            pathGo.transform.rotation = Quaternion.Euler(-90f, 0f, 0f);
 
             string pathPrefabPath = baseFolder + "/Prefabs/MapPathPrefab.prefab";
             GameObject pathPrefab = PrefabUtility.SaveAsPrefabAsset(pathGo, pathPrefabPath);
@@ -209,7 +228,7 @@ namespace TawanOS.MapEngine
                 eventSystemGo.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
             }
 
-            // Setup Top-Down Angled 3D Camera looking down at Ouija Board Table
+            // Setup Top-Down Angled 3D Camera looking down at Ouija Board Table (LeftToRight)
             GameObject camGo = new GameObject("Main Camera");
             camGo.tag = "MainCamera";
             Camera cam = camGo.AddComponent<Camera>();
@@ -218,96 +237,69 @@ namespace TawanOS.MapEngine
             camGo.AddComponent<UnityEngine.EventSystems.PhysicsRaycaster>();
             var scrollCtrl = camGo.AddComponent<MapScrollController>();
             scrollCtrl.config = config;
+            scrollCtrl.minScrollX = -18.6f;
+            scrollCtrl.maxScrollX = 15.5f;
             cam.orthographic = false;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.06f, 0.05f, 0.07f, 1f);
+            cam.backgroundColor = new Color(0.04f, 0.03f, 0.03f, 1f);
             cam.fieldOfView = 55;
-            camGo.transform.position = new Vector3(0, 11f, -6f);
-            camGo.transform.rotation = Quaternion.Euler(58f, 0f, 0f);
+            camGo.transform.position = new Vector3(-14.0f, 7.5f, -8.5f);
+            camGo.transform.rotation = Quaternion.Euler(30f, 0f, 0f);
 
-            // Setup Directional Light (Eerie Moonlight)
+            // Setup Directional Light (Eerie Moonlight / Twilight Canopy)
             GameObject lightGo = new GameObject("Directional Light");
             Light light = lightGo.AddComponent<Light>();
             light.type = LightType.Directional;
-            light.intensity = 1.1f;
-            light.color = new Color(0.7f, 0.85f, 1.0f); // Cool Moonlight
-            lightGo.transform.rotation = Quaternion.Euler(55, -35, 0);
+            light.intensity = 0.85f;
+            light.color = new Color(0.95f, 0.88f, 0.78f, 1f); // Warm pale ivory
+            light.shadows = LightShadows.Soft;
+            light.shadowStrength = 0.75f;
+            lightGo.transform.rotation = Quaternion.Euler(45f, -25f, 0f);
 
-            // Setup Ritual Table Light
+            // Setup Ritual Table Candle Light
             GameObject pointLightGo = new GameObject("Table Light");
             Light pLight = pointLightGo.AddComponent<Light>();
             pLight.type = LightType.Point;
-            pLight.range = 30f;
-            pLight.intensity = 2.5f;
-            pLight.color = new Color(1f, 0.85f, 0.6f); // Warm Candle Glow
-            pointLightGo.transform.position = new Vector3(0f, 6f, 2f);
+            pLight.range = 18f;
+            pLight.intensity = 2.2f;
+            pLight.color = new Color(1.0f, 0.85f, 0.62f, 1f); // Warm ritual candle amber
+            pLight.shadows = LightShadows.Soft;
+            pLight.shadowStrength = 0.8f;
+            pointLightGo.transform.position = new Vector3(-14.0f, 4.5f, -1.5f);
 
-            // Setup 3D Table Plane (Thai Horror Ouija Spirit Board)
-            GameObject bgMapGo = new GameObject("MapBackgroundTable");
-            var bgMapSr = bgMapGo.AddComponent<SpriteRenderer>();
-            bgMapSr.sortingOrder = -10;
-
-            float totalMapHeight = config.totalFloors * config.floorSpacingY;
-            float totalMapWidth = config.mapWidth * config.columnSpacingX;
-            bgMapGo.transform.position = new Vector3(0, 0f, (totalMapHeight * 0.5f) - 1f);
-            bgMapGo.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-            bgMapGo.transform.localScale = new Vector3(Mathf.Max(12.0f, totalMapWidth * 1.5f), (totalMapHeight * 1.15f), 1f);
-            
-            Texture2D bgTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/MapEngineData/Textures/MapBackground.jpg");
-            if (bgTex != null)
+            // Setup 3D Environment (MapNavigate.fbx - PaperFloor + Sacred Forest Trees)
+            string mapNavigatePath = "Assets/ProjectAsset/MapNavigate/MapNavigate.fbx";
+            GameObject mapNavigateAsset = AssetDatabase.LoadAssetAtPath<GameObject>(mapNavigatePath);
+            if (mapNavigateAsset != null)
             {
-                Sprite bgSprite = Sprite.Create(bgTex, new Rect(0, 0, bgTex.width, bgTex.height), new Vector2(0.5f, 0.5f), 100f);
-                bgMapSr.sprite = bgSprite;
-            }
+                GameObject envInstance = (GameObject)PrefabUtility.InstantiatePrefab(mapNavigateAsset);
+                envInstance.name = "MapNavigateEnvironment";
+                envInstance.transform.position = Vector3.zero;
+                envInstance.transform.rotation = Quaternion.identity;
+                envInstance.transform.localScale = Vector3.one;
 
-            // Setup 3D Environment Decorations (NecroPOLY Dark Corners)
-            GameObject envGo = new GameObject("NecroPolyEnvironment");
-            
-            string treePath = "Assets/EmaceArt/NecroPOLY Dark Corners/Prefabs/Assets/Nature/Trees/EA_Environment_Nature_Tree_4a_PRE.prefab";
-            string lanternPath = "Assets/EmaceArt/NecroPOLY Dark Corners/Prefabs/Assets/Props/EA_Exterior_Lantern_Solid_01a_PRE.prefab";
-            string ruinPath = "Assets/EmaceArt/NecroPOLY Dark Corners/Prefabs/Assets/Ruins/EA_Arch_Wall04_Ruin_01b_PRE.prefab";
-
-            GameObject treeAsset = AssetDatabase.LoadAssetAtPath<GameObject>(treePath);
-            GameObject lanternAsset = AssetDatabase.LoadAssetAtPath<GameObject>(lanternPath);
-            GameObject ruinAsset = AssetDatabase.LoadAssetAtPath<GameObject>(ruinPath);
-
-            // Flank table with Spooky Trees along Z-axis
-            if (treeAsset != null)
-            {
-                for (float z = 0; z <= totalMapHeight; z += 7f)
+                // Deactivate static placeholder String.* so procedural MapPathRenderer takes over,
+                // but keep 3D stone pedestals Node.* active for hybrid placement
+                foreach (Transform child in envInstance.GetComponentsInChildren<Transform>(true))
                 {
-                    // Left flank trees
-                    GameObject tLeft = (GameObject)PrefabUtility.InstantiatePrefab(treeAsset, envGo.transform);
-                    tLeft.transform.position = new Vector3(-totalMapWidth * 0.95f - 2.5f, 0f, z);
-                    tLeft.transform.localScale = new Vector3(1.2f, 1.2f, 1.2f);
-
-                    // Right flank trees
-                    GameObject tRight = (GameObject)PrefabUtility.InstantiatePrefab(treeAsset, envGo.transform);
-                    tRight.transform.position = new Vector3(totalMapWidth * 0.95f + 2.5f, 0f, z + 3f);
-                    tRight.transform.localScale = new Vector3(1.3f, 1.3f, 1.3f);
+                    if (child == envInstance.transform) continue;
+                    string cName = child.name;
+                    if (cName.StartsWith("String"))
+                    {
+                        child.gameObject.SetActive(false);
+                    }
+                    else if (cName.StartsWith("Node"))
+                    {
+                        child.gameObject.SetActive(true);
+                    }
                 }
-            }
 
-            // Place Ancient Lanterns near start and along flanks
-            if (lanternAsset != null)
-            {
-                GameObject l1 = (GameObject)PrefabUtility.InstantiatePrefab(lanternAsset, envGo.transform);
-                l1.transform.position = new Vector3(-totalMapWidth * 0.7f, 0f, -2f);
-                
-                GameObject l2 = (GameObject)PrefabUtility.InstantiatePrefab(lanternAsset, envGo.transform);
-                l2.transform.position = new Vector3(totalMapWidth * 0.7f, 0f, -2f);
-
-                GameObject l3 = (GameObject)PrefabUtility.InstantiatePrefab(lanternAsset, envGo.transform);
-                l3.transform.position = new Vector3(0f, 0f, totalMapHeight + 3f);
-            }
-
-            // Place Ancient Ruins behind Boss Node at the top
-            if (ruinAsset != null)
-            {
-                GameObject ruin = (GameObject)PrefabUtility.InstantiatePrefab(ruinAsset, envGo.transform);
-                ruin.transform.position = new Vector3(0f, 0f, totalMapHeight + 5f);
-                ruin.transform.rotation = Quaternion.Euler(0, 180, 0);
-                ruin.transform.localScale = new Vector3(1.5f, 1.5f, 1.5f);
+                // Add TreeBillboardController for cylindrical billboarding of background trees
+                var billboardCtrl = envInstance.AddComponent<TreeBillboardController>();
+                billboardCtrl.targetCamera = cam;
+                billboardCtrl.FindTrees();
+                EditorUtility.SetDirty(billboardCtrl);
+                EditorUtility.SetDirty(envInstance);
             }
 
             // Setup MapManager
@@ -378,21 +370,41 @@ namespace TawanOS.MapEngine
                 profile.title = title;
                 profile.description = desc;
                 profile.baseColor = color;
-                profile.hoverColor = color * 1.3f;
+                profile.hoverColor = new Color(color.r * 1.5f, color.g * 1.5f, color.b * 1.5f, 1f);
+                profile.visitedColor = new Color(color.r * 0.5f, color.g * 0.5f, color.b * 0.5f, 1f);
                 AssetDatabase.CreateAsset(profile, path);
+            }
+            else
+            {
+                profile.title = title;
+                profile.description = desc;
+                profile.baseColor = color;
+                profile.hoverColor = new Color(color.r * 1.5f, color.g * 1.5f, color.b * 1.5f, 1f);
+                profile.visitedColor = new Color(color.r * 0.5f, color.g * 0.5f, color.b * 0.5f, 1f);
+                EditorUtility.SetDirty(profile);
             }
 
             if (!string.IsNullOrEmpty(iconName))
             {
-                string iconPath = $"Assets/MapEngineData/Icons/{iconName}";
-                Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
-                if (tex != null)
+                string mapNavigateIconPath = $"Assets/ProjectAsset/MapNavigate/{iconName}";
+                Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(mapNavigateIconPath);
+                if (sprite != null)
                 {
-                    Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
-                    sprite.name = iconName;
-                    AssetDatabase.AddObjectToAsset(sprite, profile);
                     profile.icon = sprite;
                     EditorUtility.SetDirty(profile);
+                }
+                else
+                {
+                    string fallbackIconPath = $"Assets/MapEngineData/Icons/{iconName}";
+                    Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(fallbackIconPath);
+                    if (tex != null)
+                    {
+                        Sprite fallbackSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
+                        fallbackSprite.name = iconName;
+                        AssetDatabase.AddObjectToAsset(fallbackSprite, profile);
+                        profile.icon = fallbackSprite;
+                        EditorUtility.SetDirty(profile);
+                    }
                 }
             }
 
