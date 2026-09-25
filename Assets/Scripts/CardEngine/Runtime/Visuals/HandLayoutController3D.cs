@@ -152,6 +152,14 @@ namespace TawanOS.CardEngine
                 Quaternion targetRot = Quaternion.Euler(0, 0, angle);
 
                 var view = activeViews[i];
+
+                // A held card stays at the side of the screen; it only learns where to come back to
+                if (view.IsHeld)
+                {
+                    view.SetRestingTransform(targetPos, targetRot, applyImmediately: false);
+                    continue;
+                }
+
                 int drawOrder = newlyDrawn.IndexOf(view);
                 view.transform.DOKill();
 

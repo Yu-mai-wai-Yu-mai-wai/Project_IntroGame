@@ -202,8 +202,9 @@ namespace TawanOS.CardEngine
             SetPhase(phase);
             yield return new WaitUntil(() => endTurnRequested || (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver));
 
-            // A half-finished target choice ends with the phase
+            // A held card or a half-finished target choice ends with the phase
             CardTargeting3D.Instance?.Cancel();
+            CardPlayController3D.Instance?.Cancel();
         }
 
         // Both sides draw their opening hand at the same moment, every card starting to fly at once

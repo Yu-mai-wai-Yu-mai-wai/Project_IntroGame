@@ -148,7 +148,8 @@ MonoBehaviour:
   hoverLift: 0.4
   hoverPullToCamera: 0.3
   hoverScale: 1.15
-  playDropThresholdY: 1.2
+  defaultWhiteFrame: {fileID: 21300000, guid: d1c318fa676659d479a51d3597e3a90b, type: 3}
+  defaultBlackFrame: {fileID: 21300000, guid: 67a651f898aacce42b10f279b1ea66f1, type: 3}
 --- !u!1 &9004239742615636460
 GameObject:
   m_ObjectHideFlags: 0

@@ -114,7 +114,7 @@ namespace TawanOS.CardEngine
 
         private void OnMouseDown()
         {
-            if (CardTargeting3D.BlocksInput) return;
+            if (CardTargeting3D.BlocksInput || CardPlayController3D.BlocksInput) return;
             CardManager.Instance?.DrawFromPit();
         }
 

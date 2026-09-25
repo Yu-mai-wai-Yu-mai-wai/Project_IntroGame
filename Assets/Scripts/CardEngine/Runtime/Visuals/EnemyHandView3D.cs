@@ -255,6 +255,7 @@ namespace TawanOS.CardEngine
         private void SetFace(CardView3D view, CardInstance card, bool faceUp)
         {
             if (view.nameLabel != null) view.nameLabel.gameObject.SetActive(faceUp);
+            view.SetFaceVisible(faceUp);
             if (view.cardRenderer != null)
             {
                 view.cardRenderer.material.color = faceUp
