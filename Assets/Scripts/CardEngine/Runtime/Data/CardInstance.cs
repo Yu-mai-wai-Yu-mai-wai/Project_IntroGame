@@ -46,6 +46,9 @@ namespace TawanOS.CardEngine
         [NonSerialized] public int auraKhwan;
         [NonSerialized] public int auraAttack;
 
+        // Just drawn from the shared pit (หลุมจั่ว): hand views fly it in from the pit, then clear this
+        [NonSerialized] public bool fromPit;
+
         public bool IsDead
         {
             get

@@ -65,7 +65,7 @@ namespace TawanOS.CardEngine
         [Header("Card Deck (enemy plays cards like the player)")]
         [Tooltip("If not empty, the enemy draws and plays these cards each turn instead of using the Moveset / state moves.")]
         public List<CardDataSO> deck = new List<CardDataSO>();
-        public int startingHandSize = 5;
+        public int startingHandSize = 3;
         public int drawPerTurn = 1;
         public int maxHandSize = 10;
         [Tooltip("Safety cap on cards played in one enemy turn.")]

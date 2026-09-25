@@ -204,8 +204,10 @@ namespace TawanOS.CardEngine
             view.enabled = false; // no hover/drag on the enemy's cards
             SetFace(view, card, faceUp: showFaces);
 
-            // Start lying flat on top of the enemy's draw pile; the layout pass flies it into the hand
-            view.transform.position = PileTop();
+            // Start lying flat on top of the enemy's draw pile (or the pit); the layout pass flies it into the hand
+            bool fromPit = card.fromPit && DrawPitView3D.Instance != null;
+            card.fromPit = false;
+            view.transform.position = fromPit ? DrawPitView3D.Instance.SpawnPosition : PileTop();
             view.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
             views.Add(view);

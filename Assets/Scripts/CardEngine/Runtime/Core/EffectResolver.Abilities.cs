@@ -253,6 +253,10 @@ namespace TawanOS.CardEngine
         public bool CanResolve(CardInstance card, bool casterIsPlayer)
         {
             if (card == null) return false;
+
+            // A full board (5 cards) takes no more familiars or amulets
+            if (card.cardType != CardType.Incantation && IsBoardFull(casterIsPlayer)) return false;
+
             if (card.cardType != CardType.Incantation || card.abilities == null || card.abilities.Count == 0) return true;
 
             foreach (var a in card.abilities)

@@ -626,7 +626,7 @@ namespace TawanOS.CardEngine
         {
             state.currentCorruption += amount;
 
-            // Threshold curse backfire: at 9+, trigger curse and reset
+            // Threshold curse backfire: at 7+ (the threshold), trigger curse and reset
             if (state.currentCorruption >= state.corruptionThreshold)
             {
                 state.currentCorruption = 0;

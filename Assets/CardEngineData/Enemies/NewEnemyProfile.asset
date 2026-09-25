@@ -59,7 +59,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1affc8bd5a564ff8838b52bae88a0373, type: 2}
   - {fileID: 11400000, guid: 1aa76638236c464fbf62f706d5d48482, type: 2}
   - {fileID: 11400000, guid: 7590c4d9a3464f80a678bb0fed6a7a1a, type: 2}
-  startingHandSize: 5
+  startingHandSize: 3
   drawPerTurn: 1
   maxHandSize: 10
   maxCardsPerTurn: 6

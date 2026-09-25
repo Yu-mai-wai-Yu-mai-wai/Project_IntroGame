@@ -45,7 +45,7 @@ namespace TawanOS.CardEngine
         public List<CardInstance> enemyBoardCards = new List<CardInstance>();
         public int enemyMerit;
         public int enemyCorruption;
-        public int enemyCorruptionThreshold = 9;
+        public int enemyCorruptionThreshold = 7;
         // Max Corruption currently added by auras (เบี้ยแก้), taken back when they leave the board
         public int playerAuraCorruptionCap;
         public int enemyAuraCorruptionCap;
@@ -59,7 +59,7 @@ namespace TawanOS.CardEngine
             currentMerit = 1;
             maxMerit = 6;
             currentCorruption = 0;
-            corruptionThreshold = 9;
+            corruptionThreshold = 7;
             enemyKhwan = 30;
             maxEnemyKhwan = 30;
             incenseCurrency = 0;

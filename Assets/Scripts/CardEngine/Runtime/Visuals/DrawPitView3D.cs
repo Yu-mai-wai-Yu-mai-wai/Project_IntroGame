@@ -3,13 +3,20 @@ using DG.Tweening;
 
 namespace TawanOS.CardEngine
 {
-    // หลุมจั่ว: a clickable pit on the table next to the draw pile. Each click during the player's turn
-    // draws one random card from every card in the game and adds Corruption (see CardManager.DrawFromPit).
-    // Bootstraps itself beside the DeckPileView3D, so no scene wiring is needed.
+    // หลุมจั่ว: a shared pit at the middle-right of the table, between the two board rows. Each click
+    // during the player's turn draws one random card from every card in the game and adds Corruption
+    // (see CardManager.DrawFromPit); the enemy uses it too (EnemyCardPlayer). Bootstraps itself.
     public class DrawPitView3D : MonoBehaviour
     {
-        [Header("Look")]
+        public static DrawPitView3D Instance { get; private set; }
+
+        [Header("Placement")]
+        [Tooltip("Distance to the right of the rightmost board column.")]
+        public float gapRightOfBoard = 1.6f;
+        [Tooltip("Used only when there are no board slots to line up with.")]
         public Vector3 offsetFromDeck = new Vector3(1.3f, 0f, 0f);
+
+        [Header("Look")]
         public Vector3 pitSize = new Vector3(0.9f, 0.05f, 0.9f);
         public Color pitColor = new Color(0.05f, 0.02f, 0.08f);
         public Color hoverColor = new Color(0.35f, 0.1f, 0.45f);
@@ -23,13 +30,68 @@ namespace TawanOS.CardEngine
             if (FindFirstObjectByType<CardManager>() == null) return;
             if (FindFirstObjectByType<DrawPitView3D>() != null) return;
 
-            var deck = FindFirstObjectByType<DeckPileView3D>();
-            if (deck == null) return;
-
             var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             go.name = "DrawPit3D";
             var pit = go.AddComponent<DrawPitView3D>();
-            go.transform.position = deck.transform.position + pit.offsetFromDeck;
+            if (!pit.TryPlaceMiddleRight())
+            {
+                var deck = FindFirstObjectByType<DeckPileView3D>();
+                if (deck == null)
+                {
+                    Destroy(go);
+                    return;
+                }
+                go.transform.position = deck.transform.position + pit.offsetFromDeck;
+            }
+        }
+
+        // Halfway between the player's and the enemy's board rows, right of the rightmost column
+        private bool TryPlaceMiddleRight()
+        {
+            Vector3 playerSum = Vector3.zero, enemySum = Vector3.zero;
+            int playerCount = 0, enemyCount = 0;
+            float maxX = float.MinValue;
+
+            foreach (var slot in FindObjectsByType<BoardSlotView>(FindObjectsSortMode.None))
+            {
+                if (slot.GetComponent<DeckPileView3D>() != null || slot.name.Contains("Deck")) continue;
+
+                Vector3 p = slot.transform.position;
+                maxX = Mathf.Max(maxX, p.x);
+                if (slot.side == BoardSlotView.SlotSide.Player)
+                {
+                    playerSum += p;
+                    playerCount++;
+                }
+                else
+                {
+                    enemySum += p;
+                    enemyCount++;
+                }
+            }
+            if (playerCount == 0 || enemyCount == 0) return false;
+
+            Vector3 middle = (playerSum / playerCount + enemySum / enemyCount) * 0.5f;
+            transform.position = new Vector3(maxX + gapRightOfBoard, middle.y, middle.z);
+            return true;
+        }
+
+        // Where cards pulled from the pit start flying from
+        public Vector3 SpawnPosition => transform.position + Vector3.up * 0.1f;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+        }
+
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
         }
 
         private void Start()
@@ -52,8 +114,14 @@ namespace TawanOS.CardEngine
 
         private void OnMouseDown()
         {
-            if (CardManager.Instance == null || !CardManager.Instance.DrawFromPit()) return;
+            if (CardTargeting3D.BlocksInput) return;
+            CardManager.Instance?.DrawFromPit();
+        }
 
+        // Pulse when either side pulls a card out
+        public void PlayUseEffect()
+        {
+            if (baseScale == Vector3.zero) baseScale = transform.localScale;
             transform.DOKill();
             transform.localScale = baseScale;
             transform.DOPunchScale(baseScale * 0.15f, 0.25f, 6);

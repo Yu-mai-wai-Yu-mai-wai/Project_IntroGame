@@ -16,7 +16,7 @@ namespace TawanOS.CardEngine
         [Tooltip("Cards drawn at the start of every turn, including turn 1. -1 = use CardManager.defaultDrawCount")]
         public int drawCount = 1;
         [Tooltip("Opening hand: drawn all at once when the game starts, before turn 1. -1 = CardManager.defaultDrawCount")]
-        public int openingHandSize = 5;
+        public int openingHandSize = 3;
         public float drawPhaseStartDelay = 0.3f;
 
         [Header("End Phase")]

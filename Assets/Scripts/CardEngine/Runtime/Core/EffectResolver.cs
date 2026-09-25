@@ -49,9 +49,8 @@ namespace TawanOS.CardEngine
                     break;
                 case CardType.Amulet:
                 case CardType.Familiar:
-                    if (casterIsPlayer) PlaceBoardCard(card);
-                    else PlaceEnemyBoardCard(card);
-                    RunOnPlayAbilities(card, target, casterIsPlayer);
+                    bool placed = casterIsPlayer ? PlaceBoardCard(card) : PlaceEnemyBoardCard(card);
+                    if (placed) RunOnPlayAbilities(card, target, casterIsPlayer);
                     break;
             }
         }
@@ -92,14 +91,15 @@ namespace TawanOS.CardEngine
             }
         }
 
-        private void PlaceEnemyBoardCard(CardInstance card)
+        private bool PlaceEnemyBoardCard(CardInstance card)
         {
-            if (CombatManager.Instance == null) return;
+            if (CombatManager.Instance == null) return false;
 
             var list = CombatManager.Instance.State.enemyBoardCards;
-            PutOnBoard(list, card);
+            if (!PutOnBoard(list, card)) return false;
             RefreshAuras();
             ResyncEnemySlots(list);
+            return true;
         }
 
         private void ResyncEnemySlots(List<CardInstance> list)
@@ -131,18 +131,25 @@ namespace TawanOS.CardEngine
         }
 
         // Places a card in a fixed column. When the board is full the oldest card is replaced in its column.
-        private static void PutOnBoard(List<CardInstance> list, CardInstance card)
+        public bool IsBoardFull(bool playerSide)
+        {
+            if (CombatManager.Instance == null) return false;
+            var list = playerSide ? CombatManager.Instance.State.activeBoardCards : CombatManager.Instance.State.enemyBoardCards;
+            return FreeSlot(list) < 0;
+        }
+
+        // Places a card in a fixed column. Returns false when the board is full (CanResolve stops that earlier).
+        private static bool PutOnBoard(List<CardInstance> list, CardInstance card)
         {
             int slot = FreeSlot(list, card.boardSlot);
             if (slot < 0)
             {
-                var oldest = list[0];
-                slot = oldest.boardSlot;
-                oldest.boardSlot = -1;
-                list.RemoveAt(0);
+                Debug.LogWarning($"[EffectResolver] Board is full; {card.cardNameThai} cannot be placed");
+                return false;
             }
             card.boardSlot = slot;
             list.Add(card);
+            return true;
         }
 
         private int ApplyDamageStatusModifier(int baseDamage, bool attackerIsPlayer)
@@ -157,14 +164,15 @@ namespace TawanOS.CardEngine
             return baseDamage;
         }
 
-        private void PlaceBoardCard(CardInstance card)
+        private bool PlaceBoardCard(CardInstance card)
         {
-            if (CombatManager.Instance == null) return;
+            if (CombatManager.Instance == null) return false;
 
             var list = CombatManager.Instance.State.activeBoardCards;
-            PutOnBoard(list, card);
+            if (!PutOnBoard(list, card)) return false;
             RefreshAuras();
             ResyncSlots(list);
+            return true;
         }
 
         private void ResyncSlots(List<CardInstance> list)

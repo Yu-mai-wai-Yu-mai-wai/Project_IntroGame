@@ -2622,7 +2622,7 @@ MonoBehaviour:
     currentMerit: 1
     maxMerit: 6
     currentCorruption: 0
-    corruptionThreshold: 9
+    corruptionThreshold: 7
     enemyKhwan: 30
     maxEnemyKhwan: 30
     incenseCurrency: 0
@@ -2692,7 +2692,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.TurnPhaseController
   drawCount: 1
-  openingHandSize: 5
+  openingHandSize: 3
   drawPhaseStartDelay: 0.3
   discardHandAtEnd: 0
   endPhaseDelay: 0.6

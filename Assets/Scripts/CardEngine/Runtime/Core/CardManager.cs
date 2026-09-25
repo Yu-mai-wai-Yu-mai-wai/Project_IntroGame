@@ -125,7 +125,9 @@ namespace TawanOS.CardEngine
             // An incantation with nothing to act on stays in hand and costs nothing
             if (!EffectResolver.Instance.CanResolve(card, casterIsPlayer: true))
             {
-                Debug.Log($"[CardManager] {card.cardNameThai} has no valid target right now");
+                Debug.Log(card.cardType == CardType.Incantation
+                    ? $"[CardManager] {card.cardNameThai} has no valid target right now"
+                    : $"[CardManager] The board is full; {card.cardNameThai} cannot be played");
                 return false;
             }
 
@@ -172,6 +174,21 @@ namespace TawanOS.CardEngine
                 return false;
             }
 
+            var template = PickPitCard();
+            if (template == null) return false;
+
+            var drawn = new CardInstance(template) { fromPit = true };
+            AddToHand(drawn);
+            DrawPitView3D.Instance?.PlayUseEffect();
+            Debug.Log($"[CardManager] Pit drew {drawn.cardNameThai}");
+
+            combat?.AddCorruption(PitCorruptionGain);
+            return true;
+        }
+
+        // One random card out of every card in the game; the pit is shared by the player and the enemy
+        public static CardDataSO PickPitCard()
+        {
             var catalog = CardCatalogSO.Load();
             var pool = new List<CardDataSO>();
             if (catalog != null)
@@ -181,15 +198,9 @@ namespace TawanOS.CardEngine
             if (pool.Count == 0)
             {
                 Debug.LogWarning("[CardManager] No Resources/CardCatalog found; the pit has nothing to give.");
-                return false;
+                return null;
             }
-
-            var drawn = new CardInstance(pool[UnityEngine.Random.Range(0, pool.Count)]);
-            AddToHand(drawn);
-            Debug.Log($"[CardManager] Pit drew {drawn.cardNameThai}");
-
-            combat?.AddCorruption(PitCorruptionGain);
-            return true;
+            return pool[UnityEngine.Random.Range(0, pool.Count)];
         }
 
         // A card created mid-combat (summoned, given, or brought back) goes straight to the hand
