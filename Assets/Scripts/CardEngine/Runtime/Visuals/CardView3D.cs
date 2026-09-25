@@ -27,6 +27,7 @@ namespace TawanOS.CardEngine
         private Vector3 dragStartLocalPosition;
         private bool isDragging;
         private bool isPlacedOnBoard;
+        private bool isAwaitingTarget;
 
         private void Awake()
         {
@@ -49,31 +50,35 @@ namespace TawanOS.CardEngine
             }
         }
 
-        // Familiars also show their live Khwan (HP) and attack under the name
+        // Familiars also show their live Khwan (HP) and attack under the name; amulets with Khwan show their Khwan
         public void RefreshLabel()
         {
             if (nameLabel == null || CardData == null) return;
 
-            nameLabel.text = CardData.cardType == CardType.Familiar
-                ? $"{CardData.cardNameThai}\n{CardData.familiarHealth}/{CardData.familiarDamage}"
-                : CardData.cardNameThai;
+            if (CardData.cardType == CardType.Familiar)
+                nameLabel.text = $"{CardData.cardNameThai}\n{CardData.familiarHealth}/{CardData.familiarDamage}";
+            else if (CardData.maxKhwan > 0)
+                nameLabel.text = $"{CardData.cardNameThai}\n{CardData.familiarHealth}";
+            else
+                nameLabel.text = CardData.cardNameThai;
         }
 
         // applyImmediately=false records the resting pose only, so the caller can animate to it
         // (used for the draw fly-in from the deck).
         public void SetRestingTransform(Vector3 localPos, Quaternion localRot, bool applyImmediately = true)
         {
-            if (isDragging || isPlacedOnBoard) return;
+            if (isPlacedOnBoard) return;
             originalLocalPosition = localPos;
             originalLocalRotation = localRot;
-            if (!applyImmediately) return;
+            // A card held by the mouse (or waiting for a target) keeps its pose; it returns here afterwards
+            if (!applyImmediately || isDragging || isAwaitingTarget) return;
             transform.localPosition = localPos;
             transform.localRotation = localRot;
         }
 
         private void OnMouseEnter()
         {
-            if (isDragging || isPlacedOnBoard) return;
+            if (isDragging || isPlacedOnBoard || isAwaitingTarget || CardTargeting3D.BlocksInput) return;
 
             transform.DOKill();
             transform.DOLocalMove(originalLocalPosition + new Vector3(0, hoverLift, -hoverPullToCamera), 0.15f);
@@ -82,7 +87,7 @@ namespace TawanOS.CardEngine
 
         private void OnMouseExit()
         {
-            if (isDragging || isPlacedOnBoard) return;
+            if (isDragging || isPlacedOnBoard || isAwaitingTarget || CardTargeting3D.BlocksInput) return;
 
             transform.DOKill();
             transform.DOLocalMove(originalLocalPosition, 0.15f);
@@ -92,7 +97,7 @@ namespace TawanOS.CardEngine
 
         private void OnMouseDown()
         {
-            if (isPlacedOnBoard) return;
+            if (isPlacedOnBoard || isAwaitingTarget || CardTargeting3D.BlocksInput) return;
             isDragging = true;
             if (mainCamera == null) mainCamera = Camera.main;
             transform.DOKill();
@@ -102,7 +107,7 @@ namespace TawanOS.CardEngine
 
         private void OnMouseDrag()
         {
-            if (isPlacedOnBoard) return;
+            if (isPlacedOnBoard || !isDragging) return;
             Vector3 mouseWorld = GetMouseWorldAtCardDepth();
             Vector3 worldDelta = mouseWorld - dragStartWorld;
             Vector3 localDelta = transform.parent != null
@@ -113,15 +118,32 @@ namespace TawanOS.CardEngine
 
         private void OnMouseUp()
         {
-            if (isPlacedOnBoard) return;
+            if (isPlacedOnBoard || !isDragging) return;
             isDragging = false;
 
             if (transform.localPosition.y > originalLocalPosition.y + playDropThresholdY)
             {
+                // Incantations that act on one card wait here for the player to click that card
+                if (EffectResolver.GetTargetedAbility(CardData) != null)
+                {
+                    if (TryBeginTargeting()) return;
+                    ReturnToHand();
+                    return;
+                }
+
+                // Board cards go to the column they were dropped on (the engine keeps that column)
+                bool boardCard = CardData.cardType == CardType.Amulet || CardData.cardType == CardType.Familiar;
+                if (boardCard)
+                {
+                    if (mainCamera == null) mainCamera = Camera.main;
+                    var dropSlot = FindNearestEmptyPlayerSlot(Input.mousePosition);
+                    CardData.boardSlot = dropSlot != null ? dropSlot.slotIndex : -1;
+                }
+
                 bool played = CardManager.Instance != null && CardManager.Instance.PlayCard(CardData);
                 if (played)
                 {
-                    if (CardData.cardType == CardType.Amulet || CardData.cardType == CardType.Familiar)
+                    if (boardCard)
                     {
                         SnapToBoardSlot();
                     }
@@ -134,9 +156,64 @@ namespace TawanOS.CardEngine
                 }
             }
 
+            ReturnToHand();
+        }
+
+        private void ReturnToHand()
+        {
+            transform.DOKill();
             transform.DOLocalMove(originalLocalPosition, 0.25f).SetEase(Ease.OutQuad);
             transform.DOLocalRotateQuaternion(originalLocalRotation, 0.25f);
             transform.DOScale(baseLocalScale, 0.25f);
+        }
+
+        private bool TryBeginTargeting()
+        {
+            var cards = CardManager.Instance;
+            var resolver = EffectResolver.Instance;
+            if (cards == null || resolver == null) return false;
+
+            if (!cards.IsAllowedNow(CardData))
+            {
+                Debug.Log($"[CardView3D] {CardData.cardNameThai} cannot be played in this phase");
+                return false;
+            }
+
+            if (!cards.CanAfford(CardData))
+            {
+                Debug.LogWarning($"[CardView3D] Not enough Merit to play {CardData.cardNameThai} (Needs {CardData.meritCost})");
+                return false;
+            }
+
+            var targets = resolver.GetValidTargets(CardData, casterIsPlayer: true);
+            if (targets.Count == 0)
+            {
+                Debug.Log($"[CardView3D] {CardData.cardNameThai} has no valid target right now");
+                return false;
+            }
+
+            isAwaitingTarget = true;
+            CardTargeting3D.Ensure().Begin(this, targets, OnTargetChosen, OnTargetCancelled);
+            return true;
+        }
+
+        private void OnTargetChosen(CardInstance target)
+        {
+            isAwaitingTarget = false;
+            bool played = CardManager.Instance != null && CardManager.Instance.PlayCard(CardData, target);
+            if (!played)
+            {
+                ReturnToHand();
+                return;
+            }
+            transform.DOKill();
+            Destroy(gameObject);
+        }
+
+        private void OnTargetCancelled()
+        {
+            isAwaitingTarget = false;
+            if (this != null) ReturnToHand();
         }
 
         // Moves the dragged 3D card itself onto its assigned board slot, instead of just
@@ -152,7 +229,8 @@ namespace TawanOS.CardEngine
         {
             if (mainCamera == null) mainCamera = Camera.main;
 
-            BoardSlotView targetSlot = FindNearestEmptyPlayerSlot(Input.mousePosition);
+            // The engine has already put the card in a column; sit in that column's slot
+            BoardSlotView targetSlot = FindPlayerSlot(CardData.boardSlot);
             if (targetSlot == null)
             {
                 Debug.LogWarning($"[CardView3D] SnapToBoardSlot: no empty Player BoardSlotView available for {CardData.cardNameThai}.");
@@ -175,6 +253,18 @@ namespace TawanOS.CardEngine
             // The card has been committed to the board; it no longer drags/hovers like a hand card
             isPlacedOnBoard = true;
             enabled = false;
+        }
+
+        private static BoardSlotView FindPlayerSlot(int index)
+        {
+            if (index < 0) return null;
+            foreach (BoardSlotView slot in Object.FindObjectsByType<BoardSlotView>(FindObjectsSortMode.None))
+            {
+                if (slot.side != BoardSlotView.SlotSide.Player) continue;
+                if (slot.GetComponent<DeckPileView3D>() != null) continue;
+                if (slot.slotIndex == index) return slot;
+            }
+            return null;
         }
 
         private BoardSlotView FindNearestEmptyPlayerSlot(Vector2 screenPosition)

@@ -190,15 +190,14 @@ namespace TawanOS.CardEngine
             EnsureFolder(baseFolder, "Decks");
             EnsureFolder(baseFolder, "StatusEffects");
 
-            // 1. Create Starter Cards
-            var saisinSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CardEngineData/Cards/CardImg/saisin.png");
-            var c1 = CreateOrGetCard(baseFolder + "/Cards/Card_ExorcistKnife.asset", "c_knife", "มีดหมอปราบมาร", "Exorcist Knife", MagicSchool.WhiteMagic, CardType.Incantation, 1, 0, 8, 0, 0, 0, TargetType.SingleEnemy, "สร้างความเสียหายสะเทือนขวัญ {0} หน่วย", "อาคม • โจมตีเดี่ยว");
-            var c2 = CreateOrGetCard(baseFolder + "/Cards/Card_HolyWater.asset", "c_water", "น้ำมนต์ธรณีสาร", "Holy Water", MagicSchool.WhiteMagic, CardType.Incantation, 1, 0, 6, 0, 0, 0, TargetType.Self, "ได้รับเกราะคุ้มภัย {0} หน่วย", "อาคม • คุ้มครอง");
-            var c3 = CreateOrGetCard(baseFolder + "/Cards/Card_HolyThread.asset", "c_thread", "สายสิญจน์มัดวิญญาณ", "Holy Thread", MagicSchool.WhiteMagic, CardType.Incantation, 2, 0, 14, 0, 0, 0, TargetType.SingleEnemy, "สะกดวิญญาณรุนแรง {0} หน่วย", "อาคม • สะกดวิญญาณ", saisinSprite);
-            var c4 = CreateOrGetCard(baseFolder + "/Cards/Card_CorpseOil.asset", "c_oil", "น้ำมันพรายมนต์ดำ", "Corpse Oil", MagicSchool.BlackMagic, CardType.Incantation, 0, 2, 12, 0, 0, 0, TargetType.SingleEnemy, "มนต์ดำ! สร้างความเสียหาย {0} หน่วย (เพิ่มมลทิน +2)", "มนต์ดำ • โจมตีเดี่ยว");
-            var c5 = CreateOrGetCard(baseFolder + "/Cards/Card_SoulCurse.asset", "c_curse", "คำสาปมัดตราสัง", "Soul Curse", MagicSchool.BlackMagic, CardType.Incantation, 0, 3, 16, 0, 0, 0, TargetType.SingleEnemy, "มนต์ดำรุนแรง! สร้างความเสียหาย {0} หน่วย (เพิ่มมลทิน +3)", "มนต์ดำ • คำสาป");
-            var c6 = CreateOrGetCard(baseFolder + "/Cards/Card_PraiGrasipAmulet.asset", "c_amulet", "พรายกระซิบเตือนภัย", "Whispering Ghost Amulet", MagicSchool.WhiteMagic, CardType.Amulet, 1, 0, 0, 3, 0, 0, TargetType.Self, "เครื่องรางคุ้มภัย ทนทาน {0} ครั้ง", "เครื่องราง • ติดตัว");
-            var c7 = CreateOrGetCard(baseFolder + "/Cards/Card_KumanThongFamiliar.asset", "c_kuman", "กุมารทองเรียกทรัพย์", "Kuman Thong", MagicSchool.WhiteMagic, CardType.Familiar, 2, 0, 0, 0, 10, 4, TargetType.Self, "อัญเชิญกุมารทอง (HP 10, โจมตี 4 ต่อเทิร์น)", "บริวาร • อัญเชิญ");
+            // 1. Load the sheet cards (the only cards in the game) — used as the starter deck
+            var sheetCards = new List<CardDataSO>();
+            foreach (var prefix in new[] { "wi", "wa", "wf", "bi", "ba", "bf" })
+                for (int i = 1; i <= 7; i++)
+                {
+                    var card = AssetDatabase.LoadAssetAtPath<CardDataSO>($"{baseFolder}/Cards/Sheet/Card_s_{prefix}{i:00}.asset");
+                    if (card != null) sheetCards.Add(card);
+                }
 
             // 2. Create Starter Enemy Profiles
             var enemyPrai = CreateOrGetEnemy(baseFolder + "/Enemies/PraiGhostProfile.asset", "enemy_prai", "ผีพรายน้ำนอง", 30, false, new List<EnemyMove>
@@ -225,7 +224,7 @@ namespace TawanOS.CardEngine
                 deck.deckName = "สำรับหมอธรรมพื้นฐาน";
                 deck.defaultDrawCount = 5;
                 deck.maxHandSize = 10;
-                deck.startingCards = new List<CardDataSO> { c1, c1, c1, c2, c2, c3, c4, c5, c6, c7 };
+                deck.startingCards = new List<CardDataSO>(sheetCards);
                 AssetDatabase.CreateAsset(deck, deckPath);
             }
 
@@ -329,60 +328,6 @@ namespace TawanOS.CardEngine
             {
                 AssetDatabase.CreateFolder(parent, child);
             }
-        }
-
-        private static CardDataSO CreateOrGetCard(string path, string id, string nameTh, string nameEn, MagicSchool school, CardType type, int merit, int corrupt, int baseVal, int dura, int famHp, int famAtk, TargetType target, string desc, string customType = "", Sprite art = null)
-        {
-            CardDataSO card = AssetDatabase.LoadAssetAtPath<CardDataSO>(path);
-            if (card == null)
-            {
-                card = ScriptableObject.CreateInstance<CardDataSO>();
-                card.cardId = id;
-                card.cardNameThai = nameTh;
-                card.cardNameEng = nameEn;
-                card.magicSchool = school;
-                card.cardType = type;
-                card.meritCost = merit;
-                card.corruptionGain = corrupt;
-                card.baseValue = baseVal;
-                card.durability = dura;
-                card.familiarHealth = famHp;
-                card.familiarDamage = famAtk;
-                card.targetType = target;
-                card.descriptionFormat = desc;
-                card.customTypeText = customType;
-                card.artwork = art;
-
-                // Auto-assign Art's Card_Template_Base if present
-                Sprite defaultBg = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CardEngineData/Art/Card_Template_Base.png");
-                if (defaultBg == null) defaultBg = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CardEngineData/Cards/CardImg/Card_Template_Base.png");
-                card.cardBackground = defaultBg;
-
-                AssetDatabase.CreateAsset(card, path);
-            }
-            else
-            {
-                // Ensure existing cards also receive background and type text updates if missing
-                bool dirty = false;
-                if (card.cardBackground == null)
-                {
-                    Sprite defaultBg = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CardEngineData/Art/Card_Template_Base.png");
-                    if (defaultBg == null) defaultBg = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CardEngineData/Cards/CardImg/Card_Template_Base.png");
-                    if (defaultBg != null) { card.cardBackground = defaultBg; dirty = true; }
-                }
-                if (string.IsNullOrEmpty(card.customTypeText) && !string.IsNullOrEmpty(customType))
-                {
-                    card.customTypeText = customType;
-                    dirty = true;
-                }
-                if (card.artwork == null && art != null)
-                {
-                    card.artwork = art;
-                    dirty = true;
-                }
-                if (dirty) EditorUtility.SetDirty(card);
-            }
-            return card;
         }
 
         private static EnemyProfileSO CreateOrGetEnemy(string path, string id, string name, int hp, bool isBoss, List<EnemyMove> moves)

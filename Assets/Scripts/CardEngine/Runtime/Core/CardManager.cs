@@ -91,13 +91,41 @@ namespace TawanOS.CardEngine
             }
         }
 
+        // Whether the Merit cost can be paid right now (checked before asking the player for a target)
+        public bool CanAfford(CardInstance card)
+        {
+            if (card == null) return false;
+            if (!costSystemEnabled || CombatManager.Instance == null || card.magicSchool != MagicSchool.WhiteMagic) return true;
+            return CombatManager.Instance.State.currentMerit >= card.meritCost;
+        }
+
+        // The turn order only lets familiars/amulets be played first, then incantations
+        public bool IsAllowedNow(CardInstance card)
+        {
+            var turns = TurnPhaseController.Instance;
+            return turns == null || !turns.isActiveAndEnabled || turns.CanPlayCard(card);
+        }
+
         public bool PlayCard(CardInstance card, object target = null)
         {
             if (card == null || !handCards.Contains(card)) return false;
 
+            if (!IsAllowedNow(card))
+            {
+                Debug.Log($"[CardManager] {card.cardNameThai} cannot be played in this phase");
+                return false;
+            }
+
             if (EffectResolver.Instance == null)
             {
                 Debug.LogWarning($"[CardManager] No EffectResolver in scene; cannot play {card.cardNameThai}");
+                return false;
+            }
+
+            // An incantation with nothing to act on stays in hand and costs nothing
+            if (!EffectResolver.Instance.CanResolve(card, casterIsPlayer: true))
+            {
+                Debug.Log($"[CardManager] {card.cardNameThai} has no valid target right now");
                 return false;
             }
 
@@ -126,6 +154,75 @@ namespace TawanOS.CardEngine
             }
 
             OnCardPlayed?.Invoke(card);
+            return true;
+        }
+
+        // หลุมจั่ว: the player clicks the pit to draw one random card out of every card in the game.
+        // Each pull costs Corruption, whatever the debug cost switch says, since that is the pit's price.
+        public const int PitCorruptionGain = 1;
+
+        public bool DrawFromPit()
+        {
+            var combat = CombatManager.Instance;
+            if (combat != null && combat.CurrentPhase != CombatPhase.PlayerTurn) return false;
+
+            if (handCards.Count >= maxHandSize)
+            {
+                Debug.LogWarning("[CardManager] Hand is full! The pit gives nothing.");
+                return false;
+            }
+
+            var catalog = CardCatalogSO.Load();
+            var pool = new List<CardDataSO>();
+            if (catalog != null)
+            {
+                foreach (var template in catalog.cards) if (template != null) pool.Add(template);
+            }
+            if (pool.Count == 0)
+            {
+                Debug.LogWarning("[CardManager] No Resources/CardCatalog found; the pit has nothing to give.");
+                return false;
+            }
+
+            var drawn = new CardInstance(pool[UnityEngine.Random.Range(0, pool.Count)]);
+            AddToHand(drawn);
+            Debug.Log($"[CardManager] Pit drew {drawn.cardNameThai}");
+
+            combat?.AddCorruption(PitCorruptionGain);
+            return true;
+        }
+
+        // A card created mid-combat (summoned, given, or brought back) goes straight to the hand
+        public void AddToHand(CardInstance card)
+        {
+            if (card == null) return;
+
+            if (handCards.Count >= maxHandSize)
+            {
+                discardPile.Add(card);
+                OnCardDiscarded?.Invoke(card);
+                return;
+            }
+
+            handCards.Add(card);
+            OnCardDrawn?.Invoke(card);
+        }
+
+        // Board cards that died. Stored as a fresh copy so they come back at full strength.
+        public void SendToGraveyard(CardInstance card)
+        {
+            if (card == null) return;
+            discardPile.Add(card.source != null ? new CardInstance(card.source) : card);
+        }
+
+        public bool ReturnRandomFromDiscard()
+        {
+            if (discardPile.Count == 0) return false;
+
+            int index = UnityEngine.Random.Range(0, discardPile.Count);
+            var card = discardPile[index];
+            discardPile.RemoveAt(index);
+            AddToHand(card);
             return true;
         }
 

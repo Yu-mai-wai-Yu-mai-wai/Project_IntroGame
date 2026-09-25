@@ -4,9 +4,10 @@ using UnityEngine;
 
 namespace TawanOS.CardEngine
 {
-    // Minimal player-turn loop for testing the deck: Draw -> Main -> End -> (next turn) Draw.
-    // Add it to any object in the combat scene. While it is enabled, CombatManager hands the turn
-    // flow over to it (no enemy turn); the End Turn button and the Space key end the Main phase.
+    // The turn loop. Every turn: Draw -> the player plays familiars/amulets -> the enemy plays
+    // familiars/amulets -> the player casts incantations -> the enemy casts incantations -> the board
+    // clash -> End. Add it to any object in the combat scene; while it is enabled, CombatManager hands
+    // the turn flow over to it. The End Turn button and the Space key finish each of the player's phases.
     public class TurnPhaseController : MonoBehaviour
     {
         public static TurnPhaseController Instance { get; private set; }
@@ -22,9 +23,10 @@ namespace TawanOS.CardEngine
         public bool discardHandAtEnd = false;
         public float endPhaseDelay = 0.6f;
 
-        [Header("Enemy Phase")]
-        [Tooltip("On = the enemy acts (state machine AI) after every End phase. Off = old player-only test loop.")]
+        [Header("Enemy Phases")]
+        [Tooltip("On = the enemy plays its cards and the board clashes every turn. Off = player-only test loop.")]
         public bool enemyActsAfterEnd = true;
+        public float enemyPhaseEndDelay = 0.4f;
 
         [Header("Testing")]
         public KeyCode endTurnKey = KeyCode.Space;
@@ -61,9 +63,51 @@ namespace TawanOS.CardEngine
             loop = StartCoroutine(TurnLoop());
         }
 
+        // Finishes the player's current phase (familiars/amulets, then incantations)
         public void RequestEndTurn()
         {
-            if (CurrentPhase == TurnPhase.Main) endTurnRequested = true;
+            if (IsPlayerPhase(CurrentPhase)) endTurnRequested = true;
+        }
+
+        private static bool IsPlayerPhase(TurnPhase phase)
+        {
+            return phase == TurnPhase.PlayerBoard || phase == TurnPhase.PlayerSpell;
+        }
+
+        private static bool IsBoardCard(CardInstance card)
+        {
+            return card != null && (card.cardType == CardType.Familiar || card.cardType == CardType.Amulet);
+        }
+
+        private static bool IsIncantation(CardInstance card)
+        {
+            return card != null && card.cardType == CardType.Incantation;
+        }
+
+        // Which of the player's cards may be played right now
+        public bool CanPlayCard(CardInstance card)
+        {
+            switch (CurrentPhase)
+            {
+                case TurnPhase.PlayerBoard: return IsBoardCard(card);
+                case TurnPhase.PlayerSpell: return IsIncantation(card);
+                default: return false;
+            }
+        }
+
+        public static string PhaseLabel(TurnPhase phase)
+        {
+            switch (phase)
+            {
+                case TurnPhase.Draw: return "จั่วการ์ด";
+                case TurnPhase.PlayerBoard: return "ลงบริวาร / เครื่องราง";
+                case TurnPhase.EnemyBoard: return "ศัตรูลงบริวาร / เครื่องราง...";
+                case TurnPhase.PlayerSpell: return "ร่ายอาคม";
+                case TurnPhase.EnemySpell: return "ศัตรูร่ายอาคม...";
+                case TurnPhase.Clash: return "การ์ดตีกัน...";
+                case TurnPhase.End: return "จบเทิร์น";
+                default: return "";
+            }
         }
 
         private void Update()
@@ -100,32 +144,66 @@ namespace TawanOS.CardEngine
                     }
                 }
 
-                // --- Main ---
-                endTurnRequested = false;
-                SetPhase(TurnPhase.Main);
-                yield return new WaitUntil(() => endTurnRequested);
+                // Board cards with a start-of-turn ability (extra draw, Merit...) fire once the draw is done
+                EffectResolver.Instance?.TriggerTurnStart(isPlayer: true);
+
+                var combat = CombatManager.Instance;
+                bool enemyActs = enemyActsAfterEnd && combat != null;
+
+                // The enemy's turn starts at the same time: shield reset, start-of-turn abilities, its draw
+                if (enemyActs) yield return combat.EnemyTurnStart();
+
+                // --- 1. Player: familiars / amulets ---
+                yield return PlayerPhase(TurnPhase.PlayerBoard);
+
+                // --- 2. Enemy: familiars / amulets ---
+                if (enemyActs)
+                {
+                    SetPhase(TurnPhase.EnemyBoard);
+                    yield return combat.EnemyPlayCards(IsBoardCard);
+                    yield return new WaitForSeconds(enemyPhaseEndDelay);
+                    if (combat.IsCombatOver) break;
+                }
+
+                // --- 3. Player: incantations ---
+                yield return PlayerPhase(TurnPhase.PlayerSpell);
+                if (combat != null && combat.IsCombatOver) break;
+
+                // --- 4. Enemy: incantations (an enemy without a deck uses its telegraphed move here) ---
+                if (enemyActs)
+                {
+                    SetPhase(TurnPhase.EnemySpell);
+                    yield return combat.EnemyPlayCards(IsIncantation);
+                    combat.ResolveEnemyIntentMove();
+                    yield return new WaitForSeconds(enemyPhaseEndDelay);
+                    if (combat.IsCombatOver) break;
+
+                    // --- 5. Board clash, then end-of-round ticks ---
+                    SetPhase(TurnPhase.Clash);
+                    yield return combat.ClashAndRoundEnd();
+                    if (combat.IsCombatOver) break;
+                }
 
                 // --- End ---
                 SetPhase(TurnPhase.End);
                 if (discardHandAtEnd && cards != null) cards.DiscardHand();
                 yield return new WaitForSeconds(endPhaseDelay);
 
-                // --- Enemy ---
-                var combat = CombatManager.Instance;
-                if (enemyActsAfterEnd && combat != null)
-                {
-                    SetPhase(TurnPhase.Enemy);
-                    yield return combat.EnemyActionSequence();
-
-                    if (combat.CurrentPhase == CombatPhase.Victory || combat.CurrentPhase == CombatPhase.Defeat)
-                    {
-                        loop = null;
-                        yield break;
-                    }
-
-                    combat.PickNextEnemyMove(TurnNumber + 1);
-                }
+                if (enemyActs) combat.PickNextEnemyMove(TurnNumber + 1);
             }
+
+            loop = null;
+        }
+
+        // Waits for the player to finish one play phase (End Turn button / Space)
+        private IEnumerator PlayerPhase(TurnPhase phase)
+        {
+            endTurnRequested = false;
+            SetPhase(phase);
+            yield return new WaitUntil(() => endTurnRequested || (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver));
+
+            // A half-finished target choice ends with the phase
+            CardTargeting3D.Instance?.Cancel();
         }
 
         // Both sides draw their opening hand at the same moment, every card starting to fly at once
@@ -172,16 +250,23 @@ namespace TawanOS.CardEngine
                     combat.RefillMeritForTurn(TurnNumber);
                     combat.SetPhase(CombatPhase.TurnStartDraw);
                     break;
-                case TurnPhase.Main: combat.SetPhase(CombatPhase.PlayerTurn); break;
+                case TurnPhase.PlayerBoard:
+                case TurnPhase.PlayerSpell:
+                    combat.SetPhase(CombatPhase.PlayerTurn);
+                    break;
+                case TurnPhase.EnemyBoard:
+                case TurnPhase.EnemySpell:
+                case TurnPhase.Clash:
+                    combat.SetPhase(CombatPhase.EnemyIntentExecution);
+                    break;
                 case TurnPhase.End: combat.SetPhase(CombatPhase.RoundEndStatusTick); break;
-                case TurnPhase.Enemy: combat.SetPhase(CombatPhase.EnemyIntentExecution); break;
             }
         }
 
         private void OnGUI()
         {
             if (!showDebugLabel) return;
-            GUI.Label(new Rect(10, 10, 400, 24), $"Turn {TurnNumber}  |  Phase: {CurrentPhase}  |  [{endTurnKey}] end turn");
+            GUI.Label(new Rect(10, 10, 500, 24), $"Turn {TurnNumber}  |  Phase: {CurrentPhase}  |  [{endTurnKey}] next phase");
             if (CombatManager.Instance != null)
             {
                 var move = CombatManager.Instance.nextEnemyMove;

@@ -61,11 +61,8 @@ namespace TawanOS.CardEngine
             ClearSlot();
         }
 
-        // The board list is compacted (index i = i-th card played) while the physical card sits in
-        // whichever slot the player dropped it on, so a slot index in a resync event does not say which
-        // physical slot to empty. Clearing by index used to destroy cards that were still on the board
-        // (e.g. a familiar dropped on slot 3 vanished when only one card was in the list). Instead, a
-        // slot's physical card is removed only once it has left the board list.
+        // A slot's physical card is removed only once it has left the board list (cards keep their
+        // column, CardInstance.boardSlot, so this never removes a card that is still in play).
         private void RemoveCardNoLongerOnBoard()
         {
             if (side != SlotSide.Player) return;
@@ -97,9 +94,12 @@ namespace TawanOS.CardEngine
 
             if (statBadgeText != null)
             {
-                statBadgeText.text = card.cardType == CardType.Amulet
-                    ? $"ความคงทน: {card.currentDurability}"
-                    : $"HP:{card.familiarHealth} | ATK:{card.familiarDamage}";
+                if (card.cardType == CardType.Familiar)
+                    statBadgeText.text = $"HP:{card.familiarHealth} | ATK:{card.familiarDamage}";
+                else if (card.maxKhwan > 0)
+                    statBadgeText.text = $"HP:{card.familiarHealth}";
+                else
+                    statBadgeText.text = $"ความคงทน: {card.currentDurability}";
             }
         }
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace TawanOS.CardEngine
@@ -28,6 +29,10 @@ namespace TawanOS.CardEngine
         public int durability = 3;
         public int familiarHealth = 10;
         public int familiarDamage = 4;
+
+        [Header("Abilities")]
+        [Tooltip("ความสามารถของการ์ด (ว่าง = การ์ดแบบเดิมที่ใช้ baseValue/targetType)")]
+        public List<CardAbility> abilities = new List<CardAbility>();
 
         [Header("Visuals & Audio")]
         [Tooltip("ภาพพื้นหลังการ์ดเต็มใบที่ Art วาด (วางพื้นหลังได้เลย)")]

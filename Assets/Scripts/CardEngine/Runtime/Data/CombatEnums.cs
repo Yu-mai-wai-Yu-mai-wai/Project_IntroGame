@@ -36,14 +36,18 @@ namespace TawanOS.CardEngine
         Defeat
     }
 
-    // Simplified player turn used to test drawing: Draw -> Main -> End, then the next turn starts.
+    // One turn: Draw -> player plays familiars/amulets -> enemy does the same -> player casts
+    // incantations -> enemy does the same -> board clash -> End, then the next turn starts.
     public enum TurnPhase
     {
         None,
         Draw,
-        Main,
-        End,
-        Enemy
+        PlayerBoard,    // ผู้เล่นลงบริวาร / เครื่องราง
+        EnemyBoard,     // ศัตรูลงบริวาร / เครื่องราง
+        PlayerSpell,    // ผู้เล่นร่ายอาคม
+        EnemySpell,     // ศัตรูร่ายอาคม
+        Clash,          // การ์ดตีกัน
+        End
     }
 
     public enum EnemyIntent

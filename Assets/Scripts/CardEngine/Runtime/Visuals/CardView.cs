@@ -116,10 +116,11 @@ namespace TawanOS.CardEngine
             if (familiarBadgeRoot != null)
             {
                 bool isFamiliar = card.cardType == CardType.Familiar;
-                familiarBadgeRoot.SetActive(isFamiliar);
-                if (isFamiliar && hpAtkBadgeText != null)
+                bool hasKhwan = isFamiliar || card.maxKhwan > 0;
+                familiarBadgeRoot.SetActive(hasKhwan);
+                if (hasKhwan && hpAtkBadgeText != null)
                 {
-                    hpAtkBadgeText.text = $"{card.familiarHealth} / {card.familiarDamage}";
+                    hpAtkBadgeText.text = isFamiliar ? $"{card.familiarHealth} / {card.familiarDamage}" : $"{card.familiarHealth}";
                 }
             }
         }
