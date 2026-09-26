@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bi05
   cardNameThai: "\u0e04\u0e32\u0e16\u0e32\u0e2a\u0e30\u0e01\u0e14"
-  cardNameEng: s_bi05
+  cardNameEng: Binding Chant
   descriptionFormat: "\u0e21\u0e2d\u0e1a\u0e2a\u0e16\u0e32\u0e19\u0e30\u0e1c\u0e35\u0e1a\u0e31\u0e07\u0e15\u0e32\u0e43\u0e2b\u0e49\u0e28\u0e31\u0e15\u0e23\u0e39 1 \u0e43\u0e1a"
   magicSchool: 1
   cardType: 0

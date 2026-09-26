@@ -1,18 +1,19 @@
 using System;
+using UnityEngine;
 
 namespace TawanOS.CardEngine
 {
     public enum MagicSchool
     {
-        WhiteMagic,     // มนต์ขาว: ใช้ค่ากุศล (Merit)
-        BlackMagic      // มนต์ดำ: ไร้ค่าร่ายกุศล แต่เพิ่มมลทิน (Corruption)
+        [InspectorName("มนต์ขาว")] WhiteMagic,     // มนต์ขาว: ใช้ค่ากุศล (Merit)
+        [InspectorName("มนต์ดำ")] BlackMagic      // มนต์ดำ: ไร้ค่าร่ายกุศล แต่เพิ่มมลทิน (Corruption)
     }
 
     public enum CardType
     {
-        Incantation,    // การ์ดอาคม: ส่งผลทันทีจากมือ
-        Amulet,         // การ์ดเครื่องราง: วางลงช่องเครื่องราง ให้บัฟต่อเนื่อง
-        Familiar        // การ์ดบริวาร: วางลงสนาม มี HP ขวัญ และ ATK สะเทือนขวัญ
+        [InspectorName("อาคม")] Incantation,    // การ์ดอาคม: ส่งผลทันทีจากมือ
+        [InspectorName("เครื่องราง")] Amulet,         // การ์ดเครื่องราง: วางลงช่องเครื่องราง ให้บัฟต่อเนื่อง
+        [InspectorName("บริวาร")] Familiar        // การ์ดบริวาร: วางลงสนาม มี HP ขวัญ และ ATK สะเทือนขวัญ
     }
 
     public enum TargetType

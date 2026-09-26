@@ -1,224 +1,346 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 namespace TawanOS.CardEngine
 {
+    // Card Data inspector: build a card here and see it the way the game draws it.
+    //  - Live preview with the same frame and text layout as the in-game 3D card (CardFaceLayout)
+    //  - Thai labels, only the fields that matter for the card's type
+    //  - "Use in game": the card catalog (pit / random summons) and the player / enemy decks
     [CustomEditor(typeof(CardDataSO))]
     public class CardDataSOEditor : Editor
     {
-        private bool showLivePreview = true;
+        private const string CardFolder = "Assets/CardEngineData/Cards/Custom";
+        private const string CardPrefabPath = "Assets/CardEngineData/Prefabs/CardCube3DPrefab.prefab";
+
+        private static bool showPreview = true;
+        private static bool showAdvanced;
+
+        private Sprite whiteFrame, blackFrame;
+
+        private void OnEnable()
+        {
+            // The same default frames the game uses (set on the card prefab)
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            var view = prefab != null ? prefab.GetComponent<CardView3D>() : null;
+            if (view != null)
+            {
+                whiteFrame = view.defaultWhiteFrame;
+                blackFrame = view.defaultBlackFrame;
+            }
+        }
 
         public override void OnInspectorGUI()
         {
-            CardDataSO card = (CardDataSO)target;
+            var card = (CardDataSO)target;
+            serializedObject.Update();
 
-            // Top Quick Actions Toolbar
-            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-            if (GUILayout.Button("+ สร้างการ์ดใหม่ (New Card)", EditorStyles.toolbarButton, GUILayout.Width(170)))
-            {
-                CreateNewCardAsset();
-            }
-            if (GUILayout.Button("📁 เปิดโฟลเดอร์การ์ด", EditorStyles.toolbarButton))
-            {
-                var folder = AssetDatabase.LoadAssetAtPath<Object>("Assets/CardEngineData/Cards");
-                if (folder != null) Selection.activeObject = folder;
-            }
-            EditorGUILayout.EndHorizontal();
+            DrawToolbar();
+            EditorGUILayout.Space(4);
 
-            EditorGUILayout.Space(6);
+            showPreview = EditorGUILayout.Foldout(showPreview, "พรีวิวการ์ด (หน้าตาเดียวกับในเกม)", true, EditorStyles.foldoutHeader);
+            if (showPreview) DrawPreview(card);
 
-            // Live Preview Card (WYSIWYG Inspector)
-            showLivePreview = EditorGUILayout.Foldout(showLivePreview, "🃏 LIVE CARD PREVIEW (พรีวิวการ์ดแบบเรียลไทม์)", true, EditorStyles.foldoutHeader);
-            if (showLivePreview)
-            {
-                DrawLiveCardPreview(card);
-            }
-
-            EditorGUILayout.Space(10);
-            EditorGUILayout.LabelField("⚙️ คุณสมบัติการ์ด (Card Properties)", EditorStyles.boldLabel);
-
+            EditorGUILayout.Space(8);
             EditorGUI.BeginChangeCheck();
-            DrawDefaultInspector();
-            if (EditorGUI.EndChangeCheck())
+            DrawFields(card);
+            bool changed = EditorGUI.EndChangeCheck();
+
+            serializedObject.ApplyModifiedProperties();
+            if (changed) RefreshCardViews(card);
+
+            EditorGUILayout.Space(8);
+            DrawUseInGame(card);
+        }
+
+        // 3D cards in the open scene / Prefab Mode that show this Card Data redraw right away
+        private static void RefreshCardViews(CardDataSO card)
+        {
+            var views = new List<CardView3D>(Object.FindObjectsByType<CardView3D>(FindObjectsInactive.Include, FindObjectsSortMode.None));
+            views.AddRange(UnityEditor.SceneManagement.StageUtility.GetCurrentStageHandle().FindComponentsOfType<CardView3D>());
+            foreach (var view in views)
             {
-                EditorUtility.SetDirty(card);
-                Repaint();
+                if (view != null && view.cardDataAsset == card) view.RefreshEditorPreview();
             }
         }
 
-        private void DrawLiveCardPreview(CardDataSO card)
+        // ---------------------------------------------------------------- toolbar
+
+        private static void DrawToolbar()
         {
-            float cardWidth = 220f;
-            float cardHeight = 310f;
-
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-
-            Rect cardRect = GUILayoutUtility.GetRect(cardWidth, cardHeight);
-
-            // 1. Full Card Background (วาดภาพเต็มใบจากทีม Art หรือ Fallback)
-            Sprite bgSprite = card.cardBackground != null ? card.cardBackground : card.frameBorder;
-            if (bgSprite != null && bgSprite.texture != null)
+            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+            if (GUILayout.Button("+ สร้างการ์ดใหม่", EditorStyles.toolbarButton, GUILayout.Width(110))) CreateNewCard();
+            if (GUILayout.Button("เปิดโฟลเดอร์การ์ด", EditorStyles.toolbarButton, GUILayout.Width(110)))
             {
-                GUI.DrawTexture(cardRect, bgSprite.texture, ScaleMode.StretchToFill);
+                var folder = AssetDatabase.LoadAssetAtPath<Object>(AssetDatabase.IsValidFolder(CardFolder) ? CardFolder : "Assets/CardEngineData/Cards");
+                if (folder != null) EditorGUIUtility.PingObject(folder);
             }
-            else
-            {
-                // Fallback background matching Art team color palette
-                Color baseBg = new Color(0.53f, 0.53f, 0.53f); // Clean card gray
-                EditorGUI.DrawRect(cardRect, baseBg);
-                // Top header darker gray
-                EditorGUI.DrawRect(new Rect(cardRect.x, cardRect.y, cardRect.width, 46), new Color(0.44f, 0.44f, 0.44f));
-                // Center art box light gray
-                EditorGUI.DrawRect(new Rect(cardRect.x, cardRect.y + 46, cardRect.width, 134), new Color(0.84f, 0.84f, 0.84f));
-                // Divider line
-                EditorGUI.DrawRect(new Rect(cardRect.x + 10, cardRect.y + 180, cardRect.width - 20, 1.5f), new Color(0.75f, 0.75f, 0.75f));
-            }
-
-            // 2. Header Bar: Name Thai (Top-Left)
-            Rect nameRect = new Rect(cardRect.x + 12, cardRect.y + 10, cardRect.width - 60, 30);
-            GUIStyle nameThaiStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                alignment = TextAnchor.MiddleLeft,
-                fontSize = 15,
-                normal = { textColor = Color.white }
-            };
-            GUI.Label(nameRect, string.IsNullOrEmpty(card.cardNameThai) ? "ชื่อการ์ด" : card.cardNameThai, nameThaiStyle);
-
-            // 3. Cost Badge Circle (Top-Right "0")
-            Rect costCircleRect = new Rect(cardRect.xMax - 42, cardRect.y + 6, 32, 32);
-            bool isWhiteMagic = card.magicSchool == MagicSchool.WhiteMagic;
-            string costStr = isWhiteMagic ? $"{card.meritCost}" : $"+{card.corruptionGain}";
-            
-            // Draw circle background if no background sprite
-            if (bgSprite == null)
-            {
-                EditorGUI.DrawRect(costCircleRect, new Color(0.2f, 0.2f, 0.2f, 0.85f));
-            }
-            GUIStyle costStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 15,
-                normal = { textColor = Color.white }
-            };
-            GUI.Label(costCircleRect, costStr, costStyle);
-
-            // 4. Artwork Box ("รูป" - Center)
-            Rect artRect = new Rect(cardRect.x + 8, cardRect.y + 48, cardRect.width - 16, 130);
-            if (card.artwork != null && card.artwork.texture != null)
-            {
-                GUI.DrawTexture(artRect, card.artwork.texture, ScaleMode.ScaleToFit);
-            }
-            else
-            {
-                GUIStyle placeholderStyle = new GUIStyle(EditorStyles.centeredGreyMiniLabel)
-                {
-                    alignment = TextAnchor.MiddleCenter,
-                    wordWrap = true,
-                    fontSize = 11,
-                    normal = { textColor = new Color(0.35f, 0.35f, 0.35f) }
-                };
-                GUI.Label(artRect, "รูป\n(ลาก Sprite มาใส่ในช่อง Artwork)", placeholderStyle);
-            }
-
-            // 5. Stat Badge (Familiar HP/ATK or Amulet Durability overlay if active)
-            if (card.cardType == CardType.Familiar)
-            {
-                Rect statBadge = new Rect(artRect.x, artRect.yMax - 20, artRect.width, 20);
-                EditorGUI.DrawRect(statBadge, new Color(0, 0, 0, 0.75f));
-                GUIStyle statStyle = new GUIStyle(EditorStyles.boldLabel)
-                {
-                    alignment = TextAnchor.MiddleCenter,
-                    fontSize = 10,
-                    normal = { textColor = new Color(0.4f, 0.9f, 0.4f) }
-                };
-                GUI.Label(statBadge, $"HP: {card.familiarHealth} | ATK: {card.familiarDamage}", statStyle);
-            }
-            else if (card.cardType == CardType.Amulet)
-            {
-                Rect statBadge = new Rect(artRect.x, artRect.yMax - 20, artRect.width, 20);
-                EditorGUI.DrawRect(statBadge, new Color(0, 0, 0, 0.75f));
-                GUIStyle statStyle = new GUIStyle(EditorStyles.boldLabel)
-                {
-                    alignment = TextAnchor.MiddleCenter,
-                    fontSize = 10,
-                    normal = { textColor = new Color(0.4f, 0.7f, 1f) }
-                };
-                GUI.Label(statBadge, $"ความคงทน: {card.durability} ครั้ง", statStyle);
-            }
-
-            // 6. Card Type • Subtype Divider ("ประเภท • รูปแบบ")
-            Rect typeRect = new Rect(cardRect.x + 10, cardRect.y + 180, cardRect.width - 20, 24);
-            GUIStyle typeStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 11,
-                normal = { textColor = Color.white }
-            };
-            string typeDisplay = card.GetFormattedTypeText();
-            GUI.Label(typeRect, string.IsNullOrEmpty(typeDisplay) ? "ประเภท • รูปแบบ" : typeDisplay, typeStyle);
-
-            // 7. Description Box ("คำอธิบาย")
-            Rect descRect = new Rect(cardRect.x + 14, cardRect.y + 208, cardRect.width - 28, 92);
-            string formattedDesc = "";
-            try
-            {
-                formattedDesc = string.Format(card.descriptionFormat ?? "", card.baseValue);
-            }
-            catch
-            {
-                formattedDesc = card.descriptionFormat ?? "";
-            }
-
-            GUIStyle descStyle = new GUIStyle(EditorStyles.wordWrappedLabel)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 12,
-                normal = { textColor = Color.white }
-            };
-            GUI.Label(descRect, string.IsNullOrEmpty(formattedDesc) ? "คำอธิบาย" : formattedDesc, descStyle);
-
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
         }
 
-        private static void CreateNewCardAsset()
+        [MenuItem("Tools/TawanOS/Card Engine/New Card")]
+        public static void CreateNewCard()
         {
-            string folder = "Assets/CardEngineData/Cards";
-            if (!AssetDatabase.IsValidFolder(folder))
+            if (!AssetDatabase.IsValidFolder(CardFolder))
             {
-                Directory.CreateDirectory(folder);
+                Directory.CreateDirectory(CardFolder);
                 AssetDatabase.Refresh();
             }
 
-            string uniquePath = AssetDatabase.GenerateUniqueAssetPath(folder + "/Card_NewCustomCard.asset");
-            CardDataSO newCard = ScriptableObject.CreateInstance<CardDataSO>();
-            newCard.cardId = "card_" + System.Guid.NewGuid().ToString().Substring(0, 8);
-            newCard.cardNameThai = "ชื่อการ์ดใหม่";
-            newCard.cardNameEng = "New Card";
-            newCard.customTypeText = "อาคม • โจมตีเดี่ยว";
-            newCard.descriptionFormat = "สร้างความเสียหายสะเทือนขวัญ {0} หน่วย";
-            newCard.baseValue = 10;
-            newCard.meritCost = 1;
+            string path = AssetDatabase.GenerateUniqueAssetPath(CardFolder + "/Card_New.asset");
+            var card = CreateInstance<CardDataSO>();
+            card.cardId = Path.GetFileNameWithoutExtension(path);
+            card.cardNameThai = "การ์ดใหม่";
+            card.cardType = CardType.Familiar;
+            card.magicSchool = MagicSchool.WhiteMagic;
+            card.meritCost = 1;
 
-            // Auto-assign Art's Card_Template_Base if present
-            Sprite defaultBg = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CardEngineData/Art/Card_Template_Base.png");
-            if (defaultBg == null)
-            {
-                defaultBg = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/CardEngineData/Cards/CardImg/Card_Template_Base.png");
-            }
-            if (defaultBg != null)
-            {
-                newCard.cardBackground = defaultBg;
-            }
-
-            AssetDatabase.CreateAsset(newCard, uniquePath);
+            AssetDatabase.CreateAsset(card, path);
+            CardCatalogAutoRegister.AddToCatalog(card);
             AssetDatabase.SaveAssets();
-            Selection.activeObject = newCard;
-            EditorGUIUtility.PingObject(newCard);
-            Debug.Log($"<color=green>[CardDataSOEditor] สร้างการ์ดใหม่สำเร็จ: {uniquePath}</color>");
+            Selection.activeObject = card;
+            EditorGUIUtility.PingObject(card);
+        }
+
+        // ---------------------------------------------------------------- fields
+
+        private void DrawFields(CardDataSO card)
+        {
+            Section("ข้อมูลการ์ด");
+            Prop("cardNameThai", "ชื่อการ์ด");
+            Prop("cardNameEng", "ชื่ออังกฤษ");
+            Prop("cardId", "รหัสการ์ด");
+            Prop("magicSchool", "สาย");
+            Prop("cardType", "ประเภท");
+            Prop("customTypeText", "ข้อความประเภท", "เว้นว่าง = \"" + AutoTypeText(card) + "\"");
+            Prop("descriptionFormat", "คำอธิบายความสามารถ", "ข้อความในกล่องล่างของการ์ด ({0} = ค่า Base Value)");
+
+            Section("ค่าร่าย");
+            if (card.magicSchool == MagicSchool.WhiteMagic) Prop("meritCost", "กุศล");
+            else Prop("corruptionGain", "มลทิน");
+
+            if (card.cardType == CardType.Familiar)
+            {
+                Section("ค่าบริวาร");
+                Prop("familiarHealth", "ขวัญ (HP)");
+                Prop("familiarDamage", "สะเทือนขวัญ (ATK)");
+            }
+            else if (card.cardType == CardType.Amulet)
+            {
+                Section("ค่าเครื่องราง");
+                Prop("familiarHealth", "ขวัญ (HP)", "0 = ตีทำลายไม่ได้");
+                Prop("durability", "อายุขลัง", "จำนวนรอบก่อนหมดอายุ (0 = อยู่จนกว่าจะพัง)");
+            }
+
+            Section("ความสามารถ");
+            EditorGUILayout.HelpBox(
+                "แต่ละความสามารถ: เลือก 'ทำงานเมื่อ' (Trigger), 'เป้าหมาย' (Target) และ 'ผล' (Effect)\n" +
+                "ค่า (Value) = จำนวนหน่วย, ระยะเวลา (Duration) = จำนวนเทิร์นของสถานะ\n" +
+                "เครื่องรางที่ให้ผลค้างบนสนาม ให้ใช้ 'ขณะอยู่บนสนาม (ออร่า)' ผลจะหายเมื่อเครื่องรางพัง",
+                MessageType.None);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("abilities"), new GUIContent("ความสามารถ"), true);
+
+            Section("ขนาดตัวหนังสือบนการ์ด");
+            Prop("fontSizeAll", "ทั้งหมด", "คูณกับขนาดแต่ละส่วนด้านล่าง (1 = ปกติ)");
+            Prop("nameFontSize", "ชื่อการ์ด");
+            Prop("typeFontSize", "ประเภท / สาย");
+            Prop("costFontSize", "ค่าร่าย");
+            Prop("statFontSize", "สะเทือนขวัญ / ขวัญ");
+            Prop("descriptionFontSize", "คำอธิบาย", "ยังย่อเองถ้าข้อความยาวเกินกล่อง");
+
+            Section("รูป");
+            Prop("cardBackground", "กรอบ / พื้นหลัง", "เว้นว่าง = ใช้กรอบตามสาย (ทอง = มนต์ขาว, แดง = มนต์ดำ)");
+            Prop("artwork", "ภาพประกอบ", "วางในช่องภาพของกรอบ");
+
+            EditorGUILayout.Space(4);
+            showAdvanced = EditorGUILayout.Foldout(showAdvanced, "ขั้นสูง (ระบบเก่า / เสียง / เอฟเฟกต์)", true);
+            if (showAdvanced)
+            {
+                EditorGUI.indentLevel++;
+                Prop("baseValue", "Base Value", "ใช้แทน {0} ในคำอธิบาย และอาคมแบบเก่าที่ไม่มีความสามารถ");
+                Prop("targetType", "Target Type (ระบบเก่า)");
+                Prop("frameBorder", "Frame Border (ระบบเก่า)");
+                Prop("sfxPlay", "เสียงตอนลงการ์ด");
+                Prop("vfxPrefab", "เอฟเฟกต์ตอนลงการ์ด");
+                EditorGUI.indentLevel--;
+            }
+        }
+
+        private static void Section(string title)
+        {
+            EditorGUILayout.Space(6);
+            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+        }
+
+        private void Prop(string name, string label, string tooltip = null)
+        {
+            var p = serializedObject.FindProperty(name);
+            if (p == null) return;
+            EditorGUILayout.PropertyField(p, new GUIContent(label, tooltip ?? p.tooltip), true);
+        }
+
+        private static string AutoTypeText(CardDataSO card)
+        {
+            string saved = card.customTypeText;
+            card.customTypeText = "";
+            string auto = card.GetFormattedTypeText();
+            card.customTypeText = saved;
+            return auto;
+        }
+
+        // ---------------------------------------------------------------- preview
+
+        private void DrawPreview(CardDataSO card)
+        {
+            const float width = 230f;
+            float height = width * 1312f / 939f;
+
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            Rect r = GUILayoutUtility.GetRect(width, height, GUILayout.Width(width), GUILayout.Height(height));
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.EndHorizontal();
+
+            // Frame: the card's own background, else the default frame of its school
+            Sprite frame = card.cardBackground != null
+                ? card.cardBackground
+                : CardFaceLayout.DefaultFrame(whiteFrame, blackFrame, card.magicSchool);
+            if (frame != null) DrawSprite(r, frame, ScaleMode.StretchToFill);
+            else EditorGUI.DrawRect(r, card.magicSchool == MagicSchool.WhiteMagic ? new Color(0.85f, 0.8f, 0.55f) : new Color(0.35f, 0.1f, 0.15f));
+
+            if (card.artwork != null) DrawSprite(BoxRect(r, CardFaceLayout.Artwork), card.artwork, ScaleMode.ScaleToFit);
+
+            Color text = frame != null ? Color.white : (card.magicSchool == MagicSchool.WhiteMagic ? new Color(0.12f, 0.08f, 0.05f) : new Color(0.95f, 0.9f, 0.85f));
+            Color typeColor = frame != null ? new Color(0.95f, 0.72f, 0.72f) : text;
+
+            string cost = card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost.ToString() : card.corruptionGain.ToString();
+            float Fs(CardFaceLayout.Text part) => CardFaceLayout.FontScale(card, part);
+            DrawText(r, CardFaceLayout.Cost.Scaled(Fs(CardFaceLayout.Text.Cost)), cost, text, FontStyle.Bold);
+            DrawText(r, CardFaceLayout.Name.Scaled(Fs(CardFaceLayout.Text.Name)), string.IsNullOrEmpty(card.cardNameThai) ? "ชื่อการ์ด" : card.cardNameThai, text, FontStyle.Bold);
+            DrawText(r, CardFaceLayout.Type.Scaled(Fs(CardFaceLayout.Text.Type)), card.GetFormattedTypeText().Replace(" • ", "  "), typeColor, FontStyle.Normal);
+
+            if (card.cardType == CardType.Familiar) DrawText(r, CardFaceLayout.Attack.Scaled(Fs(CardFaceLayout.Text.Stat)), card.familiarDamage.ToString(), text, FontStyle.Bold);
+            if (card.cardType == CardType.Familiar || (card.cardType == CardType.Amulet && card.familiarHealth > 0))
+            {
+                DrawText(r, CardFaceLayout.Khwan.Scaled(Fs(CardFaceLayout.Text.Stat)), card.familiarHealth.ToString(), text, FontStyle.Bold);
+            }
+
+            string description;
+            try { description = string.Format(card.descriptionFormat ?? "", card.baseValue); }
+            catch { description = card.descriptionFormat ?? ""; }
+            DrawText(r, CardFaceLayout.Description, description, text, FontStyle.Normal, wrap: true,
+                maxFont: Mathf.RoundToInt(13 * Fs(CardFaceLayout.Text.Description)));
+        }
+
+        private static Rect BoxRect(Rect card, CardFaceLayout.Box box)
+        {
+            float w = box.size.x * card.width, h = box.size.y * card.height;
+            float cx = card.x + (box.center.x + 0.5f) * card.width;
+            float cy = card.y + (0.5f - box.center.y) * card.height;
+            return new Rect(cx - w * 0.5f, cy - h * 0.5f, w, h);
+        }
+
+        private static void DrawText(Rect card, CardFaceLayout.Box box, string text, Color color, FontStyle style, bool wrap = false, int maxFont = 0)
+        {
+            if (string.IsNullOrEmpty(text)) return;
+            Rect rect = BoxRect(card, box);
+            int size = Mathf.Max(8, Mathf.RoundToInt(rect.height * 0.75f));
+            if (maxFont > 0) size = Mathf.Min(size, maxFont);
+
+            var gs = new GUIStyle(EditorStyles.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = size,
+                fontStyle = style,
+                wordWrap = wrap,
+                clipping = TextClipping.Overflow,
+                normal = { textColor = color },
+            };
+            GUI.Label(rect, text, gs);
+        }
+
+        private static void DrawSprite(Rect rect, Sprite sprite, ScaleMode mode)
+        {
+            if (sprite == null || sprite.texture == null) return;
+            var tex = sprite.texture;
+            Rect uv = sprite.textureRect;
+            uv = new Rect(uv.x / tex.width, uv.y / tex.height, uv.width / tex.width, uv.height / tex.height);
+
+            if (mode == ScaleMode.ScaleToFit)
+            {
+                float aspect = sprite.rect.width / sprite.rect.height;
+                if (rect.width / rect.height > aspect)
+                {
+                    float w = rect.height * aspect;
+                    rect = new Rect(rect.center.x - w * 0.5f, rect.y, w, rect.height);
+                }
+                else
+                {
+                    float h = rect.width / aspect;
+                    rect = new Rect(rect.x, rect.center.y - h * 0.5f, rect.width, h);
+                }
+            }
+            GUI.DrawTextureWithTexCoords(rect, tex, uv, true);
+        }
+
+        // ---------------------------------------------------------------- use in game
+
+        private static void DrawUseInGame(CardDataSO card)
+        {
+            Section("ใช้ในเกม");
+
+            var catalog = CardCatalogAutoRegister.LoadCatalog();
+            if (catalog == null)
+            {
+                EditorGUILayout.HelpBox("ไม่พบ Resources/CardCatalog", MessageType.Warning);
+            }
+            else if (catalog.cards.Contains(card))
+            {
+                EditorGUILayout.LabelField("อยู่ในคลังการ์ดของเกมแล้ว (สุ่มจากหลุมจั่ว / อัญเชิญได้)", EditorStyles.miniLabel);
+            }
+            else if (GUILayout.Button("เพิ่มเข้าคลังการ์ดของเกม"))
+            {
+                CardCatalogAutoRegister.AddToCatalog(card);
+            }
+
+            EditorGUILayout.Space(2);
+            EditorGUILayout.LabelField("จำนวนในเด็ค", EditorStyles.miniBoldLabel);
+
+            foreach (string guid in AssetDatabase.FindAssets("t:DeckConfigSO"))
+            {
+                var deck = AssetDatabase.LoadAssetAtPath<DeckConfigSO>(AssetDatabase.GUIDToAssetPath(guid));
+                if (deck != null) DeckRow("ผู้เล่น: " + deck.name, deck, deck.startingCards, card);
+            }
+            foreach (string guid in AssetDatabase.FindAssets("t:EnemyProfileSO"))
+            {
+                var enemy = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(AssetDatabase.GUIDToAssetPath(guid));
+                if (enemy != null && enemy.deck != null && enemy.deck.Count > 0) DeckRow("ศัตรู: " + enemy.name, enemy, enemy.deck, card);
+            }
+        }
+
+        private static void DeckRow(string label, Object owner, List<CardDataSO> list, CardDataSO card)
+        {
+            int count = list.FindAll(c => c == card).Count;
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(label, GUILayout.MinWidth(120));
+            if (GUILayout.Button("-", GUILayout.Width(24)) && count > 0)
+            {
+                Undo.RecordObject(owner, "Remove card from deck");
+                list.Remove(card);
+                EditorUtility.SetDirty(owner);
+            }
+            GUILayout.Label(count.ToString(), EditorStyles.boldLabel, GUILayout.Width(24));
+            if (GUILayout.Button("+", GUILayout.Width(24)))
+            {
+                Undo.RecordObject(owner, "Add card to deck");
+                list.Add(card);
+                EditorUtility.SetDirty(owner);
+            }
+            EditorGUILayout.EndHorizontal();
         }
     }
 }

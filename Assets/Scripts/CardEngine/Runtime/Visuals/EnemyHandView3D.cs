@@ -24,6 +24,8 @@ namespace TawanOS.CardEngine
         [Tooltip("Offset from the camera (right, up, forward). Auto-mirrored from the player's hand anchor when Auto Mirror is on.")]
         public Vector3 offset = new Vector3(0f, 1.5f, 3f);
         public bool autoMirrorPlayerAnchor = true;
+        [Tooltip("Scale of the cards in the enemy's hand (board cards are the card prefab's full size).")]
+        public float handCardScale = 0.5f;
 
         [Header("Fan Layout (copied from the player's hand when found)")]
         public float cardSpacing = 0.9f;
@@ -46,6 +48,9 @@ namespace TawanOS.CardEngine
         private EnemyCardPlayer enemyCards;
         private Camera cam;
         private Transform container;
+
+        // The object the enemy's hand cards sit under (CombatCameraRig3D scales it with the camera zoom)
+        public Transform Container => container;
         private Transform deckSlot;
         private Transform pile;
         private Vector3 tableCenter;
@@ -99,6 +104,7 @@ namespace TawanOS.CardEngine
 
             container = new GameObject("EnemyHandCards").transform;
             container.SetParent(transform, false);
+            container.localScale = Vector3.one * handCardScale;
             AnchorToCamera();
             BuildPile();
 

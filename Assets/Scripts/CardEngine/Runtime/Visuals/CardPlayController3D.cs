@@ -25,10 +25,6 @@ namespace TawanOS.CardEngine
         public float heldScale = 1.4f;
         public float moveDuration = 0.25f;
 
-        [Header("Top-Down Camera")]
-        public float topViewHeight = 13f;
-        public float cameraMoveDuration = 0.4f;
-
         [Header("Slot Picking")]
         [Tooltip("How close (fraction of the screen height) a click must be to a slot to pick it.")]
         public float slotPickRadius = 0.09f;
@@ -40,10 +36,7 @@ namespace TawanOS.CardEngine
         private int endedFrame = -1;
 
         private Camera cam;
-        private Vector3 camHomePosition;
-        private Quaternion camHomeRotation;
-        private bool cameraAtTop;
-        private bool hasCamHome;
+        private bool cameraRequested;
         private bool switching;
 
         private readonly Dictionary<BoardSlotView, Renderer> slotMarkers = new Dictionary<BoardSlotView, Renderer>();
@@ -284,7 +277,7 @@ namespace TawanOS.CardEngine
                 go.transform.SetParent(slot.transform, false);
                 go.transform.localPosition = Vector3.up * 0.03f;
                 go.transform.localRotation = Quaternion.identity;
-                go.transform.localScale = new Vector3(0.8f, 0.02f, 1.1f);
+                go.transform.localScale = new Vector3(1.5f, 0.02f, 2.1f);
 
                 var r = go.GetComponent<Renderer>();
                 r.material = markerMaterial;
@@ -334,66 +327,19 @@ namespace TawanOS.CardEngine
 
         // ---------------------------------------------------------------- camera
 
+        // The top-down view comes from CombatCameraRig3D; it returns to the player's chosen view afterwards
         private void MoveCameraToTop()
         {
-            if (cam == null) cam = Camera.main;
-            if (cam == null || cameraAtTop) return;
-            if (!TryGetBoardFrame(out Vector3 center, out Vector3 towardEnemy)) return;
-
-            // The combat camera does not move otherwise, so its first pose is home
-            if (!hasCamHome)
-            {
-                camHomePosition = cam.transform.position;
-                camHomeRotation = cam.transform.rotation;
-                hasCamHome = true;
-            }
-            cameraAtTop = true;
-
-            cam.transform.DOKill();
-            cam.transform.DOMove(center + Vector3.up * topViewHeight, cameraMoveDuration).SetEase(Ease.InOutQuad);
-            cam.transform.DORotateQuaternion(Quaternion.LookRotation(Vector3.down, towardEnemy), cameraMoveDuration).SetEase(Ease.InOutQuad);
+            if (cameraRequested) return;
+            cameraRequested = true;
+            CombatCameraRig3D.Ensure().RequestTop();
         }
 
         private void MoveCameraHome()
         {
-            if (cam == null || !cameraAtTop) return;
-            cameraAtTop = false;
-
-            cam.transform.DOKill();
-            cam.transform.DOMove(camHomePosition, cameraMoveDuration).SetEase(Ease.InOutQuad);
-            cam.transform.DORotateQuaternion(camHomeRotation, cameraMoveDuration).SetEase(Ease.InOutQuad);
-        }
-
-        // Centre of the two board rows, and the direction from the player's row to the enemy's (screen up)
-        private static bool TryGetBoardFrame(out Vector3 center, out Vector3 towardEnemy)
-        {
-            Vector3 playerSum = Vector3.zero, enemySum = Vector3.zero;
-            int playerCount = 0, enemyCount = 0;
-            foreach (var slot in FindObjectsByType<BoardSlotView>(FindObjectsSortMode.None))
-            {
-                if (slot.GetComponent<DeckPileView3D>() != null || slot.name.Contains("Deck")) continue;
-                if (slot.side == BoardSlotView.SlotSide.Player)
-                {
-                    playerSum += slot.transform.position;
-                    playerCount++;
-                }
-                else
-                {
-                    enemySum += slot.transform.position;
-                    enemyCount++;
-                }
-            }
-
-            center = Vector3.zero;
-            towardEnemy = Vector3.forward;
-            if (playerCount == 0 || enemyCount == 0) return false;
-
-            Vector3 p = playerSum / playerCount, e = enemySum / enemyCount;
-            center = (p + e) * 0.5f;
-            Vector3 d = e - p;
-            d.y = 0f;
-            if (d.sqrMagnitude > 0.0001f) towardEnemy = d.normalized;
-            return true;
+            if (!cameraRequested) return;
+            cameraRequested = false;
+            CombatCameraRig3D.Instance?.ReleaseTop();
         }
     }
 }

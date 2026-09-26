@@ -13,19 +13,25 @@ MonoBehaviour:
   m_Name: Card_s_wf02
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wf02
-  cardNameThai: "\u0e1c\u0e35\u0e40\u0e08\u0e49\u0e32\u0e1b\u0e39\u0e48"
-  cardNameEng: s_wf02
-  descriptionFormat: ""
+  cardNameThai: "\u0E1C\u0E35\u0E40\u0E08\u0E49\u0E32\u0E1B\u0E39\u0E48"
+  cardNameEng: Ancestor Spirit
+  descriptionFormat: 
   magicSchool: 0
   cardType: 2
   targetType: 0
-  customTypeText: "\u0e1a\u0e23\u0e34\u0e27\u0e32\u0e23 \u2022 \u0e21\u0e19\u0e15\u0e4c\u0e02\u0e32\u0e27"
+  customTypeText: "\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E02\u0E32\u0E27"
   meritCost: 2
   corruptionGain: 0
   baseValue: 0
   durability: 0
   familiarHealth: 2
   familiarDamage: 3
+  fontSizeAll: 1
+  nameFontSize: 1
+  typeFontSize: 1
+  costFontSize: 1
+  statFontSize: 2
+  descriptionFontSize: 1
   abilities: []
   cardBackground: {fileID: 0}
   artwork: {fileID: 0}

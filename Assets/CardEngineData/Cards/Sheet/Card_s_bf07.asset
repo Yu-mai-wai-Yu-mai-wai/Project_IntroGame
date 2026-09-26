@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bf07
   cardNameThai: "\u0e1e\u0e23\u0e32\u0e22\u0e19\u0e49\u0e33"
-  cardNameEng: s_bf07
+  cardNameEng: Water Wraith
   descriptionFormat: ""
   magicSchool: 1
   cardType: 2

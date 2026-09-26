@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.7, y: 1, z: 0.08}
+  m_LocalScale: {x: 1.4, y: 2, z: 0.08}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8173560472920290093}
@@ -145,8 +145,8 @@ MonoBehaviour:
     descriptionFormat: 
   cardRenderer: {fileID: 816440305327445995}
   nameLabel: {fileID: 1724299435821492216}
-  hoverLift: 0.4
-  hoverPullToCamera: 0.3
+  hoverLift: 1
+  hoverPullToCamera: 0.6
   hoverScale: 1.15
   defaultWhiteFrame: {fileID: 21300000, guid: d1c318fa676659d479a51d3597e3a90b, type: 3}
   defaultBlackFrame: {fileID: 21300000, guid: 67a651f898aacce42b10f279b1ea66f1, type: 3}

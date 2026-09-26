@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 using TMPro;
 using DG.Tweening;
 
@@ -6,8 +7,13 @@ namespace TawanOS.CardEngine
 {
     public class CardView3D : MonoBehaviour
     {
-        [Header("Card Data Reference")]
-        public CardInstance CardData;
+        [Header("Card Data")]
+        [Tooltip("ลาก Card Data มาใส่: การ์ด 3D นี้จะแสดงการ์ดใบนั้นทันทีใน Scene/Prefab และใช้ใบนั้นตอนกด Play " +
+                 "(การ์ดบนมือที่เกมสร้างเองจะใช้ข้อมูลจากเด็คแทน)")]
+        public CardDataSO cardDataAsset;
+
+        // The live card this view shows (set by Bind at runtime, or from cardDataAsset)
+        [System.NonSerialized] public CardInstance CardData;
 
         [Header("Visuals")]
         public Renderer cardRenderer;
@@ -18,10 +24,6 @@ namespace TawanOS.CardEngine
         public Sprite defaultWhiteFrame;
         [Tooltip("Frame used when a Black Magic card has no Card Background of its own (text-free frame).")]
         public Sprite defaultBlackFrame;
-        [Tooltip("Artwork area on the card face, as a fraction of the face (width, height): the frame's picture window.")]
-        public Vector2 artworkArea = new Vector2(0.84f, 0.54f);
-        [Tooltip("Artwork centre, up from the middle of the face (fraction of the face height).")]
-        public float artworkOffsetY = 0.16f;
 
         [Header("Face Text Colours")]
         public Color textOnArt = Color.white;
@@ -30,8 +32,8 @@ namespace TawanOS.CardEngine
         public Color textOnPlainBlack = new Color(0.95f, 0.9f, 0.85f);
 
         [Header("Interaction Settings")]
-        public float hoverLift = 0.4f;
-        public float hoverPullToCamera = 0.3f;
+        public float hoverLift = 1f;
+        public float hoverPullToCamera = 0.6f;
         public float hoverScale = 1.15f;
 
         private Vector3 baseLocalScale;
@@ -56,6 +58,40 @@ namespace TawanOS.CardEngine
             baseLocalScale = transform.localScale;
         }
 
+        // A card placed in the scene by hand shows its Card Data; views the game binds itself are left alone
+        private void Start()
+        {
+            if (cardDataAsset != null && (CardData == null || CardData.source == null)) Bind(new CardInstance(cardDataAsset));
+        }
+
+#if UNITY_EDITOR
+        // Edit-mode preview: the card face updates as soon as Card Data is assigned or edited
+        private void OnValidate()
+        {
+            if (Application.isPlaying)
+            {
+                // Colours changed in the Inspector while playing: redo the face text
+                if (CardData != null && nameLabel != null)
+                {
+                    BuildFaceText();
+                    ApplyDrawOrder();
+                    RefreshLabel();
+                }
+                return;
+            }
+            UnityEditor.EditorApplication.delayCall += RefreshEditorPreview;
+        }
+
+        public void RefreshEditorPreview()
+        {
+            if (this == null || Application.isPlaying || cardDataAsset == null) return;
+            if (UnityEditor.PrefabUtility.IsPartOfPrefabAsset(gameObject)) return; // only in a scene or Prefab Mode
+
+            if (baseLocalScale == Vector3.zero) baseLocalScale = transform.localScale;
+            Bind(new CardInstance(cardDataAsset));
+        }
+#endif
+
         public void Bind(CardInstance card)
         {
             CardData = card;
@@ -63,7 +99,8 @@ namespace TawanOS.CardEngine
 
             RefreshLabel();
 
-            if (cardRenderer != null)
+            // (edit-mode preview leaves the shared material alone; the frame covers the cube anyway)
+            if (cardRenderer != null && Application.isPlaying)
             {
                 cardRenderer.material.color = card.magicSchool == MagicSchool.WhiteMagic
                     ? new Color(0.85f, 0.8f, 0.55f)
@@ -72,7 +109,26 @@ namespace TawanOS.CardEngine
 
             BuildFacePictures();
             BuildFaceText();
+            ApplyDrawOrder();
             RefreshLabel();
+        }
+
+        // The frame, artwork and text are all transparent and sit a hair apart, so Unity's distance sort
+        // could draw the frame over the text while the card moves. A Sorting Group keeps each card's parts
+        // together (cards still sort against each other by distance) and fixes the order inside the card.
+        private const int FrameOrder = 0, ArtworkOrder = 1, TextOrder = 2;
+
+        private void ApplyDrawOrder()
+        {
+            if (GetComponent<SortingGroup>() == null) gameObject.AddComponent<SortingGroup>();
+
+            if (backgroundFace != null) backgroundFace.sortingOrder = FrameOrder;
+            if (artworkFace != null) artworkFace.sortingOrder = ArtworkOrder;
+            foreach (var label in new[] { nameLabel, costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel })
+            {
+                var textRenderer = label != null ? label.GetComponent<Renderer>() : null;
+                if (textRenderer != null) textRenderer.sortingOrder = TextOrder;
+            }
         }
 
         // The card cube's face is its -Z side (the side that faces the camera in the hand and faces up
@@ -85,7 +141,7 @@ namespace TawanOS.CardEngine
             Sprite artwork = CardData.artwork;
 
             backgroundFace = SetFacePicture(backgroundFace, "FaceBackground", background, Vector2.one, 0f, FaceZ, keepAspect: false);
-            artworkFace = SetFacePicture(artworkFace, "FaceArtwork", artwork, artworkArea, artworkOffsetY, FaceZ - 0.005f, keepAspect: true);
+            artworkFace = SetFacePicture(artworkFace, "FaceArtwork", artwork, CardFaceLayout.Artwork.size, CardFaceLayout.Artwork.center.y, FaceZ - 0.005f, keepAspect: true);
 
             ApplyFaceVisibility();
         }
@@ -94,7 +150,7 @@ namespace TawanOS.CardEngine
         private Sprite FaceBackground()
         {
             if (CardData.cardBackground != null) return CardData.cardBackground;
-            return CardData.magicSchool == MagicSchool.WhiteMagic ? defaultWhiteFrame : defaultBlackFrame;
+            return CardFaceLayout.DefaultFrame(defaultWhiteFrame, defaultBlackFrame, CardData.magicSchool);
         }
 
         // area / offsetY are fractions of the card face (the cube's local -0.5..0.5 square)
@@ -106,6 +162,12 @@ namespace TawanOS.CardEngine
                 return sr;
             }
 
+            if (sr == null)
+            {
+                // Reuse the one built earlier (e.g. by the edit-mode preview), else make it
+                var existing = transform.Find(name);
+                sr = existing != null ? existing.GetComponent<SpriteRenderer>() : null;
+            }
             if (sr == null)
             {
                 var go = new GameObject(name);
@@ -147,6 +209,11 @@ namespace TawanOS.CardEngine
         {
             if (backgroundFace != null) backgroundFace.enabled = faceVisible;
             if (artworkFace != null) artworkFace.enabled = faceVisible;
+
+            // A face-up card with a frame shows only the picture: the 3D block behind it is hidden
+            // (its collider stays, so the card can still be clicked). Face-down cards keep the block as their back.
+            bool hasFrame = backgroundFace != null && backgroundFace.gameObject.activeSelf && backgroundFace.sprite != null;
+            if (cardRenderer != null) cardRenderer.enabled = !(faceVisible && hasFrame);
 
             foreach (var label in new[] { costLabel, typeLabel, descriptionLabel })
             {
@@ -201,24 +268,25 @@ namespace TawanOS.CardEngine
 
         // ---------------------------------------------------------------- face text layout
 
-        // Positions are fractions of the card face: x -0.5 (left) .. 0.5 (right), y 0.5 (top) .. -0.5 (bottom),
-        // measured from the card design (939 x 1312). Sizes are fractions of the face width / height.
+        // Positions come from CardFaceLayout (shared with the Card Data inspector preview)
         private void BuildFaceText()
         {
-            if (nameLabel == null || costLabel != null) return;
+            if (nameLabel == null) return;
 
-            costLabel = CloneLabel("CostLabel");
-            typeLabel = CloneLabel("TypeLabel");
-            attackLabel = CloneLabel("AttackLabel");
-            khwanLabel = CloneLabel("KhwanLabel");
-            descriptionLabel = CloneLabel("DescriptionLabel");
+            if (costLabel == null) costLabel = CloneLabel("CostLabel");
+            if (typeLabel == null) typeLabel = CloneLabel("TypeLabel");
+            if (attackLabel == null) attackLabel = CloneLabel("AttackLabel");
+            if (khwanLabel == null) khwanLabel = CloneLabel("KhwanLabel");
+            if (descriptionLabel == null) descriptionLabel = CloneLabel("DescriptionLabel");
 
-            PlaceLabel(nameLabel, new Vector2(0.225f, 0.365f), new Vector2(0.44f, 0.075f), TextAlignmentOptions.Center, 1.5f);
-            PlaceLabel(typeLabel, new Vector2(0.225f, 0.3f), new Vector2(0.44f, 0.035f), TextAlignmentOptions.Center, 0.7f);
-            PlaceLabel(costLabel, new Vector2(-0.374f, 0.397f), new Vector2(0.16f, 0.1f), TextAlignmentOptions.Center, 2f);
-            PlaceLabel(attackLabel, new Vector2(-0.106f, -0.114f), new Vector2(0.1f, 0.055f), TextAlignmentOptions.Center, 1.2f);
-            PlaceLabel(khwanLabel, new Vector2(0.105f, -0.114f), new Vector2(0.1f, 0.055f), TextAlignmentOptions.Center, 1.2f);
-            PlaceLabel(descriptionLabel, new Vector2(0f, -0.29f), new Vector2(0.78f, 0.22f), TextAlignmentOptions.Center, 0.4f);
+            // Text sizes come from the Card Data (Face Text Sizes)
+            var src = CardData.source;
+            PlaceLabel(nameLabel, CardFaceLayout.Name, 1.5f, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Name));
+            PlaceLabel(typeLabel, CardFaceLayout.Type, 0.7f, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Type));
+            PlaceLabel(costLabel, CardFaceLayout.Cost, 2f, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Cost));
+            PlaceLabel(attackLabel, CardFaceLayout.Attack, 1.2f, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Stat));
+            PlaceLabel(khwanLabel, CardFaceLayout.Khwan, 1.2f, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Stat));
+            PlaceLabel(descriptionLabel, CardFaceLayout.Description, 0.4f, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Description), fixedBox: true);
             descriptionLabel.textWrappingMode = TextWrappingModes.Normal;
 
             bool onArt = FaceBackground() != null;
@@ -227,16 +295,24 @@ namespace TawanOS.CardEngine
             typeLabel.color = onArt ? typeTextOnArt : main;
         }
 
+        // Reuses a label built earlier (e.g. by the edit-mode preview), else copies the name label
         private TMP_Text CloneLabel(string name)
         {
+            var existing = nameLabel.transform.parent != null ? nameLabel.transform.parent.Find(name) : null;
+            if (existing != null && existing.GetComponent<TMP_Text>() != null) return existing.GetComponent<TMP_Text>();
+
             var copy = Instantiate(nameLabel.gameObject, nameLabel.transform.parent);
             copy.name = name;
             return copy.GetComponent<TMP_Text>();
         }
 
-        // Autosized into its box so it fits whatever the font's scale is; maxSize caps short texts
-        private static void PlaceLabel(TMP_Text label, Vector2 facePos, Vector2 faceSize, TextAlignmentOptions align, float maxSize)
+        // Autosized into its box so it fits whatever the font's scale is; maxSize caps short texts.
+        // sizeMul grows the text: single-line labels get a box that much bigger (same centre), the
+        // description keeps its box (so it still wraps inside the card) and only its size cap grows.
+        private static void PlaceLabel(TMP_Text label, CardFaceLayout.Box box, float maxSize, float sizeMul, bool fixedBox = false)
         {
+            Vector2 facePos = box.center, faceSize = fixedBox ? box.size : box.Scaled(sizeMul).size;
+            maxSize *= sizeMul;
             var t = label.transform;
             float z = t.localPosition.z;
             t.localPosition = new Vector3(facePos.x, facePos.y, z);
@@ -248,7 +324,7 @@ namespace TawanOS.CardEngine
                 faceSize.x / Mathf.Max(0.0001f, Mathf.Abs(s.x)),
                 faceSize.y / Mathf.Max(0.0001f, Mathf.Abs(s.y)));
 
-            label.alignment = align;
+            label.alignment = TextAlignmentOptions.Center;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             label.overflowMode = TextOverflowModes.Overflow;
             label.enableAutoSizing = true;
@@ -279,7 +355,8 @@ namespace TawanOS.CardEngine
         }
 
         // Board cards and the enemy's cards (disabled views) never react to the mouse
-        private bool IgnoresMouse => !enabled || isPlacedOnBoard || isHeld || CardTargeting3D.BlocksInput;
+        private bool IgnoresMouse => !enabled || isPlacedOnBoard || isHeld || CardTargeting3D.BlocksInput
+            || CombatCameraRig3D.BlocksInput;
 
         private void OnMouseEnter()
         {

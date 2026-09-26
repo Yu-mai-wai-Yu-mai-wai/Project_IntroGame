@@ -7,17 +7,18 @@ namespace TawanOS.CardEngine
     public class CardDataSO : ScriptableObject
     {
         [Header("Identity")]
-        public string cardId = "card_001";
-        public string cardNameThai = "มีดหมอปราบมาร";
-        public string cardNameEng = "Exorcist Knife";
+        [Tooltip("รหัสการ์ด (ว่าง = ใช้ชื่อไฟล์)")]
+        public string cardId = "";
+        public string cardNameThai = "";
+        public string cardNameEng = "";
         [TextArea(2, 4)]
-        public string descriptionFormat = "สร้างความเสียหาย {0} หน่วย";
+        public string descriptionFormat = "";
 
         [Header("Classification")]
         public MagicSchool magicSchool = MagicSchool.WhiteMagic;
         public CardType cardType = CardType.Incantation;
         public TargetType targetType = TargetType.SingleEnemy;
-        [Tooltip("ข้อความระบุ 'ประเภท • รูปแบบ' เช่น 'อาคม • โจมตี' (หากเว้นว่าง ระบบจะสร้างอัตโนมัติ)")]
+        [Tooltip("ข้อความประเภทบนการ์ด เช่น 'บริวาร • มนต์ดำ' (เว้นว่าง = สร้างจากประเภทและสายอัตโนมัติ)")]
         public string customTypeText = "";
 
         [Header("Costs & Thresholds")]
@@ -25,10 +26,27 @@ namespace TawanOS.CardEngine
         [Range(0, 9)] public int corruptionGain = 0;
 
         [Header("Primary Combat Values")]
-        public int baseValue = 8;
-        public int durability = 3;
-        public int familiarHealth = 10;
-        public int familiarDamage = 4;
+        public int baseValue = 0;
+        [Tooltip("อายุขลังของเครื่องราง (0 = อยู่บนสนามจนกว่าจะพัง)")]
+        public int durability = 0;
+        [Tooltip("ขวัญ (HP) ของบริวาร / เครื่องราง (เครื่องราง 0 = ตีไม่ได้)")]
+        public int familiarHealth = 1;
+        [Tooltip("สะเทือนขวัญ (ATK) ของบริวาร")]
+        public int familiarDamage = 1;
+
+        [Header("Face Text Sizes (x 1 = default)")]
+        [Tooltip("ขนาดตัวหนังสือทั้งหมดบนการ์ด (คูณกับขนาดแต่ละส่วนด้านล่าง)")]
+        [Range(0.3f, 3f)] public float fontSizeAll = 1f;
+        [Tooltip("ชื่อการ์ด")]
+        [Range(0.3f, 3f)] public float nameFontSize = 1f;
+        [Tooltip("ประเภท / สาย")]
+        [Range(0.3f, 3f)] public float typeFontSize = 1f;
+        [Tooltip("ค่าร่ายในวงกลม")]
+        [Range(0.3f, 3f)] public float costFontSize = 1f;
+        [Tooltip("สะเทือนขวัญ และ ขวัญ")]
+        [Range(0.3f, 3f)] public float statFontSize = 1f;
+        [Tooltip("คำอธิบายความสามารถ (ยังย่อเองถ้าข้อความยาวเกินกล่อง)")]
+        [Range(0.3f, 3f)] public float descriptionFontSize = 1f;
 
         [Header("Abilities")]
         [Tooltip("ความสามารถของการ์ด (ว่าง = การ์ดแบบเดิมที่ใช้ baseValue/targetType)")]
@@ -43,6 +61,7 @@ namespace TawanOS.CardEngine
         public AudioClip sfxPlay;
         public GameObject vfxPrefab;
 
+        // "ประเภท • สาย" as on the sheet cards, e.g. "บริวาร • มนต์ดำ"
         public string GetFormattedTypeText()
         {
             if (!string.IsNullOrEmpty(customTypeText))
@@ -52,21 +71,12 @@ namespace TawanOS.CardEngine
             {
                 CardType.Incantation => "อาคม",
                 CardType.Amulet => "เครื่องราง",
-                CardType.Familiar => "ภูติรับใช้",
+                CardType.Familiar => "บริวาร",
                 _ => cardType.ToString()
             };
+            string schoolStr = magicSchool == MagicSchool.WhiteMagic ? "มนต์ขาว" : "มนต์ดำ";
 
-            string targetStr = targetType switch
-            {
-                TargetType.SingleEnemy => "ศัตรูเดี่ยว",
-                TargetType.AllEnemies => "ศัตรูทั้งหมด",
-                TargetType.Self => "ตนเอง",
-                TargetType.FriendlyMinion => "บริวารฝ่ายเรา",
-                TargetType.NoTarget => "ไร้เป้าหมาย",
-                _ => targetType.ToString()
-            };
-
-            return $"{typeStr} • {targetStr}";
+            return $"{typeStr} • {schoolStr}";
         }
     }
 }

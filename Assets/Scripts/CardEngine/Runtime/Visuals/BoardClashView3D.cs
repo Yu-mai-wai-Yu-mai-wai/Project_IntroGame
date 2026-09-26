@@ -29,9 +29,9 @@ namespace TawanOS.CardEngine
 
         [Header("Motion")]
         [Tooltip("How high the cards lift while charging.")]
-        public float liftHeight = 0.5f;
+        public float liftHeight = 0.8f;
         [Tooltip("Distance kept between the attacker and what it hits, along the charge direction.")]
-        public float collisionGap = 0.35f;
+        public float collisionGap = 0.7f;
         public float chargeDuration = 0.25f;
         public float impactPause = 0.2f;
         public float returnDuration = 0.3f;
@@ -40,7 +40,7 @@ namespace TawanOS.CardEngine
 
         [Header("Critical Hit Wind-up")]
         [Tooltip("How far a critical striker pulls back (away from its target) before charging.")]
-        public float critPullBack = 0.6f;
+        public float critPullBack = 1.1f;
         [Tooltip("Extra lift while pulling back for a critical hit.")]
         public float critLift = 0.3f;
         public float critPullBackDuration = 0.3f;

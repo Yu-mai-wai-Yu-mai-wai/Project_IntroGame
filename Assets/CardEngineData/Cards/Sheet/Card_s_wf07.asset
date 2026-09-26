@@ -13,19 +13,25 @@ MonoBehaviour:
   m_Name: Card_s_wf07
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wf07
-  cardNameThai: "\u0e1c\u0e35\u0e41\u0e21\u0e48\u0e22\u0e48\u0e32\u0e19\u0e32\u0e07"
-  cardNameEng: s_wf07
-  descriptionFormat: ""
+  cardNameThai: "\u0E1C\u0E35\u0E41\u0E21\u0E48\u0E22\u0E48\u0E32\u0E19\u0E32\u0E07"
+  cardNameEng: Mae Ya Nang
+  descriptionFormat: 
   magicSchool: 0
   cardType: 2
   targetType: 0
-  customTypeText: "\u0e1a\u0e23\u0e34\u0e27\u0e32\u0e23 \u2022 \u0e21\u0e19\u0e15\u0e4c\u0e02\u0e32\u0e27"
+  customTypeText: "\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E02\u0E32\u0E27"
   meritCost: 4
   corruptionGain: 0
   baseValue: 0
   durability: 0
   familiarHealth: 3
   familiarDamage: 2
+  fontSizeAll: 1
+  nameFontSize: 1
+  typeFontSize: 1
+  costFontSize: 1
+  statFontSize: 2
+  descriptionFontSize: 1
   abilities: []
   cardBackground: {fileID: 0}
   artwork: {fileID: 0}

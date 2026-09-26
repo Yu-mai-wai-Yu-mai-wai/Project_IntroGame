@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace TawanOS.CardEngine
 {
@@ -6,20 +7,20 @@ namespace TawanOS.CardEngine
     public enum CardStatusType
     {
         // อัปมงคล (debuffs)
-        Phawa,          // ผวา: สะเทือนขวัญลด 1 ต่อหน่วย
-        PhiAm,          // ผีอำ: โจมตีไม่ได้
-        DoneKhong,      // โดนของ: เสียขวัญทุกรอบเท่าจำนวนหน่วย แล้วลดลง 1 หน่วย (ไม่สนเกราะ)
-        FireBreak,      // ไฟแตก: เสียขวัญ 2 ต่อหน่วยทุกรอบ (ไม่สนเกราะ)
-        Blinded,        // ผีบังตา: โจมตีพลาด 50%
-        Karma,          // กรรมตามสนอง: ดาเมจที่ทำได้สะท้อนกลับใส่ตัวเองเท่ากัน
+        [InspectorName("ผวา")] Phawa,          // ผวา: สะเทือนขวัญลด 1 ต่อหน่วย
+        [InspectorName("ผีอำ")] PhiAm,          // ผีอำ: โจมตีไม่ได้
+        [InspectorName("โดนของ")] DoneKhong,      // โดนของ: เสียขวัญทุกรอบเท่าจำนวนหน่วย แล้วลดลง 1 หน่วย (ไม่สนเกราะ)
+        [InspectorName("ไฟแตก")] FireBreak,      // ไฟแตก: เสียขวัญ 2 ต่อหน่วยทุกรอบ (ไม่สนเกราะ)
+        [InspectorName("ผีบังตา")] Blinded,        // ผีบังตา: โจมตีพลาด 50%
+        [InspectorName("กรรมตามสนอง")] Karma,          // กรรมตามสนอง: ดาเมจที่ทำได้สะท้อนกลับใส่ตัวเองเท่ากัน
 
         // เป็นกลาง
-        Taunt,          // ยั่วยุ
+        [InspectorName("ยั่วยุ")] Taunt,          // ยั่วยุ
 
         // สิริมงคล (blessings)
-        Might,          // สะเทือนขวัญ +1 ต่อหน่วย
-        Protect,        // คุ้มภัย: ดาเมจที่ได้รับลด 1 ต่อหน่วย
-        Vital           // ฟื้นขวัญ 1 ต่อหน่วยทุกรอบ
+        [InspectorName("ฮึกเหิม")] Might,          // สะเทือนขวัญ +1 ต่อหน่วย
+        [InspectorName("คุ้มภัย")] Protect,        // คุ้มภัย: ดาเมจที่ได้รับลด 1 ต่อหน่วย
+        [InspectorName("ฟื้นขวัญ")] Vital           // ฟื้นขวัญ 1 ต่อหน่วยทุกรอบ
     }
 
     [Serializable]

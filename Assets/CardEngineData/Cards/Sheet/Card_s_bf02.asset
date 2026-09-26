@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bf02
   cardNameThai: "\u0e01\u0e23\u0e30\u0e2a\u0e37\u0e2d"
-  cardNameEng: s_bf02
+  cardNameEng: Krasue
   descriptionFormat: "\u0e1c\u0e35\u0e02\u0e49\u0e32\u0e21\u0e2b\u0e31\u0e27"
   magicSchool: 1
   cardType: 2

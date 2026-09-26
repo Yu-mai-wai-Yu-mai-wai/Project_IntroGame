@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bf06
   cardNameThai: "\u0e40\u0e1b\u0e23\u0e15"
-  cardNameEng: s_bf06
+  cardNameEng: Pret
   descriptionFormat: "\u0e2a\u0e32\u0e21\u0e32\u0e23\u0e16\u0e23\u0e31\u0e1a\u0e14\u0e32\u0e40\u0e21\u0e08\u0e15\u0e35\u0e02\u0e49\u0e32\u0e21\u0e2b\u0e31\u0e27\u0e44\u0e14\u0e49"
   magicSchool: 1
   cardType: 2

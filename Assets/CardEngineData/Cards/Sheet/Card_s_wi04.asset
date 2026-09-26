@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wi04
   cardNameThai: "\u0e04\u0e32\u0e16\u0e32\u0e01\u0e31\u0e19\u0e20\u0e31\u0e22"
-  cardNameEng: s_wi04
+  cardNameEng: Warding Chant
   descriptionFormat: "\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e40\u0e01\u0e23\u0e32\u0e30\u0e04\u0e38\u0e49\u0e21\u0e20\u0e31\u0e22\u0e43\u0e2b\u0e49\u0e01\u0e32\u0e23\u0e4c\u0e14\u0e1d\u0e31\u0e48\u0e07\u0e40\u0e23\u0e32 1 \u0e43\u0e1a"
   magicSchool: 0
   cardType: 0

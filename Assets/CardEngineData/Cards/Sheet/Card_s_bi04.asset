@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bi04
   cardNameThai: "\u0e04\u0e32\u0e16\u0e32\u0e40\u0e23\u0e35\u0e22\u0e01\u0e1c\u0e35"
-  cardNameEng: s_bi04
+  cardNameEng: Ghost-Summoning Chant
   descriptionFormat: 
   magicSchool: 1
   cardType: 0

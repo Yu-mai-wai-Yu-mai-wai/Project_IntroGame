@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bf03
   cardNameThai: "\u0e1c\u0e35\u0e2b\u0e31\u0e27\u0e02\u0e32\u0e14"
-  cardNameEng: s_bf03
+  cardNameEng: Headless Ghost
   descriptionFormat: "\u0e44\u0e14\u0e49\u0e23\u0e31\u0e1a\u0e01\u0e32\u0e23\u0e4c\u0e14 \"\u0e2b\u0e31\u0e27\u0e01\u0e30\u0e42\u0e2b\u0e25\u0e01\u0e2d\u0e32\u0e16\u0e23\u0e23\u0e1e\u0e4c\" 1 \u0e43\u0e1a"
   magicSchool: 1
   cardType: 2

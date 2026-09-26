@@ -266,6 +266,7 @@ namespace TawanOS.CardEngine
 
         private void OnGUI()
         {
+            if (CombatCameraRig3D.HideOverlay) return; // the board-only camera view hides all UI
             if (!showDebugLabel) return;
             GUI.Label(new Rect(10, 10, 500, 24), $"Turn {TurnNumber}  |  Phase: {CurrentPhase}  |  [{endTurnKey}] next phase");
             if (CombatManager.Instance != null)

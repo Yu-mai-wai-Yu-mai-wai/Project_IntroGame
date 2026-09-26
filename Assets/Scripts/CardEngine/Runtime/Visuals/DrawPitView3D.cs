@@ -12,12 +12,12 @@ namespace TawanOS.CardEngine
 
         [Header("Placement")]
         [Tooltip("Distance to the right of the rightmost board column.")]
-        public float gapRightOfBoard = 1.6f;
+        public float gapRightOfBoard = 2f;
         [Tooltip("Used only when there are no board slots to line up with.")]
         public Vector3 offsetFromDeck = new Vector3(1.3f, 0f, 0f);
 
         [Header("Look")]
-        public Vector3 pitSize = new Vector3(0.9f, 0.05f, 0.9f);
+        public Vector3 pitSize = new Vector3(1.3f, 0.05f, 1.3f);
         public Color pitColor = new Color(0.05f, 0.02f, 0.08f);
         public Color hoverColor = new Color(0.35f, 0.1f, 0.45f);
 
@@ -114,7 +114,7 @@ namespace TawanOS.CardEngine
 
         private void OnMouseDown()
         {
-            if (CardTargeting3D.BlocksInput || CardPlayController3D.BlocksInput) return;
+            if (CardTargeting3D.BlocksInput || CardPlayController3D.BlocksInput || CombatCameraRig3D.BlocksInput) return;
             CardManager.Instance?.DrawFromPit();
         }
 
