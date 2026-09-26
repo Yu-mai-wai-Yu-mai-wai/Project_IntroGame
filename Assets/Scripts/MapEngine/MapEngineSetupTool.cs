@@ -39,11 +39,11 @@ namespace TawanOS.MapEngine
             Color crimsonVisited = new Color(0.1725f, 0.0784f, 0.0627f, 1f);
 
             var enemyProfile = CreateOrGetProfile(baseFolder + "/Profiles/EnemyProfile.asset", NodeType.MinorEnemy, "Forest Shadow", "Vengeful spirits haunting the sacred path.", crimsonBase, "NarrowIcon.png");
-            var eliteProfile = CreateOrGetProfile(baseFolder + "/Profiles/EliteProfile.asset", NodeType.EliteEnemy, "Ancient Shrine Guardian", "A cursed guardian of the ancient ruins holding powerful relics.", crimsonBase, "TempleIcon.png");
-            var restProfile = CreateOrGetProfile(baseFolder + "/Profiles/RestProfile.asset", NodeType.RestSite, "Spirit Lantern", "Consecrated sanctuary to light incense and soothe your soul.", crimsonBase, "ShrineIcon.png");
-            var treasureProfile = CreateOrGetProfile(baseFolder + "/Profiles/TreasureProfile.asset", NodeType.Treasure, "Sacred Offering", "Ancient treasure chest left behind by past practitioners.", crimsonBase, "ShrineIcon.png");
-            var storeProfile = CreateOrGetProfile(baseFolder + "/Profiles/StoreProfile.asset", NodeType.Store, "Bodhi Tree Merchant", "An enigmatic merchant trading talismans and sacred offerings.", crimsonBase, "Tree1.png");
-            var bossProfile = CreateOrGetProfile(baseFolder + "/Profiles/BossProfile.asset", NodeType.Boss, "The Sovereign Spirit", "The ancient overlord reigning over the temple grounds.", crimsonBase, "TempleIcon.png");
+            var eliteProfile = CreateOrGetProfile(baseFolder + "/Profiles/EliteProfile.asset", NodeType.EliteEnemy, "Ancient Shrine Guardian", "A cursed guardian of the ancient ruins holding powerful relics.", crimsonBase, "EliteIcon.png");
+            var restProfile = CreateOrGetProfile(baseFolder + "/Profiles/RestProfile.asset", NodeType.RestSite, "Spirit Lantern", "Consecrated sanctuary to light incense and soothe your soul.", crimsonBase, "TempleIcon.png");
+            var treasureProfile = CreateOrGetProfile(baseFolder + "/Profiles/TreasureProfile.asset", NodeType.Treasure, "Sacred Offering", "Ancient treasure chest left behind by past practitioners.", crimsonBase, "OfferingIcon.png");
+            var storeProfile = CreateOrGetProfile(baseFolder + "/Profiles/StoreProfile.asset", NodeType.Store, "Bodhi Tree Merchant", "An enigmatic merchant trading talismans and sacred offerings.", crimsonBase, "ShrineIcon.png");
+            var bossProfile = CreateOrGetProfile(baseFolder + "/Profiles/BossProfile.asset", NodeType.Boss, "The Sovereign Spirit", "The ancient overlord reigning over the temple grounds.", crimsonBase, "GraveyardIcon.png");
 
             // 2. Create Biome Profile
             string biomePath = baseFolder + "/Profiles/DefaultBiome.asset";
@@ -72,9 +72,10 @@ namespace TawanOS.MapEngine
                 config.depthZOffset = 0f;
                 config.nodePositionJitter = 0.2f;
                 config.use3DTableMode = true;
-                config.cameraHeightY = 7.5f;
-                config.cameraAnglePitch = 30f;
-                config.cameraZDistance = 8.5f;
+                // Low, close framing so the canopy fills the top edge (Blender concept render).
+                config.cameraHeightY = 3f;
+                config.cameraAnglePitch = 28f;
+                config.cameraZDistance = 5.5f;
                 config.player3DScale = Vector3.one;
                 config.player3DRotation = new Vector3(0, 180, 0);
                 config.startNodeOffset = Vector3.zero;
@@ -249,7 +250,7 @@ namespace TawanOS.MapEngine
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.04f, 0.03f, 0.03f, 1f);
             cam.fieldOfView = 55;
-            camGo.transform.position = new Vector3(15.0f, 7.5f, 8.5f);
+            camGo.transform.position = new Vector3(15.5f, 3f, 5.5f);
             camGo.transform.rotation = Quaternion.Euler(30f, 180f, 0f);
 
             // Setup Directional Light (Eerie Moonlight / Twilight Canopy looking from camera side)

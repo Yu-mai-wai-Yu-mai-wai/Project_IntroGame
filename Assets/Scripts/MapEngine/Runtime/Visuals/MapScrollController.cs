@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using DG.Tweening;
 
 namespace TawanOS.MapEngine
@@ -12,8 +14,17 @@ namespace TawanOS.MapEngine
         public float inertiaDamping = 0.92f;
 
         [Header("3D Table Scroll Bounds")]
+        // Camera X range = node X range (18.6 .. -15.5) shifted by lookAheadX.
         public float minScrollX = -18.6f;
         public float maxScrollX = 15.5f;
+        [Tooltip("Camera sits this far ahead (toward -X, screen right) of the current floor so the glass lands on the left third.")]
+        public float lookAheadX = 3f;
+
+        [Header("3D Table Atmosphere (matches the Blender concept render)")]
+        public Color fogColor = new Color(0.11f, 0.075f, 0.055f, 1f);
+        public float fogDensity = 0.03f;
+        public float sunIntensity = 0.5f;
+        [Range(0f, 1f)] public float vignetteIntensity = 0.45f;
 
         private Vector3 lastMousePosition;
         private bool isDragging = false;
@@ -25,6 +36,39 @@ namespace TawanOS.MapEngine
             {
                 targetTransform = Camera.main != null ? Camera.main.transform : transform;
             }
+
+            if (config != null && config.use3DTableMode && config.orientation == MapOrientation.LeftToRight)
+            {
+                // Camera looks toward -Z (into the tree line); pitch comes from config so framing is tuned in one asset.
+                targetTransform.rotation = Quaternion.Euler(config.cameraAnglePitch, 180f, 0f);
+                ApplyAtmosphere(targetTransform.GetComponent<Camera>());
+            }
+        }
+
+        private void ApplyAtmosphere(Camera cam)
+        {
+            // Fog colour doubles as the clear colour so the far edge of the paper floor fades out instead of cutting to black.
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.ExponentialSquared;
+            RenderSettings.fogColor = fogColor;
+            RenderSettings.fogDensity = fogDensity;
+
+            foreach (var light in FindObjectsByType<Light>(FindObjectsSortMode.None))
+            {
+                if (light.type == LightType.Directional) light.intensity = sunIntensity;
+            }
+
+            if (cam == null) return;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = fogColor;
+            cam.GetUniversalAdditionalCameraData().renderPostProcessing = true;
+
+            var volume = new GameObject("MapAtmosphereVolume").AddComponent<Volume>();
+            volume.isGlobal = true;
+            volume.profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            var vignette = volume.profile.Add<Vignette>(true);
+            vignette.intensity.Override(vignetteIntensity);
+            vignette.smoothness.Override(0.5f);
         }
 
         private void Update()
@@ -89,6 +133,8 @@ namespace TawanOS.MapEngine
 
         public void ScrollToFloor(int floorIndex)
         {
+            // MapManager.Start may call this before our Start has resolved the camera.
+            if (targetTransform == null && Camera.main != null) targetTransform = Camera.main.transform;
             if (config == null || targetTransform == null) return;
 
             if (config.use3DTableMode)
@@ -99,18 +145,18 @@ namespace TawanOS.MapEngine
                     float targetX;
                     if (floorIndex < 0)
                     {
-                        targetX = 15.5f;
+                        targetX = maxScrollX;
                     }
                     else if (floorIndex >= 7)
                     {
-                        targetX = -18.6f;
+                        targetX = minScrollX;
                     }
                     else
                     {
-                        float[] floorXs = { 11.54f, 7.60f, 2.90f, -2.15f, -5.80f, -9.65f, -13.55f, -18.60f };
+                        float[] floorXs = { 13.55f, 9.65f, 5.80f, 2.15f, -2.93f, -7.62f, -11.54f, -15.47f };
                         targetX = floorXs[Mathf.Clamp(floorIndex, 0, floorXs.Length - 1)];
                     }
-                    targetX = Mathf.Clamp(targetX, minScrollX, maxScrollX);
+                    targetX = Mathf.Clamp(targetX - lookAheadX, minScrollX, maxScrollX);
                     targetCamPos = new Vector3(targetX, config.cameraHeightY, config.cameraZDistance);
                 }
                 else

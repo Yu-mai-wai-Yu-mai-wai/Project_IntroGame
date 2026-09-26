@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: EliteProfile
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.NodeProfileSO
   type: 1
-  icon: {fileID: 21300000, guid: 62eae6fe3c3cddd4187fb16cb28de182, type: 3}
+  icon: {fileID: 21300000, guid: fdbd4aacb7cb446392e4aae3cbeb0772, type: 3}
   baseColor: {r: 0.3529, g: 0.0941, b: 0.0627, a: 1}
   hoverColor: {r: 0.52935, g: 0.14115, b: 0.094050005, a: 1}
   visitedColor: {r: 0.17645, g: 0.04705, b: 0.03135, a: 1}

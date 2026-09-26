@@ -8,6 +8,13 @@ namespace TawanOS.MapEngine
         [SerializeField] private LineRenderer lineRenderer;
         [SerializeField] private int pointsCount = 20;
         [SerializeField] private float curveOffsetMagnitude = 0.5f;
+        [Tooltip("Height above node points. PaperFloor top is y=0.027, nodes sit at 0.025, so paths need a lift to show.")]
+        [SerializeField] private float surfaceLift = 0.02f;
+        [Tooltip("Gap between a string end and the node centre (3D table). Icon half-width is 0.6.")]
+        [SerializeField] private float nodeGap = 0.75f;
+
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private MaterialPropertyBlock colorBlock;
 
         public Vector2Int SourcePos { get; private set; }
         public Vector2Int TargetPos { get; private set; }
@@ -74,47 +81,47 @@ namespace TawanOS.MapEngine
             // This ensures the LineRenderer ribbon lies 100% flat on the horizontal X-Z plane
             transform.rotation = Quaternion.Euler(-90f, 0f, 0f);
 
-            // Calculate Control Point P1 for Bezier Curve
-            Vector3 midPoint = (start + end) * 0.5f;
             Vector3 direction = (end - start).normalized;
 
             // Detect whether path is on horizontal X-Z table surface or vertical X-Y canvas
             bool isHorizontalPlane = Mathf.Abs(start.y - end.y) < 0.2f && (Mathf.Abs(direction.x) > 0.01f || Mathf.Abs(direction.z) > 0.01f);
 
-            Vector3 perpendicular;
             if (isHorizontalPlane)
             {
-                // Horizontal X-Z plane perpendicular
-                perpendicular = new Vector3(-direction.z, 0f, direction.x);
+                // 3D table: flowchart-style S-curve. Both tangents run along the floor axis (X), so every string
+                // leaves and enters its node horizontally, and ends stop short of the icon like the Blender render.
+                float flatYTable = Mathf.Max(start.y, end.y) + surfaceLift;
+                float dx = end.x - start.x;
+                float trim = Mathf.Min(nodeGap, Mathf.Abs(dx) * 0.4f) * Mathf.Sign(dx);
+                Vector3 p0 = new Vector3(start.x + trim, flatYTable, start.z);
+                Vector3 p3 = new Vector3(end.x - trim, flatYTable, end.z);
+                Vector3 handle = new Vector3((p3.x - p0.x) * 0.5f, 0f, 0f);
+                Vector3 p1 = p0 + handle;
+                Vector3 p2 = p3 - handle;
+
+                for (int i = 0; i < pointsCount; i++)
+                {
+                    float t = i / (float)(pointsCount - 1);
+                    float u = 1f - t;
+                    lineRenderer.SetPosition(i, u * u * u * p0 + 3f * u * u * t * p1 + 3f * u * t * t * p2 + t * t * t * p3);
+                }
+
+                SetColor(biome != null ? biome.pathBaseColor : new Color(0.95f, 0.93f, 0.90f, 1f));
+                return;
             }
-            else
-            {
-                // Vertical X-Y plane perpendicular
-                perpendicular = new Vector3(-direction.y, direction.x, 0f);
-            }
-            
+
+            // Vertical 2D canvas: quadratic curve bowed sideways
+            Vector3 midPoint = (start + end) * 0.5f;
+            Vector3 perpendicular = new Vector3(-direction.y, direction.x, 0f);
+
             // Deterministic curve offset based on coordinates
             float sign = ((sourcePos.x + targetPos.y) % 2 == 0) ? 1f : -1f;
             Vector3 controlPoint = midPoint + perpendicular * (curveOffsetMagnitude * sign);
 
-            float flatY = Mathf.Max(start.y, end.y);
-            if (isHorizontalPlane)
-            {
-                start.y = flatY;
-                end.y = flatY;
-                controlPoint.y = flatY;
-            }
-
-            // Generate Quadratic Bezier Points
             for (int i = 0; i < pointsCount; i++)
             {
                 float t = i / (float)(pointsCount - 1);
-                Vector3 point = CalculateQuadraticBezierPoint(t, start, controlPoint, end);
-                if (isHorizontalPlane)
-                {
-                    point.y = flatY;
-                }
-                lineRenderer.SetPosition(i, point);
+                lineRenderer.SetPosition(i, CalculateQuadraticBezierPoint(t, start, controlPoint, end));
             }
 
             Color pathColor = biome != null ? biome.pathBaseColor : new Color(0.95f, 0.93f, 0.90f, 0.85f);
@@ -133,6 +140,11 @@ namespace TawanOS.MapEngine
             {
                 lineRenderer.startColor = color;
                 lineRenderer.endColor = color;
+                // URP Lit (String.mat) ignores vertex colour; tint through _BaseColor without cloning the material.
+                colorBlock ??= new MaterialPropertyBlock();
+                lineRenderer.GetPropertyBlock(colorBlock);
+                colorBlock.SetColor(BaseColorId, color);
+                lineRenderer.SetPropertyBlock(colorBlock);
             }
         }
 

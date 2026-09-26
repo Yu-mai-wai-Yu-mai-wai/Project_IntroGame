@@ -12,6 +12,8 @@ namespace TawanOS.MapEngine
         [SerializeField] private Vector3 baseScale = Vector3.one;
         [SerializeField] private Vector3 hoverScale = new Vector3(1.25f, 1.25f, 1.25f);
         [SerializeField] private float animationSpeed = 0.2f;
+        [Tooltip("Icon width in world units, independent of PNG resolution. FBX pedestal disc is 1.4.")]
+        [SerializeField] private float iconWorldSize = 1.2f;
 
         public NodeBlueprint NodeData { get; private set; }
         public NodeProfileSO Profile { get; private set; }
@@ -64,10 +66,6 @@ namespace TawanOS.MapEngine
             {
                 iconRenderer.sortingOrder = 1;
                 iconRenderer.transform.localPosition = new Vector3(0f, 0f, -0.01f);
-                // 50% scale of stone pedestal (radius ~ 0.5)
-                iconRenderer.transform.localScale = (nodeData.type == NodeType.Boss) 
-                    ? new Vector3(0.7f, 0.7f, 1f) 
-                    : new Vector3(0.5f, 0.5f, 1f);
                 iconRenderer.color = Color.white;
 
                 if (profile != null && profile.icon != null)
@@ -78,6 +76,11 @@ namespace TawanOS.MapEngine
                 {
                     iconRenderer.sprite = circleSprite;
                 }
+
+                // Icons ship at different PNG sizes (600-855px); fit the larger side to iconWorldSize. Boss gets +30% via baseScale.
+                Vector2 spriteSize = iconRenderer.sprite.bounds.size;
+                float fit = iconWorldSize / Mathf.Max(spriteSize.x, spriteSize.y, 0.001f);
+                iconRenderer.transform.localScale = new Vector3(fit, fit, 1f);
             }
 
             UpdateVisualState();

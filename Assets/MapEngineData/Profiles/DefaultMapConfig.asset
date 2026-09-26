@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DefaultMapConfig
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.MapConfigSO
   seed: 737445
-  useRandomSeed: 0
+  useRandomSeed: 1
   totalFloors: 7
   mapWidth: 3
   startingNodesCount: 3
@@ -32,9 +32,9 @@ MonoBehaviour:
   nodePositionJitter: 0.2
   use3DTableMode: 1
   tableHeightY: 0
-  cameraHeightY: 7.5
-  cameraAnglePitch: 30
-  cameraZDistance: 8.5
+  cameraHeightY: 3
+  cameraAnglePitch: 28
+  cameraZDistance: 5.5
   player3DScale: {x: 1, y: 1, z: 1}
   player3DRotation: {x: 0, y: 180, z: 0}
   renderStartPointLines: 1
