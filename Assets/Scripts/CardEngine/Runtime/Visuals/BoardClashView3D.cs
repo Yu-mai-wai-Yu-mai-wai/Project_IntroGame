@@ -55,7 +55,16 @@ namespace TawanOS.CardEngine
         private readonly List<CardInstance> died = new List<CardInstance>();
         private EffectResolver resolver;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        // AfterSceneLoad fires only for the first scene played; the combat scene is usually loaded later from the map.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void HookSceneLoads()
+        {
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded; // no double hook without domain reload
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private static void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode) => Bootstrap();
+
         private static void Bootstrap()
         {
             if (FindFirstObjectByType<CombatManager>() == null) return;

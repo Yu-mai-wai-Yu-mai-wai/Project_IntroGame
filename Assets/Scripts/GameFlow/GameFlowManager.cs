@@ -72,7 +72,9 @@ namespace TawanOS.GameFlow
                 {
                     var profile = pendingEnemyProfile;
                     pendingEnemyProfile = null;
-                    CombatManager.Instance.StartCombat(profile);
+                    // CombatManager.Start begins the fight with this profile (sceneLoaded runs before Start).
+                    // Calling StartCombat here as well started two overlapping turn loops.
+                    CombatManager.Instance.currentEnemyProfile = profile;
                 }
             }
         }
