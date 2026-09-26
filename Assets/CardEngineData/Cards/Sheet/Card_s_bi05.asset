@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae89d501da270bf47bfa4b1beb2d1ec3, type: 3}
+  m_Name: Card_s_bi05
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
+  cardId: s_bi05
+  cardNameThai: "\u0e04\u0e32\u0e16\u0e32\u0e2a\u0e30\u0e01\u0e14"
+  cardNameEng: Binding Chant
+  descriptionFormat: "\u0e21\u0e2d\u0e1a\u0e2a\u0e16\u0e32\u0e19\u0e30\u0e1c\u0e35\u0e1a\u0e31\u0e07\u0e15\u0e32\u0e43\u0e2b\u0e49\u0e28\u0e31\u0e15\u0e23\u0e39 1 \u0e43\u0e1a"
+  magicSchool: 1
+  cardType: 0
+  targetType: 1
+  customTypeText: "\u0e2d\u0e32\u0e04\u0e21 \u2022 \u0e21\u0e19\u0e15\u0e4c\u0e14\u0e33"
+  meritCost: 0
+  corruptionGain: 3
+  baseValue: 0
+  durability: 0
+  familiarHealth: 0
+  familiarDamage: 0
+  abilities:
+  - trigger: 0
+    effect: 6
+    target: 4
+    status: 4
+    value: 1
+    duration: 2
+    ignoreArmor: 0
+    relatedCard: {fileID: 0}
+  cardBackground: {fileID: 0}
+  artwork: {fileID: 0}
+  frameBorder: {fileID: 0}
+  sfxPlay: {fileID: 0}
+  vfxPrefab: {fileID: 0}

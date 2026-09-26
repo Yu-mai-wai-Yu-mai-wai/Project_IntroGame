@@ -1,18 +1,19 @@
 using System;
+using UnityEngine;
 
 namespace TawanOS.CardEngine
 {
     public enum MagicSchool
     {
-        WhiteMagic,     // มนต์ขาว: ใช้ค่ากุศล (Merit)
-        BlackMagic      // มนต์ดำ: ไร้ค่าร่ายกุศล แต่เพิ่มมลทิน (Corruption)
+        [InspectorName("มนต์ขาว")] WhiteMagic,     // มนต์ขาว: ใช้ค่ากุศล (Merit)
+        [InspectorName("มนต์ดำ")] BlackMagic      // มนต์ดำ: ไร้ค่าร่ายกุศล แต่เพิ่มมลทิน (Corruption)
     }
 
     public enum CardType
     {
-        Incantation,    // การ์ดอาคม: ส่งผลทันทีจากมือ
-        Amulet,         // การ์ดเครื่องราง: วางลงช่องเครื่องราง ให้บัฟต่อเนื่อง
-        Familiar        // การ์ดบริวาร: วางลงสนาม มี HP ขวัญ และ ATK สะเทือนขวัญ
+        [InspectorName("อาคม")] Incantation,    // การ์ดอาคม: ส่งผลทันทีจากมือ
+        [InspectorName("เครื่องราง")] Amulet,         // การ์ดเครื่องราง: วางลงช่องเครื่องราง ให้บัฟต่อเนื่อง
+        [InspectorName("บริวาร")] Familiar        // การ์ดบริวาร: วางลงสนาม มี HP ขวัญ และ ATK สะเทือนขวัญ
     }
 
     public enum TargetType
@@ -36,14 +37,18 @@ namespace TawanOS.CardEngine
         Defeat
     }
 
-    // Simplified player turn used to test drawing: Draw -> Main -> End, then the next turn starts.
+    // One turn: Draw -> player plays familiars/amulets -> enemy does the same -> player casts
+    // incantations -> enemy does the same -> board clash -> End, then the next turn starts.
     public enum TurnPhase
     {
         None,
         Draw,
-        Main,
-        End,
-        Enemy
+        PlayerBoard,    // ผู้เล่นลงบริวาร / เครื่องราง
+        EnemyBoard,     // ศัตรูลงบริวาร / เครื่องราง
+        PlayerSpell,    // ผู้เล่นร่ายอาคม
+        EnemySpell,     // ศัตรูร่ายอาคม
+        Clash,          // การ์ดตีกัน
+        End
     }
 
     public enum EnemyIntent

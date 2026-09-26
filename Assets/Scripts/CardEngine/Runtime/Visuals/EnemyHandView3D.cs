@@ -24,6 +24,8 @@ namespace TawanOS.CardEngine
         [Tooltip("Offset from the camera (right, up, forward). Auto-mirrored from the player's hand anchor when Auto Mirror is on.")]
         public Vector3 offset = new Vector3(0f, 1.5f, 3f);
         public bool autoMirrorPlayerAnchor = true;
+        [Tooltip("Scale of the cards in the enemy's hand (board cards are the card prefab's full size).")]
+        public float handCardScale = 0.5f;
 
         [Header("Fan Layout (copied from the player's hand when found)")]
         public float cardSpacing = 0.9f;
@@ -46,6 +48,9 @@ namespace TawanOS.CardEngine
         private EnemyCardPlayer enemyCards;
         private Camera cam;
         private Transform container;
+
+        // The object the enemy's hand cards sit under (CombatCameraRig3D scales it with the camera zoom)
+        public Transform Container => container;
         private Transform deckSlot;
         private Transform pile;
         private Vector3 tableCenter;
@@ -99,6 +104,7 @@ namespace TawanOS.CardEngine
 
             container = new GameObject("EnemyHandCards").transform;
             container.SetParent(transform, false);
+            container.localScale = Vector3.one * handCardScale;
             AnchorToCamera();
             BuildPile();
 
@@ -204,8 +210,10 @@ namespace TawanOS.CardEngine
             view.enabled = false; // no hover/drag on the enemy's cards
             SetFace(view, card, faceUp: showFaces);
 
-            // Start lying flat on top of the enemy's draw pile; the layout pass flies it into the hand
-            view.transform.position = PileTop();
+            // Start lying flat on top of the enemy's draw pile (or the pit); the layout pass flies it into the hand
+            bool fromPit = card.fromPit && DrawPitView3D.Instance != null;
+            card.fromPit = false;
+            view.transform.position = fromPit ? DrawPitView3D.Instance.SpawnPosition : PileTop();
             view.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
             views.Add(view);
@@ -253,6 +261,7 @@ namespace TawanOS.CardEngine
         private void SetFace(CardView3D view, CardInstance card, bool faceUp)
         {
             if (view.nameLabel != null) view.nameLabel.gameObject.SetActive(faceUp);
+            view.SetFaceVisible(faceUp);
             if (view.cardRenderer != null)
             {
                 view.cardRenderer.material.color = faceUp

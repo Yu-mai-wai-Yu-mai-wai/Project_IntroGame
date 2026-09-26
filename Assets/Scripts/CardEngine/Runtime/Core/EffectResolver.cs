@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace TawanOS.CardEngine
 {
-    public class EffectResolver : MonoBehaviour, IEffectResolver
+    public partial class EffectResolver : MonoBehaviour, IEffectResolver
     {
         public static EffectResolver Instance { get; private set; }
 
@@ -29,6 +29,7 @@ namespace TawanOS.CardEngine
                 return;
             }
             Instance = this;
+            catalog = CardCatalogSO.Load();
         }
 
         public void ResolveCardEffect(CardInstance card, object target = null)
@@ -48,14 +49,29 @@ namespace TawanOS.CardEngine
                     break;
                 case CardType.Amulet:
                 case CardType.Familiar:
-                    if (casterIsPlayer) PlaceBoardCard(card);
-                    else PlaceEnemyBoardCard(card);
+                    bool placed = casterIsPlayer ? PlaceBoardCard(card) : PlaceEnemyBoardCard(card);
+                    if (placed) RunOnPlayAbilities(card, target, casterIsPlayer);
                     break;
             }
         }
 
+        private void RunOnPlayAbilities(CardInstance card, object target, bool casterIsPlayer)
+        {
+            if (card.abilities == null || card.abilities.Count == 0) return;
+
+            TriggerAbilities(card, AbilityTrigger.OnPlay, casterIsPlayer, null, target);
+            RemoveDeadFamiliars();
+        }
+
         private void ExecuteIncantation(CardInstance card, object target, bool casterIsPlayer)
         {
+            // Cards with abilities are fully data-driven; the rest keep the older baseValue/targetType rules
+            if (card.abilities != null && card.abilities.Count > 0)
+            {
+                RunOnPlayAbilities(card, target, casterIsPlayer);
+                return;
+            }
+
             if (card.targetType == TargetType.SingleEnemy || card.targetType == TargetType.AllEnemies)
             {
                 // Deal damage to the caster's opponent
@@ -75,23 +91,65 @@ namespace TawanOS.CardEngine
             }
         }
 
-        private void PlaceEnemyBoardCard(CardInstance card)
+        private bool PlaceEnemyBoardCard(CardInstance card)
         {
-            if (CombatManager.Instance == null) return;
+            if (CombatManager.Instance == null) return false;
 
             var list = CombatManager.Instance.State.enemyBoardCards;
-            if (list.Count >= MaxBoardSlots) list.RemoveAt(0);
-            list.Add(card);
+            if (!PutOnBoard(list, card)) return false;
+            RefreshAuras();
             ResyncEnemySlots(list);
+            return true;
         }
 
         private void ResyncEnemySlots(List<CardInstance> list)
         {
             for (int i = 0; i < MaxBoardSlots; i++)
             {
-                if (i < list.Count) OnEnemySlotOccupied?.Invoke(list[i], i);
+                var card = CardAt(list, i);
+                if (card != null) OnEnemySlotOccupied?.Invoke(card, i);
                 else OnEnemySlotCleared?.Invoke(i);
             }
+        }
+
+        // The card in board column `slot`, or null when that column is empty
+        public static CardInstance CardAt(List<CardInstance> board, int slot)
+        {
+            if (board == null || slot < 0) return null;
+            return board.Find(c => c != null && c.boardSlot == slot);
+        }
+
+        // The column a new card goes to: the requested one when it is free, else the leftmost free one (-1 = full)
+        public static int FreeSlot(List<CardInstance> board, int preferred = -1)
+        {
+            if (preferred >= 0 && preferred < MaxBoardSlots && CardAt(board, preferred) == null) return preferred;
+            for (int i = 0; i < MaxBoardSlots; i++)
+            {
+                if (CardAt(board, i) == null) return i;
+            }
+            return -1;
+        }
+
+        // Places a card in a fixed column. When the board is full the oldest card is replaced in its column.
+        public bool IsBoardFull(bool playerSide)
+        {
+            if (CombatManager.Instance == null) return false;
+            var list = playerSide ? CombatManager.Instance.State.activeBoardCards : CombatManager.Instance.State.enemyBoardCards;
+            return FreeSlot(list) < 0;
+        }
+
+        // Places a card in a fixed column. Returns false when the board is full (CanResolve stops that earlier).
+        private static bool PutOnBoard(List<CardInstance> list, CardInstance card)
+        {
+            int slot = FreeSlot(list, card.boardSlot);
+            if (slot < 0)
+            {
+                Debug.LogWarning($"[EffectResolver] Board is full; {card.cardNameThai} cannot be placed");
+                return false;
+            }
+            card.boardSlot = slot;
+            list.Add(card);
+            return true;
         }
 
         private int ApplyDamageStatusModifier(int baseDamage, bool attackerIsPlayer)
@@ -106,32 +164,24 @@ namespace TawanOS.CardEngine
             return baseDamage;
         }
 
-        private void PlaceBoardCard(CardInstance card)
+        private bool PlaceBoardCard(CardInstance card)
         {
-            if (CombatManager.Instance == null) return;
+            if (CombatManager.Instance == null) return false;
 
             var list = CombatManager.Instance.State.activeBoardCards;
-            if (list.Count >= MaxBoardSlots)
-            {
-                // Replace oldest slot (Ponytail: FIFO slot replacement)
-                list.RemoveAt(0);
-            }
-            list.Add(card);
+            if (!PutOnBoard(list, card)) return false;
+            RefreshAuras();
             ResyncSlots(list);
+            return true;
         }
 
         private void ResyncSlots(List<CardInstance> list)
         {
             for (int i = 0; i < MaxBoardSlots; i++)
             {
-                if (i < list.Count)
-                {
-                    OnSlotOccupied?.Invoke(list[i], i);
-                }
-                else
-                {
-                    OnSlotCleared?.Invoke(i);
-                }
+                var card = CardAt(list, i);
+                if (card != null) OnSlotOccupied?.Invoke(card, i);
+                else OnSlotCleared?.Invoke(i);
             }
         }
 
@@ -142,11 +192,12 @@ namespace TawanOS.CardEngine
             var list = CombatManager.Instance.State.activeBoardCards;
             for (int i = list.Count - 1; i >= 0; i--)
             {
-                if (list[i].cardType != CardType.Amulet) continue;
+                if (list[i].cardType != CardType.Amulet || list[i].currentDurability <= 0) continue;
 
                 list[i].currentDurability--;
                 if (list[i].currentDurability <= 0)
                 {
+                    list[i].boardSlot = -1;
                     list.RemoveAt(i);
                 }
             }
@@ -156,12 +207,19 @@ namespace TawanOS.CardEngine
             var enemyList = CombatManager.Instance.State.enemyBoardCards;
             for (int i = enemyList.Count - 1; i >= 0; i--)
             {
-                if (enemyList[i].cardType != CardType.Amulet) continue;
+                if (enemyList[i].cardType != CardType.Amulet || enemyList[i].currentDurability <= 0) continue;
 
                 enemyList[i].currentDurability--;
-                if (enemyList[i].currentDurability <= 0) enemyList.RemoveAt(i);
+                if (enemyList[i].currentDurability <= 0)
+                {
+                    enemyList[i].boardSlot = -1;
+                    enemyList.RemoveAt(i);
+                }
             }
             ResyncEnemySlots(enemyList);
+
+            // Amulets that wore out take their auras with them
+            RemoveDeadFamiliars();
         }
 
         public void ResolveEnemyIntent(EnemyIntent intent, int value, StatusEffectType status = StatusEffectType.KhwanPhawa)
@@ -214,54 +272,100 @@ namespace TawanOS.CardEngine
             return card != null && card.cardType == CardType.Familiar && card.familiarHealth > 0;
         }
 
-        // A familiar strikes: a target familiar loses Khwan (familiarHealth); with no target familiar the
-        // hit lands on the opposing player's Khwan. Attackers are not checked for being alive so that
-        // two familiars can trade blows at the same moment.
-        public void ResolveFamiliarStrike(CardInstance attacker, CardInstance targetFamiliar, bool fromPlayer)
+        // Cards a familiar can hit: live familiars, and amulets that have Khwan (they can be destroyed)
+        public static bool IsStrikeable(CardInstance card)
         {
-            if (attacker == null || attacker.familiarDamage <= 0) return;
+            if (card == null || card.IsDead) return false;
+            return card.cardType == CardType.Familiar || card.maxKhwan > 0;
+        }
 
-            if (targetFamiliar == null)
+        // A familiar strikes: the target card loses Khwan (armor first); with no target the hit lands on the
+        // opposing player's Khwan. Attackers are not checked for being alive so that two familiars can
+        // trade blows at the same moment. Multi-strikers also hit the cards beside the target.
+        // isCrit (rolled beforehand with RollCrit) doubles the damage.
+        public void ResolveFamiliarStrike(CardInstance attacker, CardInstance targetFamiliar, bool fromPlayer, bool isCrit = false)
+        {
+            if (!CanStrike(attacker)) return;
+
+            if (HasCardStatus(attacker, CardStatusType.Blinded) && UnityEngine.Random.Range(0, 100) < BlindedMissPercent)
             {
-                ResolveFamiliarAttack(attacker, fromPlayer);
+                Debug.Log($"[Clash] {attacker.cardNameThai} is blinded and misses");
                 return;
             }
 
-            int damage = CombatManager.Instance != null
-                ? ApplyDamageStatusModifier(attacker.familiarDamage, attackerIsPlayer: fromPlayer)
-                : attacker.familiarDamage;
-            Debug.Log($"[Clash] {attacker.cardNameThai} hits {targetFamiliar.cardNameThai} for {damage} (same column)");
-            targetFamiliar.familiarHealth = Mathf.Max(0, targetFamiliar.familiarHealth - damage);
-            OnFamiliarDamaged?.Invoke(targetFamiliar, damage);
-            if (targetFamiliar.familiarHealth <= 0) OnFamiliarDied?.Invoke(targetFamiliar);
+            int attack = CombatManager.Instance != null
+                ? ApplyDamageStatusModifier(EffectiveAttack(attacker), attackerIsPlayer: fromPlayer)
+                : EffectiveAttack(attacker);
+            if (attack <= 0) return;
+
+            if (isCrit)
+            {
+                attack *= CritDamageMultiplier;
+                Debug.Log($"[Clash] {attacker.cardNameThai} lands a critical hit ({attack})");
+            }
+
+            var targets = CollectStrikeTargets(attacker, targetFamiliar, fromPlayer);
+            if (targets.Count == 0)
+            {
+                HitOpposingPlayer(attacker, attack, fromPlayer);
+            }
+            else
+            {
+                foreach (var t in targets)
+                {
+                    Debug.Log($"[Clash] {attacker.cardNameThai} hits {t.cardNameThai} for {attack}");
+                    DamageCard(t, attack, ignoreArmor: false, attacker, fromPlayer);
+                }
+            }
+
+            // กรรมตามสนอง: the damage dealt comes back on the attacker
+            if (HasCardStatus(attacker, CardStatusType.Karma)) DamageCard(attacker, attack, ignoreArmor: true, source: null, sourceIsPlayer: !fromPlayer);
         }
 
-        // Called once the whole clash is over, because removing cards shifts the board slots
+        // Called once the whole clash is over. The other cards keep their columns.
+        // Dead player cards go to the graveyard so they can be brought back.
         public void RemoveDeadFamiliars()
         {
             if (CombatManager.Instance == null) return;
 
-            var playerList = CombatManager.Instance.State.activeBoardCards;
-            if (playerList.RemoveAll(c => c.cardType == CardType.Familiar && c.familiarHealth <= 0) > 0)
+            // Removing a card can end its aura, and losing an aura can (rarely) kill another card
+            for (int pass = 0; pass < 5; pass++)
             {
-                ResyncSlots(playerList);
+                bool removed = RemoveDeadFrom(CombatManager.Instance.State.activeBoardCards, true);
+                removed |= RemoveDeadFrom(CombatManager.Instance.State.enemyBoardCards, false);
+                RefreshAuras();
+                if (!removed) break;
             }
+        }
 
-            var enemyList = CombatManager.Instance.State.enemyBoardCards;
-            if (enemyList.RemoveAll(c => c.cardType == CardType.Familiar && c.familiarHealth <= 0) > 0)
+        private bool RemoveDeadFrom(List<CardInstance> list, bool isPlayer)
+        {
+            var dead = list.FindAll(c => c.IsDead);
+            if (dead.Count == 0) return false;
+
+            list.RemoveAll(c => c.IsDead);
+            foreach (var c in dead)
             {
-                ResyncEnemySlots(enemyList);
+                c.boardSlot = -1;
+                SendToGraveyard(c, isPlayer);
             }
+            if (isPlayer) ResyncSlots(list);
+            else ResyncEnemySlots(list);
+            return true;
         }
 
         // One familiar attacks the opposing side's Khwan directly
         public void ResolveFamiliarAttack(CardInstance card, bool fromPlayer)
         {
-            if (card == null || card.cardType != CardType.Familiar || card.familiarDamage <= 0) return;
-            if (CombatManager.Instance == null) return;
+            if (card == null || card.cardType != CardType.Familiar) return;
+            ResolveFamiliarStrike(card, null, fromPlayer, RollCrit(card, fromPlayer));
+        }
 
-            int damage = ApplyDamageStatusModifier(card.familiarDamage, attackerIsPlayer: fromPlayer);
+        private void HitOpposingPlayer(CardInstance card, int damage, bool fromPlayer)
+        {
             var combat = CombatManager.Instance;
+            if (combat == null) return;
+
             int shield = fromPlayer ? combat.CurrentEnemyShield : combat.CurrentPlayerShield;
             Debug.Log($"[Clash] {card.cardNameThai} hits {(fromPlayer ? "enemy" : "player")} Khwan for {damage} (target shield {shield} absorbs first)");
             combat.TakeDamage(damage, toPlayer: !fromPlayer);

@@ -65,7 +65,15 @@ namespace TawanOS.CardEngine
             view.Bind(card);
             activeViews.Add(view);
 
-            if (deckPile != null)
+            if (card.fromPit && DrawPitView3D.Instance != null)
+            {
+                // Pulled from the pit: fly out of it instead of the deck
+                card.fromPit = false;
+                view.transform.position = DrawPitView3D.Instance.SpawnPosition;
+                view.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+                newlyDrawn.Add(view);
+            }
+            else if (deckPile != null)
             {
                 // Start lying flat on top of the deck pile; the layout pass flies it into the hand
                 view.transform.position = deckPile.DrawSpawnPosition;
@@ -144,6 +152,14 @@ namespace TawanOS.CardEngine
                 Quaternion targetRot = Quaternion.Euler(0, 0, angle);
 
                 var view = activeViews[i];
+
+                // A held card stays at the side of the screen; it only learns where to come back to
+                if (view.IsHeld)
+                {
+                    view.SetRestingTransform(targetPos, targetRot, applyImmediately: false);
+                    continue;
+                }
+
                 int drawOrder = newlyDrawn.IndexOf(view);
                 view.transform.DOKill();
 

@@ -14,6 +14,7 @@ namespace TawanOS.CardEngine
         public CardInstance attacker;
         public CardInstance target; // opposing familiar being hit, or null for the player
         public int targetColumn;    // column of the target familiar (== column when hitting the player)
+        public bool isCrit;         // critical hit: double damage, and the card pulls back to charge first
     }
 
     // Plays the end-of-turn board clash visuals. CombatManager decides who hits whom and applies the
@@ -28,14 +29,26 @@ namespace TawanOS.CardEngine
 
         [Header("Motion")]
         [Tooltip("How high the cards lift while charging.")]
-        public float liftHeight = 0.5f;
+        public float liftHeight = 0.8f;
         [Tooltip("Distance kept between the attacker and what it hits, along the charge direction.")]
-        public float collisionGap = 0.35f;
+        public float collisionGap = 0.7f;
         public float chargeDuration = 0.25f;
         public float impactPause = 0.2f;
         public float returnDuration = 0.3f;
         public float impactPunch = 0.2f;
         public float deathDuration = 0.3f;
+
+        [Header("Critical Hit Wind-up")]
+        [Tooltip("How far a critical striker pulls back (away from its target) before charging.")]
+        public float critPullBack = 1.1f;
+        [Tooltip("Extra lift while pulling back for a critical hit.")]
+        public float critLift = 0.3f;
+        public float critPullBackDuration = 0.3f;
+        [Tooltip("How long the card holds at the back, charging, before it strikes.")]
+        public float critChargeHold = 0.25f;
+        [Tooltip("Charge time multiplier for a critical strike (lower = faster lunge).")]
+        public float critChargeSpeed = 0.7f;
+        public float critImpactPunch = 0.4f;
 
         private readonly Dictionary<int, BoardSlotView> playerSlots = new Dictionary<int, BoardSlotView>();
         private readonly Dictionary<int, BoardSlotView> enemySlots = new Dictionary<int, BoardSlotView>();
@@ -158,14 +171,23 @@ namespace TawanOS.CardEngine
             Vector3 mid = (pPos + ePos) * 0.5f + Vector3.up * liftHeight;
 
             var seq = DOTween.Sequence();
-            seq.Append(playerView.transform.DOMove(mid - dir * collisionGap, chargeDuration).SetEase(Ease.InQuad));
-            seq.Join(enemyView.transform.DOMove(mid + dir * collisionGap, chargeDuration).SetEase(Ease.InQuad));
+            bool anyCrit = playerStrike.isCrit || enemyStrike.isCrit;
+            if (anyCrit)
+            {
+                // Critical strikers pull back and charge up first; the other card waits in its slot
+                if (playerStrike.isCrit) AppendWindUp(seq, playerView, pPos, -dir, join: false);
+                if (enemyStrike.isCrit) AppendWindUp(seq, enemyView, ePos, dir, join: playerStrike.isCrit);
+                seq.AppendInterval(critChargeHold);
+            }
+            float charge = anyCrit ? chargeDuration * critChargeSpeed : chargeDuration;
+            seq.Append(playerView.transform.DOMove(mid - dir * collisionGap, charge).SetEase(Ease.InQuad));
+            seq.Join(enemyView.transform.DOMove(mid + dir * collisionGap, charge).SetEase(Ease.InQuad));
             seq.AppendCallback(() =>
             {
                 apply(playerStrike);
                 apply(enemyStrike);
-                Punch(playerView);
-                Punch(enemyView);
+                Punch(playerView, anyCrit);
+                Punch(enemyView, anyCrit);
             });
             seq.AppendInterval(impactPause);
             seq.Append(playerView.transform.DOLocalMove(Vector3.zero, returnDuration).SetEase(Ease.OutQuad));
@@ -203,12 +225,20 @@ namespace TawanOS.CardEngine
             Vector3 chargeTo = tPos + Vector3.up * liftHeight - dir * collisionGap;
 
             var seq = DOTween.Sequence();
-            seq.Append(attackerView.transform.DOMove(chargeTo, chargeDuration * 1.5f).SetEase(Ease.InQuad));
+            float charge = chargeDuration * 1.5f;
+            if (strike.isCrit)
+            {
+                // Pull back away from the target, hold to charge up, then lunge in faster
+                AppendWindUp(seq, attackerView, aPos, -dir, join: false);
+                seq.AppendInterval(critChargeHold);
+                charge *= critChargeSpeed;
+            }
+            seq.Append(attackerView.transform.DOMove(chargeTo, charge).SetEase(Ease.InQuad));
             seq.AppendCallback(() =>
             {
                 apply(strike);
-                Punch(attackerView);
-                if (targetView != null) Punch(targetView);
+                Punch(attackerView, strike.isCrit);
+                if (targetView != null) Punch(targetView, strike.isCrit);
             });
             seq.AppendInterval(impactPause);
             seq.Append(attackerView.transform.DOLocalMove(Vector3.zero, returnDuration).SetEase(Ease.OutQuad));
@@ -225,9 +255,18 @@ namespace TawanOS.CardEngine
             return d.sqrMagnitude > 0.0001f ? d.normalized : Vector3.forward;
         }
 
-        private void Punch(CardView3D view)
+        // Critical wind-up: the card backs off from its slot (away from the target) and rises
+        private void AppendWindUp(Sequence seq, CardView3D view, Vector3 slotPos, Vector3 awayDir, bool join)
         {
-            if (view != null) view.transform.DOPunchScale(Vector3.one * impactPunch, impactPause, 8);
+            Vector3 back = slotPos + awayDir * critPullBack + Vector3.up * (liftHeight + critLift);
+            var move = view.transform.DOMove(back, critPullBackDuration).SetEase(Ease.OutQuad);
+            if (join) seq.Join(move);
+            else seq.Append(move);
+        }
+
+        private void Punch(CardView3D view, bool crit = false)
+        {
+            if (view != null) view.transform.DOPunchScale(Vector3.one * (crit ? critImpactPunch : impactPunch), impactPause, 8);
         }
 
         // Familiars whose Khwan hit 0 shrink away once the cards are back on their slots

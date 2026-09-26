@@ -75,6 +75,8 @@ namespace TawanOS.CardEngine
             state.enemyShield = 0;
             state.playerStatuses.Clear();
             state.enemyStatuses.Clear();
+            state.playerPurify = 0;
+            state.enemyPurify = 0;
 
             if (CardManager.Instance != null && CardManager.Instance.defaultDeckConfig != null)
             {
@@ -83,6 +85,12 @@ namespace TawanOS.CardEngine
 
             state.enemyBoardCards.Clear();
             state.enemyCorruption = 0;
+
+            // Auras from the previous fight are gone with its board
+            state.corruptionThreshold -= state.playerAuraCorruptionCap;
+            state.enemyCorruptionThreshold -= state.enemyAuraCorruptionCap;
+            state.playerAuraCorruptionCap = 0;
+            state.enemyAuraCorruptionCap = 0;
             enemyAI.Init(enemyProfile);
             enemyCards.Init(enemyProfile);
             PickNextEnemyMove();
@@ -128,6 +136,8 @@ namespace TawanOS.CardEngine
                 CardManager.Instance.DrawCards(CardManager.Instance.defaultDrawCount);
             }
 
+            EffectResolver.Instance?.TriggerTurnStart(isPlayer: true);
+
             SetPhase(CombatPhase.PlayerTurn);
         }
 
@@ -172,23 +182,52 @@ namespace TawanOS.CardEngine
         // Callers must check for Victory/Defeat afterwards.
         public IEnumerator EnemyActionSequence()
         {
-            // Enemy shield does not carry over into the enemy's own turn
-            state.enemyShield = 0;
-            OnShieldChanged?.Invoke(state.enemyShield, false);
+            yield return EnemyTurnStart();
 
             if (enemyCards.Active)
             {
                 // Enemy plays cards from its own deck, same rules as the player
-                yield return enemyCards.PlayTurn(this, state.turnNumber, enemyAI.CurrentPlayStyle);
+                yield return EnemyPlayCards(null);
             }
-            else if (nextEnemyMove != null && EffectResolver.Instance != null)
+            else
             {
-                ReportEnemyAction(nextEnemyMove.moveDescription);
-                EffectResolver.Instance.ResolveEnemyIntent(nextEnemyMove.intent, nextEnemyMove.baseValue, nextEnemyMove.statusEffect);
+                ResolveEnemyIntentMove();
             }
 
             yield return new WaitForSeconds(0.6f);
+            yield return ClashAndRoundEnd();
+        }
 
+        // Start of the enemy's turn: its shield resets, its start-of-turn abilities fire, it draws
+        public IEnumerator EnemyTurnStart()
+        {
+            // Enemy shield does not carry over into the enemy's own turn
+            state.enemyShield = 0;
+            OnShieldChanged?.Invoke(state.enemyShield, false);
+
+            EffectResolver.Instance?.TriggerTurnStart(isPlayer: false);
+
+            yield return enemyCards.DrawForTurn();
+        }
+
+        // The enemy plays the cards `filter` allows (null = any)
+        public IEnumerator EnemyPlayCards(Predicate<CardInstance> filter)
+        {
+            if (!enemyCards.Active) yield break;
+            yield return enemyCards.PlayCards(this, enemyAI.CurrentPlayStyle, filter);
+        }
+
+        // An enemy without a card deck uses its telegraphed move instead
+        public void ResolveEnemyIntentMove()
+        {
+            if (enemyCards.Active || nextEnemyMove == null || EffectResolver.Instance == null) return;
+            ReportEnemyAction(nextEnemyMove.moveDescription);
+            EffectResolver.Instance.ResolveEnemyIntent(nextEnemyMove.intent, nextEnemyMove.baseValue, nextEnemyMove.statusEffect);
+        }
+
+        // Board clash, then the end-of-round ticks. Callers must check for Victory/Defeat afterwards.
+        public IEnumerator ClashAndRoundEnd()
+        {
             if (state.playerKhwan <= 0)
             {
                 if (!IsCombatOver) EndCombat(false);
@@ -219,11 +258,13 @@ namespace TawanOS.CardEngine
             if (EffectResolver.Instance != null)
             {
                 EffectResolver.Instance.TickAmuletDurability();
+                EffectResolver.Instance.TickCardStatuses();
             }
         }
 
-        // Familiars fight in columns, left to right (slot 0..4). In each column the player's familiar
-        // strikes first, then the enemy's (or both at once when they face each other). A familiar only
+        // Familiars fight in columns, left to right (slot 0..4). In each column an overhead (ตีข้ามหัว)
+        // familiar strikes first, then the normal one; otherwise the player's familiar strikes first, then
+        // the enemy's (or both at once when they face each other). A familiar only
         // clashes with the familiar in the opposite slot of the same column; when that slot has no live
         // familiar, it hits the opposing player's Khwan.
         // Damage is applied through EffectResolver at the moment of impact; without a 3D board view it
@@ -234,21 +275,26 @@ namespace TawanOS.CardEngine
             if (resolver == null) yield break;
 
             var view = BoardClashView3D.Instance;
-            Action<ClashStrike> apply = s => resolver.ResolveFamiliarStrike(s.attacker, s.target, s.fromPlayer);
+            Action<ClashStrike> apply = s => resolver.ResolveFamiliarStrike(s.attacker, s.target, s.fromPlayer, s.isCrit);
 
             for (int col = 0; col < EffectResolver.MaxBoardSlots; col++)
             {
                 if (IsCombatOver) yield break;
 
-                CardInstance playerCard = PlayerFamiliarAt(col, view);
+                CardInstance playerCard = PlayerFamiliarAt(col);
                 CardInstance enemyCard = EnemyFamiliarAt(col);
                 bool playerReady = CanAttack(playerCard);
                 bool enemyReady = CanAttack(enemyCard);
                 if (!playerReady && !enemyReady) continue;
 
-                if (playerReady && enemyReady
-                    && TargetColumn(col, attackerIsPlayer: true, view) == col
-                    && TargetColumn(col, attackerIsPlayer: false, view) == col)
+                bool playerOverhead = EffectResolver.HasKeyword(playerCard, AbilityEffect.Overhead);
+                bool enemyOverhead = EffectResolver.HasKeyword(enemyCard, AbilityEffect.Overhead);
+
+                // Two familiars trade blows at the same moment only when each one's target is the other
+                // (never when one strikes overhead: overhead strikers always go first)
+                if (playerReady && enemyReady && !playerOverhead && !enemyOverhead
+                    && MakeStrike(col, playerCard, fromPlayer: true, view).target == enemyCard
+                    && MakeStrike(col, enemyCard, fromPlayer: false, view).target == playerCard)
                 {
                     var ps = MakeStrike(col, playerCard, fromPlayer: true, view);
                     var es = MakeStrike(col, enemyCard, fromPlayer: false, view);
@@ -257,19 +303,19 @@ namespace TawanOS.CardEngine
                 }
                 else
                 {
-                    if (playerReady)
+                    // Overhead strikers hit first, then normal ones; on a tie the player goes first
+                    bool enemyFirst = enemyOverhead && !playerOverhead;
+                    for (int turn = 0; turn < 2; turn++)
                     {
-                        var ps = MakeStrike(col, playerCard, fromPlayer: true, view);
-                        if (view != null) yield return view.Strike(ps, apply);
-                        else apply(ps);
-                    }
+                        bool fromPlayer = (turn == 0) != enemyFirst;
+                        CardInstance attacker = fromPlayer ? playerCard : enemyCard;
 
-                    // Re-check: the player's strike may just have killed this column's enemy familiar
-                    if (!IsCombatOver && CanAttack(enemyCard))
-                    {
-                        var es = MakeStrike(col, enemyCard, fromPlayer: false, view);
-                        if (view != null) yield return view.Strike(es, apply);
-                        else apply(es);
+                        // Re-check: the first strike may just have killed or disabled this column's other familiar
+                        if (IsCombatOver || !CanAttack(attacker)) continue;
+
+                        var strike = MakeStrike(col, attacker, fromPlayer, view);
+                        if (view != null) yield return view.Strike(strike, apply);
+                        else apply(strike);
                     }
                 }
 
@@ -282,43 +328,30 @@ namespace TawanOS.CardEngine
 
         private static bool CanAttack(CardInstance card)
         {
+            var resolver = EffectResolver.Instance;
+            if (resolver != null) return resolver.CanFamiliarAttack(card);
             return EffectResolver.IsAliveFamiliar(card) && card.familiarDamage > 0;
         }
 
-        private CardInstance PlayerFamiliarAt(int col, BoardClashView3D view)
+        private CardInstance PlayerFamiliarAt(int col)
         {
-            CardInstance card;
-            if (view != null)
-            {
-                card = view.PlayerCardAt(col);
-                if (card != null && !state.activeBoardCards.Contains(card)) card = null;
-            }
-            else
-            {
-                card = col < state.activeBoardCards.Count ? state.activeBoardCards[col] : null;
-            }
+            var card = EffectResolver.CardAt(state.activeBoardCards, col);
             return EffectResolver.IsAliveFamiliar(card) ? card : null;
         }
 
         private CardInstance EnemyFamiliarAt(int col)
         {
-            var card = col < state.enemyBoardCards.Count ? state.enemyBoardCards[col] : null;
+            var card = EffectResolver.CardAt(state.enemyBoardCards, col);
             return EffectResolver.IsAliveFamiliar(card) ? card : null;
         }
 
-        // A familiar only fights the familiar in the opposite slot of its own column. Returns that
-        // column, or -1 when the opposite slot has no live familiar and the hit goes to the player.
-        private int TargetColumn(int col, bool attackerIsPlayer, BoardClashView3D view)
-        {
-            var opposing = attackerIsPlayer ? EnemyFamiliarAt(col) : PlayerFamiliarAt(col, view);
-            return opposing != null ? col : -1;
-        }
-
+        // Who a familiar hits is decided by EffectResolver.ChooseStrikeTarget: the familiar in the opposite
+        // slot by default, a taunting card instead, or (overhead) the player. target == null = the player.
         private ClashStrike MakeStrike(int col, CardInstance attacker, bool fromPlayer, BoardClashView3D view)
         {
-            int targetCol = TargetColumn(col, fromPlayer, view);
-            CardInstance target = null;
-            if (targetCol >= 0) target = fromPlayer ? EnemyFamiliarAt(targetCol) : PlayerFamiliarAt(targetCol, view);
+            var resolver = EffectResolver.Instance;
+            CardInstance target = resolver != null ? resolver.ChooseStrikeTarget(attacker, col, fromPlayer) : null;
+            int targetCol = target != null ? resolver.BoardIndexOf(target, onPlayerSide: !fromPlayer) : -1;
 
             return new ClashStrike
             {
@@ -326,7 +359,8 @@ namespace TawanOS.CardEngine
                 column = col,
                 attacker = attacker,
                 target = target,
-                targetColumn = targetCol >= 0 ? targetCol : col
+                targetColumn = targetCol >= 0 ? targetCol : col,
+                isCrit = resolver != null && resolver.RollCrit(attacker, fromPlayer)
             };
         }
 
@@ -445,9 +479,31 @@ namespace TawanOS.CardEngine
             return list.Exists(s => s.type == type);
         }
 
+        public void AddPurify(int charges, bool toPlayer)
+        {
+            if (charges <= 0) return;
+            if (toPlayer) state.playerPurify += charges;
+            else state.enemyPurify += charges;
+        }
+
+        private static bool IsDebuffStatus(StatusEffectType type)
+        {
+            return type == StatusEffectType.KhwanPhawa || type == StatusEffectType.BleedingCurse;
+        }
+
         public void ApplyStatus(StatusEffectType type, int duration, bool toPlayer)
         {
             if (duration <= 0) return;
+
+            // ชำระล้าง: a purify charge swallows the debuff
+            if (IsDebuffStatus(type) && (toPlayer ? state.playerPurify : state.enemyPurify) > 0)
+            {
+                if (toPlayer) state.playerPurify--;
+                else state.enemyPurify--;
+                Debug.Log($"[CombatManager] Purify blocked {type} on {(toPlayer ? "player" : "enemy")}");
+                return;
+            }
+
             var list = toPlayer ? state.playerStatuses : state.enemyStatuses;
             var existing = list.Find(s => s.type == type);
             if (existing != null)
@@ -546,17 +602,31 @@ namespace TawanOS.CardEngine
         public void AddEnemyCorruption(int amount)
         {
             state.enemyCorruption += amount;
-            if (state.enemyCorruption < state.corruptionThreshold) return;
+            if (state.enemyCorruption < state.enemyCorruptionThreshold) return;
 
             state.enemyCorruption = 0;
             EffectResolver.Instance?.TriggerCurseBackfire(toPlayer: false);
+        }
+
+        // เบี้ยแก้: raises how much Corruption a side can hold before the curse backfires
+        public void RaiseCorruptionThreshold(int amount, bool forPlayer)
+        {
+            if (forPlayer)
+            {
+                state.corruptionThreshold += amount;
+                OnCorruptionChanged?.Invoke(state.currentCorruption, state.corruptionThreshold);
+            }
+            else
+            {
+                state.enemyCorruptionThreshold += amount;
+            }
         }
 
         public void AddCorruption(int amount)
         {
             state.currentCorruption += amount;
 
-            // Threshold curse backfire: at 9+, trigger curse and reset
+            // Threshold curse backfire: at 7+ (the threshold), trigger curse and reset
             if (state.currentCorruption >= state.corruptionThreshold)
             {
                 state.currentCorruption = 0;

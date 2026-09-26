@@ -34,6 +34,10 @@ namespace TawanOS.CardEngine
         public int playerShield;
         public int enemyShield;
 
+        // ชำระล้าง: each charge blocks the next debuff applied to that side
+        public int playerPurify;
+        public int enemyPurify;
+
         public List<CardInstance> drawPile = new List<CardInstance>();
         public List<CardInstance> handCards = new List<CardInstance>();
         public List<CardInstance> discardPile = new List<CardInstance>();
@@ -41,6 +45,10 @@ namespace TawanOS.CardEngine
         public List<CardInstance> enemyBoardCards = new List<CardInstance>();
         public int enemyMerit;
         public int enemyCorruption;
+        public int enemyCorruptionThreshold = 7;
+        // Max Corruption currently added by auras (เบี้ยแก้), taken back when they leave the board
+        public int playerAuraCorruptionCap;
+        public int enemyAuraCorruptionCap;
         public List<ActiveStatus> playerStatuses = new List<ActiveStatus>();
         public List<ActiveStatus> enemyStatuses = new List<ActiveStatus>();
 
@@ -51,7 +59,7 @@ namespace TawanOS.CardEngine
             currentMerit = 1;
             maxMerit = 6;
             currentCorruption = 0;
-            corruptionThreshold = 9;
+            corruptionThreshold = 7;
             enemyKhwan = 30;
             maxEnemyKhwan = 30;
             incenseCurrency = 0;

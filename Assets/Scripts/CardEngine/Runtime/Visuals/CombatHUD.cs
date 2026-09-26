@@ -91,7 +91,10 @@ namespace TawanOS.CardEngine
         {
             if (phaseText != null)
             {
-                phaseText.text = phase == CombatPhase.PlayerTurn ? "เทิร์นของคุณ" : "เทิร์นของศัตรู...";
+                var turns = TurnPhaseController.Instance;
+                phaseText.text = turns != null && turns.isActiveAndEnabled
+                    ? TurnPhaseController.PhaseLabel(turns.CurrentPhase)
+                    : phase == CombatPhase.PlayerTurn ? "เทิร์นของคุณ" : "เทิร์นของศัตรู...";
             }
 
             if (endTurnButton != null)

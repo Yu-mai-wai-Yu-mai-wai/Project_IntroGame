@@ -148,7 +148,7 @@ Transform:
   m_GameObject: {fileID: 108837748}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 1.8, y: -0.95, z: 3.7}
+  m_LocalPosition: {x: 2.4, y: -0.95, z: 3.2}
   m_LocalScale: {x: 1.4, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -832,7 +832,7 @@ Transform:
   m_GameObject: {fileID: 468630060}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -1.8, y: -0.95, z: 6.3}
+  m_LocalPosition: {x: -2.4, y: -0.95, z: 6.8}
   m_LocalScale: {x: 1.4, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -966,7 +966,7 @@ Transform:
   m_GameObject: {fileID: 474403008}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -1.8, y: -0.95, z: 3.7}
+  m_LocalPosition: {x: -2.4, y: -0.95, z: 3.2}
   m_LocalScale: {x: 1.4, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1241,7 +1241,7 @@ Transform:
   m_GameObject: {fileID: 603374515}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 1.8, y: -0.95, z: 6.3}
+  m_LocalPosition: {x: 2.4, y: -0.95, z: 6.8}
   m_LocalScale: {x: 1.4, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1411,7 +1411,7 @@ Transform:
   m_GameObject: {fileID: 629996791}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 5.78, y: -0.95, z: 1.43}
+  m_LocalPosition: {x: 7.3, y: -0.95, z: 1.9}
   m_LocalScale: {x: 1.4, y: 1.3999997, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1508,7 +1508,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2aabf2b5562f384e9221c13cbff11f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.DeckPileView3D
-  cardSize: {x: 0.7, y: 1}
+  cardSize: {x: 1.96, y: 2.8}
   thicknessPerCard: 0.02
   minVisibleThickness: 0.02
   pileColor: {r: 0.25, g: 0.1, b: 0.15, a: 1}
@@ -1686,8 +1686,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.HandLayoutController3D
   cardPrefab: {fileID: 8038836874958016398, guid: 756f410208e9b5d42ba5c829d28ace38, type: 3}
   handContainer: {fileID: 714268575}
-  cardSpacing: 0.9
-  maxTotalWidth: 6
+  cardSpacing: 1.8
+  maxTotalWidth: 12
   arcAngle: 5
   curveDepth: 0.15
   deckPile: {fileID: 0}
@@ -1719,7 +1719,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1930,7 +1930,7 @@ Transform:
   m_GameObject: {fileID: 909768759}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: -0.95, z: 6.3}
+  m_LocalPosition: {x: 0.0, y: -0.95, z: 6.8}
   m_LocalScale: {x: 1.4, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2226,15 +2226,15 @@ MonoBehaviour:
   handAnchor: {fileID: 1298102423}
   offset: {x: 0, y: 1.5, z: 3}
   autoMirrorPlayerAnchor: 1
-  cardSpacing: 0.9
-  maxTotalWidth: 6
+  cardSpacing: 1.8
+  maxTotalWidth: 12
   arcAngle: 5
   curveDepth: 0.15
   drawFlyDuration: 0.45
   drawStagger: 0.12
   playFlyDuration: 0.4
   playLingerTime: 0.6
-  pileCardSize: {x: 0.7, y: 1}
+  pileCardSize: {x: 1.96, y: 2.8}
   thicknessPerCard: 0.02
 --- !u!1 &1305718491
 GameObject:
@@ -2265,7 +2265,7 @@ Transform:
   m_GameObject: {fileID: 1305718491}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 3.6, y: -0.95, z: 3.7}
+  m_LocalPosition: {x: 4.8, y: -0.95, z: 3.2}
   m_LocalScale: {x: 1.4, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2467,7 +2467,7 @@ Transform:
   m_GameObject: {fileID: 1397705451}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -3.6, y: -0.95, z: 6.3}
+  m_LocalPosition: {x: -4.8, y: -0.95, z: 6.8}
   m_LocalScale: {x: 1.4, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2622,7 +2622,7 @@ MonoBehaviour:
     currentMerit: 1
     maxMerit: 6
     currentCorruption: 0
-    corruptionThreshold: 9
+    corruptionThreshold: 7
     enemyKhwan: 30
     maxEnemyKhwan: 30
     incenseCurrency: 0
@@ -2692,7 +2692,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.TurnPhaseController
   drawCount: 1
-  openingHandSize: 5
+  openingHandSize: 3
   drawPhaseStartDelay: 0.3
   discardHandAtEnd: 0
   endPhaseDelay: 0.6
@@ -2997,7 +2997,7 @@ Transform:
   m_GameObject: {fileID: 1660141963}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -3.6, y: -0.95, z: 3.7}
+  m_LocalPosition: {x: -4.8, y: -0.95, z: 3.2}
   m_LocalScale: {x: 1.4, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3350,7 +3350,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -1.5, z: 5}
-  m_LocalScale: {x: 14.5079, y: 1, z: 10.568}
+  m_LocalScale: {x: 18, y: 1, z: 10.568}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -3384,7 +3384,7 @@ Transform:
   m_GameObject: {fileID: 1856475139}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -5.72, y: -0.95, z: 8.47}
+  m_LocalPosition: {x: -7.3, y: -0.95, z: 8.1}
   m_LocalScale: {x: 1.4, y: 1.3999999, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3518,7 +3518,7 @@ Transform:
   m_GameObject: {fileID: 1874202470}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 3.6, y: -0.95, z: 6.3}
+  m_LocalPosition: {x: 4.8, y: -0.95, z: 6.8}
   m_LocalScale: {x: 1.4, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3687,7 +3687,7 @@ Transform:
   m_GameObject: {fileID: 1930226584}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: -0.95, z: 3.7}
+  m_LocalPosition: {x: 0.0, y: -0.95, z: 3.2}
   m_LocalScale: {x: 1.4, y: 1.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
