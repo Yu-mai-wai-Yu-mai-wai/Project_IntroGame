@@ -13,6 +13,8 @@ namespace TawanOS.CardEngine
         public float thicknessPerCard = 0.02f;
         public float minVisibleThickness = 0.02f;
         public Color pileColor = new Color(0.25f, 0.1f, 0.15f);
+        [Tooltip("Card-back material for the pile (e.g. CombatDemo/BackCardMat). Empty = plain pileColor.")]
+        public Material pileMaterial;
         public float heightLerpSpeed = 10f;
 
         private Transform pile;
@@ -29,7 +31,9 @@ namespace TawanOS.CardEngine
             var pileGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
             pileGo.name = "DeckPile3D";
             Destroy(pileGo.GetComponent<Collider>()); // must not intercept card mouse events
-            pileGo.GetComponent<Renderer>().material.color = pileColor;
+            var pileRenderer = pileGo.GetComponent<Renderer>();
+            if (pileMaterial != null) pileRenderer.sharedMaterial = pileMaterial;
+            else pileRenderer.material.color = pileColor;
             pile = pileGo.transform;
             ApplyThickness(0f);
         }

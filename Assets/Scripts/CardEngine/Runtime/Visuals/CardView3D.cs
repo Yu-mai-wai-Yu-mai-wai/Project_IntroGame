@@ -24,6 +24,8 @@ namespace TawanOS.CardEngine
         public Sprite defaultWhiteFrame;
         [Tooltip("Frame used when a Black Magic card has no Card Background of its own (text-free frame).")]
         public Sprite defaultBlackFrame;
+        [Tooltip("Shown on face-down cards (the enemy's hand). Empty = the plain coloured block.")]
+        public Sprite cardBack;
 
         [Header("Face Text Colours")]
         public Color textOnArt = Color.white;
@@ -44,6 +46,7 @@ namespace TawanOS.CardEngine
 
         private SpriteRenderer backgroundFace;
         private SpriteRenderer artworkFace;
+        private SpriteRenderer backFace;
         private bool faceVisible = true;
 
         // Face text laid out like the card design: cost top-left, name + type top-right,
@@ -123,6 +126,7 @@ namespace TawanOS.CardEngine
             if (GetComponent<SortingGroup>() == null) gameObject.AddComponent<SortingGroup>();
 
             if (backgroundFace != null) backgroundFace.sortingOrder = FrameOrder;
+            if (backFace != null) backFace.sortingOrder = FrameOrder;
             if (artworkFace != null) artworkFace.sortingOrder = ArtworkOrder;
             foreach (var label in new[] { nameLabel, costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel })
             {
@@ -142,6 +146,7 @@ namespace TawanOS.CardEngine
 
             backgroundFace = SetFacePicture(backgroundFace, "FaceBackground", background, Vector2.one, 0f, FaceZ, keepAspect: false);
             artworkFace = SetFacePicture(artworkFace, "FaceArtwork", artwork, CardFaceLayout.Artwork.size, CardFaceLayout.Artwork.center.y, FaceZ - 0.005f, keepAspect: true);
+            backFace = SetFacePicture(backFace, "FaceBack", cardBack, Vector2.one, 0f, FaceZ, keepAspect: false);
 
             ApplyFaceVisibility();
         }
@@ -209,6 +214,7 @@ namespace TawanOS.CardEngine
         {
             if (backgroundFace != null) backgroundFace.enabled = faceVisible;
             if (artworkFace != null) artworkFace.enabled = faceVisible;
+            if (backFace != null) backFace.enabled = !faceVisible;
 
             // A face-up card with a frame shows only the picture: the 3D block behind it is hidden
             // (its collider stays, so the card can still be clicked). Face-down cards keep the block as their back.
