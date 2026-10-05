@@ -1,43 +1,143 @@
 {
-  "_note": "DRAFT: due dates and owners are placeholders for the PM to edit before running. Cards, lists, labels, checklist items and members are matched by name, so edit names here to match the board exactly. Times are Asia/Bangkok (+07:00).",
+  "_note": "DRAFT: owners are placeholders for the PM to edit. Due dates are planned back from the presentation on Wed 2026-10-21 13:30 (LAB 308): everything lands by Tue 10-20. Cards, lists, labels, checklist items and members are matched by name. Times are Asia/Bangkok (+07:00).",
   "board": "8xxtXDuB",
-
   "move_cards": [
-    { "card": "Code : Map generator", "to_list": "Done" },
-    { "card": "Mechanic game", "to_list": "Doing" },
-    { "card": "Game Design Setting game", "to_list": "Doing" },
-    { "card": "[Dev] 3D Card Interaction & Table Raycast", "to_list": "Doing" },
-    { "card": "[Dev] Core Game Loop & Scene Integration", "to_list": "Doing" }
+    {
+      "card": "Code : Map generator",
+      "to_list": "Done"
+    },
+    {
+      "card": "Mechanic game",
+      "to_list": "Doing"
+    },
+    {
+      "card": "Game Design Setting game",
+      "to_list": "Doing"
+    },
+    {
+      "card": "[Dev] 3D Card Interaction & Table Raycast",
+      "to_list": "Doing"
+    },
+    {
+      "card": "[Dev] Core Game Loop & Scene Integration",
+      "to_list": "Doing"
+    }
   ],
-
   "complete_cards": [
     "Code : Card Generator",
     "Code : Map generator"
   ],
-
   "check_items": [
-    { "card": "[Dev] 3D Card Interaction & Table Raycast", "item": "Prefab การ์ด 3D", "_evidence": "Assets/CardEngineData/Prefabs/CardCube3DPrefab.prefab" },
-    { "card": "[Dev] Core Game Loop & Scene Integration", "item": "เมื่อคลิก Node ทางเปลี่ยว", "_evidence": "GameFlowManager.HandleCombatNodeEntered loads CombatTestScene" }
+    {
+      "card": "[Dev] 3D Card Interaction & Table Raycast",
+      "item": "Prefab การ์ด 3D",
+      "_evidence": "Assets/CardEngineData/Prefabs/CardCube3DPrefab.prefab"
+    },
+    {
+      "card": "[Dev] Core Game Loop & Scene Integration",
+      "item": "เมื่อคลิก Node ทางเปลี่ยว",
+      "_evidence": "GameFlowManager.HandleCombatNodeEntered loads CombatTestScene"
+    }
   ],
-
   "update_cards": [
-    { "card": "[Dev] Core Game Loop & Scene Integration", "due": "2026-10-12T17:00:00+07:00", "add_members": ["thanatpatpromthong1", "asitaraphumdokmai"] },
-    { "card": "[Dev] 3D Card Interaction & Table Raycast", "due": "2026-10-14T17:00:00+07:00", "add_members": ["thanatpatpromthong1"] },
-    { "card": "GDD Doc", "due": "2026-10-09T17:00:00+07:00", "add_members": ["narathornausuwan", "asitaraphumdokmai"] },
-    { "card": "Mechanic game", "due": "2026-10-09T17:00:00+07:00", "add_members": ["asitaraphumdokmai"] },
-    { "card": "Game Design Setting game", "due": "2026-10-09T17:00:00+07:00", "add_members": ["narathornausuwan"] },
-    { "card": "Real Document Game", "due": "2026-10-24T17:00:00+07:00", "add_members": ["thanatpatpromthong1"] },
-    { "card": "Art 2D Maker", "due": "2026-10-14T17:00:00+07:00" },
-    { "card": "Art 3D Maker", "due": "2026-10-14T17:00:00+07:00" },
-    { "card": "Music / Sound", "due": "2026-10-16T17:00:00+07:00", "add_members": ["kiritokung100"], "_check": "confirm kiritokung100 is the Sound Designer" },
-    { "card": "[2D Art] Visual Novel Sprites & Dialogue Box", "due": "2026-10-16T17:00:00+07:00", "add_members": ["wannisaamornwongphaiboon"] },
-    { "card": "[2D Art & UI] Parchment Map & 7 Yantra Stamp Icons", "due": "2026-10-16T17:00:00+07:00", "add_members": ["saichonchaimoon"] },
-    { "card": "[3D Art] Ritual Tabletop & Atmosphere", "due": "2026-10-14T17:00:00+07:00" },
-    { "card": "[QA] Playtest Session 1 & Mechanics Balance", "due": "2026-10-17T17:00:00+07:00", "add_members": ["narathornausuwan"] },
-    { "card": "[Milestone] Gameplay Video Demo (1 Min) & Slide Deck", "due": "2026-10-24T17:00:00+07:00", "add_members": ["thanatpatpromthong1", "saichonchaimoon"] },
-    { "card": "Self reflection ทุกคน", "due": "2026-10-24T17:00:00+07:00" }
+    {
+      "card": "[Dev] Core Game Loop & Scene Integration",
+      "due": "2026-10-12T17:00:00+07:00",
+      "add_members": [
+        "thanatpatpromthong1",
+        "asitaraphumdokmai"
+      ]
+    },
+    {
+      "card": "[Dev] 3D Card Interaction & Table Raycast",
+      "due": "2026-10-13T17:00:00+07:00",
+      "add_members": [
+        "thanatpatpromthong1"
+      ]
+    },
+    {
+      "card": "GDD Doc",
+      "due": "2026-10-09T17:00:00+07:00",
+      "add_members": [
+        "narathornausuwan",
+        "asitaraphumdokmai"
+      ]
+    },
+    {
+      "card": "Mechanic game",
+      "due": "2026-10-09T17:00:00+07:00",
+      "add_members": [
+        "asitaraphumdokmai"
+      ]
+    },
+    {
+      "card": "Game Design Setting game",
+      "due": "2026-10-09T17:00:00+07:00",
+      "add_members": [
+        "narathornausuwan"
+      ]
+    },
+    {
+      "card": "Real Document Game",
+      "due": "2026-10-19T17:00:00+07:00",
+      "add_members": [
+        "thanatpatpromthong1"
+      ]
+    },
+    {
+      "card": "Art 2D Maker",
+      "due": "2026-10-14T17:00:00+07:00"
+    },
+    {
+      "card": "Art 3D Maker",
+      "due": "2026-10-14T17:00:00+07:00"
+    },
+    {
+      "card": "Music / Sound",
+      "due": "2026-10-14T17:00:00+07:00",
+      "add_members": [
+        "kiritokung100"
+      ],
+      "_check": "confirm kiritokung100 is the Sound Designer"
+    },
+    {
+      "card": "[2D Art] Visual Novel Sprites & Dialogue Box",
+      "due": "2026-10-14T17:00:00+07:00",
+      "add_members": [
+        "wannisaamornwongphaiboon"
+      ]
+    },
+    {
+      "card": "[2D Art & UI] Parchment Map & 7 Yantra Stamp Icons",
+      "due": "2026-10-14T17:00:00+07:00",
+      "add_members": [
+        "saichonchaimoon"
+      ]
+    },
+    {
+      "card": "[3D Art] Ritual Tabletop & Atmosphere",
+      "due": "2026-10-14T17:00:00+07:00"
+    },
+    {
+      "card": "[QA] Playtest Session 1 & Mechanics Balance",
+      "due": "2026-10-15T17:00:00+07:00",
+      "add_members": [
+        "narathornausuwan"
+      ]
+    },
+    {
+      "card": "[Milestone] Gameplay Video Demo (1 Min) & Slide Deck",
+      "due": "2026-10-19T17:00:00+07:00",
+      "add_members": [
+        "thanatpatpromthong1",
+        "saichonchaimoon"
+      ]
+    },
+    {
+      "card": "Self reflection ทุกคน",
+      "due": "2026-10-19T17:00:00+07:00"
+    }
   ],
-
   "add_checklists": [
     {
       "card": "Self reflection ทุกคน",
@@ -65,110 +165,215 @@
       ]
     }
   ],
-
   "new_cards": [
     {
       "list": "Doing",
       "name": "[Design] Sync ตัวเลขเกม (Source of Truth = Sheet)",
       "desc": "ตอนนี้ค่ามลทินสูงสุดไม่ตรงกัน: Trello 10 / Doc 9 / Sheet 9 / โค้ด 7 และชุดการ์ดไม่ตรงกัน: Sheet 28 ใบ / โค้ด 42 ใบ / Trello Art 2D ใช้ชื่อการ์ดที่ไม่มีใน Sheet",
-      "labels": ["High Priority"],
-      "members": ["narathornausuwan", "asitaraphumdokmai"],
+      "labels": [
+        "High Priority"
+      ],
+      "members": [
+        "narathornausuwan",
+        "asitaraphumdokmai"
+      ],
       "due": "2026-10-07T17:00:00+07:00",
       "checklists": [
-        { "name": "Checklist", "items": [
-          "ตัดสินค่ามลทินสูงสุด แล้วแก้ Doc, Sheet และ CombatStateData ให้ตรงกัน",
-          "ตัดสินชุดการ์ด (28 หรือ 42 ใบ) และเติมการ์ดมนต์ดำเครื่องราง/บริวารลง Sheet",
-          "เติมรหัสการ์ดใน Sheet ให้ตรงกับชื่อ asset (เช่น Card_s_wa01)",
-          "แก้รายชื่อการ์ดใน checklist Art 2D Maker ให้ตรงกับ Sheet",
-          "ตัดสินว่ามีโหนดหมอกดำและเมรุใน scope หรือไม่ (โค้ดมี 6 ประเภท, Doc มี 7)"
-        ] }
+        {
+          "name": "Checklist",
+          "items": [
+            "ตัดสินค่ามลทินสูงสุด แล้วแก้ Doc, Sheet และ CombatStateData ให้ตรงกัน",
+            "ตัดสินชุดการ์ด (28 หรือ 42 ใบ) และเติมการ์ดมนต์ดำเครื่องราง/บริวารลง Sheet",
+            "เติมรหัสการ์ดใน Sheet ให้ตรงกับชื่อ asset (เช่น Card_s_wa01)",
+            "แก้รายชื่อการ์ดใน checklist Art 2D Maker ให้ตรงกับ Sheet",
+            "ตัดสินว่ามีโหนดหมอกดำและเมรุใน scope หรือไม่ (โค้ดมี 6 ประเภท, Doc มี 7)"
+          ]
+        }
       ]
     },
     {
       "list": "Backlog",
       "name": "[Dev] Non-combat Nodes (วัด / ศาลตายาย / กองของเซ่น)",
       "desc": "MapManager ส่งต่อเฉพาะโหนดต่อสู้ โหนด RestSite / Store / Treasure กดแล้วไม่มีอะไรเกิดขึ้น",
-      "labels": ["Code", "High Priority"],
-      "members": ["thanatpatpromthong1"],
-      "due": "2026-10-14T17:00:00+07:00",
+      "labels": [
+        "Code",
+        "High Priority"
+      ],
+      "members": [
+        "thanatpatpromthong1"
+      ],
+      "due": "2026-10-13T17:00:00+07:00",
       "checklists": [
-        { "name": "Checklist", "items": [
-          "วัด: ฟื้นขวัญแล้วกลับแผนที่",
-          "ศาลตายาย: ใช้ธูปซื้อการ์ด",
-          "กองของเซ่น: สุ่มรับการ์ด",
-          "(ถ้าอยู่ใน scope) หมอกดำ: อีเวนต์ตัวเลือก",
-          "(ถ้าอยู่ใน scope) เมรุ: อัปเกรด/ทิ้งการ์ด"
-        ] }
+        {
+          "name": "Checklist",
+          "items": [
+            "วัด: ฟื้นขวัญแล้วกลับแผนที่",
+            "ศาลตายาย: ใช้ธูปซื้อการ์ด",
+            "กองของเซ่น: สุ่มรับการ์ด",
+            "(ถ้าอยู่ใน scope) หมอกดำ: อีเวนต์ตัวเลือก",
+            "(ถ้าอยู่ใน scope) เมรุ: อัปเกรด/ทิ้งการ์ด"
+          ]
+        }
       ]
     },
     {
       "list": "Backlog",
       "name": "[Dev] Win / Lose Flow",
       "desc": "ตอนนี้แพ้แล้วค้างที่ Defeat panel และชนะ Boss แล้วกลับแผนที่เหมือนศัตรูทั่วไป",
-      "labels": ["Code", "High Priority"],
-      "members": ["asitaraphumdokmai"],
-      "due": "2026-10-14T17:00:00+07:00",
+      "labels": [
+        "Code",
+        "High Priority"
+      ],
+      "members": [
+        "asitaraphumdokmai"
+      ],
+      "due": "2026-10-12T17:00:00+07:00",
       "checklists": [
-        { "name": "Checklist", "items": [
-          "หน้าจบเกมเมื่อชนะ Boss ใจกลางป่าช้า",
-          "หน้า Game Over เมื่อขวัญเหลือ 0 พร้อมปุ่มเริ่มใหม่",
-          "รีเซ็ต run state (HP, เด็ค, ธูป, แผนที่) เมื่อเริ่มใหม่"
-        ] }
+        {
+          "name": "Checklist",
+          "items": [
+            "หน้าจบเกมเมื่อชนะ Boss ใจกลางป่าช้า",
+            "หน้า Game Over เมื่อขวัญเหลือ 0 พร้อมปุ่มเริ่มใหม่",
+            "รีเซ็ต run state (HP, เด็ค, ธูป, แผนที่) เมื่อเริ่มใหม่"
+          ]
+        }
       ]
     },
     {
       "list": "Backlog",
       "name": "[Doc] Technical Documentation",
       "desc": "ส่วนที่ 4 ของรายงาน",
-      "labels": ["Documentation"],
-      "members": ["thanatpatpromthong1"],
-      "due": "2026-10-21T17:00:00+07:00",
+      "labels": [
+        "Documentation"
+      ],
+      "members": [
+        "thanatpatpromthong1"
+      ],
+      "due": "2026-10-18T17:00:00+07:00",
       "checklists": [
-        { "name": "Checklist", "items": [
-          "สรุป Unity features ที่ใช้และหน้าที่ในเกม",
-          "Class Diagram: CardEngine / MapEngine / GameFlow",
-          "AI Logic: EnemyCardPlayer / EnemyStateMachine",
-          "ปัญหาทางเทคนิคและวิธีแก้"
-        ] }
+        {
+          "name": "Checklist",
+          "items": [
+            "สรุป Unity features ที่ใช้และหน้าที่ในเกม",
+            "Class Diagram: CardEngine / MapEngine / GameFlow",
+            "AI Logic: EnemyCardPlayer / EnemyStateMachine",
+            "ปัญหาทางเทคนิคและวิธีแก้"
+          ]
+        }
       ]
     },
     {
       "list": "Backlog",
       "name": "[QA] Testing & Iteration Log",
       "desc": "ส่วนที่ 5 ของรายงาน ต้องแสดงว่านำผล playtest มาปรับเกมจริง",
-      "labels": ["QA", "Documentation"],
-      "members": ["narathornausuwan"],
-      "due": "2026-10-19T17:00:00+07:00",
+      "labels": [
+        "QA",
+        "Documentation"
+      ],
+      "members": [
+        "narathornausuwan"
+      ],
+      "due": "2026-10-17T17:00:00+07:00",
       "checklists": [
-        { "name": "Checklist", "items": [
-          "สร้างฟอร์ม/เทมเพลตบันทึก playtest",
-          "สรุปผล Playtest Session 1",
-          "บันทึกสิ่งที่แก้หลัง playtest (ก่อน/หลัง)",
-          "Playtest Session 2 เพื่อยืนยันผลการแก้"
-        ] }
+        {
+          "name": "Checklist",
+          "items": [
+            "สร้างฟอร์ม/เทมเพลตบันทึก playtest",
+            "สรุปผล Playtest Session 1",
+            "บันทึกสิ่งที่แก้หลัง playtest (ก่อน/หลัง)",
+            "Playtest Session 2 เพื่อยืนยันผลการแก้"
+          ]
+        }
       ]
     },
     {
       "list": "Backlog",
       "name": "[Slide] เติมสไลด์นำเสนอที่ยังว่าง",
       "desc": "Canva มี 11 หน้าที่มีแค่หัวข้อ",
-      "labels": ["Documentation", "Deadline"],
-      "members": ["thanatpatpromthong1", "saichonchaimoon"],
-      "due": "2026-10-22T17:00:00+07:00",
+      "labels": [
+        "Documentation",
+        "Deadline"
+      ],
+      "members": [
+        "thanatpatpromthong1",
+        "saichonchaimoon"
+      ],
+      "due": "2026-10-19T17:00:00+07:00",
       "checklists": [
-        { "name": "Checklist", "items": [
-          "Core Stats & Resources",
-          "Level Design",
-          "Core Gameplay Loop (diagram)",
-          "Art Direction (CI)",
-          "Card Design",
-          "Resource & Risk System",
-          "Map & Exploration",
-          "Art Direction & Visual Identity (ลบหน้าที่ซ้ำ)",
-          "UI / UX",
-          "DEMO",
-          "แก้ Story ให้ใช้ 'อีสาน' ตรงกับ Doc"
-        ] }
+        {
+          "name": "Checklist",
+          "items": [
+            "Core Stats & Resources",
+            "Level Design",
+            "Core Gameplay Loop (diagram)",
+            "Art Direction (CI)",
+            "Card Design",
+            "Resource & Risk System",
+            "Map & Exploration",
+            "Art Direction & Visual Identity (ลบหน้าที่ซ้ำ)",
+            "UI / UX",
+            "DEMO",
+            "แก้ Story ให้ใช้ 'อีสาน' ตรงกับ Doc"
+          ]
+        }
+      ]
+    },
+    {
+      "list": "Backlog",
+      "name": "[Dev] Unity Mandatory Features (Assignment 4.1)",
+      "desc": "ข้อกำหนดบังคับ 8 ข้อ (15% ของคะแนน) ตอนนี้ยังขาด Particle, Sound, Animator Controller, Main/Pause/Game Over menu และ loading screen",
+      "labels": [
+        "Code",
+        "High Priority"
+      ],
+      "members": [
+        "thanatpatpromthong1",
+        "asitaraphumdokmai"
+      ],
+      "due": "2026-10-14T17:00:00+07:00",
+      "checklists": [
+        {
+          "name": "Checklist",
+          "items": [
+            "Particle / VFX: ควันธูป, เปลวเทียน, effect ตอนใช้การ์ด",
+            "Sound: BGM + SFX พร้อม volume slider",
+            "PlayerPrefs: บันทึกค่า volume",
+            "Animation: Animator Controller / State Machine จริง (เช่น มือ, ศัตรู, การ์ด)",
+            "UI: Main Menu",
+            "UI: Pause Menu",
+            "UI: Game Over Screen",
+            "Scene Management: loading/transition screen ระหว่าง Map กับ Combat",
+            "Prefab: ยืนยันว่ามีแล้ว (การ์ด, node)",
+            "Serialization: ยืนยัน save/load (MapSaveManager) และขยายไปเก็บ run state"
+          ]
+        }
+      ]
+    },
+    {
+      "list": "Backlog",
+      "name": "[Milestone] Final Build, Drive, Onlearn & Rehearsal",
+      "desc": "นำเสนอ พุธ 21 ต.ค. 2569 13:30-17:30 LAB 308 กลุ่มที่ 6 จาก 7 มีเวลา 15 นาทีรวมถามตอบ",
+      "labels": [
+        "Deadline",
+        "Documentation"
+      ],
+      "members": [
+        "thanatpatpromthong1"
+      ],
+      "due": "2026-10-20T17:00:00+07:00",
+      "checklists": [
+        {
+          "name": "Checklist",
+          "items": [
+            "Build Windows ที่เล่นได้ อัปโหลด Google Drive + แชร์ลิงก์",
+            "Unity Project / Source อัปโหลด Google Drive + แชร์ลิงก์",
+            "ใส่ลิงก์ Drive ใน Executive Summary ของรายงาน",
+            "Export รายงาน PDF ส่ง Onlearn (เช็ค deadline)",
+            "ซ้อมนำเสนอจับเวลา 10 นาที + Q&A 5 นาที",
+            "ทดสอบ build บนเครื่องอื่น + เตรียมคลิปสำรองถ้า demo สด error",
+            "เตรียมคำตอบ Q&A: MDA, ทฤษฎีจิตวิทยา, Unity features, การแบ่งงาน"
+          ]
+        }
       ]
     }
   ]
