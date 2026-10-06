@@ -39,12 +39,15 @@ Bind by the `s_xxxx` prefix, never by the Thai part.
 
 Audio files: `bgm_*`, `amb_*`, `sfx_*`. Variants end in `_01`, `_02` and are picked at random.
 
+Source assets live outside the repo at `D:\Tawanagent\GameProject_Asset` (Art, Sounds). Task B0 in the plan copies
+them into `Assets/Audio`, `Assets/Art`, `Assets/Video`. 13 cards have no art yet and use a placeholder (task B7).
+
 ## Unity command line (Windows)
 
 The editor must be closed for batch mode (project lock). Set once per shell:
 
 ```powershell
-$UNITY = "C:\Program Files\Unity\Hub\Editor\6000.3.19f1\Editor\Unity.exe"
+$UNITY = "D:\Unity_Editor\6000.3.19f1\Editor\Unity.exe"   # เครื่องของตะวัน (ตรวจแล้ว 6 ต.ค.) เครื่องอื่นแก้ path ให้ตรงกับที่ติดตั้ง
 $PROJ  = "D:\Unity2026PJ\Project_IntroGame"
 ```
 
