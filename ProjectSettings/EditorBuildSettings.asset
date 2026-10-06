@@ -26,6 +26,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MeruScene.unity
     guid: 6be46ef75f4fc9b45b6fe20487db820d
+  - enabled: 1
+    path: Assets/Scenes/VictoryScene.unity
+    guid: b1d6b3c77a5c58c4b812b53a466b297b
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
