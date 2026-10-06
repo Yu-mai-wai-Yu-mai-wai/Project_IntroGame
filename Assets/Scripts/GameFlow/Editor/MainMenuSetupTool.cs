@@ -14,6 +14,24 @@ namespace TawanOS.GameFlow
         private const string ScenePath = "Assets/Scenes/MainMenu.unity";
         private const string ShrineIconPath = "Assets/ProjectAsset/MapNavigate/ShrineIcon.png";
 
+        private const string LogoPath = "Assets/Art/Logo/KhwanLogo.png";
+
+        /// <summary>Makes sure the PNG imports as a Sprite (a fresh copy defaults to Texture) and loads it.</summary>
+        private static Sprite EnsureSprite(string path)
+        {
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null) return null;
+            if (importer.textureType != TextureImporterType.Sprite || importer.mipmapEnabled)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.SaveAndReimport();
+            }
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
         private static readonly Color Gold = new Color(0.93f, 0.78f, 0.45f);
         private static readonly Color Parchment = new Color(0.96f, 0.92f, 0.82f);
         private static readonly Color Muted = new Color(0.66f, 0.61f, 0.54f);
@@ -76,7 +94,13 @@ namespace TawanOS.GameFlow
             menu.menuGroup = group;
             var g = group.transform;
 
-            menu.titleText = Text("Title", g, new Vector2(0.07f, 0.66f), new Vector2(0.6f, 0.88f), charm, 120, Gold, TextAlignmentOptions.BottomLeft);
+            // Game logo replaces the plain-text title (MainMenuUI.titleText stays unassigned; it is null-checked).
+            var logo = Img("Logo", g, new Vector2(0.05f, 0.67f), new Vector2(0.25f, 0.98f), Color.white, null);
+            logo.sprite = EnsureSprite(LogoPath);
+            logo.preserveAspect = true;
+            logo.enabled = logo.sprite != null;
+            logo.raycastTarget = false;
+            if (logo.sprite == null) Debug.LogWarning($"[MainMenuSetupTool] Logo not found at {LogoPath}.");
             var subtitle = Text("Subtitle", g, new Vector2(0.075f, 0.6f), new Vector2(0.6f, 0.66f), sarabun, 30, Muted, TextAlignmentOptions.TopLeft);
             subtitle.text = "เส้นทางของหมอธรรม";
 
