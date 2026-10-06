@@ -202,6 +202,7 @@ namespace TawanOS.GameFlow
             {
                 CombatManager.Instance.OnCombatEnded -= HandleCombatEnded;
                 CombatManager.Instance.OnCombatEnded += HandleCombatEnded;
+                combatEndHandled = false;
 
                 if (pendingEnemyProfile != null)
                 {
@@ -304,8 +305,14 @@ namespace TawanOS.GameFlow
             SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
         }
 
+        // One combat pays out or ends the run once, even if the end event were to fire twice (plan task A8)
+        private bool combatEndHandled;
+
         private void HandleCombatEnded(bool isVictory)
         {
+            if (combatEndHandled) return;
+            combatEndHandled = true;
+
             if (!isVictory)
             {
                 // Defeat ends the run: the save goes, the Defeat panel shows, then back to the menu

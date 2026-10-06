@@ -259,12 +259,21 @@ namespace TawanOS.CardEngine
             yield return new WaitForSeconds(0.3f);
 
             // Tick duration-based statuses (Bleeding deals damage here) and amulet durability
-            TickStatusDurations(onPlayer: true);
-            TickStatusDurations(onPlayer: false);
-            if (EffectResolver.Instance != null)
+            // Both sides tick before the winner is decided, so bleeding that drops both to 0 is a player Victory
+            BeginOutcomeBatch();
+            try
             {
-                EffectResolver.Instance.TickAmuletDurability();
-                EffectResolver.Instance.TickCardStatuses();
+                TickStatusDurations(onPlayer: true);
+                TickStatusDurations(onPlayer: false);
+                if (EffectResolver.Instance != null)
+                {
+                    EffectResolver.Instance.TickAmuletDurability();
+                    EffectResolver.Instance.TickCardStatuses();
+                }
+            }
+            finally
+            {
+                EndOutcomeBatch();
             }
         }
 
@@ -416,7 +425,33 @@ namespace TawanOS.CardEngine
 
         public void TakeDamage(int amount, bool toPlayer)
         {
+            // The outcome is decided only after every part of this hit (reflect included) has landed
+            BeginOutcomeBatch();
             TakeDamageInternal(amount, toPlayer, allowReflect: true);
+            EndOutcomeBatch();
+        }
+
+        // Damage taken between Begin/End is applied first and the winner is decided once, at the last End.
+        // Both sides at 0 Khwan in the same batch is a Victory for the player (PM rule, plan task A8).
+        private int outcomeBatchDepth;
+
+        public void BeginOutcomeBatch()
+        {
+            outcomeBatchDepth++;
+        }
+
+        public void EndOutcomeBatch()
+        {
+            if (outcomeBatchDepth > 0) outcomeBatchDepth--;
+            EvaluateOutcome();
+        }
+
+        private void EvaluateOutcome()
+        {
+            if (IsCombatOver || outcomeBatchDepth > 0) return;
+
+            if (state.enemyKhwan <= 0) EndCombat(true);
+            else if (state.playerKhwan <= 0) EndCombat(false);
         }
 
         private void TakeDamageInternal(int amount, bool toPlayer, bool allowReflect)
@@ -444,20 +479,12 @@ namespace TawanOS.CardEngine
                 int remaining = AbsorbShield(amount, ref state.playerShield);
                 OnShieldChanged?.Invoke(state.playerShield, true);
                 state.playerKhwan = Mathf.Max(0, state.playerKhwan - remaining);
-                if (state.playerKhwan <= 0)
-                {
-                    EndCombat(false);
-                }
             }
             else
             {
                 int remaining = AbsorbShield(amount, ref state.enemyShield);
                 OnShieldChanged?.Invoke(state.enemyShield, false);
                 state.enemyKhwan = Mathf.Max(0, state.enemyKhwan - remaining);
-                if (state.enemyKhwan <= 0)
-                {
-                    EndCombat(true);
-                }
             }
         }
 
@@ -651,6 +678,12 @@ namespace TawanOS.CardEngine
 
         public void EndCombat(bool isVictory)
         {
+            // A combat ends exactly once; later calls (a second killing blow in the same resolution) are ignored
+            if (IsCombatOver) return;
+
+            // Both sides at 0 Khwan: the player wins
+            if (!isVictory && state.enemyKhwan <= 0) isVictory = true;
+
             SetPhase(isVictory ? CombatPhase.Victory : CombatPhase.Defeat);
             OnCombatEnded?.Invoke(isVictory);
             Debug.Log($"[CombatManager] Combat ended: {(isVictory ? "VICTORY" : "DEFEAT")}");
