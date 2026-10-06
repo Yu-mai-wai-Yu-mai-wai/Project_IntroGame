@@ -3,6 +3,8 @@ using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -12,8 +14,8 @@ namespace TawanOS.GameFlow
     public static class MainMenuSetupTool
     {
         private const string ScenePath = "Assets/Scenes/MainMenu.unity";
-        private const string ShrineIconPath = "Assets/ProjectAsset/MapNavigate/ShrineIcon.png";
-
+        private const string TablePath = "Assets/ProjectAsset/CombatDemo/Table.fbx";
+        private const string VolumeProfilePath = "Assets/ProjectAsset/CombatDemo/CombatDressingVolume.asset";
         private const string LogoPath = "Assets/Art/Logo/KhwanLogo.png";
 
         /// <summary>Makes sure the PNG imports as a Sprite (a fresh copy defaults to Texture) and loads it.</summary>
@@ -47,17 +49,37 @@ namespace TawanOS.GameFlow
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
+            // 1. 3D Perspective Camera framed to show Scarecrow on the right and UI on the left
             var camGo = new GameObject("Main Camera");
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.04f, 0.025f, 0.03f);
+            cam.backgroundColor = new Color(0.02f, 0.015f, 0.015f);
             camGo.tag = "MainCamera";
-            camGo.transform.position = new Vector3(0, 0, -10);
+            cam.orthographic = false;
+            cam.fieldOfView = 48f;
+            cam.nearClipPlane = 0.05f;
+            camGo.transform.SetPositionAndRotation(new Vector3(-1.8f, 4.2f, -9.2f), Quaternion.Euler(20f, 10f, 0f));
+            var uac = cam.GetUniversalAdditionalCameraData();
+            if (uac != null) uac.renderPostProcessing = true;
 
+            // 2. 3D Stage with Scarecrow, ritual cords, red flickering light, and fog
+            var stageGo = new GameObject("MainMenuStage");
+            var tableFbx = AssetDatabase.LoadAssetAtPath<GameObject>(TablePath);
+            MainMenuStage.BuildStage(stageGo, tableFbx);
+
+            // 3. Post-Processing Volume for atmosphere
+            var volGo = new GameObject("MainMenuVolume");
+            var vol = volGo.AddComponent<Volume>();
+            vol.isGlobal = true;
+            var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(VolumeProfilePath);
+            if (profile != null) vol.sharedProfile = profile;
+
+            // 4. UI EventSystem
             var esGo = new GameObject("EventSystem");
             esGo.AddComponent<UnityEngine.EventSystems.EventSystem>();
             esGo.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
 
+            // 5. Canvas and horror layout
             BuildCanvas();
 
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -69,7 +91,8 @@ namespace TawanOS.GameFlow
         private static void BuildCanvas()
         {
             var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
-            var sarabun = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/KorKorTor SDF.asset");
+            if (bodyFont == null) bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
             var panelSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
 
             var canvasGo = new GameObject("MainMenuCanvas");
@@ -83,58 +106,54 @@ namespace TawanOS.GameFlow
             var menu = canvasGo.AddComponent<MainMenuUI>();
             var root = canvasGo.transform;
 
-            Img("Background", root, Vector2.zero, Vector2.one, new Color(0.06f, 0.035f, 0.04f), null);
-            var shrine = Img("ShrineArt", root, new Vector2(0.52f, 0.08f), new Vector2(0.96f, 0.92f), new Color(1f, 1f, 1f, 0.18f), null);
-            shrine.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(ShrineIconPath);
-            shrine.preserveAspect = true;
-            shrine.enabled = shrine.sprite != null;
-            shrine.raycastTarget = false;
+            // No solid background image covering the screen so 3D scene is visible
 
             var group = Rect("Menu", root, Vector2.zero, Vector2.one).gameObject.AddComponent<CanvasGroup>();
             menu.menuGroup = group;
             var g = group.transform;
 
-            // Game logo replaces the plain-text title (MainMenuUI.titleText stays unassigned; it is null-checked).
-            var logo = Img("Logo", g, new Vector2(0.05f, 0.67f), new Vector2(0.25f, 0.98f), Color.white, null);
+            // Logo width >= 28% of the screen (0.05 to 0.35 = 30%)
+            var logo = Img("Logo", g, new Vector2(0.05f, 0.65f), new Vector2(0.35f, 0.96f), Color.white, null);
             logo.sprite = EnsureSprite(LogoPath);
             logo.preserveAspect = true;
             logo.enabled = logo.sprite != null;
             logo.raycastTarget = false;
             if (logo.sprite == null) Debug.LogWarning($"[MainMenuSetupTool] Logo not found at {LogoPath}.");
-            var subtitle = Text("Subtitle", g, new Vector2(0.075f, 0.6f), new Vector2(0.6f, 0.66f), sarabun, 30, Muted, TextAlignmentOptions.TopLeft);
+            var subtitle = Text("Subtitle", g, new Vector2(0.05f, 0.58f), new Vector2(0.35f, 0.64f), bodyFont, 30, Muted, TextAlignmentOptions.TopLeft);
             subtitle.text = "เส้นทางของหมอธรรม";
 
-            menu.newGameButton = MenuButton("NewGameButton", g, 0.46f, "เริ่มเกมใหม่", sarabun, panelSprite);
-            menu.continueButton = MenuButton("ContinueButton", g, 0.34f, "เล่นต่อ", sarabun, panelSprite);
-            menu.continueInfoText = Text("ContinueInfo", g, new Vector2(0.075f, 0.285f), new Vector2(0.5f, 0.335f), sarabun, 22, Muted, TextAlignmentOptions.TopLeft);
-            menu.settingsButton = MenuButton("SettingsButton", g, 0.19f, "ตั้งค่า", sarabun, panelSprite);
-            menu.quitButton = MenuButton("QuitButton", g, 0.08f, "ออกจากเกม", sarabun, panelSprite);
+            // Menu buttons: width <= 20% (0.05 to 0.24 = 19%), height >= 44 px (0.07 * 1080 = 75.6 px)
+            menu.newGameButton = MenuButton("NewGameButton", g, 0.46f, "เริ่มเกมใหม่", bodyFont, panelSprite);
+            menu.continueButton = MenuButton("ContinueButton", g, 0.36f, "เล่นต่อ", bodyFont, panelSprite);
+            menu.continueInfoText = Text("ContinueInfo", g, new Vector2(0.05f, 0.30f), new Vector2(0.35f, 0.35f), bodyFont, 22, Muted, TextAlignmentOptions.TopLeft);
+            menu.settingsButton = MenuButton("SettingsButton", g, 0.20f, "ตั้งค่า", bodyFont, panelSprite);
+            menu.quitButton = MenuButton("QuitButton", g, 0.10f, "ออกจากเกม", bodyFont, panelSprite);
 
             // Overwrite confirmation
             var dim = Img("ConfirmPanel", root, Vector2.zero, Vector2.one, new Color(0, 0, 0, 0.7f), null);
             menu.confirmPanel = dim.gameObject;
             var box = Img("Window", dim.transform, new Vector2(0.32f, 0.36f), new Vector2(0.68f, 0.64f), new Color(0.13f, 0.075f, 0.06f), panelSprite);
             box.gameObject.AddComponent<Outline>().effectColor = new Color(Gold.r, Gold.g, Gold.b, 0.5f);
-            var question = Text("Question", box.transform, new Vector2(0.06f, 0.42f), new Vector2(0.94f, 0.92f), sarabun, 30, Parchment, TextAlignmentOptions.Center);
+            var question = Text("Question", box.transform, new Vector2(0.06f, 0.42f), new Vector2(0.94f, 0.92f), bodyFont, 30, Parchment, TextAlignmentOptions.Center);
             question.text = "เริ่มเกมใหม่?\n<size=75%><color=#a89c8a>เกมที่เล่นค้างไว้จะถูกลบ</color></size>";
-            menu.confirmYesButton = DialogButton("YesButton", box.transform, new Vector2(0.08f, 0.1f), new Vector2(0.46f, 0.34f), "เริ่มใหม่", new Color(0.55f, 0.15f, 0.1f), sarabun, panelSprite);
-            menu.confirmNoButton = DialogButton("NoButton", box.transform, new Vector2(0.54f, 0.1f), new Vector2(0.92f, 0.34f), "ยกเลิก", new Color(0.3f, 0.25f, 0.22f), sarabun, panelSprite);
+            menu.confirmYesButton = DialogButton("YesButton", box.transform, new Vector2(0.08f, 0.1f), new Vector2(0.46f, 0.34f), "เริ่มใหม่", new Color(0.55f, 0.15f, 0.1f), bodyFont, panelSprite);
+            menu.confirmNoButton = DialogButton("NoButton", box.transform, new Vector2(0.54f, 0.1f), new Vector2(0.92f, 0.34f), "ยกเลิก", new Color(0.3f, 0.25f, 0.22f), bodyFont, panelSprite);
 
             // Mode selection panel (Phase A10)
             var modeDim = Img("ModePanel", root, Vector2.zero, Vector2.one, new Color(0, 0, 0, 0.7f), null);
             menu.modePanel = modeDim.gameObject;
             var modeBox = Img("Window", modeDim.transform, new Vector2(0.30f, 0.30f), new Vector2(0.70f, 0.70f), new Color(0.13f, 0.075f, 0.06f), panelSprite);
             modeBox.gameObject.AddComponent<Outline>().effectColor = new Color(Gold.r, Gold.g, Gold.b, 0.5f);
-            var modeTitle = Text("Title", modeBox.transform, new Vector2(0.06f, 0.68f), new Vector2(0.94f, 0.94f), sarabun, 32, Parchment, TextAlignmentOptions.Center);
+            var modeTitle = Text("Title", modeBox.transform, new Vector2(0.06f, 0.68f), new Vector2(0.94f, 0.94f), bodyFont, 32, Parchment, TextAlignmentOptions.Center);
             modeTitle.text = "เลือกโหมดการเล่น\n<size=70%><color=#a89c8a>กำหนดระยะเวลาเส้นทางหมอธรรม</color></size>";
-            menu.fullModeButton = DialogButton("FullModeButton", modeBox.transform, new Vector2(0.08f, 0.38f), new Vector2(0.46f, 0.62f), "เล่นเต็ม (7 ชั้น)", new Color(0.55f, 0.15f, 0.1f), sarabun, panelSprite);
-            menu.shortModeButton = DialogButton("ShortModeButton", modeBox.transform, new Vector2(0.54f, 0.38f), new Vector2(0.92f, 0.62f), "เล่นสั้น (4 ชั้น)", new Color(0.2f, 0.35f, 0.25f), sarabun, panelSprite);
-            menu.modeCancelButton = DialogButton("CancelButton", modeBox.transform, new Vector2(0.31f, 0.10f), new Vector2(0.69f, 0.30f), "ยกเลิก", new Color(0.3f, 0.25f, 0.22f), sarabun, panelSprite);
+            menu.fullModeButton = DialogButton("FullModeButton", modeBox.transform, new Vector2(0.08f, 0.38f), new Vector2(0.46f, 0.62f), "เล่นเต็ม (7 ชั้น)", new Color(0.55f, 0.15f, 0.1f), bodyFont, panelSprite);
+            menu.shortModeButton = DialogButton("ShortModeButton", modeBox.transform, new Vector2(0.54f, 0.38f), new Vector2(0.92f, 0.62f), "เล่นสั้น (4 ชั้น)", new Color(0.2f, 0.35f, 0.25f), bodyFont, panelSprite);
+            menu.modeCancelButton = DialogButton("CancelButton", modeBox.transform, new Vector2(0.31f, 0.10f), new Vector2(0.69f, 0.30f), "ยกเลิก", new Color(0.3f, 0.25f, 0.22f), bodyFont, panelSprite);
         }
 
         private static Button MenuButton(string name, Transform parent, float y, string label, TMP_FontAsset font, Sprite sprite)
         {
-            var img = Img(name, parent, new Vector2(0.07f, y), new Vector2(0.32f, y + 0.09f), Color.white, sprite);
+            var img = Img(name, parent, new Vector2(0.05f, y), new Vector2(0.24f, y + 0.07f), Color.white, sprite);
             var button = img.gameObject.AddComponent<Button>();
             var colors = button.colors;
             colors.normalColor = new Color(0.2f, 0.12f, 0.09f, 0.95f);
@@ -143,8 +162,8 @@ namespace TawanOS.GameFlow
             colors.selectedColor = colors.normalColor;
             colors.disabledColor = new Color(0.12f, 0.09f, 0.08f, 0.6f);
             button.colors = colors;
-            var text = Text("Label", img.transform, Vector2.zero, Vector2.one, font, 40, Parchment, TextAlignmentOptions.MidlineLeft);
-            text.margin = new Vector4(32, 0, 0, 0);
+            var text = Text("Label", img.transform, Vector2.zero, Vector2.one, font, 32, Parchment, TextAlignmentOptions.MidlineLeft);
+            text.margin = new Vector4(20, 0, 0, 0);
             text.text = label;
             text.fontStyle = FontStyles.Bold;
             text.raycastTarget = false;
