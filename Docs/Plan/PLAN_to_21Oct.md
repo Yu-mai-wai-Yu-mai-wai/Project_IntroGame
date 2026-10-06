@@ -25,7 +25,7 @@
 | ขวัญต่อเนื่องข้ามการต่อสู้ | **ยังไม่มี** |
 | ศัตรูใน build | **พัง** (คืนค่า null นอก Editor) |
 | Sound, PlayerPrefs (volume), Particle, Animator, Pause, Settings, Loading screen | **ยังไม่มี** |
-| Asset จาก `D:\Tawanagent\GameProject_Asset` (เสียง 27, ภาพการ์ด 29, Story 12 รูป + 2 วิดีโอ, Character 2 รูป) | **ยังไม่อยู่ในโปรเจกต์** (ไม่มี `Assets/Audio`, `Assets/Art`) → B0 |
+| Asset จาก `D:\Tawanagent\GameProject_Asset` (เสียง 27, ภาพการ์ด 29, Story 13 รูป + 2 วิดีโอ, Character 2 รูป) | **ยังไม่อยู่ในโปรเจกต์** (ไม่มี `Assets/Audio`, `Assets/Art`) → B0 |
 | ภาพการ์ด | มีภาพ 29 จาก 42 ใบ ขาด 13 ใบ → ใช้ placeholder (B7) |
 | Intro เนื้อเรื่อง | **ยังไม่มี** → B8 |
 | รายงาน 7 ส่วน, สไลด์, ไฟล์ส่งงาน | มีแค่ส่วน 7.4 ใน C3 → เพิ่ม Phase D |
@@ -34,15 +34,16 @@
 
 | # | เรื่อง | ค่าในโค้ด | default ถ้ายังไม่ได้คำตอบ |
 |---|---|---|---|
-| D1 | มลทินสูงสุด (ข้อขัดแย้ง: Doc ออกแบบเขียน 9 หน่วย เกจ 0–10 เตือนที่ 8–9 แต่ค่าที่ใช้อยู่คือ 7) | 7 | คงไว้ 7 แล้วแก้ Doc และรายงานให้ตรงโค้ด |
+| D1 | มลทินสูงสุด (ข้อขัดแย้ง: Doc ออกแบบเขียน 9 หน่วย เกจ 0–10 เตือนที่ 8–9 แต่ค่าที่ใช้อยู่คือ 7) | 7 | **ตัดสินแล้ว 6 ต.ค.:** คงไว้ 7 ตามโค้ด แก้ Doc และรายงานให้ตรง (ทีม Game Design ต้องรับทราบ) |
 | D2 | ขวัญสูงสุดผู้เล่น | 50 (`RunState.DefaultMaxHp`) | คงไว้ 50 |
 | D3 | เครื่องรางติดตัว (relic) ในร้าน/อีเวนต์ | เก็บไว้แต่ไม่มีผล | ซ่อนจากร้านและอีเวนต์ (A6 ทางเลือก ก) |
 | D4 | ภาพการ์ด: ภาพประกอบ (`artwork`) หรือภาพสำเร็จ (`cardImage`) | ปนกัน 5 ใบเป็น `cardImage` | **ตัดสินแล้ว 6 ต.ค.:** ใช้ `artwork` จากชุด Drive (29 ใบ), 5 ใบเดิมคงไว้, อีก 13 ใบใช้ placeholder จนกว่าศิลปินส่งภาพ |
 | D5 | ชื่อร้าน: ศาลตายาย (Doc) หรือ ศาลพระภูมิ (เกม) | ศาลพระภูมิ | คงตามเกม แล้วแก้ Doc |
 | D6 | โหนดวัด (ฟื้นขวัญ) ที่ Doc เขียนไว้ | ไม่มี ฟื้นขวัญอยู่ในร้าน | ไม่ทำ แก้ Doc |
-| D7 | Story intro: ลำดับภาพ, ข้อความบรรยาย, วิดีโอ 2 ไฟล์ใช้ตรงไหน | ยังไม่มี | ภาพเรียงตามชื่อไฟล์ `IMG_7922`→`IMG_7933`, วิดีโอต่อท้าย (`dad_khwan.mp4` ก่อน), ข้อความบรรยายเว้นว่างจนกว่าทีมส่งบท |
-| D8 | ทฤษฎีจิตวิทยา 1–2 ข้อสำหรับรายงาน 7.2 (กรอบ Design Foundation = 20% ของคะแนน) | ยังไม่เลือก | Flow + Self-Determination Theory ต้องผูกกับ mechanic ที่มีจริงในเกม (D2) |
+| D7 | Story intro: ลำดับภาพ, ข้อความบรรยาย, วิดีโอ 2 ไฟล์ใช้ตรงไหน | ยังไม่มี | **ตำแหน่งตัดสินแล้ว:** ก่อน Main Menu ทุกครั้งที่เปิดเกม ส่วนที่เหลือใช้ default: ภาพเรียงตามชื่อไฟล์ `IMG_7922`→`IMG_7934`, วิดีโอต่อท้าย (`dad_khwan.mp4` ก่อน), ข้อความบรรยายเว้นว่างจนกว่าทีมส่งบท |
+| D8 | ทฤษฎีจิตวิทยาสำหรับรายงาน 7.2 (Design Foundation = 20% ของคะแนน) | ยังไม่เลือก | **ตัดสินแล้ว:** ทีม Game Design (นราธร, อสิธารา) เป็นเจ้าของ ฝั่ง Dev ไม่เขียน แต่ต้องตรวจว่าทุก mechanic ที่ทีมอ้างมีอยู่จริงใน build (D1) |
 | D9 | ภาพ Character Design 2 รูป (`IMG_7920` ชีทตัวละครเต็มตัว + silhouette) ใช้ตรงไหน | ยังไม่มี | แสดงเป็นภาพตัวละครผู้เล่นในหน้า Game Over / Victory (B3) |
+| D10 | หน้ารางวัลข้ามได้ไหม (Doc: ข้ามไม่ได้, โค้ด: `allowSkip = true`, ได้ธูป 10) | ข้ามได้ | **ตัดสินแล้ว 6 ต.ค.:** ตามโค้ดเดิม แก้ Doc |
 
 ---
 
@@ -110,8 +111,8 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
   |---|---|---|
   | `Sounds\BGM`, `Sounds\Ambience`, `Sounds\SFX` (คงโฟลเดอร์ย่อย `card/`, `corruption/`, `scream/`) | `Assets/Audio/BGM`, `Assets/Audio/Ambience`, `Assets/Audio/SFX` | 27 ไฟล์ |
   | `Art\Card Design\**\*.png` (รวมเป็นโฟลเดอร์เดียว ชื่อไฟล์ไม่ซ้ำกัน) | `Assets/Art/Cards/` | 29 ไฟล์ |
-  | `Art\Story_Start_Game\*.png` | `Assets/Art/Story/` | 12 ไฟล์ |
-  | `Art\Story_Start_Game\*.mp4` | `Assets/Video/` | 2 ไฟล์ (5.7 MB, 9.8 MB) |
+  | `Art\Story_Start_Game\*.png` | `Assets/Art/Story/` | 13 ไฟล์ (`IMG_7922`–`IMG_7934`) |
+  | `Art\Story_Start_Game\*.mp4` | `Assets/Video/` | 2 ไฟล์ (1920×1080, h264, 30 fps, **ไม่มีแทร็กเสียง**; `dad_khwan.mp4` 6.0 วินาที 5.7 MB, อีกไฟล์ 10.0 วินาที 9.8 MB) |
   | `Art\Character Design\*.JPG` | `Assets/Art/Characters/` | 2 ไฟล์ |
 - ไม่คัดลอก: ไฟล์ `.zip`, `.unitypackage`, `.tar`, `icon.ai` (Unity import `.ai` ไม่ได้ ต้องให้ศิลปิน export เป็น PNG ก่อน), โฟลเดอร์ `Font`/`Logo`/`UI-UX` ที่ยังว่าง
 - เปิด Unity ให้ import ครั้งเดียว แล้ว commit ไฟล์ `.meta` ทั้งหมดไปพร้อมกัน (ห้ามขาด `.meta`)
@@ -191,14 +192,15 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - **Done when:** log `bound=29 placeholder=13 orphan=0`, การ์ดทั้ง 42 ใบมีภาพที่ไม่ใช่ null, รันซ้ำแล้วผลเท่าเดิม (idempotent) และลองใส่ภาพทดสอบ 1 ใบแล้ว `placeholder=12`
 
 ### [ ] B8 Story intro + ภาพตัวละคร
-- ใช้ภาพจาก `Assets/Art/Story/` (12 รูป, สไตล์ภาพบุคคล/ฉากแบบ visual novel), `Assets/Video/` (2 วิดีโอ), `Assets/Art/Characters/` (2 รูป) ค่า default ตาม D7, D9
+- ใช้ภาพจาก `Assets/Art/Story/` (13 รูป), `Assets/Video/` (2 วิดีโอ ไม่มีเสียงในตัว ใช้เสียง BGM แทน), `Assets/Art/Characters/` (2 รูป) ค่า default ตาม D7, D9
+- **ตำแหน่ง (PM ตัดสิน 6 ต.ค.):** เล่นตอนเปิดเกม **ก่อนเข้า Main Menu** ทุกครั้งที่เปิดเกม ข้ามได้ทันที ไม่เกี่ยวกับ "เริ่มใหม่/เล่นต่อ"
 - `TawanOS.GameFlow.IntroStoryDataSO`: list ของ step, แต่ละ step เป็นภาพหรือวิดีโอ + ข้อความบรรยาย (ว่างได้) เก็บที่ `Assets/GameFlowData/IntroStory.asset` เพื่อให้ทีมสลับลำดับได้โดยไม่แตะโค้ด
 - ฉาก `IntroStoryScene` สร้างจาก editor script `TawanOS.GameFlow.IntroStorySetupTool.SetupIntroScene` (ห้ามแก้ YAML ด้วยมือ) ใช้ `UnityEngine.Video.VideoPlayer` กับ `VideoClip` ที่ serialize ไว้ (ห้ามอ่านจาก path ใน runtime)
-- ลำดับฉาก: Main Menu → "เริ่มเกมใหม่" → `IntroStoryScene` → `MapTestScene` ส่วน "เล่นต่อ" ข้าม intro
-- ควบคุม: คลิก/Space/Enter = ถัดไป, ปุ่ม "ข้าม" และ `Esc` = ข้ามทั้งหมด, ปุ่ม 44×44 px ขึ้นไป, ใช้ฟอนต์ Sarabun (TMP)
-- เสียง: ใช้ `bgm_title` ต่อเนื่องจาก Main Menu (ผ่าน B1); ถ้ายังไม่มี B1 ให้เงียบ
-- ใส่ `IntroStoryScene` ใน Build Settings ระหว่าง `MainMenu` กับ `MapTestScene`
-- **Done when:** batch test เริ่มเกมใหม่แล้ว active scene เป็น `IntroStoryScene`, กดข้ามแล้วไป `MapTestScene` และ `RunState.HasSave` ยังเป็น true; "เล่นต่อ" ไม่เข้า intro; จำนวน step ใน asset = 12 ภาพ + 2 วิดีโอ
+- ลำดับฉาก: เปิดเกม → `IntroStoryScene` → `MainMenu` → (เริ่มใหม่/เล่นต่อ) → `MapTestScene` `IntroStoryScene` เป็น build index 0 ก่อน `MainMenu`
+- ต้องตรวจก่อนทำ: ฉากแรกของ build เปลี่ยนจาก `MainMenu` เป็น `IntroStoryScene` โค้ดที่สมมติว่า `MainMenu` เป็นจุดเริ่ม (การสร้าง `GameFlowManager` อัตโนมัติ, ปุ่ม "กลับเมนูหลัก", `RunState` โหลด save) ต้องไม่พึ่ง build index 0 ถ้าต้องแก้ ให้แก้ที่ `GameFlowManager` จุดเดียว
+- ควบคุม: คลิก/Space/Enter = ถัดไป, ปุ่ม "ข้าม" และ `Esc` = ข้ามทั้งหมด, ปุ่ม 44×44 px ขึ้นไป, ใช้ฟอนต์ Sarabun (TMP) ผู้เล่นที่เห็น intro มาแล้วต้องข้ามได้ภายใน 1 คลิก
+- เสียง: วิดีโอไม่มีเสียงในตัว ใช้ `bgm_title` เล่นต่อเนื่องจาก intro เข้า Main Menu (ผ่าน B1) ถ้ายังไม่มี B1 ให้เงียบ
+- **Done when:** batch test เปิดเกมแล้ว active scene เป็น `IntroStoryScene`, จำลองกดข้ามแล้วไป `MainMenu`, "เริ่มใหม่" และ "เล่นต่อ" ทำงานเหมือนเดิม (`RunState.HasSave` ไม่เปลี่ยนจาก intro), `grep` ไม่พบโค้ดที่ผูกกับ build index 0, จำนวน step ใน asset = 13 ภาพ + 2 วิดีโอ
 
 ### [ ] B9 ภาพตัวละครในหน้า Game Over / Victory
 - ใช้ `Assets/Art/Characters/IMG_7920.JPG` (ชีทตัวละครเต็มตัว) ในหน้า Game Over และ Victory จาก B3 ตัดเฉพาะตัวละครด้านซ้าย (ไม่เอา silhouette) ด้วย Sprite import setting หรือ `RectTransform` mask ไม่แก้ไฟล์ต้นฉบับ
@@ -237,7 +239,7 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 ไฟล์เอกสารทั้งหมดเขียนที่ `Docs/Report/` หัวข้อต้องตรงกับโครงสร้างรายงานข้อ 7 ของเอกสารสั่งงาน
 
 ### [ ] D1 รายงาน 7.2 Design Foundation (20%)
-- `Docs/Report/design_justification.md`
+- `Docs/Report/design_justification.md` **เจ้าของ: ทีม Game Design (นราธร, อสิธารา)** ฝั่ง Dev (ธนัทภัร) ไม่เขียนทฤษฎี แต่เป็นผู้ตรวจว่า mechanic ที่อ้างมีอยู่จริงใน build และระบุ class/ฉากให้
 - ส่วน MDA: ไล่จาก Aesthetic (ผู้เล่นควรรู้สึกอะไร) → Dynamics → Mechanics และส่วน Elemental Tetrad (Mechanics, Story, Technology, Aesthetics) ผูกกับระบบที่มีใน build จริง
 - ส่วนทฤษฎีจิตวิทยา 1–2 ข้อ (ค่า default ตาม D8) ตาราง: ทฤษฎี → เหตุผลที่เลือก → mechanic ในเกม → ไฟล์/ฉากที่เห็นผล → วิธีผู้ตรวจดูได้ในเกม
 - ห้ามเขียนทฤษฎีลอย ๆ: ทุกแถวต้องมี mechanic ที่ชี้ไป class หรือฉากที่มีอยู่จริง
@@ -255,8 +257,18 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - **Done when:** ทุกข้อใน known_limitations มีที่มาจาก issue/commit/PLAN ที่ชี้ได้
 
 ### [ ] D4 รายงาน 7.6 Individual Contribution
-- `Docs/Report/contribution.md`: ตารางสัดส่วนงานของสมาชิกทุกคน (5–6 คน) แยกตาม task หรือเปอร์เซ็นต์ และเจ้าภาพหลักของแต่ละงาน
-- ที่มาของข้อมูล: `git shortlog -sn --all`, บอร์ด Trello, และงานที่ไม่อยู่ใน git (ศิลป์, เสียง, ออกแบบ, เนื้อเรื่อง) ที่สมาชิกต้องยืนยันเอง
+- `Docs/Report/contribution.md`: ตารางสัดส่วนงานของสมาชิกทุกคน แยกตาม task หรือเปอร์เซ็นต์ และเจ้าภาพหลักของแต่ละงาน
+- สมาชิก 6 คน (เลขประจำตัวใส่ในรายงานเอง ไม่ใส่ใน repo):
+  | สมาชิก | บทบาท |
+  |---|---|
+  | ธนัทภัร พรหมทอง | Project Management, Dev |
+  | ภูริ ประชาสุขสิน | 3D Artist, Sound Designer |
+  | วรรณณิศา อมรวงศ์ไพบูลย์ | 2D Artist |
+  | อสิธารา พุ่มดอกไม้ | Dev, Game Design (Gameplay) |
+  | นราธร อู่สุวรรณ์ | Game Design (Gameplay), UI/UX, QA Tester |
+  | สายชล ไชยมูล | 2D Artist |
+- ที่มาของข้อมูล: `git shortlog -sn --all` (ตอนนี้มีผู้ commit 3 ชื่อ: `tawaninm` 45, `Hundredz` 9, `Thanatpat` 2 ต้องจับคู่ชื่อ git กับสมาชิก), บอร์ด Trello, และงานที่ไม่อยู่ใน git (ศิลป์ เสียง ออกแบบ เนื้อเรื่อง QA) ที่สมาชิกต้องยืนยันเอง
+- QA Tester คือนราธร: ให้เขาเป็นเจ้าของ `Docs/Testing/playtest_log.md` (C2)
 - Self-Reflection ของสมาชิกแต่ละคน คนละ 1 ย่อหน้าสั้น ให้แต่ละคนเขียนเอง ห้ามเขียนแทน
 - **Done when:** ตารางครบทุกคนในทีม ผลรวมเปอร์เซ็นต์ = 100 และครบ reflection ทุกคน
 
