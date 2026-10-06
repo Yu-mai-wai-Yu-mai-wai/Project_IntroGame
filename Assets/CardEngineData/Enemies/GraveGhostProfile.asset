@@ -15,12 +15,12 @@ MonoBehaviour:
   enemyId: enemy_grave
   enemyName: "\u0E1C\u0E35\u0E1B\u0E48\u0E32\u0E0A\u0E49\u0E32"
   portrait: {fileID: 0}
-  maxKhwan: 1
+  maxKhwan: 30
   deck: []
   startingHandSize: 3
   drawPerTurn: 1
   maxHandSize: 10
-  maxCardsPerTurn: 1
+  maxCardsPerTurn: 6
   moves:
   - intent: 0
     baseValue: 5
