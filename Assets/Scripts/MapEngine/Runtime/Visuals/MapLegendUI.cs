@@ -98,14 +98,24 @@ namespace TawanOS.MapEngine
         {
             var theme = UIThemeSO.Current;
 
+            // The setup tool creates this object empty under the Canvas, so it has a zero-size rect at the
+            // screen centre. Anchors on children resolve against that rect, which pushed the button to the
+            // middle of the screen. Stretch it over the whole canvas so the anchors mean screen corners.
+            var selfRect = GetComponent<RectTransform>();
+            if (selfRect == null) selfRect = gameObject.AddComponent<RectTransform>();
+            selfRect.anchorMin = Vector2.zero;
+            selfRect.anchorMax = Vector2.one;
+            selfRect.offsetMin = Vector2.zero;
+            selfRect.offsetMax = Vector2.zero;
+
             // --- Toggle Button "สัญลักษณ์ (L)" ---
             var toggleGo = new GameObject("ToggleLegendButton", typeof(RectTransform), typeof(Image), typeof(Button));
             toggleGo.transform.SetParent(transform, false);
             var toggleRect = toggleGo.GetComponent<RectTransform>();
-            toggleRect.anchorMin = new Vector2(0f, 1f);
-            toggleRect.anchorMax = new Vector2(0f, 1f);
-            toggleRect.pivot = new Vector2(0f, 1f);
-            toggleRect.anchoredPosition = new Vector2(24f, -70f);
+            toggleRect.anchorMin = new Vector2(1f, 1f);
+            toggleRect.anchorMax = new Vector2(1f, 1f);
+            toggleRect.pivot = new Vector2(1f, 1f);
+            toggleRect.anchoredPosition = new Vector2(-24f, -24f);
             toggleRect.sizeDelta = new Vector2(170f, 44f);
 
             var toggleImg = toggleGo.GetComponent<Image>();
@@ -130,10 +140,10 @@ namespace TawanOS.MapEngine
             panelGroup = panelRoot.GetComponent<CanvasGroup>();
 
             var panelRect = panelRoot.GetComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0f, 1f);
-            panelRect.anchorMax = new Vector2(0f, 1f);
-            panelRect.pivot = new Vector2(0f, 1f);
-            panelRect.anchoredPosition = new Vector2(24f, -124f);
+            panelRect.anchorMin = new Vector2(1f, 1f);
+            panelRect.anchorMax = new Vector2(1f, 1f);
+            panelRect.pivot = new Vector2(1f, 1f);
+            panelRect.anchoredPosition = new Vector2(-24f, -78f);
             panelRect.sizeDelta = new Vector2(520f, 530f);
 
             // Border & Background
