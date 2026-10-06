@@ -62,7 +62,7 @@ MonoBehaviour:
   startingHandSize: 3
   drawPerTurn: 1
   maxHandSize: 10
-  maxCardsPerTurn: 6
+  maxCardsPerTurn: 1
   moves: []
   aiStates:
   - stateName: Opening

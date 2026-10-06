@@ -20,7 +20,7 @@ MonoBehaviour:
   startingHandSize: 3
   drawPerTurn: 1
   maxHandSize: 10
-  maxCardsPerTurn: 6
+  maxCardsPerTurn: 1
   moves:
   - intent: 0
     baseValue: 5
