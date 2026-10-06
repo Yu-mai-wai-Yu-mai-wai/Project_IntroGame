@@ -17,8 +17,8 @@ MonoBehaviour:
   crimson: {r: 0.34117648, g: 0.12941177, b: 0.12941177, a: 1}
   text: {r: 0.7607843, g: 0.74509805, b: 0.74509805, a: 1}
   accent: {r: 0.9411765, g: 0.6784314, b: 0.48235294, a: 1}
-  bodyFont: {fileID: 11400000, guid: 70dd15b1fd3606e44a7cd6b9f49cf317, type: 2}
-  titleFont: {fileID: 11400000, guid: 9ece194a389fd8a46aeec390079fd8ad, type: 2}
+  bodyFont: {fileID: 11400000, guid: f831081eaffa7b54da5a97429896706a, type: 2}
+  titleFont: {fileID: 11400000, guid: 5358c17815b61ca4080dcade93ea9f47, type: 2}
   bodySize: 24
   labelSize: 20
   titleSize: 36

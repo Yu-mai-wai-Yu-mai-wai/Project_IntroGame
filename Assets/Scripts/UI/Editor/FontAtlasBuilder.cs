@@ -15,9 +15,14 @@ namespace TawanOS.EditorTools
     /// </summary>
     public static class FontAtlasBuilder
     {
+        private const string EkkamaiVibeSdf = "Assets/Fonts/EkkamaiVibe SDF.asset";
+        private const string RueangLaoSdf = "Assets/Fonts/MN-RueangLao SDF.asset";
         private const string KorKorTorSdf = "Assets/Fonts/KorKorTor SDF.asset";
         private const string CharmSdf = "Assets/Fonts/Charm-Bold SDF.asset";
         private const string SarabunSdf = "Assets/Fonts/Sarabun-Regular SDF.asset";
+
+        private const string EkkamaiVibeTtf = "Assets/Fonts/EkkamaiVibe-Regular.ttf";
+        private const string RueangLaoOtf = "Assets/Fonts/MN Rueang Lao.otf";
         private const string KorKorTorTtf = "Assets/Fonts/KorKorTor.ttf";
         private const string CharmTtf = "Assets/Fonts/Charm-Bold.ttf";
         private const string SarabunTtf = "Assets/Fonts/Sarabun-Regular.ttf";
@@ -33,55 +38,104 @@ namespace TawanOS.EditorTools
 
         private static void Bake()
         {
-            var kkFont = AssetDatabase.LoadAssetAtPath<Font>(KorKorTorTtf);
-            if (kkFont == null)
+            var ekFont = AssetDatabase.LoadAssetAtPath<Font>(EkkamaiVibeTtf);
+            if (ekFont == null)
             {
-                Debug.LogError($"[FontAtlasBuilder] KorKorTor.ttf not found at {KorKorTorTtf}.");
+                Debug.LogError($"[FontAtlasBuilder] EkkamaiVibe-Regular.ttf not found at {EkkamaiVibeTtf}.");
                 return;
             }
 
-            var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(CharmSdf);
-            if (charm == null)
+            var rlFont = AssetDatabase.LoadAssetAtPath<Font>(RueangLaoOtf);
+            if (rlFont == null)
             {
-                Debug.LogError("[FontAtlasBuilder] Charm-Bold SDF asset not found.");
+                Debug.LogError($"[FontAtlasBuilder] MN Rueang Lao.otf not found at {RueangLaoOtf}.");
                 return;
             }
 
-            var sarabun = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(SarabunSdf);
+            var charmFont = AssetDatabase.LoadAssetAtPath<Font>(CharmTtf);
+            var sarabunFont = AssetDatabase.LoadAssetAtPath<Font>(SarabunTtf);
 
-            // Recreate KorKorTor SDF freshly from TTF so its atlas texture and material are always clean sub-assets.
-            var korkortor = TMP_FontAsset.CreateFontAsset(kkFont);
-            korkortor.name = "KorKorTor SDF";
-            AssetDatabase.CreateAsset(korkortor, KorKorTorSdf);
-            if (korkortor.atlasTextures != null && korkortor.atlasTextures.Length > 0 && korkortor.atlasTextures[0] != null)
+            // 1. EkkamaiVibe SDF (Body)
+            var ekkamai = GetOrCreateFontAsset(ekFont, EkkamaiVibeSdf, "EkkamaiVibe SDF");
+            BakeOne(ekkamai, ekFont);
+
+            // 2. MN-RueangLao SDF (Title Horror)
+            var rueangLao = GetOrCreateFontAsset(rlFont, RueangLaoSdf, "MN-RueangLao SDF");
+            BakeOne(rueangLao, rlFont);
+
+            // 3. Fallbacks: Sarabun & Charm
+            TMP_FontAsset sarabun = null;
+            if (sarabunFont != null)
             {
-                korkortor.atlasTextures[0].name = "KorKorTor SDF Atlas";
-                AssetDatabase.AddObjectToAsset(korkortor.atlasTextures[0], korkortor);
+                sarabun = GetOrCreateFontAsset(sarabunFont, SarabunSdf, "Sarabun-Regular SDF");
+                BakeOne(sarabun, sarabunFont);
             }
-            if (korkortor.material != null)
+
+            TMP_FontAsset charm = null;
+            if (charmFont != null)
             {
-                korkortor.material.name = "KorKorTor SDF Material";
-                AssetDatabase.AddObjectToAsset(korkortor.material, korkortor);
+                charm = GetOrCreateFontAsset(charmFont, CharmSdf, "Charm-Bold SDF");
+                BakeOne(charm, charmFont);
             }
 
-            BakeOne(korkortor, kkFont);
-            if (sarabun != null) BakeOne(sarabun, AssetDatabase.LoadAssetAtPath<Font>(SarabunTtf));
-            BakeOne(charm, AssetDatabase.LoadAssetAtPath<Font>(CharmTtf));
+            // 4. Overwrite KorKorTor SDF with EkkamaiVibe data so any lingering reference renders real Thai text
+            var korkortor = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(KorKorTorSdf);
+            if (korkortor != null)
+            {
+                BakeOne(korkortor, ekFont);
+                if (korkortor.fallbackFontAssetTable == null) korkortor.fallbackFontAssetTable = new List<TMP_FontAsset>();
+                if (!korkortor.fallbackFontAssetTable.Contains(ekkamai)) korkortor.fallbackFontAssetTable.Add(ekkamai);
+                EditorUtility.SetDirty(korkortor);
+            }
 
-            // KorKorTor lacks ฿ (U+0E3F); Sarabun covers it as fallback.
-            if (korkortor.fallbackFontAssetTable == null) korkortor.fallbackFontAssetTable = new List<TMP_FontAsset>();
-            if (sarabun != null && !korkortor.fallbackFontAssetTable.Contains(sarabun))
-                korkortor.fallbackFontAssetTable.Add(sarabun);
-            EditorUtility.SetDirty(korkortor);
+            // Fallback hierarchy:
+            // EkkamaiVibe -> Sarabun (for ฿ etc.)
+            if (ekkamai.fallbackFontAssetTable == null) ekkamai.fallbackFontAssetTable = new List<TMP_FontAsset>();
+            if (sarabun != null && !ekkamai.fallbackFontAssetTable.Contains(sarabun))
+                ekkamai.fallbackFontAssetTable.Add(sarabun);
+            EditorUtility.SetDirty(ekkamai);
 
-            // Charm title face falls back to KorKorTor (body), then Sarabun.
-            if (charm.fallbackFontAssetTable == null) charm.fallbackFontAssetTable = new List<TMP_FontAsset>();
-            if (!charm.fallbackFontAssetTable.Contains(korkortor)) charm.fallbackFontAssetTable.Add(korkortor);
-            if (sarabun != null && !charm.fallbackFontAssetTable.Contains(sarabun)) charm.fallbackFontAssetTable.Add(sarabun);
-            EditorUtility.SetDirty(charm);
+            // MN-RueangLao (Title) -> EkkamaiVibe -> Sarabun
+            if (rueangLao.fallbackFontAssetTable == null) rueangLao.fallbackFontAssetTable = new List<TMP_FontAsset>();
+            if (!rueangLao.fallbackFontAssetTable.Contains(ekkamai))
+                rueangLao.fallbackFontAssetTable.Add(ekkamai);
+            if (sarabun != null && !rueangLao.fallbackFontAssetTable.Contains(sarabun))
+                rueangLao.fallbackFontAssetTable.Add(sarabun);
+            EditorUtility.SetDirty(rueangLao);
+
+            // Charm -> EkkamaiVibe -> Sarabun
+            if (charm != null)
+            {
+                if (charm.fallbackFontAssetTable == null) charm.fallbackFontAssetTable = new List<TMP_FontAsset>();
+                if (!charm.fallbackFontAssetTable.Contains(ekkamai)) charm.fallbackFontAssetTable.Add(ekkamai);
+                if (sarabun != null && !charm.fallbackFontAssetTable.Contains(sarabun)) charm.fallbackFontAssetTable.Add(sarabun);
+                EditorUtility.SetDirty(charm);
+            }
 
             AssetDatabase.SaveAssets();
-            Debug.Log("[FontAtlasBuilder] Thai atlases baked (Static). Body=KorKorTor, Title=Charm, Fallback=Sarabun.");
+            Debug.Log("[FontAtlasBuilder] Thai atlases baked (Static). Body=EkkamaiVibe, Title=MN-RueangLao, Fallback=Sarabun.");
+        }
+
+        private static TMP_FontAsset GetOrCreateFontAsset(Font font, string assetPath, string assetName)
+        {
+            var existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(assetPath);
+            if (existing != null) return existing;
+
+            var newAsset = TMP_FontAsset.CreateFontAsset(font);
+            newAsset.name = assetName;
+            AssetDatabase.CreateAsset(newAsset, assetPath);
+            if (newAsset.atlasTextures != null && newAsset.atlasTextures.Length > 0 && newAsset.atlasTextures[0] != null)
+            {
+                newAsset.atlasTextures[0].name = $"{assetName} Atlas";
+                AssetDatabase.AddObjectToAsset(newAsset.atlasTextures[0], newAsset);
+            }
+            if (newAsset.material != null)
+            {
+                newAsset.material.name = $"{assetName} Material";
+                AssetDatabase.AddObjectToAsset(newAsset.material, newAsset);
+            }
+            AssetDatabase.SaveAssets();
+            return newAsset;
         }
 
         private static void BakeOne(TMP_FontAsset asset, Font source)

@@ -12,9 +12,9 @@ namespace TawanOS.UI
     public static class UIThemeSetupTool
     {
         private const string AssetPath = "Assets/Resources/" + UIThemeSO.ResourceName + ".asset";
-        private const string BodyFontPath = "Assets/Fonts/KorKorTor SDF.asset";
+        private const string BodyFontPath = "Assets/Fonts/EkkamaiVibe SDF.asset";
         private const string FallbackBodyFontPath = "Assets/Fonts/Sarabun-Regular SDF.asset";
-        private const string TitleFontPath = "Assets/Fonts/Charm-Bold SDF.asset";
+        private const string TitleFontPath = "Assets/Fonts/MN-RueangLao SDF.asset";
 
         [MenuItem("Tools/TawanOS/UI/Create UI Theme")]
         public static void CreateThemeFromMenu()

@@ -35,7 +35,7 @@ MonoBehaviour:
     m_StrikethroughOffset: 16.8
     m_StrikethroughThickness: 4.5
     m_TabWidth: 44
-  m_Material: {fileID: 4196617958147014721}
+  m_Material: {fileID: 7094392169404162479}
   m_SourceFontFileGUID: 73a7eb4c89088c546924a22279d9d505
   m_CreationSettings:
     sourceFontFileName: 
@@ -3677,7 +3677,7 @@ MonoBehaviour:
     m_GlyphIndex: 310
     m_Scale: 1
   m_AtlasTextures:
-  - {fileID: 363562020978047831}
+  - {fileID: 4369155213381555742}
   m_AtlasTextureIndex: 0
   m_IsMultiAtlasTexturesEnabled: 1
   m_GetFontFeatures: 1
@@ -4477,6 +4477,7 @@ MonoBehaviour:
   m_ShouldReimportFontFeatures: 0
   m_FallbackFontAssetTable:
   - {fileID: 11400000, guid: e1bda5ac93f4c674fbeee0b6c4316bec, type: 2}
+  - {fileID: 11400000, guid: f831081eaffa7b54da5a97429896706a, type: 2}
   m_FontWeightTable:
   - regularTypeface: {fileID: 0}
     italicTypeface: {fileID: 0}
@@ -4532,7 +4533,7 @@ MonoBehaviour:
     kerningPairs: []
   fallbackFontAssets: []
   atlas: {fileID: 0}
---- !u!28 &363562020978047831
+--- !u!28 &4369155213381555742
 Texture2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -4578,7 +4579,7 @@ Texture2D:
     offset: 0
     size: 0
     path: 
---- !u!21 &4196617958147014721
+--- !u!21 &7094392169404162479
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -4602,7 +4603,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 363562020978047831}
+        m_Texture: {fileID: 4369155213381555742}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []

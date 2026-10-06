@@ -15,12 +15,12 @@ namespace TawanOS.EditorTools
     /// </summary>
     public static class ThaiGlyphTests
     {
-        private const string KorKorTorSdf = "Assets/Fonts/KorKorTor SDF.asset";
+        private const string EkkamaiVibeSdf = "Assets/Fonts/EkkamaiVibe SDF.asset";
+        private const string EkkamaiVibeTtf = "Assets/Fonts/EkkamaiVibe-Regular.ttf";
+        private const string RueangLaoSdf = "Assets/Fonts/MN-RueangLao SDF.asset";
+        private const string RueangLaoOtf = "Assets/Fonts/MN Rueang Lao.otf";
         private const string SarabunSdf = "Assets/Fonts/Sarabun-Regular SDF.asset";
-        private const string CharmSdf = "Assets/Fonts/Charm-Bold SDF.asset";
-        private const string KorKorTorTtf = "Assets/Fonts/KorKorTor.ttf";
         private const string SarabunTtf = "Assets/Fonts/Sarabun-Regular.ttf";
-        private const string CharmTtf = "Assets/Fonts/Charm-Bold.ttf";
 
         // Text that appears in the UI today (menu, map HUD/legend, shop, events share the Thai range test below).
         private static readonly string[] Samples =
@@ -38,9 +38,9 @@ namespace TawanOS.EditorTools
         private static void Execute(bool exitOnFinish)
         {
             int failures = 0;
-            failures += CheckFont("KorKorTor", KorKorTorSdf, KorKorTorTtf);
+            failures += CheckFont("EkkamaiVibe", EkkamaiVibeSdf, EkkamaiVibeTtf);
+            failures += CheckFont("MN-RueangLao", RueangLaoSdf, RueangLaoOtf);
             failures += CheckFont("Sarabun", SarabunSdf, SarabunTtf);
-            failures += CheckFont("Charm", CharmSdf, CharmTtf);
             failures += CheckLegendCorner();
 
             if (failures == 0) Debug.Log("[ThaiGlyphTests] PASS");

@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using TawanOS.UI;
 
 namespace TawanOS.MapEngine
 {
@@ -15,6 +16,12 @@ namespace TawanOS.MapEngine
         private void Awake()
         {
             mainCamera = Camera.main;
+            var theme = UIThemeSO.Current;
+            if (theme != null)
+            {
+                if (titleText != null && theme.titleFont != null) titleText.font = theme.titleFont;
+                if (descriptionText != null && theme.bodyFont != null) descriptionText.font = theme.bodyFont;
+            }
             HideTooltip();
         }
 

@@ -36,6 +36,8 @@ MonoBehaviour:
   m_fallbackFontAssets:
   - {fileID: 11400000, guid: e1bda5ac93f4c674fbeee0b6c4316bec, type: 2}
   - {fileID: 11400000, guid: 9ece194a389fd8a46aeec390079fd8ad, type: 2}
+  - {fileID: 11400000, guid: f831081eaffa7b54da5a97429896706a, type: 2}
+  - {fileID: 11400000, guid: 5358c17815b61ca4080dcade93ea9f47, type: 2}
   m_matchMaterialPreset: 1
   m_HideSubTextObjects: 0
   m_defaultSpriteAsset: {fileID: 11400000, guid: c41005c129ba4d66911b75229fd70b45, type: 2}

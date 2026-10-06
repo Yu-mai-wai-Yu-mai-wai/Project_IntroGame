@@ -93,8 +93,10 @@ namespace TawanOS.CardEngine
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.fontSize = 3f;
             tmp.color = Color.black;
-            TMP_FontAsset charmFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
-            if (charmFont != null) tmp.font = charmFont;
+            TMP_FontAsset titleFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
+            if (titleFont != null) tmp.font = titleFont;
 
             var view = cardGo.AddComponent<CardView3D>();
             view.cardRenderer = renderer;
