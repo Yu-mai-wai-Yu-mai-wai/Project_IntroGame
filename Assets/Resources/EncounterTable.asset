@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.GameFlow.EncounterTableSO
   minor:
   - {fileID: 11400000, guid: 0dcca0e7068694d4e8e84167d7894090, type: 2}
+  - {fileID: 11400000, guid: 738c6c36a65257743a398863269831ad, type: 2}
+  - {fileID: 11400000, guid: a521b449b11f44318bf9b45fa9df1c63, type: 2}
   elite:
-  - {fileID: 11400000, guid: 0dcca0e7068694d4e8e84167d7894090, type: 2}
+  - {fileID: 11400000, guid: f3752d3d991f46bd9a24237565b408d3, type: 2}
   boss:
   - {fileID: 11400000, guid: 89f39d63277479a45a1f21ccc8f7e1e0, type: 2}

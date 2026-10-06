@@ -34,17 +34,68 @@ namespace TawanOS.EditorTools
 
             if (table != null)
             {
-                var minor = table.Pick(NodeType.MinorEnemy);
-                var elite = table.Pick(NodeType.EliteEnemy);
-                var boss = table.Pick(NodeType.Boss);
+                failures += Expect("EncounterTable has at least 3 minor enemies", table.minor.Count >= 3);
+                failures += Expect("EncounterTable has at least 1 elite enemy", table.elite.Count >= 1);
+                failures += Expect("EncounterTable has at least 1 boss enemy", table.boss.Count >= 1);
 
-                failures += Expect("Minor node resolves an enemy", minor != null);
+                // A7: Elite profile is distinct from minor and has 45 Khwan
+                var elite = table.Pick(NodeType.EliteEnemy);
                 failures += Expect("Elite node resolves an enemy", elite != null);
+                if (elite != null)
+                {
+                    failures += Expect("Elite enemy has 45 Khwan (A7)", elite.maxKhwan == 45);
+                    failures += Expect("Elite enemy is not in minor list (A7)", !table.minor.Contains(elite));
+                }
+
+                // Check all minor enemies
+                foreach (var m in table.minor)
+                {
+                    failures += Expect($"Minor enemy '{m.enemyName}' is not null", m != null);
+                    if (m != null)
+                    {
+                        failures += Expect($"Minor enemy '{m.enemyName}' has 30 Khwan", m.maxKhwan == 30);
+                    }
+                }
+
+                // Check boss
+                var boss = table.Pick(NodeType.Boss);
                 failures += Expect("Boss node resolves an enemy", boss != null);
-                failures += Expect("Boss is the Phi Tai Hong profile (enemy_boss)", boss != null && boss.enemyId == "enemy_boss");
-                failures += Expect("Boss name contains ผีตายโหง", boss != null && boss.enemyName != null && boss.enemyName.Contains("ผีตายโหง"));
-                failures += Expect("Minor enemy has 30 Khwan", minor != null && minor.maxKhwan == 30);
-                failures += Expect("Boss has 60 Khwan", boss != null && boss.maxKhwan == 60);
+                if (boss != null)
+                {
+                    failures += Expect("Boss is the Phi Tai Hong profile (enemy_boss)", boss.enemyId == "enemy_boss");
+                    failures += Expect("Boss name contains ผีตายโหง", boss.enemyName != null && boss.enemyName.Contains("ผีตายโหง"));
+                    failures += Expect("Boss has 60 Khwan", boss.maxKhwan == 60);
+                }
+
+                // A9: Ensure all enemyIds in roster are unique
+                var allEnemies = new System.Collections.Generic.List<EnemyProfileSO>();
+                allEnemies.AddRange(table.minor);
+                allEnemies.AddRange(table.elite);
+                allEnemies.AddRange(table.boss);
+
+                var seenIds = new System.Collections.Generic.HashSet<string>();
+                bool allUnique = true;
+                foreach (var enemy in allEnemies)
+                {
+                    if (enemy != null)
+                    {
+                        if (!seenIds.Add(enemy.enemyId))
+                        {
+                            allUnique = false;
+                            Debug.LogError($"[EncounterTableTests] Duplicate enemyId found: '{enemy.enemyId}' in {enemy.name}");
+                        }
+                    }
+                }
+                failures += Expect("All enemy IDs in roster are unique (A9)", allUnique);
+
+                // A9: Rolling minor 20 times encounters at least 2 distinct enemies
+                var pickedMinorIds = new System.Collections.Generic.HashSet<string>();
+                for (int i = 0; i < 20; i++)
+                {
+                    var picked = table.Pick(NodeType.MinorEnemy);
+                    if (picked != null) pickedMinorIds.Add(picked.enemyId);
+                }
+                failures += Expect("Picking minor enemies returns at least 2 distinct types (A9)", pickedMinorIds.Count >= 2);
             }
 
             // Runtime code must not depend on AssetDatabase to find enemies

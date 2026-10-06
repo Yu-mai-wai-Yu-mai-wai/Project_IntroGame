@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f29241bc0ecb7e9499d405e7e9f4215c, type: 3}
   m_Name: NewEnemyProfile
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.EnemyProfileSO
-  enemyId: enemy_prai
-  enemyName: "\u0E1C\u0E35\u0E1E\u0E23\u0E32\u0E22"
+  enemyId: enemy_krasue
+  enemyName: "\u0E1C\u0E35\u0E01\u0E23\u0E30\u0E2A\u0E37\u0E2D"
   portrait: {fileID: 0}
   maxKhwan: 30
   deck:
