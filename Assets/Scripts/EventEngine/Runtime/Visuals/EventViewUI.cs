@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using TawanOS.GameFlow;
+using TawanOS.Settings;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -140,7 +141,7 @@ namespace TawanOS.EventEngine
             float shown = 0f;
             while (shown < total)
             {
-                shown += charactersPerSecond * Time.deltaTime;
+                shown += GameSettings.CharactersPerSecond(charactersPerSecond) * Time.deltaTime;
                 bodyText.maxVisibleCharacters = Mathf.Min(total, Mathf.FloorToInt(shown));
                 yield return null;
             }

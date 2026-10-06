@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
+using TawanOS.Settings;
 
 namespace TawanOS.CardEngine
 {
@@ -69,7 +70,7 @@ namespace TawanOS.CardEngine
         {
             root.DOKill();
             root.localScale = Vector3.one;
-            root.DOShakeAnchorPos(0.5f, 20f, 25);
+            if (!GameSettings.ReduceMotion) root.DOShakeAnchorPos(0.5f, 20f, 25);
         }
 
         private void Refresh(int current, int max, bool animate)

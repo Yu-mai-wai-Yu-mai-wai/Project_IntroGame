@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
+using TawanOS.Settings;
 
 namespace TawanOS.CardEngine
 {
@@ -104,7 +105,7 @@ namespace TawanOS.CardEngine
             if (first) fill.anchorMax = target;
             else fill.DOAnchorMax(target, 0.25f);
 
-            if (damaged)
+            if (damaged && !GameSettings.ReduceMotion)
             {
                 var root = (RectTransform)fill.parent.parent;
                 root.DOComplete();

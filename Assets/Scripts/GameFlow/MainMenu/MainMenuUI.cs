@@ -1,4 +1,5 @@
 using DG.Tweening;
+using TawanOS.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,7 +8,7 @@ namespace TawanOS.GameFlow
 {
     /// <summary>
     /// Title screen: New Game (asks before overwriting a saved run), Continue (only when a save
-    /// exists, with a one-line summary of it) and Quit.
+    /// exists, with a one-line summary of it), Settings and Quit.
     /// </summary>
     public class MainMenuUI : MonoBehaviour
     {
@@ -20,6 +21,7 @@ namespace TawanOS.GameFlow
         public Button newGameButton;
         public Button continueButton;
         public TextMeshProUGUI continueInfoText;
+        public Button settingsButton;
         public Button quitButton;
 
         [Header("Overwrite Confirmation")]
@@ -40,6 +42,7 @@ namespace TawanOS.GameFlow
         {
             if (newGameButton != null) newGameButton.onClick.AddListener(OnNewGame);
             if (continueButton != null) continueButton.onClick.AddListener(OnContinue);
+            if (settingsButton != null) settingsButton.onClick.AddListener(() => SettingsPanel.Open());
             if (quitButton != null) quitButton.onClick.AddListener(OnQuit);
             if (confirmYesButton != null) confirmYesButton.onClick.AddListener(OnConfirmYes);
             if (confirmNoButton != null) confirmNoButton.onClick.AddListener(() => confirmPanel.SetActive(false));

@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.TextCore;
 using UnityEngine.UI;
 
 namespace TawanOS.UI
@@ -66,7 +68,17 @@ namespace TawanOS.UI
             tmp.alignment = alignment;
             tmp.textWrappingMode = TextWrappingModes.Normal;
             tmp.raycastTarget = false;
+            EnableThaiMarks(tmp);
             return tmp;
+        }
+
+        /// <summary>
+        /// The project's TMP default is 'kern' only. Without 'mark'/'mkmk' a tone mark over an upper vowel is not
+        /// lifted: in Sarabun the ่ of "ที่" lands on the stroke of ี and disappears.
+        /// </summary>
+        public static void EnableThaiMarks(TMP_Text text)
+        {
+            text.fontFeatures = new List<OTL_FeatureTag> { OTL_FeatureTag.kern, OTL_FeatureTag.mark, OTL_FeatureTag.mkmk };
         }
     }
 }
