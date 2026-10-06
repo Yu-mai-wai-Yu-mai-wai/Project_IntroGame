@@ -96,8 +96,32 @@
 - **Done when:** ไม่มีทางซื้อหรือได้ของที่ไม่มีผลในเกม
 
 ### [ ] A7 ศัตรู Elite
-- ใน `EncounterTable` (A1) ใส่ศัตรู Elite ที่ต่างจาก minor: ถ้ายังไม่มี ให้ duplicate `PraiGhostProfile` เป็น `PraiGhostEliteProfile` เพิ่ม `maxKhwan` 1.5 เท่า แล้วแจ้งทีม Game Design ให้ปรับ
-- **Done when:** Elite กับ minor ใช้ profile คนละตัว
+- ใน `EncounterTable` (A1) ใส่ศัตรู Elite ที่ต่างจาก minor: duplicate `PraiGhostProfile` เป็น `PraiGhostEliteProfile` ตั้ง `maxKhwan: 45` (1.5 เท่าของศัตรูทั่วไป) แล้วแจ้งทีม Game Design ให้ปรับ
+- ที่มาของตัวเลข (PM มอบให้ Claude กำหนด 6 ต.ค.): ศัตรูทั่วไป 30 (คืนค่าเดิม), Elite 45, Boss 60 ตั้งตามสัดส่วนเวลาต่อสู้ใน Doc (ทั่วไป 5–10 นาที, Boss 10–15 นาที) เป็นค่าเริ่มต้นที่ต้องปรับหลัง playtest รอบ 1 ไม่ใช่ค่าที่ balance แล้ว ค่า 1 เดิมมาจากคอมมิต `3b97241` และน่าจะเป็นค่าทดสอบ
+- **Done when:** Elite กับ minor ใช้ profile คนละตัว, `maxKhwan` ของ Elite = 45
+
+### [ ] A8 การต่อสู้จบครั้งเดียว (guard `EndCombat`) + ตายพร้อมกันผู้เล่นชนะ
+- ปัญหา: `CombatManager.TakeDamageInternal` ไม่ตรวจว่าการต่อสู้จบแล้ว และ `GameFlowManager.HandleCombatEnded` ไม่ป้องกันการถูกเรียกซ้ำ ถ้าขวัญสองฝั่งถึง 0 ในจังหวะเดียวกัน (เช่น `MontSaThon` สะท้อนดาเมจ หรือบริวารสองฝั่งชนกันในคอลัมน์เดียวกัน) จะเรียก `EndCombat(true)` และ `EndCombat(false)` ทั้งคู่ ผลคือให้รางวัลแล้วลบ save ในรอบเดียว
+- กติกา (PM ตัดสิน 6 ต.ค.): **ตายพร้อมกัน ผู้เล่นชนะ**
+- แก้:
+  - `CombatManager.EndCombat`: ถ้า `IsCombatOver` อยู่แล้วให้ return (เรียกได้ครั้งเดียว)
+  - `EndCombat(false)`: ถ้า `enemyKhwan <= 0` ให้ถือเป็น `EndCombat(true)`
+  - การโจมตีคู่ที่เกิดพร้อมกัน (บริวารเผชิญหน้ากัน) ให้ใส่ดาเมจทั้งสองฝั่งก่อน แล้วค่อยตัดสินผลหลังใส่ครบ
+  - `HandleCombatEnded` ทำงานครั้งเดียวต่อการต่อสู้ (ล้าง subscription หรือ flag) และไม่แก้ไขกฎการตัดสินแพ้ชนะอื่น
+- **Done when:** EditMode test `CombatEndTests` ผ่าน 3 กรณี: (1) เรียก `EndCombat` ซ้ำ `OnCombatEnded` ยิงครั้งเดียว (2) สะท้อนดาเมจทำให้สองฝั่งเป็น 0 → Victory (3) บริวารคอลัมน์เดียวกันฆ่ากันทั้งคู่ → Victory; smoke test ยังผ่าน
+
+### [ ] A9 ศัตรูทั่วไปตัวที่ 3 + แก้ id ซ้ำ
+- ปัญหา: roster ตอนนี้มีศัตรูทั่วไปจริงตัวเดียว `NewEnemyProfile` ใช้ `enemyId: enemy_prai` ซ้ำกับ `PraiGhostProfile` และเด็คเริ่มต้นเหมือนกัน
+- ขั้นต่ำที่ต้องมีใน build (PM ตัดสิน): ศัตรูทั่วไป 3 แบบ, Elite 1, Boss 1
+- ทำ: แก้ `NewEnemyProfile` ให้ `enemyId` ไม่ซ้ำ และสร้างศัตรูทั่วไปให้ครบ 3 แบบจากการ์ดที่มีอยู่ (เด็คต่างกัน ชื่อ/ภาพต่างกัน `maxKhwan: 30`) ตัวเลขการ์ดและเด็คเป็นของทีม Game Design ฝั่ง Dev ใส่ค่าเริ่มต้นให้เล่นได้ แล้วส่งให้ทีม Game Design ปรับ
+- ต่อสายผ่าน `EncounterTable` (A1) ห้ามใช้ path string
+- **Done when:** `enemyId` ทุกตัวไม่ซ้ำ (ตรวจด้วย editor script), `EncounterTable` มี minor 3, elite 1, boss 1, และเล่นแผนที่ 1 รอบแล้วเจอศัตรูทั่วไปอย่างน้อย 2 แบบ
+
+### [ ] A10 โหมดสั้น 4 ชั้น
+- PM ตัดสิน 6 ต.ค.: มีโหมดสั้นสำหรับนำเสนอ (ยังไม่ทราบเวลานำเสนอ)
+- เพิ่มตัวเลือกใน Main Menu: "เล่นเต็ม (7 ชั้น)" / "เล่นสั้น (4 ชั้น)" ส่งค่าเข้า `MapConfigSO` ผ่าน `RunState` (บันทึกใน save เพื่อให้ "เล่นต่อ" ใช้โหมดเดิม) ห้ามแก้ asset `DefaultMapConfig` ตรงๆ
+- ต้องตรวจก่อน: `startingNodesCount: 3`, `preBossNodesCount: 2`, `pathCount: 3` ที่ตั้งไว้ต้องสร้างแผนที่ 4 ชั้นที่ถูกต้องได้ (ชั้นสุดท้ายเป็น Boss)
+- **Done when:** batch test สร้างแผนที่ 4 ชั้นด้วย seed 20 ค่า ทุกครั้งมีทางเดินจากชั้นแรกถึง Boss และไม่มีโหนดโดดเดี่ยว; "เล่นต่อ" กลับมาในโหมดเดิม
 
 ---
 
@@ -208,6 +232,87 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 
 ---
 
+## Phase F · ข้อเสนอเพิ่มเติมรอบ 3 (**รอตะวันตอบ "Proceed" ก่อนเริ่มทุกข้อ**)
+
+เสนอเมื่อ 6 ต.ค. จากคำขอของ PM (เสียง, VFX, ฟอนต์ไทย, UI, ข้อบังคับ Unity 8 ข้อ, cutscene) ตรวจสถานะจริงในโปรเจกต์ก่อนเขียน:
+- ติดตั้งแล้ว: URP 17.3.0, Timeline 1.8.12, Input System 1.19.0, uGUI 2.0 (TMP), DOTween (`Assets/Plugins/Demigiant`)
+- **ยังไม่ติดตั้ง:** `com.unity.visualeffectgraph` (ไม่อยู่ใน `Packages/manifest.json`)
+- ไม่มีโค้ดที่ใช้ `ParticleSystem`/`VisualEffect`, ไม่มี Animator Controller, ไม่มี AudioMixer, ไม่มี `PlayerPrefs` สำหรับ settings, ไม่มี damage number
+- ที่มีแล้วใช้ต่อได้: event `EffectResolver.OnDamageDealt(int, bool)`, `CombatObjectPool`, `RunState` JSON save
+
+เกณฑ์เรียงลำดับ: อะไรที่เกณฑ์วิชาบังคับ (Unity 8 ข้อ) ทำก่อน อะไรที่เป็นความสวยงามทำทีหลัง
+**เส้นตัด:** F1–F7 ต้องเสร็จก่อน C1 (14 ต.ค.) F8–F10 ทำเท่าที่ทัน F11–F12 ทำเมื่อ F1–F10 ผ่านแล้วเท่านั้น
+
+### [ ] F1 ฟอนต์ไทย วรรณยุกต์/สระแสดงผลผิด
+- ข้อเท็จจริง: `Sarabun-Regular SDF` และ `Charm-Bold SDF` เป็น **Dynamic atlas** (`m_AtlasPopulationMode: 1`) และไม่มี fallback font ทั้งสองมีข้อมูล mark-to-base / mark-to-mark ในไฟล์แล้ว Dynamic atlas ยังเป็นสาเหตุที่ Unity แก้ไฟล์ `.asset` ทั้งสองทุกครั้งที่เล่น (ไฟล์ค้างใน git status) **ยังไม่ได้ยืนยันสาเหตุของวรรณยุกต์เพี้ยน** เพราะยังไม่ได้เห็นภาพจาก Unity
+- ขั้นแรก: สร้าง `FontTestScene` ด้วย editor script แสดงข้อความอ้างอิง 20 บรรทัด (เช่น ที่ ปู่ ผี้ น้ำ ก้อน เสี่ยง ผู้ ชั้น ขวัญเอ้ย ขวัญมา พรายน้ำนอง วอดส์ ตะเกียง) ทุกฟอนต์ ทุกขนาดที่เกมใช้ (HUD, ปุ่ม, การ์ด, อีเวนต์) แล้วถ่ายภาพเทียบ
+- วิธีแก้ที่เป็นไปได้ (เลือกหลังเห็นภาพ): สร้าง SDF แบบ Static ครอบคลุม U+0E01–U+0E5B + Latin + ตัวเลข + เครื่องหมาย พร้อม OpenType features (kerning, mark positioning) ที่ atlas 2048 เปิด kerning บน TMP component ทุกตัว สร้าง SDF ให้ `Sarabun-Bold` และ `Charm-Regular` ที่มี `.ttf` อยู่แล้ว ตั้ง fallback ระหว่างสองฟอนต์
+- **Done when:** ข้อความอ้างอิงทั้ง 20 บรรทัดแสดงถูกในทุกฟอนต์ทุกขนาด (ตะวันหรือ UI/UX owner ตรวจจากภาพ), เล่นเกมแล้ว `git status` ไม่มีไฟล์ SDF เปลี่ยน, ลบ `Library/` แล้วเปิดใหม่ยังแสดงถูก
+
+### [ ] F2 UI/UX: Main Menu mockup + ปรับ UI ที่ยังไม่ใช้ได้จริง
+- เจ้าของงานออกแบบ: นราธร (UI/UX) ร่วมกับ 2D artist (วรรณณิศา, สายชล) ฝั่ง Dev สร้างตามภาพออกแบบ ไม่ออกแบบเอง
+- ขั้นแรก (Dev): จับภาพหน้าจอทุกฉาก (MainMenu, Intro, Map, Combat, Event, Shop, Reward, Meru, Pause, Game Over) ด้วย batch script ให้ UI/UX owner ทำเครื่องหมายจุดที่ใช้ไม่ได้ ผมยังไม่ได้เห็นหน้า UI จริง จึงไม่สรุปว่าอะไรผิดตรงไหน
+- Mockup ที่ต้องมี: Main Menu (เริ่ม/เล่นต่อ/โหมดสั้น/ตั้งค่า/ออก), หน้า Intro พร้อมปุ่มข้าม, Pause, Settings, Game Over, Victory ใส่ใน `Docs/Design/` เป็นภาพหรือไฟล์ Figma
+- ข้อห้ามเขียนไว้ชัด (ตาม CLAUDE.md ข้อ 5): ปุ่ม Unity เริ่มต้นสีเทา/ขาว, สี่เหลี่ยมมนไล่สีพร้อมเงาเหมือนกันทุกปุ่ม, แสงนีออนเรืองรอบขอบ, emoji/ไอคอนตกแต่ง, จัดกึ่งกลางทุกอย่าง
+- Dev ทำ: `UITheme.asset` ที่เดียว (สี, ฟอนต์, ระยะห่าง, sprite 9-slice) ให้ทุกฉากอ้างอิง ไม่ใส่ค่าสีใน prefab รายตัว
+- **Done when:** ภาพหน้าจอก่อน/หลังของทุกฉากอยู่ใน `Docs/Testing/ui_review.md`, UI/UX owner เซ็นรับรายฉาก, ทุกปุ่มมีขนาดอย่างน้อย 44×44 px และกดด้วยคีย์บอร์ดได้, contrast ข้อความ ≥ 4.5:1
+
+### [ ] F3 เสียงครบทุกไฟล์ ส่งให้ตรงจุด
+- ขยาย B1: สร้างตาราง "ไฟล์เสียง → จุดเรียก" ครบ 27 ไฟล์ (ตารางใน B1 ครอบคลุม key ทั้งหมดอยู่แล้ว ข้อนี้เพิ่มการตรวจว่าไม่มีไฟล์ตกหล่น)
+- editor tool `Tools/TawanOS/Audio/Check Coverage` พิมพ์รายการ key ที่ไม่มีจุดเรียก
+- ช่องว่างที่ไฟล์ที่ได้รับไม่ครอบคลุม (ขอจากภูริ Sound Designer ถ้าต้องการ): เสียงกดปุ่ม/โฮเวอร์ UI, Victory, Defeat, ซื้อของในร้าน, เลือกตัวเลือกอีเวนต์, เดินบนแผนที่ ถ้าไม่ได้ ให้ใช้ค่า default คือเงียบ
+- **Done when:** รายงาน coverage ได้ `unreferenced=0` สำหรับ 27 ไฟล์ และ playtest ยืนยันว่าแต่ละเสียงดังตรงจุดตามตาราง
+
+### [ ] F4 Player Preferences ให้ครบ
+- key: `vol_master`, `vol_bgm`, `vol_sfx`, `fullscreen`, `resolution` (index ของรายการที่เครื่องรองรับ) ตั้งค่าตอนเปิดเกมก่อนฉากแรก (ก่อน Intro)
+- ย้าย `MapSaveData` ออกจาก `PlayerPrefs` (ตอนนี้ `MapSaveManager` เขียนซ้ำทั้งไฟล์และ PlayerPrefs ทำให้มีข้อมูลสองที่) เหลือเฉพาะไฟล์ ใช้ `PlayerPrefs` กับ settings เท่านั้น
+- Settings เปิดได้จาก Main Menu และ Pause ใช้ panel เดียวกัน
+- **Done when:** EditMode test ตั้งค่า → อ่านกลับได้, ปิดเปิด build แล้วค่ายังอยู่, `grep -rn PlayerPrefs Assets/Scripts` เหลือเฉพาะโค้ดตั้งค่า
+
+### [ ] F5 Serialization ให้สมบูรณ์
+- ปัจจุบัน `RunSaveData` เก็บ HP, ธูป, เด็ค, relic, อีเวนต์ที่เจอ, resume point แต่ยังไม่ครบ
+- เพิ่ม: เขียนไฟล์แบบ atomic (เขียนไฟล์ชั่วคราวแล้วแทนที่) พร้อม `.bak`, ตรวจไฟล์เสียตอนโหลดแล้วตกไปเริ่มเกมใหม่โดยไม่ crash, สถิติ run (ชั้นที่ไป, ศัตรูที่เอาชนะ, จำนวนเทิร์น, เวลาเล่น, โหมดสั้น/เต็ม) สำหรับหน้า Victory/Game Over และรายงาน, ตรวจความสอดคล้อง save ของ run กับ save ของแผนที่ (มีอันเดียว = ถือว่าไม่มี save), migration ตาม `version`
+- **Done when:** EditMode test: round-trip ทุกฟิลด์, ไฟล์ JSON เสีย → ไม่ crash และ `HasSave == false`, version เก่า → โหลดได้หรือปฏิเสธอย่างชัดเจน
+
+### [ ] F6 Scene transition / loading screen (ขยาย B4)
+- ใช้ `SceneManager.LoadSceneAsync` พร้อมหน้า loading แบบ "หมอกดำ" (ตามชื่อใน SPEC) แสดง progress และอยู่อย่างน้อย 0.6 วินาที เพื่อไม่ให้กะพริบเมื่อฉากโหลดเร็ว
+- ใช้กับทุกการเปลี่ยนฉากรวม Intro และ Combat
+- **Done when:** `grep -rn "SceneManager.LoadScene(" Assets/Scripts --include=*.cs` เหลือเฉพาะใน `SceneLoader` และ Editor scripts และภาพหน้าจอมีแถบ progress
+
+### [ ] F7 Pause, Settings, Game Over (ขยาย B3)
+- ปัญหาที่พบ: `Escape` ถูกใช้อยู่แล้วใน `CardPlayController3D` (ยกเลิกการลาก), `CardTargeting3D` (ยกเลิกเป้าหมาย), `CardDetailPanelUI`, `GraveyardPanelUI` (ปิด panel) ถ้าเพิ่ม Pause ตรงๆ จะเด้ง Pause ซ้อนทุกครั้งที่ยกเลิกอย่างอื่น
+- แก้: ตัวจัดการ `Esc` กลางที่มีลำดับความสำคัญ (ยกเลิกเป้าหมาย → ปิด panel → ลำดับสุดท้ายเปิด Pause) แล้วให้ UI ทั้งหมดอ่านเวลาแบบ unscaled เมื่อ `Time.timeScale = 0`
+- Game Over: เปลี่ยน panel 3 วินาทีที่เด้งกลับเมนูเองเป็นหน้าที่มีสรุป run + ปุ่ม "เริ่มใหม่" / "เมนูหลัก" และภาพตัวละคร (B9)
+- **Done when:** กด Esc ขณะลากการ์ดแล้วยกเลิกการลากอย่างเดียว ไม่เปิด Pause; ขณะ Pause แอนิเมชันและ coroutine ที่ใช้เวลาจริงไม่เดินต่อ; ไม่มีฉากไหนกลับเมนูเองหลังแพ้
+
+### [ ] F8 Particle / VFX ด้วย VFX Graph (ขยาย B5)
+- ติดตั้ง `com.unity.visualeffectgraph` เวอร์ชันที่ตรงกับ URP 17.3.0 (เพิ่มใน `Packages/manifest.json` ซึ่งเป็นไฟล์สำคัญ ต้องบอกผลกระทบก่อนทำและมี commit แยก)
+- VFX Graph ต้องใช้ compute shader: ตรวจ `SystemInfo.supportsComputeShaders` ถ้าไม่รองรับ ให้ตกไปใช้ `ParticleSystem` ตัวเล็กแทน (เกณฑ์วิชานับทั้งสองแบบ)
+- รายการ effect (หนึ่งไฟล์ต่อหนึ่งงาน เก็บที่ `Assets/VFX/`): hover การ์ด (ประกายธูปรอบขอบการ์ด), ลงการ์ด (มนต์ขาว = ทอง, มนต์ดำ = แดงเลือด), มลทินแตก (ฟ้าผ่า), ควันธูปบนโต๊ะ, เปลวเทียน, ไฟพิธี (เปิด/ดับ ผูก `sfx_fire_on/off`), แรงกระแทกตอนโจมตี, เผาการ์ดที่เมรุ, ศัตรู Boss ปรากฏ, บรรยากาศฉาก: หมอก/ประกายบนแผนที่, โคมในศาล, หมอกดำในอีเวนต์
+- ตั้งงบ: จำนวนระบบอนุภาคพร้อมกันและเวลาเฟรมที่ยอมรับได้ ให้ทีมกำหนดจากเครื่องต่ำสุดที่ใช้นำเสนอ
+- **Done when:** อย่างน้อย 6 effect เป็น VFX Graph asset และถูกใช้ในฉากจริง, build `.exe` ไม่มีวัตถุสีชมพู/missing shader, effect ปิดได้จาก Settings (ตัวเลือก "ลดเอฟเฟกต์")
+
+### [ ] F9 ตัวเลขดาเมจและ combo
+- จุดเชื่อม: `EffectResolver.OnDamageDealt(int damage, bool toPlayer)` ไม่มีตำแหน่ง/คริ/ผู้โจมตี จึงเพิ่ม event ใหม่ที่ส่ง `DamageInfo` (จำนวน, ตำแหน่งโลกของเป้าหมาย, isCrit, ฝั่งเป้าหมาย) โดยไม่ลบ event เดิม
+- `DamageNumberView` ดึงจาก `CombatObjectPool` ลอยขึ้นแล้วจาง สีตามชนิด (ดาเมจ, คริติคอล, ฟื้นขวัญ, เกราะรับ)
+- Combo (ต้องให้ทีม Game Design ยืนยันนิยาม): default = จำนวนการโจมตีของบริวารฝั่งผู้เล่นที่ติดต่อกันใน clash รอบเดียว แสดง "×N" ขยายตามจำนวน รีเซ็ตเมื่อจบรอบ เป็นผลเชิงภาพอย่างเดียว ไม่เปลี่ยนค่าดาเมจ (ห้ามแก้ตัวเลขเกม)
+- **Done when:** ทุกครั้งที่เกิดดาเมจใน smoke test มีตัวเลขโผล่ที่ตำแหน่งเป้าหมาย, ไม่สร้างวัตถุใหม่ระหว่างต่อสู้ (ใช้ pool), combo นับถูกตามนิยามในการทดสอบ 3 กรณี
+
+### [ ] F10 Animator (ขยาย B6)
+- เพิ่มจาก `EnemyPresence.controller`: Animator Controller ของปุ่ม UI (Normal/Highlighted/Pressed/Disabled), ของ panel Pause/Game Over (เข้า/ออก) และของเทียน/ไฟพิธี เพื่อให้มี state machine จริงมากกว่า 1 ที่ (DOTween อย่างเดียวไม่นับตามเกณฑ์)
+- **Done when:** controller อย่างน้อย 3 ตัว แต่ละตัวมี ≥ 3 state และ transition ด้วย parameter ถูกใช้ในฉากจริง
+
+### [ ] F11 Cutscene และ effect เชื่อม asset ที่มี (ทำเมื่อ F1–F10 ผ่านแล้ว)
+- ใช้ Timeline 1.8.12 ที่ติดตั้งอยู่: (ก) Intro (B8) ภาพ Story + วิดีโอ + ปุ่มข้าม, (ข) ฉาก Boss ปรากฏ: กล้องเคลื่อน + `bgm_boss` crossfade + `sfx_fire_on` + VFX, (ค) ฉากจบ Victory ใช้ภาพ Story/ตัวละคร
+- ทุก cutscene ข้ามได้ใน 1 คลิก
+- **Done when:** `PlayableDirector` อย่างน้อย 2 ฉากทำงานใน build และข้ามได้โดย state ของเกมไม่เพี้ยน
+
+### [ ] F12 ตรวจว่า asset ที่ได้รับถูกใช้ครบ
+- `Docs/Report/asset_usage.md`: ทุกไฟล์ใน `GameProject_Asset` (เสียง 27, ภาพการ์ด 29, Story 13 + วิดีโอ 2, ตัวละคร 2, `icon.ai`) → ใช้ที่ไหน หรือเหตุผลที่ยังไม่ใช้
+- **Done when:** ไม่มีไฟล์ที่ไม่มีคำอธิบาย
+
+---
+
 ## Phase C · ทดสอบและเอกสาร (พุธ 15 – จันทร์ 19 ต.ค.)
 
 ### [ ] C1 Gate ก่อน Playtest (อังคาร 14 ต.ค. เย็น)
@@ -288,7 +393,7 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 
 | วัน | งาน |
 |---|---|
-| อ. 6 – พฤ. 8 | A0 – A7, B0, ลงมือ D1 ร่างแรก (ต้องตัดสิน D8 ก่อน) |
+| อ. 6 – พฤ. 8 | A0 – A10, B0 (D1 เป็นงานของทีม Game Design) |
 | ศ. 9 – จ. 12 | B1, B2, B3, B7, B8, B9 |
 | อ. 13 – อ. 14 | B4, B5, B6, C1 |
 | พ. 15 | Playtest รอบ 1 |
