@@ -23,15 +23,20 @@ namespace TawanOS.Audio
 
         public static AudioManager Instance { get; private set; }
 
-        // ponytail: volume is applied per AudioSource (master x channel) instead of an AudioMixer, because Unity
-        // has no public API to create a mixer with exposed parameters. Upgrade: route sources into MainMixer groups.
+        // ponytail: upgraded from per-AudioSource volume to mixer exposed parameters (MasterVol/BgmVol/SfxVol).
+        // Falls back to AudioSource.volume when mixer is absent (test environments).
         private AudioSource bgmA, bgmB, ambience, sfx;
         private AudioSource bgmActive;
         private string currentBgmKey, currentAmbienceKey;
         private Coroutine crossfade;
         private AudioLibrarySO library;
-        private UnityEngine.Audio.AudioMixerGroup outputGroup;
+        private UnityEngine.Audio.AudioMixer mixer;
+        private UnityEngine.Audio.AudioMixerGroup masterGroup, bgmGroup, sfxGroup;
         private readonly HashSet<string> warned = new HashSet<string>();
+
+        private const string MixerParamMaster = "MasterVol";
+        private const string MixerParamBgm = "BgmVol";
+        private const string MixerParamSfx = "SfxVol";
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -56,14 +61,19 @@ namespace TawanOS.Audio
             if (library == null) Debug.LogWarning("[AudioManager] Resources/AudioLibrary not found. Run Tools/TawanOS/Audio/Build Audio Library.");
             if (library != null && library.mixer != null)
             {
-                var groups = library.mixer.FindMatchingGroups("Master");
-                if (groups.Length > 0) outputGroup = groups[0];
+                mixer = library.mixer;
+                var masterGroups = mixer.FindMatchingGroups("Master");
+                if (masterGroups.Length > 0) masterGroup = masterGroups[0];
+                var bgmGroups = mixer.FindMatchingGroups("BgmVol");
+                if (bgmGroups.Length > 0) bgmGroup = bgmGroups[0];
+                var sfxGroups = mixer.FindMatchingGroups("SfxVol");
+                if (sfxGroups.Length > 0) sfxGroup = sfxGroups[0];
             }
 
-            bgmA = NewSource("BgmA", loop: true);
-            bgmB = NewSource("BgmB", loop: true);
-            ambience = NewSource("Ambience", loop: true);
-            sfx = NewSource("Sfx", loop: false);
+            bgmA = NewSource("BgmA", loop: true, bgmGroup ?? masterGroup);
+            bgmB = NewSource("BgmB", loop: true, bgmGroup ?? masterGroup);
+            ambience = NewSource("Ambience", loop: true, bgmGroup ?? masterGroup);
+            sfx = NewSource("Sfx", loop: false, sfxGroup ?? masterGroup);
             bgmActive = bgmA;
             ApplyVolumes();
 
@@ -89,7 +99,7 @@ namespace TawanOS.Audio
                 if (listener != own && listener.enabled) listener.enabled = false;
         }
 
-        private AudioSource NewSource(string name, bool loop)
+        private AudioSource NewSource(string name, bool loop, UnityEngine.Audio.AudioMixerGroup group)
         {
             var child = new GameObject(name);
             child.transform.SetParent(transform, false);
@@ -97,7 +107,7 @@ namespace TawanOS.Audio
             src.playOnAwake = false;
             src.loop = loop;
             src.spatialBlend = 0f;
-            if (outputGroup != null) src.outputAudioMixerGroup = outputGroup;
+            if (group != null) src.outputAudioMixerGroup = group;
             return src;
         }
 
@@ -125,14 +135,18 @@ namespace TawanOS.Audio
             var clip = Resolve(key);
             ambience.Stop();
             ambience.clip = clip;
-            ambience.volume = EffectiveVolume(AudioChannel.Bgm);
+            ambience.volume = SourceVolumeBgm();
             if (clip != null) ambience.Play();
         }
 
         public void PlaySfx(string key)
         {
             var clip = Resolve(key);
-            if (clip != null) sfx.PlayOneShot(clip, EffectiveVolume(AudioChannel.Sfx));
+            if (clip != null)
+            {
+                float vol = mixer != null ? 1f : LoadVolume(AudioChannel.Master) * LoadVolume(AudioChannel.Sfx);
+                sfx.PlayOneShot(clip, vol);
+            }
         }
 
         private AudioClip Resolve(string key)
@@ -151,11 +165,11 @@ namespace TawanOS.Audio
             {
                 float k = t / CrossfadeSeconds;
                 if (from != null) from.volume = start * (1f - k);
-                to.volume = EffectiveVolume(AudioChannel.Bgm) * k;
+                to.volume = SourceVolumeBgm() * k;
                 yield return null;
             }
             if (from != null && from != to) { from.Stop(); from.volume = 0f; }
-            to.volume = EffectiveVolume(AudioChannel.Bgm);
+            to.volume = SourceVolumeBgm();
             crossfade = null;
         }
 
@@ -169,16 +183,28 @@ namespace TawanOS.Audio
             ApplyVolumes();
         }
 
-        private float EffectiveVolume(AudioChannel channel)
+        /// <summary>For crossfade math only — the per-source volume for BGM sources. Mixer handles master attenuation.</summary>
+        private float SourceVolumeBgm()
         {
-            float master = LoadVolume(AudioChannel.Master);
-            return channel == AudioChannel.Master ? master : master * LoadVolume(channel);
+            // When mixer is present, master × bgm is handled by mixer groups; source stays at 1.
+            // When mixer is absent (tests), multiply manually.
+            if (mixer != null) return 1f;
+            return LoadVolume(AudioChannel.Master) * LoadVolume(AudioChannel.Bgm);
         }
 
         private void ApplyVolumes()
         {
-            if (crossfade == null && bgmActive != null) bgmActive.volume = EffectiveVolume(AudioChannel.Bgm);
-            if (ambience != null) ambience.volume = EffectiveVolume(AudioChannel.Bgm);
+            if (mixer != null)
+            {
+                mixer.SetFloat(MixerParamMaster, VolumeToDb(LoadVolume(AudioChannel.Master)));
+                mixer.SetFloat(MixerParamBgm, VolumeToDb(LoadVolume(AudioChannel.Bgm)));
+                mixer.SetFloat(MixerParamSfx, VolumeToDb(LoadVolume(AudioChannel.Sfx)));
+            }
+            // Source volume for crossfade and non-mixer fallback
+            float bgmVol = SourceVolumeBgm();
+            if (crossfade == null && bgmActive != null) bgmActive.volume = bgmVol;
+            if (ambience != null) ambience.volume = bgmVol;
+            // SFX uses PlayOneShot volume; when mixer is absent, scale is applied there.
         }
 
         public static string PrefKey(AudioChannel channel)

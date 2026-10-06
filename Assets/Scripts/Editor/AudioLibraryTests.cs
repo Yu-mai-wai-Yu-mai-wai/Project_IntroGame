@@ -36,6 +36,12 @@ namespace TawanOS.EditorTools
             {
                 failures += Expect("AudioLibrary references MainMixer", library.mixer != null && library.mixer.name == "MainMixer");
                 failures += Expect("MainMixer has a Master group", library.mixer != null && library.mixer.FindMatchingGroups("Master").Length > 0);
+                if (library.mixer != null)
+                {
+                    failures += Expect("MainMixer exposes MasterVol parameter", library.mixer.GetFloat("MasterVol", out _));
+                    failures += Expect("MainMixer exposes BgmVol parameter", library.mixer.GetFloat("BgmVol", out _));
+                    failures += Expect("MainMixer exposes SfxVol parameter", library.mixer.GetFloat("SfxVol", out _));
+                }
                 foreach (string key in RequiredKeys)
                     failures += Expect($"key '{key}' has at least one clip", library.Contains(key));
             }
