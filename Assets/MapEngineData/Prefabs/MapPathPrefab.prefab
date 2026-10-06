@@ -167,3 +167,5 @@ MonoBehaviour:
   lineRenderer: {fileID: 0}
   pointsCount: 20
   curveOffsetMagnitude: 0.5
+  surfaceLift: 0.02
+  nodeGap: 0.75
