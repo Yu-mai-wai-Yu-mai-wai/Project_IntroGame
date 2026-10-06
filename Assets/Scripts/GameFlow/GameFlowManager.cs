@@ -4,6 +4,7 @@ using TawanOS.CardEngine;
 using TawanOS.EventEngine;
 using TawanOS.MapEngine;
 using TawanOS.ShopEngine;
+using TawanOS.StoryEngine;
 
 namespace TawanOS.GameFlow
 {
@@ -12,7 +13,7 @@ namespace TawanOS.GameFlow
     /// a story event or the spirit-house shop when that node is clicked on the map, and returns
     /// them to the map afterwards. Feeds the run deck into combat; a won fight pays incense and
     /// opens the card reward screen before returning to the map; a lost fight ends the run.
-    /// The main menu starts a run through <see cref="StartNewGame"/> or <see cref="ContinueGame"/>.
+    /// The main menu starts a run through <see cref="StartNewGame"/> (intro story first) or <see cref="ContinueGame"/>.
     /// Bootstraps itself before the first scene loads, so it works regardless of which scene is
     /// opened first (MainMenu, MapTestScene, EventScene, ShopScene or CombatTestScene).
     /// </summary>
@@ -28,6 +29,7 @@ namespace TawanOS.GameFlow
         private const string RewardSceneName = "RewardScene";
         private const string MeruSceneName = "MeruScene";
         public const string VictorySceneName = "VictoryScene";
+        private const string StorySceneName = "StoryScene";
         private const float VictoryPanelDelaySeconds = 2f;
         private const float DefeatPanelDelaySeconds = 3f;
 
@@ -80,13 +82,23 @@ namespace TawanOS.GameFlow
 
         // ---------------------------------------------------------------- main menu
 
-        /// <summary>Wipes the saved run and map, then starts a fresh run on a newly rolled map.</summary>
+        /// <summary>Wipes the saved run and map, plays the intro story, then starts on a newly rolled map.</summary>
         public void StartNewGame(int totalFloors = RunState.DefaultTotalFloors)
         {
             RunState.StartNewRun(totalFloors);
             new MapSaveManager().ClearSavedMap();
             ResetPendingState();
-            SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+
+            // StoryScene plays its default story (the intro); without it the run starts on the map
+            if (Application.CanStreamedLevelBeLoaded(StorySceneName))
+            {
+                SceneManager.LoadScene(StorySceneName, LoadSceneMode.Single);
+            }
+            else
+            {
+                Debug.LogWarning("[GameFlowManager] StoryScene is not in Build Settings (run Tools > TawanOS > Story > Setup Story Scene & Intro) - skipping the intro.");
+                SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+            }
         }
 
         /// <summary>
@@ -169,6 +181,12 @@ namespace TawanOS.GameFlow
             {
                 MeruManager.Instance.OnMeruFinished -= HandleMeruFinished;
                 MeruManager.Instance.OnMeruFinished += HandleMeruFinished;
+            }
+
+            if (StoryPlayer.Instance != null)
+            {
+                StoryPlayer.Instance.OnStoryFinished -= HandleStoryFinished;
+                StoryPlayer.Instance.OnStoryFinished += HandleStoryFinished;
             }
 
             if (ShopManager.Instance != null)
@@ -313,6 +331,11 @@ namespace TawanOS.GameFlow
         {
             RunState.Current.ClearResume();
             if (Application.isPlaying) SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+        }
+
+        private void HandleStoryFinished()
+        {
+            SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
         }
 
         private void HandleShopClosed()
