@@ -73,6 +73,7 @@ namespace TawanOS.MapEngine
 
         private void Update()
         {
+            if (TawanOS.UI.PauseMenu.IsPaused) return;
             HandleDragScroll();
         }
 

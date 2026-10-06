@@ -70,7 +70,7 @@ namespace TawanOS.MapEngine
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.L))
+            if (Input.GetKeyDown(KeyCode.L) && !TawanOS.UI.PauseMenu.IsPaused)
             {
                 Toggle();
             }

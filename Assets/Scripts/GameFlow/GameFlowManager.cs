@@ -89,6 +89,16 @@ namespace TawanOS.GameFlow
             SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
         }
 
+        /// <summary>
+        /// Back to the title screen from the Pause menu. The run is already saved (RunState writes on every change)
+        /// and its resume point is kept, so "เล่นต่อ" re-enters the node, a fight from its start.
+        /// </summary>
+        public void ReturnToMainMenu()
+        {
+            ResetPendingState();
+            SceneManager.LoadScene(MainMenuSceneName, LoadSceneMode.Single);
+        }
+
         /// <summary>Loads the saved run and returns to where it was left: inside a node, or the map.</summary>
         public void ContinueGame()
         {

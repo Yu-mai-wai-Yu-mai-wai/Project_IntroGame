@@ -150,6 +150,7 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
+            if (TawanOS.UI.PauseMenu.IsPaused) return;
             if (Input.GetKeyDown(toggleKey) && !CardDetailPanelUI.IsOpen && !GraveyardPanelUI.IsOpen) ToggleTopView();
 
             // Right-click a card: its detail screen. A held card or a target choice uses right-click to cancel.

@@ -96,7 +96,7 @@ namespace TawanOS.CardEngine
             if (canvas == null) return;
 
             if (isOpen && Time.frameCount > openedFrame
-                && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape)))
+                && (Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1) || TawanOS.UI.EscapeKey.Use()))
             {
                 Hide();
             }

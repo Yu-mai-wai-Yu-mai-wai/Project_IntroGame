@@ -91,10 +91,10 @@ namespace TawanOS.UI
             {
                 revertTimer -= Time.unscaledDeltaTime;
                 confirmText.text = $"ใช้การตั้งค่าหน้าจอนี้ไหม?\n<size=75%>จะกลับเป็นค่าเดิมใน {Mathf.CeilToInt(Mathf.Max(0f, revertTimer))} วินาที</size>";
-                if (revertTimer <= 0f || Input.GetKeyDown(KeyCode.Escape)) RevertDisplay();
+                if (revertTimer <= 0f || EscapeKey.Use()) RevertDisplay();
                 return;
             }
-            if (Input.GetKeyDown(KeyCode.Escape)) Close();
+            if (EscapeKey.Use()) Close();
         }
 
         // ---------------------------------------------------------------- layout (1920x1080 reference)

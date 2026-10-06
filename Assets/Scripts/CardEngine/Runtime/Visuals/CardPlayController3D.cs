@@ -180,9 +180,9 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
-            if (held == null) return;
+            if (held == null || TawanOS.UI.PauseMenu.IsPaused) return;
 
-            if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetMouseButtonDown(1) || TawanOS.UI.EscapeKey.Use())
             {
                 // A target choice handles its own cancel
                 if (!CardTargeting3D.BlocksInput) Release(returnToHand: true);
