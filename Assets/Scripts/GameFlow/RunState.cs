@@ -27,6 +27,7 @@ namespace TawanOS.GameFlow
     {
         public const int DefaultMaxHp = 50;
         public const int DefaultIncense = 50;
+        public const int DefaultTotalFloors = 7;
         private const int SaveVersion = 1;
 
         private static RunState current;
@@ -38,6 +39,7 @@ namespace TawanOS.GameFlow
         public int CurrentHp { get; private set; }
         public int MaxHp { get; private set; }
         public int Incense { get; private set; } // Run currency (ธูป)
+        public int TotalFloors { get; private set; } = DefaultTotalFloors;
         public IReadOnlyList<string> RelicIds => relicIds;
         public IReadOnlyCollection<string> SeenEventIds => seenEventIds;
 
@@ -68,10 +70,11 @@ namespace TawanOS.GameFlow
         // ---------------------------------------------------------------- run lifecycle
 
         /// <summary>Fresh run from the main menu: default stats, starter deck on first use, autosave on.</summary>
-        public static void StartNewRun()
+        public static void StartNewRun(int totalFloors = DefaultTotalFloors)
         {
             DeleteSave();
             Current.Reset();
+            Current.TotalFloors = totalFloors > 0 ? totalFloors : DefaultTotalFloors;
             Current.IsPersistent = true;
             Current.Save();
         }
@@ -105,7 +108,9 @@ namespace TawanOS.GameFlow
                 var data = JsonConvert.DeserializeObject<RunSaveData>(File.ReadAllText(SavePath));
                 if (data == null) return null;
                 int cards = data.deckCardIds != null ? data.deckCardIds.Count : 0;
-                return $"HP {data.currentHp}/{data.maxHp}   •   ธูป {data.incense}   •   สำรับ {cards} ใบ";
+                int floors = data.totalFloors > 0 ? data.totalFloors : DefaultTotalFloors;
+                string modeStr = floors <= 4 ? "โหมดสั้น 4 ชั้น" : "โหมดเต็ม 7 ชั้น";
+                return $"HP {data.currentHp}/{data.maxHp}   •   ธูป {data.incense}   •   สำรับ {cards} ใบ   •   {modeStr}";
             }
             catch (System.Exception)
             {
@@ -130,6 +135,7 @@ namespace TawanOS.GameFlow
             MaxHp = DefaultMaxHp;
             CurrentHp = DefaultMaxHp;
             Incense = DefaultIncense;
+            TotalFloors = DefaultTotalFloors;
             CardRemovalsBought = 0;
             relicIds.Clear();
             seenEventIds.Clear();
@@ -271,6 +277,7 @@ namespace TawanOS.GameFlow
                 currentHp = CurrentHp,
                 maxHp = MaxHp,
                 incense = Incense,
+                totalFloors = TotalFloors,
                 cardRemovalsBought = CardRemovalsBought,
                 deckInitialized = deckInitialized,
                 deckCardIds = deck.ConvertAll(c => c.cardId),
@@ -295,6 +302,7 @@ namespace TawanOS.GameFlow
             MaxHp = Mathf.Max(1, data.maxHp);
             CurrentHp = Mathf.Clamp(data.currentHp, 1, MaxHp);
             Incense = Mathf.Max(0, data.incense);
+            TotalFloors = data.totalFloors > 0 ? data.totalFloors : DefaultTotalFloors;
             CardRemovalsBought = data.cardRemovalsBought;
 
             relicIds.Clear();
@@ -327,6 +335,7 @@ namespace TawanOS.GameFlow
             public int currentHp;
             public int maxHp;
             public int incense;
+            public int totalFloors;
             public int cardRemovalsBought;
             public bool deckInitialized;
             public List<string> deckCardIds;

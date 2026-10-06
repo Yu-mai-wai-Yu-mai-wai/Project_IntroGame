@@ -27,6 +27,12 @@ namespace TawanOS.GameFlow
         public Button confirmYesButton;
         public Button confirmNoButton;
 
+        [Header("Mode Selection")]
+        public GameObject modePanel;
+        public Button fullModeButton;
+        public Button shortModeButton;
+        public Button modeCancelButton;
+
         [Header("Intro")]
         public CanvasGroup menuGroup;
 
@@ -35,14 +41,18 @@ namespace TawanOS.GameFlow
             if (newGameButton != null) newGameButton.onClick.AddListener(OnNewGame);
             if (continueButton != null) continueButton.onClick.AddListener(OnContinue);
             if (quitButton != null) quitButton.onClick.AddListener(OnQuit);
-            if (confirmYesButton != null) confirmYesButton.onClick.AddListener(StartNewGame);
+            if (confirmYesButton != null) confirmYesButton.onClick.AddListener(OnConfirmYes);
             if (confirmNoButton != null) confirmNoButton.onClick.AddListener(() => confirmPanel.SetActive(false));
+            if (fullModeButton != null) fullModeButton.onClick.AddListener(() => StartGameWithMode(7));
+            if (shortModeButton != null) shortModeButton.onClick.AddListener(() => StartGameWithMode(4));
+            if (modeCancelButton != null) modeCancelButton.onClick.AddListener(() => { if (modePanel != null) modePanel.SetActive(false); });
         }
 
         private void Start()
         {
             if (titleText != null) titleText.text = string.IsNullOrEmpty(gameTitle) ? Application.productName : gameTitle;
             if (confirmPanel != null) confirmPanel.SetActive(false);
+            if (modePanel != null) modePanel.SetActive(false);
 
             string save = RunState.DescribeSave();
             if (continueButton != null) continueButton.interactable = save != null;
@@ -62,13 +72,31 @@ namespace TawanOS.GameFlow
                 confirmPanel.SetActive(true);
                 return;
             }
-            StartNewGame();
+            OpenModePanelOrStart();
         }
 
-        private void StartNewGame()
+        private void OnConfirmYes()
+        {
+            if (confirmPanel != null) confirmPanel.SetActive(false);
+            OpenModePanelOrStart();
+        }
+
+        private void OpenModePanelOrStart()
+        {
+            if (modePanel != null)
+            {
+                modePanel.SetActive(true);
+            }
+            else
+            {
+                StartGameWithMode(RunState.DefaultTotalFloors);
+            }
+        }
+
+        public void StartGameWithMode(int totalFloors)
         {
             SetInteractable(false);
-            GameFlowManager.Instance.StartNewGame();
+            GameFlowManager.Instance.StartNewGame(totalFloors);
         }
 
         private void OnContinue()
@@ -90,6 +118,7 @@ namespace TawanOS.GameFlow
         {
             if (menuGroup != null) menuGroup.interactable = value;
             if (confirmPanel != null) confirmPanel.SetActive(false);
+            if (modePanel != null) modePanel.SetActive(false);
         }
     }
 }

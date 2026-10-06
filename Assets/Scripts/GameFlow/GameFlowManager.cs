@@ -81,9 +81,9 @@ namespace TawanOS.GameFlow
         // ---------------------------------------------------------------- main menu
 
         /// <summary>Wipes the saved run and map, then starts a fresh run on a newly rolled map.</summary>
-        public void StartNewGame()
+        public void StartNewGame(int totalFloors = RunState.DefaultTotalFloors)
         {
-            RunState.StartNewRun();
+            RunState.StartNewRun(totalFloors);
             new MapSaveManager().ClearSavedMap();
             ResetPendingState();
             SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);

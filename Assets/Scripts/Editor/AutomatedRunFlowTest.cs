@@ -117,8 +117,127 @@ namespace TawanOS.EditorTools
             // Cleanup test objects
             Object.DestroyImmediate(flowGo);
 
+            // --- 4. Map Mode Tests (Phase A10: 4 Floors Procedural Generation & Seed Checks) ---
+            var generator = new MapGraphGenerator();
+            var config4 = ScriptableObject.CreateInstance<MapConfigSO>();
+            config4.totalFloors = 4;
+            config4.mapWidth = 3;
+            config4.use3DTableMode = false;
+
+            for (int seed = 100; seed < 120; seed++)
+            {
+                var graph = generator.GenerateMap(config4, seed);
+                failures += Expect($"Seed {seed} (4 floors): Graph not null", graph != null);
+                if (graph == null) continue;
+
+                failures += Expect($"Seed {seed} (4 floors): Floor count is 5", graph.floors.Count == 5);
+                
+                bool hasBoss = false;
+                if (graph.floors.Count > 4 && graph.floors[4] != null)
+                {
+                    foreach (var n in graph.floors[4])
+                    {
+                        if (n.type == NodeType.Boss) hasBoss = true;
+                    }
+                }
+                failures += Expect($"Seed {seed} (4 floors): Boss exists on floor 4", hasBoss);
+
+                if (graph.floors.Count > 0 && graph.floors[0] != null)
+                {
+                    foreach (var startNode in graph.floors[0])
+                    {
+                        bool canReach = CanReachBoss(startNode, graph, 4);
+                        failures += Expect($"Seed {seed} Node ({startNode.gridPosition.x},{startNode.gridPosition.y}) reaches Boss", canReach);
+                    }
+                }
+
+                for (int f = 1; f < 4; f++)
+                {
+                    if (f >= graph.floors.Count) break;
+                    foreach (var n in graph.floors[f])
+                    {
+                        failures += Expect($"Seed {seed} Node ({n.gridPosition.x},{n.gridPosition.y}) has incoming", n.incomingConnections.Count > 0);
+                        failures += Expect($"Seed {seed} Node ({n.gridPosition.x},{n.gridPosition.y}) has outgoing", n.outgoingConnections.Count > 0);
+                    }
+                }
+            }
+
+            var tableConfig4 = ScriptableObject.CreateInstance<MapConfigSO>();
+            tableConfig4.totalFloors = 4;
+            tableConfig4.mapWidth = 3;
+            tableConfig4.use3DTableMode = true;
+
+            var tableGraph = generator.GenerateMap(tableConfig4, 42);
+            failures += Expect("TableMode 4 floors: Graph generated", tableGraph != null);
+            if (tableGraph != null)
+            {
+                failures += Expect("TableMode 4 floors: Floor count is 5", tableGraph.floors.Count == 5);
+                failures += Expect("TableMode 4 floors: Boss is on floor 4", tableGraph.floors[4].Count == 1 && tableGraph.floors[4][0].type == NodeType.Boss);
+                failures += Expect("TableMode 4 floors: Node.018 mapping exists", MapManager.TryGetTableNodeFbxName(new Vector2Int(1, 4), 4, out string fbx) && fbx == "Node.018");
+            }
+
+            RunState.StartNewRun(4);
+            failures += Expect("RunState.Current.TotalFloors is 4", RunState.Current.TotalFloors == 4);
+            failures += Expect("RunState save file exists", RunState.HasSave);
+            string desc4 = RunState.DescribeSave();
+            failures += Expect("RunState describe save shows 4 floors", desc4 != null && desc4.Contains("โหมดสั้น 4 ชั้น"));
+
+            RunState.LoadSavedRun();
+            failures += Expect("Reloaded RunState.Current.TotalFloors is 4", RunState.Current.TotalFloors == 4);
+
+            RunState.StartNewRun(7);
+            failures += Expect("RunState.Current.TotalFloors is 7", RunState.Current.TotalFloors == 7);
+            string desc7 = RunState.DescribeSave();
+            failures += Expect("RunState describe save shows 7 floors", desc7 != null && desc7.Contains("โหมดเต็ม 7 ชั้น"));
+
+            RunState.EndRun();
+
+            var mmScene = EditorSceneManager.OpenScene("Assets/Scenes/MainMenu.unity");
+            var canvas = GameObject.Find("MainMenuCanvas");
+            failures += Expect("MainMenu scene has MainMenuCanvas", canvas != null);
+            if (canvas != null)
+            {
+                var menu = canvas.GetComponent<MainMenuUI>();
+                failures += Expect("MainMenuUI attached", menu != null);
+                failures += Expect("modePanel assigned", menu != null && menu.modePanel != null);
+                failures += Expect("fullModeButton assigned", menu != null && menu.fullModeButton != null);
+                failures += Expect("shortModeButton assigned", menu != null && menu.shortModeButton != null);
+                failures += Expect("modeCancelButton assigned", menu != null && menu.modeCancelButton != null);
+            }
+
+            Object.DestroyImmediate(config4);
+            Object.DestroyImmediate(tableConfig4);
+
             Debug.Log(failures == 0 ? "[AutomatedRunFlowTest] PASS" : $"[AutomatedRunFlowTest] FAIL: {failures} check(s) failed");
             if (exitOnFinish) EditorApplication.Exit(failures == 0 ? 0 : 1);
+        }
+
+        private static bool CanReachBoss(NodeBlueprint startNode, MapGraphData graph, int bossFloor)
+        {
+            var visited = new System.Collections.Generic.HashSet<Vector2Int>();
+            var queue = new System.Collections.Generic.Queue<Vector2Int>();
+            queue.Enqueue(startNode.gridPosition);
+            visited.Add(startNode.gridPosition);
+
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+                if (current.y == bossFloor) return true;
+
+                var node = graph.GetNodeAt(current);
+                if (node == null) continue;
+
+                foreach (var outPos in node.outgoingConnections)
+                {
+                    if (!visited.Contains(outPos))
+                    {
+                        visited.Add(outPos);
+                        queue.Enqueue(outPos);
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static int Expect(string name, bool condition)

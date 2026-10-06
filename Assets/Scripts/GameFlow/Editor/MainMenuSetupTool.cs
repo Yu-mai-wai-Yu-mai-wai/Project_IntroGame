@@ -94,6 +94,17 @@ namespace TawanOS.GameFlow
             question.text = "เริ่มเกมใหม่?\n<size=75%><color=#a89c8a>เกมที่เล่นค้างไว้จะถูกลบ</color></size>";
             menu.confirmYesButton = DialogButton("YesButton", box.transform, new Vector2(0.08f, 0.1f), new Vector2(0.46f, 0.34f), "เริ่มใหม่", new Color(0.55f, 0.15f, 0.1f), sarabun, panelSprite);
             menu.confirmNoButton = DialogButton("NoButton", box.transform, new Vector2(0.54f, 0.1f), new Vector2(0.92f, 0.34f), "ยกเลิก", new Color(0.3f, 0.25f, 0.22f), sarabun, panelSprite);
+
+            // Mode selection panel (Phase A10)
+            var modeDim = Img("ModePanel", root, Vector2.zero, Vector2.one, new Color(0, 0, 0, 0.7f), null);
+            menu.modePanel = modeDim.gameObject;
+            var modeBox = Img("Window", modeDim.transform, new Vector2(0.30f, 0.30f), new Vector2(0.70f, 0.70f), new Color(0.13f, 0.075f, 0.06f), panelSprite);
+            modeBox.gameObject.AddComponent<Outline>().effectColor = new Color(Gold.r, Gold.g, Gold.b, 0.5f);
+            var modeTitle = Text("Title", modeBox.transform, new Vector2(0.06f, 0.68f), new Vector2(0.94f, 0.94f), sarabun, 32, Parchment, TextAlignmentOptions.Center);
+            modeTitle.text = "เลือกโหมดการเล่น\n<size=70%><color=#a89c8a>กำหนดระยะเวลาเส้นทางหมอธรรม</color></size>";
+            menu.fullModeButton = DialogButton("FullModeButton", modeBox.transform, new Vector2(0.08f, 0.38f), new Vector2(0.46f, 0.62f), "เล่นเต็ม (7 ชั้น)", new Color(0.55f, 0.15f, 0.1f), sarabun, panelSprite);
+            menu.shortModeButton = DialogButton("ShortModeButton", modeBox.transform, new Vector2(0.54f, 0.38f), new Vector2(0.92f, 0.62f), "เล่นสั้น (4 ชั้น)", new Color(0.2f, 0.35f, 0.25f), sarabun, panelSprite);
+            menu.modeCancelButton = DialogButton("CancelButton", modeBox.transform, new Vector2(0.31f, 0.10f), new Vector2(0.69f, 0.30f), "ยกเลิก", new Color(0.3f, 0.25f, 0.22f), sarabun, panelSprite);
         }
 
         private static Button MenuButton(string name, Transform parent, float y, string label, TMP_FontAsset font, Sprite sprite)
