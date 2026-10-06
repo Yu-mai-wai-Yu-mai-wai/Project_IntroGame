@@ -1,4 +1,5 @@
 using DG.Tweening;
+using TawanOS.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,6 +22,7 @@ namespace TawanOS.GameFlow
         public Button continueButton;
         public TextMeshProUGUI continueInfoText;
         public Button quitButton;
+        public Button settingsButton;
 
         [Header("Overwrite Confirmation")]
         public GameObject confirmPanel;
@@ -41,6 +43,7 @@ namespace TawanOS.GameFlow
             if (newGameButton != null) newGameButton.onClick.AddListener(OnNewGame);
             if (continueButton != null) continueButton.onClick.AddListener(OnContinue);
             if (quitButton != null) quitButton.onClick.AddListener(OnQuit);
+            if (settingsButton != null) settingsButton.onClick.AddListener(OnSettings);
             if (confirmYesButton != null) confirmYesButton.onClick.AddListener(OnConfirmYes);
             if (confirmNoButton != null) confirmNoButton.onClick.AddListener(() => confirmPanel.SetActive(false));
             if (fullModeButton != null) fullModeButton.onClick.AddListener(() => StartGameWithMode(7));
@@ -103,6 +106,14 @@ namespace TawanOS.GameFlow
         {
             SetInteractable(false);
             GameFlowManager.Instance.ContinueGame();
+        }
+
+        private SettingsPanelUI settings;
+
+        private void OnSettings()
+        {
+            if (settings == null) settings = SettingsPanelUI.Create(transform);
+            settings.Open();
         }
 
         private void OnQuit()

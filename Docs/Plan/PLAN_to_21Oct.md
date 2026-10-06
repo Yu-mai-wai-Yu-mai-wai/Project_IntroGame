@@ -191,7 +191,9 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
   | ศัตรูตาย, ชนะ | `sfx_scream` |
 - **Done when:** EditMode test `AudioLibraryTests` ยืนยันว่า key ทุกตัวในสองตารางนี้หาเจอ
 
-### [ ] B2 Settings + PlayerPrefs (ข้อ Player Preferences)
+### [~] B2 Settings + PlayerPrefs (ข้อ Player Preferences) — โค้ดเสร็จ 6 ต.ค. ค้าง: ฟังและดูใน Play mode, ต่อกับ Pause (B3)
+- **เสร็จ:** `SettingsPanelUI` (สร้างด้วยโค้ด ใช้ซ้ำใน Pause ได้ด้วย `SettingsPanelUI.Create(parent)`), `GameSettings` (fullscreen), ปุ่ม "ตั้งค่า" ใน MainMenu, `SettingsPanelTests` PASS (Red→Green: slider บันทึก PlayerPrefs, เปิดใหม่ค่ายังอยู่, toggle เต็มจอบันทึก, ปุ่ม >= 44 px)
+- **ต่างจากสเปก:** ใช้ volume ต่อ AudioSource ไม่ใช่ `SetFloat` บน mixer (MainMixer มีแค่กลุ่ม Master ยังไม่มี exposed parameter)
 - `AudioManager.SetVolume(channel, 0..1)` แปลง dB (`v <= 0.0001 ? -80 : Mathf.Log10(v) * 20`) บันทึก PlayerPrefs key `vol_master`, `vol_bgm`, `vol_sfx` และโหลดตอนเริ่ม
 - Settings panel (prefab ใช้ร่วมกันใน Main Menu และ Pause): slider 3 ตัว + toggle fullscreen (`Screen.fullScreen` เก็บใน PlayerPrefs `fullscreen`)
 - เพิ่มปุ่ม "ตั้งค่า" ใน `MainMenuUI`

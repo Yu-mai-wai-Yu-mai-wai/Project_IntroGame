@@ -107,7 +107,8 @@ namespace TawanOS.GameFlow
             menu.newGameButton = MenuButton("NewGameButton", g, 0.46f, "เริ่มเกมใหม่", sarabun, panelSprite);
             menu.continueButton = MenuButton("ContinueButton", g, 0.34f, "เล่นต่อ", sarabun, panelSprite);
             menu.continueInfoText = Text("ContinueInfo", g, new Vector2(0.075f, 0.285f), new Vector2(0.5f, 0.335f), sarabun, 22, Muted, TextAlignmentOptions.TopLeft);
-            menu.quitButton = MenuButton("QuitButton", g, 0.16f, "ออกจากเกม", sarabun, panelSprite);
+            menu.settingsButton = MenuButton("SettingsButton", g, 0.19f, "ตั้งค่า", sarabun, panelSprite);
+            menu.quitButton = MenuButton("QuitButton", g, 0.08f, "ออกจากเกม", sarabun, panelSprite);
 
             // Overwrite confirmation
             var dim = Img("ConfirmPanel", root, Vector2.zero, Vector2.one, new Color(0, 0, 0, 0.7f), null);
