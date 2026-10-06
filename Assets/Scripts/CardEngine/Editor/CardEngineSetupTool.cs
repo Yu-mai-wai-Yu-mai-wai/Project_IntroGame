@@ -60,17 +60,20 @@ namespace TawanOS.CardEngine
         {
             Font charmFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Charm-Bold.ttf");
             Font sarabunFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Sarabun-Regular.ttf");
+            Font korkortorFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/KorKorTor.ttf");
 
-            if (charmFont == null || sarabunFont == null)
+            if (charmFont == null || (sarabunFont == null && korkortorFont == null))
             {
                 Debug.LogError("[CardEngineSetupTool] TTF Fonts not found in Assets/Fonts!");
                 return;
             }
 
             TMP_FontAsset charmSdf = GetOrCreateTMPFontAsset(charmFont, "Assets/Fonts/Charm-Bold SDF.asset");
-            TMP_FontAsset sarabunSdf = GetOrCreateTMPFontAsset(sarabunFont, "Assets/Fonts/Sarabun-Regular SDF.asset");
+            TMP_FontAsset sarabunSdf = sarabunFont != null ? GetOrCreateTMPFontAsset(sarabunFont, "Assets/Fonts/Sarabun-Regular SDF.asset") : null;
+            TMP_FontAsset korkortorSdf = korkortorFont != null ? GetOrCreateTMPFontAsset(korkortorFont, "Assets/Fonts/KorKorTor SDF.asset") : null;
+            TMP_FontAsset bodySdf = korkortorSdf ?? sarabunSdf;
 
-            if (charmSdf == null || sarabunSdf == null)
+            if (charmSdf == null || bodySdf == null)
             {
                 Debug.LogError("[CardEngineSetupTool] Failed to create TMP Font Assets!");
                 return;
@@ -84,7 +87,8 @@ namespace TawanOS.CardEngine
                 SerializedProperty fallbacks = so.FindProperty("m_fallbackFontAssets");
                 if (fallbacks != null)
                 {
-                    AddFallbackIfMissing(fallbacks, sarabunSdf);
+                    if (korkortorSdf != null) AddFallbackIfMissing(fallbacks, korkortorSdf);
+                    if (sarabunSdf != null) AddFallbackIfMissing(fallbacks, sarabunSdf);
                     AddFallbackIfMissing(fallbacks, charmSdf);
                     so.ApplyModifiedProperties();
                     EditorUtility.SetDirty(settings);
@@ -96,7 +100,8 @@ namespace TawanOS.CardEngine
             if (defaultFont != null)
             {
                 if (defaultFont.fallbackFontAssetTable == null) defaultFont.fallbackFontAssetTable = new List<TMP_FontAsset>();
-                if (!defaultFont.fallbackFontAssetTable.Contains(sarabunSdf)) defaultFont.fallbackFontAssetTable.Add(sarabunSdf);
+                if (korkortorSdf != null && !defaultFont.fallbackFontAssetTable.Contains(korkortorSdf)) defaultFont.fallbackFontAssetTable.Add(korkortorSdf);
+                if (sarabunSdf != null && !defaultFont.fallbackFontAssetTable.Contains(sarabunSdf)) defaultFont.fallbackFontAssetTable.Add(sarabunSdf);
                 if (!defaultFont.fallbackFontAssetTable.Contains(charmSdf)) defaultFont.fallbackFontAssetTable.Add(charmSdf);
                 EditorUtility.SetDirty(defaultFont);
             }
@@ -116,7 +121,7 @@ namespace TawanOS.CardEngine
                     }
                     if (view.descText != null)
                     {
-                        view.descText.font = sarabunSdf;
+                        view.descText.font = bodySdf;
                         view.descText.fontSize = 11.5f;
                     }
                     EditorUtility.SetDirty(prefabGo);

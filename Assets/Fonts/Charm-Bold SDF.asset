@@ -3779,7 +3779,7 @@ MonoBehaviour:
     m_Scale: 1
   m_AtlasTextures:
   - {fileID: 3743755800687221625}
-  - {fileID: 624596365432585009}
+  - {fileID: 1861768898467240105}
   m_AtlasTextureIndex: 1
   m_IsMultiAtlasTexturesEnabled: 1
   m_GetFontFeatures: 1
@@ -271211,6 +271211,8 @@ MonoBehaviour:
   m_ShouldReimportFontFeatures: 0
   m_FallbackFontAssetTable:
   - {fileID: 11400000, guid: e1bda5ac93f4c674fbeee0b6c4316bec, type: 2}
+  - {fileID: 0}
+  - {fileID: 11400000, guid: 70dd15b1fd3606e44a7cd6b9f49cf317, type: 2}
   m_FontWeightTable:
   - regularTypeface: {fileID: 0}
     italicTypeface: {fileID: 0}
@@ -271266,7 +271268,7 @@ MonoBehaviour:
     kerningPairs: []
   fallbackFontAssets: []
   atlas: {fileID: 0}
---- !u!28 &624596365432585009
+--- !u!28 &1861768898467240105
 Texture2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

@@ -70,7 +70,9 @@ namespace TawanOS.GameFlow
         private static VictoryViewUI BuildCanvas()
         {
             var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
-            var sarabun = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/KorKorTor SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var sarabun = bodyFont;
 
             var canvasGo = new GameObject("VictoryCanvas");
             var canvas = canvasGo.AddComponent<Canvas>();

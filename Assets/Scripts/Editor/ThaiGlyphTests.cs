@@ -15,8 +15,10 @@ namespace TawanOS.EditorTools
     /// </summary>
     public static class ThaiGlyphTests
     {
+        private const string KorKorTorSdf = "Assets/Fonts/KorKorTor SDF.asset";
         private const string SarabunSdf = "Assets/Fonts/Sarabun-Regular SDF.asset";
         private const string CharmSdf = "Assets/Fonts/Charm-Bold SDF.asset";
+        private const string KorKorTorTtf = "Assets/Fonts/KorKorTor.ttf";
         private const string SarabunTtf = "Assets/Fonts/Sarabun-Regular.ttf";
         private const string CharmTtf = "Assets/Fonts/Charm-Bold.ttf";
 
@@ -36,6 +38,7 @@ namespace TawanOS.EditorTools
         private static void Execute(bool exitOnFinish)
         {
             int failures = 0;
+            failures += CheckFont("KorKorTor", KorKorTorSdf, KorKorTorTtf);
             failures += CheckFont("Sarabun", SarabunSdf, SarabunTtf);
             failures += CheckFont("Charm", CharmSdf, CharmTtf);
             failures += CheckLegendCorner();
