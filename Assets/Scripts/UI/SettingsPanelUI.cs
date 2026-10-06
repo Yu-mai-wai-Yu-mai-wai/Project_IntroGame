@@ -15,7 +15,17 @@ namespace TawanOS.UI
     {
         public Slider masterSlider, musicSlider, sfxSlider;
         public Toggle fullscreenToggle;
+        public Toggle reduceFlickerToggle;
         public Button closeButton;
+
+        public const string PrefReduceFlicker = "reduce_flicker";
+        public static bool ReduceFlicker => PlayerPrefs.GetInt(PrefReduceFlicker, 0) == 1;
+
+        public static void SetReduceFlicker(bool value)
+        {
+            PlayerPrefs.SetInt(PrefReduceFlicker, value ? 1 : 0);
+            PlayerPrefs.Save();
+        }
 
         private TextMeshProUGUI masterValue, musicValue, sfxValue;
 
@@ -34,8 +44,8 @@ namespace TawanOS.UI
             var panel = root.gameObject.AddComponent<SettingsPanelUI>();
 
             var window = UiFactory.CreateRect("Window", root);
-            window.anchorMin = new Vector2(0.28f, 0.2f);
-            window.anchorMax = new Vector2(0.72f, 0.8f);
+            window.anchorMin = new Vector2(0.28f, 0.18f);
+            window.anchorMax = new Vector2(0.72f, 0.82f);
             window.offsetMin = window.offsetMax = Vector2.zero;
             var border = window.gameObject.AddComponent<Image>();
             border.color = theme.crimson;
@@ -49,10 +59,15 @@ namespace TawanOS.UI
             panel.musicSlider = Row(window, theme, 1, "เพลง", AudioChannel.Bgm, out panel.musicValue);
             panel.sfxSlider = Row(window, theme, 2, "เสียงเอฟเฟกต์", AudioChannel.Sfx, out panel.sfxValue);
 
-            Label(window, "FullscreenLabel", "เต็มจอ", theme, theme.bodySize, 0.06f, 0.36f, 0.30f, 0.43f, TextAlignmentOptions.MidlineLeft);
-            panel.fullscreenToggle = MakeToggle(window, theme);
+            Label(window, "FullscreenLabel", "เต็มจอ", theme, theme.bodySize, 0.06f, 0.34f, 0.34f, 0.42f, TextAlignmentOptions.MidlineLeft);
+            panel.fullscreenToggle = MakeToggle(window, theme, "FullscreenToggle", 0.35f, 0.41f);
             panel.fullscreenToggle.SetIsOnWithoutNotify(GameSettings.Fullscreen);
             panel.fullscreenToggle.onValueChanged.AddListener(GameSettings.SetFullscreen);
+
+            Label(window, "ReduceFlickerLabel", "ลดแสงกระพริบ", theme, theme.bodySize, 0.06f, 0.34f, 0.23f, 0.31f, TextAlignmentOptions.MidlineLeft);
+            panel.reduceFlickerToggle = MakeToggle(window, theme, "ReduceFlickerToggle", 0.24f, 0.30f);
+            panel.reduceFlickerToggle.SetIsOnWithoutNotify(ReduceFlicker);
+            panel.reduceFlickerToggle.onValueChanged.AddListener(SetReduceFlicker);
 
             panel.closeButton = MakeButton(window, theme, "ปิด");
             panel.closeButton.onClick.AddListener(panel.Close);
@@ -73,6 +88,7 @@ namespace TawanOS.UI
             musicSlider.SetValueWithoutNotify(AudioManager.LoadVolume(AudioChannel.Bgm));
             sfxSlider.SetValueWithoutNotify(AudioManager.LoadVolume(AudioChannel.Sfx));
             fullscreenToggle.SetIsOnWithoutNotify(GameSettings.Fullscreen);
+            if (reduceFlickerToggle != null) reduceFlickerToggle.SetIsOnWithoutNotify(ReduceFlicker);
             ShowPercent();
             if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(masterSlider.gameObject);
         }
@@ -117,13 +133,13 @@ namespace TawanOS.UI
 
         private static Slider Row(RectTransform window, UIThemeSO theme, int index, string label, AudioChannel channel, out TextMeshProUGUI valueText)
         {
-            float top = 0.80f - index * 0.15f;
-            Label(window, label + "Label", label, theme, theme.bodySize, 0.06f, 0.34f, top - 0.11f, top, TextAlignmentOptions.MidlineLeft);
-            valueText = Label(window, label + "Value", "100%", theme, theme.bodySize, 0.82f, 0.95f, top - 0.11f, top, TextAlignmentOptions.MidlineRight);
+            float top = 0.82f - index * 0.14f;
+            Label(window, label + "Label", label, theme, theme.bodySize, 0.06f, 0.34f, top - 0.10f, top, TextAlignmentOptions.MidlineLeft);
+            valueText = Label(window, label + "Value", "100%", theme, theme.bodySize, 0.82f, 0.95f, top - 0.10f, top, TextAlignmentOptions.MidlineRight);
 
             var slider = MakeSlider(window, theme, label + "Slider");
             var r = (RectTransform)slider.transform;
-            r.anchorMin = new Vector2(0.36f, top - 0.11f);
+            r.anchorMin = new Vector2(0.36f, top - 0.10f);
             r.anchorMax = new Vector2(0.80f, top);
             r.offsetMin = r.offsetMax = Vector2.zero;
             slider.SetValueWithoutNotify(AudioManager.LoadVolume(channel));
@@ -136,16 +152,18 @@ namespace TawanOS.UI
             var root = UiFactory.CreateRect(name, parent);
             var slider = root.gameObject.AddComponent<Slider>();
 
-            var bg = UiFactory.CreateImage("Background", root, theme.crimson);
-            bg.rectTransform.anchorMin = new Vector2(0f, 0.35f);
-            bg.rectTransform.anchorMax = new Vector2(1f, 0.65f);
+            var bg = UiFactory.CreateImage("Background", root, new Color(0.18f, 0.11f, 0.12f, 0.95f));
+            bg.rectTransform.anchorMin = new Vector2(0f, 0.38f);
+            bg.rectTransform.anchorMax = new Vector2(1f, 0.62f);
             bg.rectTransform.offsetMin = bg.rectTransform.offsetMax = Vector2.zero;
+            var bgOutline = bg.gameObject.AddComponent<Outline>();
+            bgOutline.effectColor = theme.crimson;
 
             var fillArea = UiFactory.CreateRect("Fill Area", root);
-            fillArea.anchorMin = new Vector2(0f, 0.35f);
-            fillArea.anchorMax = new Vector2(1f, 0.65f);
-            fillArea.offsetMin = new Vector2(12f, 0f);
-            fillArea.offsetMax = new Vector2(-12f, 0f);
+            fillArea.anchorMin = new Vector2(0f, 0.38f);
+            fillArea.anchorMax = new Vector2(1f, 0.62f);
+            fillArea.offsetMin = new Vector2(6f, 0f);
+            fillArea.offsetMax = new Vector2(-6f, 0f);
             var fill = UiFactory.CreateImage("Fill", fillArea, theme.accent);
             fill.rectTransform.anchorMin = Vector2.zero;
             fill.rectTransform.anchorMax = new Vector2(0f, 1f);
@@ -153,13 +171,13 @@ namespace TawanOS.UI
 
             var handleArea = UiFactory.CreateRect("Handle Slide Area", root);
             UiFactory.Stretch(handleArea, 0f);
-            handleArea.offsetMin = new Vector2(12f, 0f);
-            handleArea.offsetMax = new Vector2(-12f, 0f);
+            handleArea.offsetMin = new Vector2(8f, 0f);
+            handleArea.offsetMax = new Vector2(-8f, 0f);
             var handle = UiFactory.CreateImage("Handle", handleArea, theme.accent);
             handle.raycastTarget = true;
-            handle.rectTransform.anchorMin = new Vector2(0f, 0f);
-            handle.rectTransform.anchorMax = new Vector2(0f, 1f);
-            handle.rectTransform.sizeDelta = new Vector2(28f, 0f);
+            handle.rectTransform.anchorMin = new Vector2(0f, 0.22f);
+            handle.rectTransform.anchorMax = new Vector2(0f, 0.78f);
+            handle.rectTransform.sizeDelta = new Vector2(16f, 0f);
 
             slider.fillRect = fill.rectTransform;
             slider.handleRect = handle.rectTransform;
@@ -171,21 +189,24 @@ namespace TawanOS.UI
             return slider;
         }
 
-        private static Toggle MakeToggle(RectTransform parent, UIThemeSO theme)
+        private static Toggle MakeToggle(RectTransform parent, UIThemeSO theme, string name, float y0, float y1)
         {
-            var root = UiFactory.CreateRect("FullscreenToggle", parent);
-            root.anchorMin = new Vector2(0.36f, 0.30f);
-            root.anchorMax = new Vector2(0.36f, 0.43f);
+            var root = UiFactory.CreateRect(name, parent);
+            root.anchorMin = new Vector2(0.36f, y0);
+            root.anchorMax = new Vector2(0.36f, y1);
             root.pivot = new Vector2(0f, 0.5f);
-            root.sizeDelta = new Vector2(56f, 0f);
+            root.sizeDelta = new Vector2(32f, 32f);
             root.anchoredPosition = Vector2.zero;
             var toggle = root.gameObject.AddComponent<Toggle>();
 
-            var box = UiFactory.CreateImage("Box", root, theme.crimson);
+            var box = UiFactory.CreateImage("Box", root, new Color(0.16f, 0.10f, 0.12f, 0.95f));
             box.raycastTarget = true;
             UiFactory.Stretch(box.rectTransform, 0f);
+            var outline = box.gameObject.AddComponent<Outline>();
+            outline.effectColor = theme.crimson;
+
             var mark = UiFactory.CreateImage("Check", box.rectTransform, theme.accent);
-            UiFactory.Stretch(mark.rectTransform, 10f);
+            UiFactory.Stretch(mark.rectTransform, 6f);
 
             toggle.targetGraphic = box;
             toggle.graphic = mark;
