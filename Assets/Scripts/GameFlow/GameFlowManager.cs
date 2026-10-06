@@ -30,11 +30,6 @@ namespace TawanOS.GameFlow
         private const float VictoryPanelDelaySeconds = 2f;
         private const float DefeatPanelDelaySeconds = 3f;
 
-        // TODO: replace with a proper per-biome encounter table once more enemies exist.
-        private const string MinorEnemyAssetPath = "Assets/CardEngineData/Enemies/PraiGhostProfile.asset";
-        private const string EliteEnemyAssetPath = "Assets/CardEngineData/Enemies/PraiGhostProfile.asset";
-        private const string BossEnemyAssetPath = "Assets/CardEngineData/Enemies/PhiTaiHongBossProfile.asset";
-
         private EnemyProfileSO pendingEnemyProfile;
         private int? pendingEventFloor;
         private bool pendingOffering; // กองของเซ่น: EventScene plays the offering story instead of a random event
@@ -400,24 +395,19 @@ namespace TawanOS.GameFlow
 
         private EnemyProfileSO ResolveEnemyProfile(NodeType nodeType)
         {
-            string path = nodeType switch
+            var table = EncounterTableSO.Load();
+            if (table == null)
             {
-                NodeType.Boss => BossEnemyAssetPath,
-                NodeType.EliteEnemy => EliteEnemyAssetPath,
-                _ => MinorEnemyAssetPath,
-            };
+                Debug.LogError($"[GameFlowManager] Resources/{EncounterTableSO.ResourceName}.asset is missing (run Tools > TawanOS > Game Flow > Create Encounter Table)");
+                return null;
+            }
 
-#if UNITY_EDITOR
-            var profile = UnityEditor.AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(path);
+            var profile = table.Pick(nodeType);
             if (profile == null)
             {
-                Debug.LogError($"[GameFlowManager] Could not load EnemyProfileSO at '{path}' for node type {nodeType}");
+                Debug.LogError($"[GameFlowManager] The encounter table has no enemy for node type {nodeType}");
             }
             return profile;
-#else
-            Debug.LogError("[GameFlowManager] Runtime (non-editor) enemy profile resolution is not implemented yet - needs a Resources-based encounter table.");
-            return null;
-#endif
         }
     }
 }
