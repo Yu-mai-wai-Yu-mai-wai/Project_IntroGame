@@ -160,7 +160,9 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - **Done when:** นับไฟล์ได้ตามตาราง, Console ไม่มี Error ตอน import, ไม่มีไฟล์เดี่ยวเกิน 100 MB (ข้อจำกัด GitHub; ไฟล์ใหญ่สุดคือ `amb_event.wav` 17.6 MB), `git status` ไม่มี `.meta` ที่ขาด
 - หมายเหตุ: ถ้า `amb_event.wav` ทำให้ build ใหญ่เกินไป ให้แปลงเป็น mp3 ชื่อเดิมก่อน (ไม่เปลี่ยน key)
 
-### [ ] B1 AudioManager (ข้อ Sound)
+### [~] B1 AudioManager (ข้อ Sound) — โค้ดเสร็จ 6 ต.ค. ค้าง: Mixer, hover SFX, ฟังจริง
+- **เสร็จ:** `AudioLibrarySO`, `AudioManager`, `AudioDirector`, tool `Build Audio Library` (23 key), `AudioLibraryTests` PASS (Red→Green) ผูกเพลงตามฉากและ SFX จาก event เดิมโดยไม่แก้ logic
+- **ค้าง/ต่างจากสเปก:** (1) ไม่มี `MainMixer.mixer` ใช้ volume ต่อ AudioSource แทน (Unity ไม่มี API สร้าง mixer + exposed parameter) (2) `sfx_card_hover` ยังไม่ผูก ต้องเพิ่ม event ใน `CardPlayController3D` (3) ยังไม่ได้ฟังจริงใน Play mode
 - ไฟล์เสียงต้องอยู่ที่ `Assets/Audio/BGM/`, `Assets/Audio/Ambience/`, `Assets/Audio/SFX/` (ทำ B0 ก่อน ถ้ายังไม่มีให้หยุดแล้วแจ้ง PM)
 - `Assets/Scripts/Audio/` namespace `TawanOS.Audio`:
   - `AudioLibrarySO`: `{ key, AudioClip[] variants }` key = ชื่อไฟล์ตัด `_01`/`_02` ออก
