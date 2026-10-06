@@ -100,6 +100,12 @@ namespace TawanOS.EditorTools
                 // 7. Fog / mist particles
                 var particles = Object.FindObjectsByType<ParticleSystem>(FindObjectsSortMode.None);
                 failures += Expect("Atmospheric fog/mist particle system exists", particles.Length > 0);
+                foreach (var ps in particles)
+                {
+                    var psr = ps.GetComponent<ParticleSystemRenderer>();
+                    failures += Expect($"{ps.name} has non-null particle material (no purple glitch)",
+                        psr != null && psr.sharedMaterial != null && !psr.sharedMaterial.shader.name.Contains("InternalErrorShader"));
+                }
 
                 // 8. No solid background image blocking 3D camera
                 var canvas = Object.FindFirstObjectByType<Canvas>();
@@ -123,6 +129,8 @@ namespace TawanOS.EditorTools
                     failures += Expect("No solid background image blocking 3D camera", !hasBlockingBackground);
                 }
             }
+
+
             finally
             {
                 if (needRestore && !string.IsNullOrEmpty(prevPath) && File.Exists(prevPath))

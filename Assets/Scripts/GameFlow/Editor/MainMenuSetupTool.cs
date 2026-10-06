@@ -90,9 +90,10 @@ namespace TawanOS.GameFlow
 
         private static void BuildCanvas()
         {
-            var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
-            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/KorKorTor SDF.asset");
-            if (bodyFont == null) bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var titleFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
+            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
             var panelSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
 
             var canvasGo = new GameObject("MainMenuCanvas");
@@ -112,22 +113,22 @@ namespace TawanOS.GameFlow
             menu.menuGroup = group;
             var g = group.transform;
 
-            // Logo width >= 28% of the screen (0.05 to 0.35 = 30%)
-            var logo = Img("Logo", g, new Vector2(0.05f, 0.65f), new Vector2(0.35f, 0.96f), Color.white, null);
+            // Logo enlarged to ~38% of the screen width (0.04 to 0.42 = 38%)
+            var logo = Img("Logo", g, new Vector2(0.04f, 0.62f), new Vector2(0.42f, 0.97f), Color.white, null);
             logo.sprite = EnsureSprite(LogoPath);
             logo.preserveAspect = true;
             logo.enabled = logo.sprite != null;
             logo.raycastTarget = false;
             if (logo.sprite == null) Debug.LogWarning($"[MainMenuSetupTool] Logo not found at {LogoPath}.");
-            var subtitle = Text("Subtitle", g, new Vector2(0.05f, 0.58f), new Vector2(0.35f, 0.64f), bodyFont, 30, Muted, TextAlignmentOptions.TopLeft);
+            var subtitle = Text("Subtitle", g, new Vector2(0.045f, 0.54f), new Vector2(0.40f, 0.61f), bodyFont, 30, Muted, TextAlignmentOptions.TopLeft);
             subtitle.text = "เส้นทางของหมอธรรม";
 
             // Menu buttons: width <= 20% (0.05 to 0.24 = 19%), height >= 44 px (0.07 * 1080 = 75.6 px)
-            menu.newGameButton = MenuButton("NewGameButton", g, 0.46f, "เริ่มเกมใหม่", bodyFont, panelSprite);
-            menu.continueButton = MenuButton("ContinueButton", g, 0.36f, "เล่นต่อ", bodyFont, panelSprite);
-            menu.continueInfoText = Text("ContinueInfo", g, new Vector2(0.05f, 0.30f), new Vector2(0.35f, 0.35f), bodyFont, 22, Muted, TextAlignmentOptions.TopLeft);
-            menu.settingsButton = MenuButton("SettingsButton", g, 0.20f, "ตั้งค่า", bodyFont, panelSprite);
-            menu.quitButton = MenuButton("QuitButton", g, 0.10f, "ออกจากเกม", bodyFont, panelSprite);
+            menu.newGameButton = MenuButton("NewGameButton", g, 0.44f, "เริ่มเกมใหม่", bodyFont, panelSprite);
+            menu.continueButton = MenuButton("ContinueButton", g, 0.34f, "เล่นต่อ", bodyFont, panelSprite);
+            menu.continueInfoText = Text("ContinueInfo", g, new Vector2(0.05f, 0.28f), new Vector2(0.35f, 0.33f), bodyFont, 22, Muted, TextAlignmentOptions.TopLeft);
+            menu.settingsButton = MenuButton("SettingsButton", g, 0.19f, "ตั้งค่า", bodyFont, panelSprite);
+            menu.quitButton = MenuButton("QuitButton", g, 0.09f, "ออกจากเกม", bodyFont, panelSprite);
 
             // Overwrite confirmation
             var dim = Img("ConfirmPanel", root, Vector2.zero, Vector2.one, new Color(0, 0, 0, 0.7f), null);
@@ -144,7 +145,7 @@ namespace TawanOS.GameFlow
             menu.modePanel = modeDim.gameObject;
             var modeBox = Img("Window", modeDim.transform, new Vector2(0.30f, 0.30f), new Vector2(0.70f, 0.70f), new Color(0.13f, 0.075f, 0.06f), panelSprite);
             modeBox.gameObject.AddComponent<Outline>().effectColor = new Color(Gold.r, Gold.g, Gold.b, 0.5f);
-            var modeTitle = Text("Title", modeBox.transform, new Vector2(0.06f, 0.68f), new Vector2(0.94f, 0.94f), bodyFont, 32, Parchment, TextAlignmentOptions.Center);
+            var modeTitle = Text("Title", modeBox.transform, new Vector2(0.06f, 0.68f), new Vector2(0.94f, 0.94f), titleFont ?? bodyFont, 34, Parchment, TextAlignmentOptions.Center);
             modeTitle.text = "เลือกโหมดการเล่น\n<size=70%><color=#a89c8a>กำหนดระยะเวลาเส้นทางหมอธรรม</color></size>";
             menu.fullModeButton = DialogButton("FullModeButton", modeBox.transform, new Vector2(0.08f, 0.38f), new Vector2(0.46f, 0.62f), "เล่นเต็ม (7 ชั้น)", new Color(0.55f, 0.15f, 0.1f), bodyFont, panelSprite);
             menu.shortModeButton = DialogButton("ShortModeButton", modeBox.transform, new Vector2(0.54f, 0.38f), new Vector2(0.92f, 0.62f), "เล่นสั้น (4 ชั้น)", new Color(0.2f, 0.35f, 0.25f), bodyFont, panelSprite);

@@ -159,8 +159,22 @@ namespace TawanOS.GameFlow
             barGo.transform.localPosition = stageOffset + new Vector3(0, 6.5f, 7.5f);
 
             // Create LineRenderers for >= 6 strings (สายสิญจน์)
-            var cordMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
-            cordMat.color = new Color(0.95f, 0.85f, 0.80f, 0.95f); // Raw sacred thread white-cream
+            string cordMatPath = "Assets/Art/Particles/Mat_RitualCord.mat";
+            Material cordMat = null;
+#if UNITY_EDITOR
+            cordMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(cordMatPath);
+            if (cordMat == null)
+            {
+                Shader unlitShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
+                cordMat = new Material(unlitShader);
+                cordMat.name = "Mat_RitualCord";
+                cordMat.color = new Color(0.95f, 0.85f, 0.80f, 0.95f); // Raw sacred thread white-cream
+                UnityEditor.AssetDatabase.CreateAsset(cordMat, cordMatPath);
+            }
+#else
+            cordMat = new Material(Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default"));
+            cordMat.color = new Color(0.95f, 0.85f, 0.80f, 0.95f);
+#endif
 
             int cordCount = 8;
             stage.strings = new LineRenderer[cordCount];
@@ -198,7 +212,7 @@ namespace TawanOS.GameFlow
                 cordGo.transform.SetParent(stageParent.transform, false);
 
                 var lr = cordGo.AddComponent<LineRenderer>();
-                lr.material = cordMat;
+                lr.sharedMaterial = cordMat;
                 lr.startWidth = 0.025f;
                 lr.endWidth = 0.020f;
                 lr.positionCount = 2;
@@ -254,7 +268,7 @@ namespace TawanOS.GameFlow
             main.startLifetime = 6.0f;
             main.startSpeed = 0.2f;
             main.startSize = 3.5f;
-            main.startColor = new Color(0.12f, 0.08f, 0.09f, 0.25f); // Dark incense mist
+            main.startColor = new Color(0.20f, 0.15f, 0.16f, 0.35f); // Dark incense mist
             main.simulationSpace = ParticleSystemSimulationSpace.World;
 
             var emission = ps.emission;
@@ -263,6 +277,42 @@ namespace TawanOS.GameFlow
             var shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Box;
             shape.scale = new Vector3(8f, 0.5f, 6f);
+
+            var psRenderer = fogGo.GetComponent<ParticleSystemRenderer>();
+            if (psRenderer != null)
+            {
+#if UNITY_EDITOR
+                string fogMatPath = "Assets/Art/Particles/Mat_AtmosphericFog.mat";
+                Material fogMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(fogMatPath);
+                if (fogMat == null)
+                {
+                    Shader particleShader = Shader.Find("Universal Render Pipeline/Particles/Unlit")
+                        ?? Shader.Find("Universal Render Pipeline/Unlit")
+                        ?? Shader.Find("Particles/Standard Unlit")
+                        ?? Shader.Find("Sprites/Default");
+
+                    fogMat = new Material(particleShader);
+                    fogMat.name = "Mat_AtmosphericFog";
+                    if (particleShader != null && particleShader.name.Contains("Particles/Unlit"))
+                    {
+                        fogMat.SetFloat("_Surface", 1f); // 1 = Transparent
+                        fogMat.SetFloat("_Blend", 0f);   // 0 = Alpha
+                        fogMat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                        fogMat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                        fogMat.SetInt("_ZWrite", 0);
+                        fogMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+                    }
+                    Texture2D smokeTex = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Particles/SoftSmoke.png");
+                    if (smokeTex != null)
+                    {
+                        fogMat.mainTexture = smokeTex;
+                        if (fogMat.HasProperty("_BaseMap")) fogMat.SetTexture("_BaseMap", smokeTex);
+                    }
+                    UnityEditor.AssetDatabase.CreateAsset(fogMat, fogMatPath);
+                }
+                psRenderer.sharedMaterial = fogMat;
+#endif
+            }
 
             stage.fogParticles = ps;
 
