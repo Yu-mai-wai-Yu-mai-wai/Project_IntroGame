@@ -555,10 +555,13 @@ namespace TawanOS.MapEngine
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.R))
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // Debug map reset is reserved for Editor/Dev builds under F3 to prevent player wipes
+            if (Input.GetKey(KeyCode.F3) && Input.GetKeyDown(KeyCode.R))
             {
                 ResetAndRegenerate();
             }
+#endif
         }
 
         public void ResetAndRegenerate()

@@ -10,6 +10,34 @@ namespace TawanOS.MapEngine
 {
     public class MapEngineSetupTool
     {
+        [MenuItem("Tools/TawanOS/Map Engine/Clean Player UI in Scene")]
+        public static void CleanPlayerUIInScene()
+        {
+            var scene = EditorSceneManager.OpenScene("Assets/Scenes/MapTestScene.unity");
+            var canvas = GameObject.Find("UICanvas");
+            if (canvas != null)
+            {
+                var resetBtn = canvas.transform.Find("ResetButton");
+                if (resetBtn != null)
+                {
+                    Undo.DestroyObjectImmediate(resetBtn.gameObject);
+                    Debug.Log("[MapEngineSetupTool] Removed ResetButton from UICanvas.");
+                }
+                var status = canvas.transform.Find("MapPlayerStatusUI");
+                if (status == null)
+                {
+                    var statusGo = new GameObject("MapPlayerStatusUI");
+                    statusGo.transform.SetParent(canvas.transform, false);
+                    statusGo.AddComponent<MapPlayerStatusUI>();
+                    Debug.Log("[MapEngineSetupTool] Added MapPlayerStatusUI to UICanvas.");
+                }
+            }
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[MapEngineSetupTool] Clean Player UI in Scene finished.");
+        }
+
         [MenuItem("Tools/TawanOS/Map Engine/Setup Test Scene & Profiles")]
         [MenuItem("Window/TawanOS Map Engine Setup")]
         public static void SetupTestSceneAndProfiles()
@@ -333,33 +361,10 @@ namespace TawanOS.MapEngine
             legendGo.transform.SetParent(canvasGo.transform, false);
             legendGo.AddComponent<MapLegendUI>();
 
-            GameObject btnGo = new GameObject("ResetButton");
-            btnGo.transform.SetParent(canvasGo.transform, false);
-            var btnImage = btnGo.AddComponent<UnityEngine.UI.Image>();
-            btnImage.color = new Color(0.2f, 0.2f, 0.25f, 0.9f);
-            var btn = btnGo.AddComponent<UnityEngine.UI.Button>();
-            
-            RectTransform btnRect = btnGo.GetComponent<RectTransform>();
-            btnRect.anchorMin = new Vector2(1f, 1f);
-            btnRect.anchorMax = new Vector2(1f, 1f);
-            btnRect.pivot = new Vector2(1f, 1f);
-            btnRect.anchoredPosition = new Vector2(-20f, -20f);
-            btnRect.sizeDelta = new Vector2(160f, 50f);
-
-            GameObject textGo = new GameObject("Text");
-            textGo.transform.SetParent(btnGo.transform, false);
-            var text = textGo.AddComponent<UnityEngine.UI.Text>();
-            text.text = "Reset Map 🔄 (R)";
-            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            text.fontSize = 18;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = Color.white;
-            RectTransform textRect = textGo.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(btn.onClick, manager.ResetAndRegenerate);
+            // Player Status UI
+            GameObject statusGo = new GameObject("MapPlayerStatusUI");
+            statusGo.transform.SetParent(canvasGo.transform, false);
+            statusGo.AddComponent<MapPlayerStatusUI>();
 
             // Save Scene
             string scenePath = "Assets/Scenes/MapTestScene.unity";

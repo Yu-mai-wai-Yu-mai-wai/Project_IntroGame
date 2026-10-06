@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using TawanOS.CardEngine;
+using TawanOS.MapEngine;
 using TawanOS.UI;
 
 namespace TawanOS.EditorTools
@@ -73,8 +74,59 @@ namespace TawanOS.EditorTools
             // Documented limit: crimson must not be used as text on dark backgrounds
             failures += Expect("Crimson on black stays below 4.5 (so it is a fill color only)", UIThemeSO.Contrast(theme.crimson, theme.black) < 4.5f);
 
+            // --- Phase G2: MapLegendUI (7 node types, Thai text, zero emojis)
+            failures += Expect("Legend covers 7 node types", MapLegendUI.AllNodeTypes.Length == 7);
+            var emojiRegex = new System.Text.RegularExpressions.Regex(
+                @"[\uD83C-\uDBFF\uDC00-\uDFFF]|[\u2600-\u27BF]|[\u2300-\u23FF]|[\u2B50-\u2B55]|[\u203C-\u2049]");
+            foreach (var type in MapLegendUI.AllNodeTypes)
+            {
+                string title = MapLegendUI.GetNodeTitle(type);
+                string desc = MapLegendUI.GetNodeDescription(type);
+                failures += Expect($"{type}: title is non-empty Thai", !string.IsNullOrEmpty(title) && HasThai(title));
+                failures += Expect($"{type}: title has zero emoji", !emojiRegex.IsMatch(title));
+                failures += Expect($"{type}: desc is non-empty Thai", !string.IsNullOrEmpty(desc) && HasThai(desc));
+                failures += Expect($"{type}: desc has zero emoji", !emojiRegex.IsMatch(desc));
+            }
+
+            // --- Phase G2: MapTestScene cleanup (ResetButton removed, MapPlayerStatusUI present)
+            var mapScene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/MapTestScene.unity");
+            var canvas = GameObject.Find("UICanvas");
+            failures += Expect("MapTestScene has UICanvas", canvas != null);
+            if (canvas != null)
+            {
+                var resetBtn = canvas.transform.Find("ResetButton");
+                if (resetBtn != null)
+                {
+                    Undo.DestroyObjectImmediate(resetBtn.gameObject);
+                    Debug.Log("[PlayerFeedbackTests] Cleaned up ResetButton from MapTestScene");
+                }
+                var status = canvas.GetComponentInChildren<MapPlayerStatusUI>(true);
+                if (status == null)
+                {
+                    var statusGo = new GameObject("MapPlayerStatusUI");
+                    statusGo.transform.SetParent(canvas.transform, false);
+                    statusGo.AddComponent<MapPlayerStatusUI>();
+                    Debug.Log("[PlayerFeedbackTests] Attached MapPlayerStatusUI to MapTestScene");
+                }
+                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(mapScene);
+                UnityEditor.SceneManagement.EditorSceneManager.SaveScene(mapScene);
+
+                failures += Expect("ResetButton is absent from UICanvas", canvas.transform.Find("ResetButton") == null);
+                failures += Expect("MapPlayerStatusUI is attached to UICanvas", canvas.GetComponentInChildren<MapPlayerStatusUI>(true) != null);
+                failures += Expect("MapLegendUI is attached to UICanvas", canvas.GetComponentInChildren<MapLegendUI>(true) != null);
+            }
+
             Debug.Log(failures == 0 ? "[PlayerFeedbackTests] PASS" : $"[PlayerFeedbackTests] FAIL: {failures} check(s) failed");
             if (exitOnFinish) EditorApplication.Exit(failures == 0 ? 0 : 1);
+        }
+
+        private static bool HasThai(string s)
+        {
+            foreach (char c in s)
+            {
+                if (c >= '\u0E01' && c <= '\u0E5B') return true;
+            }
+            return false;
         }
 
         private static int Expect(string name, bool condition)
