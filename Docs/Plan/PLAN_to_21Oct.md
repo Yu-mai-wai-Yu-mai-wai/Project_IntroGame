@@ -1,186 +1,205 @@
 # แผนงานถึงวันนำเสนอ 21 ต.ค. 2569
 
-เป้าหมาย: เกมเล่นจบลูปได้ (Win/Lose) และผ่านข้อบังคับ Unity ครบ 8 ข้อภายใน **อังคาร 14 ต.ค.**
-เพื่อให้มีเวลา Playtest 15 ต.ค. และแก้ตามผลก่อนเขียน Testing Log
+อัปเดต 6 ต.ค. 2569 หลัง merge `dcb2b57` (Main Menu, Event, Shop, Reward, Meru, RunState, Graveyard)
 
-ลำดับ task เรียงตามคะแนนที่ได้ต่อเวลาที่ใช้ ทำตามลำดับ ยกเว้นที่ระบุว่าทำคู่ขนานได้
-แต่ละ task มี **Done when** ที่ตรวจได้จาก CLI ห้ามปิด task ถ้ายังไม่ผ่าน
+เป้าหมาย: **build .exe ที่เล่นจบได้ (ชนะ Boss = จบเกม, ขวัญหมด = Game Over)** และผ่านข้อบังคับ Unity ครบ 8 ข้อ
+ภายใน **อังคาร 14 ต.ค.** เพื่อ Playtest วันพุธ 15 ต.ค.
 
----
-
-## Phase 0 · ก่อนเริ่ม (จันทร์ 5 – พุธ 7 ต.ค.)
-
-### T0.1 ยืนยัน asset ที่ import แล้ว
-- หาไฟล์ใน `Assets/` ที่ชื่อขึ้นต้น `s_b`, `s_w`, `bgm_`, `amb_`, `sfx_` แล้วรายงานว่าอยู่ path ไหน
-- ถ้ายังกระจายอยู่หลายที่ ย้ายเข้าโครงนี้ผ่าน `AssetDatabase.MoveAsset` (ห้ามย้ายด้วย file system เพราะ .meta จะหลุด):
-  - `Assets/Art/Cards/` ภาพการ์ด
-  - `Assets/Audio/BGM/`, `Assets/Audio/Ambience/`, `Assets/Audio/SFX/`
-- **Done when:** รายงานจำนวนไฟล์ต่อโฟลเดอร์ ภาพการ์ด 29 ไฟล์, BGM 5, Ambience 4, SFX 18
-
-### T0.2 รอผลตัดสินจากทีม (PM เป็นคนตัดสิน ห้ามเดา)
-| เรื่อง | ค่าในโค้ดตอนนี้ | ที่ต้องรู้ |
-|---|---|---|
-| มลทินสูงสุด | 7 (`CombatStateData.corruptionThreshold`) | 7 / 9 / 10 |
-| ขวัญสูงสุดผู้เล่น | 50 (`maxPlayerKhwan`) | Sheet เขียน 20 |
-| หมอกดำ, เมรุ | ไม่มีใน `NodeType` | ทำหรือตัด (แผนนี้ถือว่าตัด) |
-| ชุดการ์ด | 42 ใบ | ยืนยัน 42 |
-
-ระหว่างรอ ทำ Phase 1 ได้เลย เพราะไม่ขึ้นกับค่าเหล่านี้
+กติกา: ทำตามลำดับ task, ทุก task มี **Done when** ที่ตรวจได้ ห้ามติ๊กถ้ายังไม่ผ่าน, หนึ่ง task หนึ่ง commit
+ถ้า task ต้องการคำตอบจากหัวข้อ "รอทีมตัดสิน" ให้ทำด้วยค่า default ที่เขียนไว้ แล้วระบุใน commit message
 
 ---
 
-## Phase 1 · ผูก asset เข้าเกม (พุธ 8 ต.ค.)
+## สถานะตอนนี้
 
-### T1 CardArtBinder (ข้อ Prefab/การ์ดมีภาพ)
-- ไฟล์ใหม่: `Assets/Scripts/CardEngine/Editor/CardArtBinder.cs`
-- สำหรับทุก PNG ใน `Assets/Art/Cards/`:
-  1. ตั้ง importer เป็น `TextureImporterType.Sprite`, `SpriteImportMode.Single`, max size 1024
-  2. ตัดชื่อไฟล์เอา 6 ตัวแรกหลัง `s_` มาเป็น `cardId` เช่น `s_ba05_...` → `s_ba05`
-  3. หา `CardDataSO` ที่ `cardId` ตรงกัน แล้วตั้ง `artwork` + `EditorUtility.SetDirty`
-- รายงาน: ผูกได้กี่ใบ, การ์ดไหนยังไม่มีภาพ (ควรได้ 13 ใบ), ไฟล์ไหนหาการ์ดไม่เจอ
-- MenuItem `Tools/TawanOS/Card Engine/Bind Card Art` + `public static void BindFromCli()`
-- **Done when:** รันจาก CLI แล้ว log บอก `bound=29 missing=13 orphan=0` และ `CardView3D` แสดงภาพใน CombatTestScene
+| ระบบ | สถานะ |
+|---|---|
+| Main Menu (เริ่ม / เล่นต่อ / ออก) | มีแล้ว |
+| แผนที่ → ต่อสู้ / หมอกดำ / กองของเซ่น / ศาล / เมรุ | มีแล้ว ยกเว้นเมรุ (ไม่มีฉาก) |
+| ชนะ → เลือกการ์ด + ได้ธูป | มีแล้ว |
+| แพ้ → ลบ save → Main Menu | มีแล้ว (panel 3 วินาที ไม่มีปุ่ม) |
+| Save / Continue (`RunState` JSON) | มีแล้ว |
+| ชนะ Boss → จบเกม | **ยังไม่มี** |
+| ขวัญต่อเนื่องข้ามการต่อสู้ | **ยังไม่มี** |
+| ศัตรูใน build | **พัง** (คืนค่า null นอก Editor) |
+| Sound, PlayerPrefs (volume), Particle, Animator, Pause, Settings, Loading screen | **ยังไม่มี** |
 
-### T2 AudioManager (ข้อ Sound + Player Preferences)
-- ไฟล์ใหม่ใน `Assets/Scripts/Audio/` namespace `TawanOS.Audio`:
-  - `AudioLibrarySO`: list ของ `{ key, AudioClip[] variants, volume }` key = ชื่อไฟล์ตัดเลข variant ออก เช่น `sfx_card_hover`
-  - `AudioManager`: singleton + `DontDestroyOnLoad` สร้างอัตโนมัติแบบเดียวกับ `GameFlowManager`
-    - 3 channel: BGM (loop, crossfade 1 วินาที), Ambience (loop), SFX (`PlayOneShot`, สุ่ม variant)
-    - `AudioMixer` ใหม่ `Assets/Audio/MainMixer.mixer` group Master/BGM/SFX expose parameter `MasterVol`, `BgmVol`, `SfxVol`
-    - `SetVolume(channel, 0..1)` แปลงเป็น dB (`Mathf.Log10(v) * 20`, v=0 → -80) แล้ว **บันทึก PlayerPrefs** key `vol_master`, `vol_bgm`, `vol_sfx` และโหลดตอนเริ่ม
-  - Editor tool `Tools/TawanOS/Audio/Build Audio Library` สแกน `Assets/Audio/**` สร้าง `AudioLibrary.asset` ใน `Resources/` อัตโนมัติ
-- การเล่นตามฉาก:
+## รอทีมตัดสิน (PM เป็นคนตัดสิน)
+
+| # | เรื่อง | ค่าในโค้ด | default ถ้ายังไม่ได้คำตอบ |
+|---|---|---|---|
+| D1 | มลทินสูงสุด | 7 | คงไว้ 7 |
+| D2 | ขวัญสูงสุดผู้เล่น | 50 (`RunState.DefaultMaxHp`) | คงไว้ 50 |
+| D3 | เครื่องรางติดตัว (relic) ในร้าน/อีเวนต์ | เก็บไว้แต่ไม่มีผล | ซ่อนจากร้านและอีเวนต์ (A6 ทางเลือก ก) |
+| D4 | ภาพการ์ด: ภาพประกอบ (`artwork`) หรือภาพสำเร็จ (`cardImage`) | ปนกัน 5 ใบเป็น `cardImage` | ใช้ `artwork` จากชุด Drive, 5 ใบเดิมคงไว้ |
+| D5 | ชื่อร้าน: ศาลตายาย (Doc) หรือ ศาลพระภูมิ (เกม) | ศาลพระภูมิ | คงตามเกม แล้วแก้ Doc |
+| D6 | โหนดวัด (ฟื้นขวัญ) ที่ Doc เขียนไว้ | ไม่มี ฟื้นขวัญอยู่ในร้าน | ไม่ทำ แก้ Doc |
+
+---
+
+## Phase A · แก้บั๊กระบบ (อังคาร 6 – พฤหัส 8 ต.ค.)
+
+ทำก่อนทุกอย่าง เพราะกระทบเกณฑ์ "เล่นจนจบ Win/Lose ได้จริง" (15%)
+
+### [ ] A0 BuildScript (ทำก่อนเพื่อจับบั๊กที่เกิดเฉพาะใน build)
+- `Assets/Scripts/Editor/BuildScript.cs` namespace `TawanOS.EditorTools`, method `BuildWindows()`
+- ใช้ scene จาก `EditorBuildSettings` ที่ enabled, เอา `SampleScene` ออกจาก Build Settings
+- output `Build/Windows/KhwanEuyKhwanMa.exe`, `EditorApplication.Exit(1)` ถ้า `BuildReport.summary.result != Succeeded`
+- **Done when:** build จาก CLI สำเร็จ, Build Settings ไม่มี `SampleScene`
+
+### [ ] A1 ศัตรูโหลดได้ใน build
+- ปัญหา: `GameFlowManager.ResolveEnemyProfile` ใช้ `AssetDatabase` ใน `#if UNITY_EDITOR` ส่วน build คืน `null` ทำให้ทุกการต่อสู้ได้ศัตรูเปล่าขวัญ 30
+- แก้: สร้าง `EncounterTableSO` (`TawanOS.GameFlow`) มี list `minor`, `elite`, `boss` เป็น `EnemyProfileSO` เก็บที่ `Assets/Resources/EncounterTable.asset` โหลดด้วย `Resources.Load` แล้วสุ่มจาก list ตาม `NodeType` ลบ path string ทั้งหมดออก
+- ใส่ค่าเริ่ม: minor = PraiGhost, elite = PraiGhost (จนกว่าจะมีศัตรูใหม่), boss = PhiTaiHongBoss
+- `EventManager` ส่งศัตรูจากอีเวนต์เป็น reference อยู่แล้ว ส่วน `TakeEditorTestEvent` ที่ใช้ `AssetDatabase` เป็นตัวช่วยทดสอบใน Editor ที่คืน null ใน build โดยตั้งใจ ไม่ต้องแก้
+- **Done when:** ไม่มีโค้ด runtime ที่ต้องพึ่ง `AssetDatabase` เพื่อให้เกมทำงาน (ยกเว้นตัวช่วยทดสอบใน Editor) และใน build การต่อสู้ Boss แสดงชื่อผีตายโหง
+
+### [ ] A2 ขวัญต่อเนื่องข้ามการต่อสู้
+- ปัญหา: `CombatManager.StartCombat` ตั้ง `playerKhwan = maxPlayerKhwan` (50) ทุกครั้ง และไม่เขียนค่ากลับ `RunState` ทำให้ฟื้นขวัญที่ร้าน หรือเสียขวัญจากอีเวนต์ไม่มีผล
+- แก้:
+  - ตอนเริ่มต่อสู้ (ใน `GameFlowManager.HandleSceneLoaded` ฝั่ง combat หรือใน `StartCombat`): ถ้า `RunState.Current.IsPersistent` ให้ `maxPlayerKhwan = RunState.MaxHp`, `playerKhwan = RunState.CurrentHp` ถ้าไม่ใช่ (เปิด CombatTestScene ตรงๆ) ใช้ค่าเดิม เพื่อไม่ให้ smoke test พัง
+  - ตอน `OnCombatEnded(true)`: เขียนขวัญที่เหลือกลับ `RunState` แล้ว save
+  - HUD ขวัญในฉากต่อสู้ต้องแสดงค่าที่อ่านมาจาก RunState
+- **Done when:** EditMode test `RunStateCombatSyncTests`: ตั้ง RunState HP 23/50 → เริ่ม combat → `playerKhwan == 23` และจบ combat ที่ 17 → `RunState.CurrentHp == 17`; smoke test ยังผ่าน
+
+### [ ] A3 ชนะ Boss = จบเกม
+- ปัญหา: ชนะ Boss → RewardScene → กลับแผนที่
+- แก้ใน `GameFlowManager.HandleCombatEnded`: ถ้า node ที่เข้ามาคือ `NodeType.Boss` → `RunState.EndRun()` + ลบ map save → เปิดหน้าจบเกม (Victory) ที่มีสรุป run (ชั้นที่ไป, ขวัญที่เหลือ, จำนวนการ์ด, ธูป) และปุ่ม "เมนูหลัก" (ใช้ร่วมกับ C3)
+- **Done when:** batch test `AutomatedRunFlowTest` (สร้างใหม่ ใน `Assets/Scripts/Editor/`): จำลองเข้า Boss แล้ว `CombatManager.EndCombat(true)` → active scene เป็นหน้า Victory และ `RunState.HasSave == false`; จำลองแพ้ → ได้หน้า Game Over
+
+### [ ] A4 เมรุใช้งานได้
+- รัน `TawanOS.GameFlow.MeruSetupTool.SetupMeruScene` สร้าง `MeruScene` แล้วใส่ Build Settings ต่อท้าย
+- ไม่มีการ์ดใบไหนตั้ง `upgradedCard` เลย (0/42) ปุ่ม "อัพเกรด" จึงถูกปิดพร้อมข้อความ "ไม่มีการ์ดที่อัพเกรดได้" อยู่แล้ว (`MeruViewUI.ShowChoice`) ไม่ต้องแก้โค้ด แค่บันทึกใน Future Work จนกว่าทีม Design จะทำการ์ดอัปเกรด
+- **Done when:** เข้าโหนดเมรุแล้วเปิดฉาก เผาการ์ดได้ จำนวนการ์ดในเด็คลด กลับแผนที่ได้
+
+### [ ] A5 อีเวนต์หมอกดำครบ
+- `EventCatalog.asset` อ้างแค่ `what` (วอดส์) ให้ใส่ `Event_GhostGamble`, `Event_SpiritHouse`, `Event_WanderingShaman`, `Event_WellVoice` และ `what` ผ่าน editor script (ห้ามรัน `SetupEventScene` ซ้ำ เพราะจะสร้างฉากใหม่ทับ)
+- แก้ชื่อ `what.asset` เป็น `Event_Wods.asset` และ title "วอดส์่" เป็น "วอดส์" (มีวรรณยุกต์เกิน)
+- ลบ `Event_New.asset` (placeholder) ถ้าไม่มีอะไรอ้างถึง
+- เปลี่ยนชื่อโหนดใน `MapEngineData/Profiles/EventProfile.asset` จาก `Unknown Omen` เป็น `หมอกดำ`
+- **Done when:** catalog มี 5 อีเวนต์ และเล่นโหนดหมอกดำ 5 ครั้งไม่เจอเรื่องซ้ำ (catalog เลือกจากที่ยังไม่เคยเจอ)
+
+### [ ] A6 เครื่องรางติดตัว (relic)
+- ปัญหา: `RunState.AddRelic` เก็บ id แต่ไม่มีโค้ดใช้ ผู้เล่นเสียธูปฟรี
+- ทางเลือก ก (default ตาม D3): ซ่อน amulet ใน `ShopConfig` และเอา effect `GainRelic` ออกจากอีเวนต์ที่ใช้ แทนด้วย `GainIncense` หรือ `CardReward`
+- ทางเลือก ข (ถ้าทีมเลือกทำ): `RelicEffects` ใน `TawanOS.GameFlow` อ่าน `RunState.RelicIds` ตอนเริ่ม combat แล้วใช้ effect ที่มีอยู่แล้ว (`AddShield`, `AddMerit`, `RaiseCorruptionThreshold`, `ApplyStatus`) map จาก relicId ทีละตัว
+- **Done when:** ไม่มีทางซื้อหรือได้ของที่ไม่มีผลในเกม
+
+### [ ] A7 ศัตรู Elite
+- ใน `EncounterTable` (A1) ใส่ศัตรู Elite ที่ต่างจาก minor: ถ้ายังไม่มี ให้ duplicate `PraiGhostProfile` เป็น `PraiGhostEliteProfile` เพิ่ม `maxKhwan` 1.5 เท่า แล้วแจ้งทีม Game Design ให้ปรับ
+- **Done when:** Elite กับ minor ใช้ profile คนละตัว
+
+---
+
+## Phase B · ข้อบังคับ Unity ที่ยังขาด (ศุกร์ 9 – อังคาร 14 ต.ค.)
+
+B1 → B2 ต้องทำตามลำดับ (Settings ใช้ AudioManager) ส่วน B4, B5, B6, B7 ทำคู่ขนานได้
+
+### [ ] B1 AudioManager (ข้อ Sound)
+- ไฟล์เสียงต้องอยู่ที่ `Assets/Audio/BGM/`, `Assets/Audio/Ambience/`, `Assets/Audio/SFX/` (ถ้ายังไม่มี ให้หยุดแล้วแจ้ง PM ให้ import จาก Drive ก่อน)
+- `Assets/Scripts/Audio/` namespace `TawanOS.Audio`:
+  - `AudioLibrarySO`: `{ key, AudioClip[] variants }` key = ชื่อไฟล์ตัด `_01`/`_02` ออก
+  - Editor tool `Tools/TawanOS/Audio/Build Audio Library` สแกน `Assets/Audio/**` สร้าง `Assets/Resources/AudioLibrary.asset`
+  - `AudioManager`: singleton + `DontDestroyOnLoad` สร้างแบบเดียวกับ `GameFlowManager`, channel BGM (loop, crossfade 1 วิ), Ambience (loop), SFX (`PlayOneShot`, สุ่ม variant)
+  - `Assets/Audio/MainMixer.mixer` group Master/BGM/SFX expose `MasterVol`, `BgmVol`, `SfxVol`
+- เพลงตามฉาก (เปลี่ยนใน `SceneManager.sceneLoaded`):
   | ฉาก | BGM | Ambience |
   |---|---|---|
   | MainMenu | `bgm_title` | `amb_map` |
-  | MapTestScene | `bgm_map` | `amb_map` |
-  | CombatTestScene ศัตรูทั่วไป | `bgm_combat` | `amb_combat` |
-  | CombatTestScene เมื่อ `NodeType.Boss` | `bgm_boss` | `amb_boss` |
-- การผูก SFX ผ่าน event ที่มีอยู่แล้ว (ห้ามแก้ logic การต่อสู้):
+  | MapTestScene, ShopScene, RewardScene, MeruScene | `bgm_map` | `amb_map` |
+  | EventScene | `bgm_event` | `amb_event` |
+  | CombatTestScene ศัตรูทั่วไป/Elite | `bgm_combat` | `amb_combat` |
+  | CombatTestScene Boss | `bgm_boss` | `amb_boss` |
+- SFX ผ่าน event ที่มีอยู่ (ถ้า event ที่ต้องการยังไม่มี ให้เพิ่ม `event` 1 บรรทัดในคลาสต้นทาง ห้ามแก้ logic):
   | Event | SFX |
   |---|---|
-  | `CardManager.OnCardDrawn` | `sfx_card_draw` |
-  | `CardManager.OnCardPlayed` | `sfx_card_play` |
-  | `CardManager.OnDeckReshuffled` | `sfx_card_shuffle` |
+  | `CardManager.OnCardDrawn` / `OnCardPlayed` / `OnDeckReshuffled` | `sfx_card_draw` / `sfx_card_play` / `sfx_card_shuffle` |
   | hover การ์ดใน `CardPlayController3D` | `sfx_card_hover` |
   | `CombatManager.OnMeritChanged` เมื่อค่าเพิ่ม | `sfx_merit_gain` |
   | `CombatManager.OnCurseBackfireTriggered` | `sfx_corruption_break` + `sfx_corruption_thunder` |
-  | `TurnPhaseController` จบเทิร์นผู้เล่น | `sfx_turn_end` |
-  | ขวัญผู้เล่นลด (`TakeDamage` toPlayer) | `sfx_hit_taken` + `sfx_khwan_shake` |
+  | `TurnPhaseController` เข้า `TurnPhase.End` | `sfx_turn_end` |
+  | ขวัญผู้เล่นลด (เพิ่ม event `OnPlayerDamaged` ใน `TakeDamageInternal`) | `sfx_hit_taken` + `sfx_khwan_shake` |
   | บริวารโจมตี (`BoardClashView3D`) | `sfx_attack` |
-  | เริ่มต่อสู้ / ขวัญหมด | `sfx_fire_on` / `sfx_fire_off` |
-  | ศัตรูตาย / ชนะ | `sfx_scream` |
-  ถ้า event ที่ต้องการยังไม่มี ให้เพิ่ม `event` ใน class ต้นทางแค่บรรทัดเดียวแล้ว invoke ตรงจุดเดิม
-- **Done when:** compile ผ่าน, smoke test ผ่าน, EditMode test `AudioLibraryTests` ยืนยันว่า key ทุกตัวในตารางข้างบนหาเจอ และ PlayerPrefs เก็บ/อ่านค่า volume ได้
+  | เริ่มต่อสู้ / แพ้ | `sfx_fire_on` / `sfx_fire_off` |
+  | ศัตรูตาย, ชนะ | `sfx_scream` |
+- **Done when:** EditMode test `AudioLibraryTests` ยืนยันว่า key ทุกตัวในสองตารางนี้หาเจอ
 
----
+### [ ] B2 Settings + PlayerPrefs (ข้อ Player Preferences)
+- `AudioManager.SetVolume(channel, 0..1)` แปลง dB (`v <= 0.0001 ? -80 : Mathf.Log10(v) * 20`) บันทึก PlayerPrefs key `vol_master`, `vol_bgm`, `vol_sfx` และโหลดตอนเริ่ม
+- Settings panel (prefab ใช้ร่วมกันใน Main Menu และ Pause): slider 3 ตัว + toggle fullscreen (`Screen.fullScreen` เก็บใน PlayerPrefs `fullscreen`)
+- เพิ่มปุ่ม "ตั้งค่า" ใน `MainMenuUI`
+- **Done when:** EditMode test ตั้ง volume → อ่านจาก PlayerPrefs ได้ค่าเดิม; ปิดเปิดเกมแล้วค่า slider ยังอยู่
 
-## Phase 2 · ปิด Core Loop (พฤหัส 9 – จันทร์ 12 ต.ค.)
+### [ ] B3 Pause, Game Over, Victory (ข้อ UI/UX)
+- Pause: prefab overlay สร้างโดย `PauseMenu` ที่ auto-create แบบ `GameFlowManager` ทำงานทุกฉากยกเว้น MainMenu กด `Esc` (Input System) → `Time.timeScale = 0` ปุ่ม: เล่นต่อ, ตั้งค่า, กลับเมนูหลัก (save ไว้ก่อนออก)
+- Game Over: แทน panel 3 วินาทีเดิม เป็นหน้าที่มีข้อความ, สรุป run และปุ่ม "เริ่มใหม่" / "เมนูหลัก" ไม่เด้งกลับเอง
+- Victory: หน้าจาก A3
+- ฟอนต์ Sarabun/Charm (TMP), ปุ่มอย่างน้อย 44×44 px, contrast ข้อความ 4.5:1 (WCAG AA), ทุกปุ่มกดด้วยคีย์บอร์ดได้
+- **Done when:** กด Esc ในทุกฉากเกมแล้วเกมหยุดและเล่นต่อได้; แพ้แล้วเห็นปุ่มทั้งสอง
 
-### T3 RunState: ข้อมูลข้ามฉาก (ข้อ Serialization)
-- ไฟล์ใหม่ `Assets/Scripts/Run/RunState.cs` namespace `TawanOS.Run` เก็บ: `playerKhwan`, `maxPlayerKhwan`, `incense`, `deckCardIds` (List<string>), `floorReached`, `bossDefeated`
-- `RunStateService`: singleton, `NewRun(DeckConfigSO starter)`, `Save()` / `Load()` เป็น JSON ด้วย `JsonUtility` ที่ `Application.persistentDataPath/run_save.json` (แยกจาก `map_save.json` เดิม)
-- แก้ `CombatManager.StartCombat`: อ่านขวัญจาก RunState แทน `state.playerKhwan = state.maxPlayerKhwan` (บรรทัด ~68) เมื่อ RunState มีอยู่ ถ้าไม่มี (เปิด CombatTestScene ตรงๆ) ใช้ค่าเดิม เพื่อไม่ให้ smoke test พัง
-- เมื่อ `OnCombatEnded(true)`: เขียนขวัญที่เหลือกลับ RunState, ให้ธูปรางวัล (ค่าเริ่ม 10 ธูป, Elite 20, ใส่เป็น `[SerializeField]`), Save
-- **Done when:** EditMode test `RunStateTests` ยืนยัน save → load ได้ค่าเดิม และ smoke test ยังผ่าน
+### [ ] B4 Loading / transition (ข้อ Scene Management)
+- `Assets/Scripts/GameFlow/SceneLoader.cs`: overlay fade (CanvasGroup) → `SceneManager.LoadSceneAsync` แสดง progress → fade in
+- แทน `SceneManager.LoadScene(` ทุกจุดใน `GameFlowManager`, `MainMenuUI`, Event/Shop/Reward/Meru ด้วย `SceneLoader.Load(name)`
+- **Done when:** `grep -rn "SceneManager.LoadScene(" Assets/Scripts --include=*.cs` เหลือแค่ใน SceneLoader และ Editor scripts
 
-### T4 Win / Lose Flow
-- ตอนนี้ `CombatHUD.HandleCombatEnded` เปิด `victoryPanel` / `defeatPanel` ในฉาก Combat ส่วน `GameFlowManager` ข้ามกรณีแพ้ (`if (!isVictory) return;`)
-- `GameFlowManager.HandleCombatEnded` (เก็บ `NodeType` ที่เข้ามาไว้ใน field `pendingNodeType` ตอน `HandleCombatNodeEntered`):
-  - แพ้ → โหลด GameOver (T6) แทนการค้างที่ Defeat panel
-  - ชนะ Boss (`pendingNodeType == NodeType.Boss`) → `RunState.bossDefeated = true` → หน้า Victory
-  - ชนะทั่วไป → กลับแผนที่ (เดิม)
-- Restart: `RunStateService.NewRun` + `MapManager.ResetAndRegenerate` (มีอยู่แล้ว) + ลบ save
-- **Done when:** เขียน batch method ใหม่ `AutomatedRunFlowTest` ที่จำลอง: เริ่ม run → combat แพ้ → ได้ GameOver; เริ่มใหม่ → ชนะ boss → ได้ Victory (สั่งผลแพ้/ชนะผ่าน `CombatManager.EndCombat(bool)` ได้เลย)
-
-### T5 โหนดที่ไม่ใช่การต่อสู้
-- `MapManager`: เพิ่ม `event Action<NodeType> OnNodeEntered` ยิงทุกครั้งที่เลือกโหนด (คง `OnCombatNodeEntered` ไว้เพื่อไม่ให้ของเดิมพัง)
-- ไฟล์ใหม่ `Assets/Scripts/GameFlow/NodeEventPanels.cs` เป็น overlay บนฉากแผนที่ (ไม่ต้องสร้างฉากใหม่):
-  | NodeType | ชื่อในเกม | ทำอะไร |
-  |---|---|---|
-  | `RestSite` | วัด | ฟื้นขวัญ 30% ของสูงสุด (`[SerializeField]`) |
-  | `Store` | ศาลตายาย | แสดงการ์ดสุ่ม 3 ใบ ใช้ธูปซื้อ เข้าเด็คใน RunState ราคา: `CardDataSO` ยังไม่มีช่องราคา ให้เพิ่ม `public int incensePrice` (ค่าเริ่ม = `(meritCost + corruptionGain) * 5`) แล้วให้ Game Designer ปรับใน asset ตามสูตรมูลค่าการ์ดใน Sheet |
-  | `Treasure` | กองของเซ่น | เลือกการ์ด 1 จาก 3 ฟรี |
-- ปิด panel แล้วโหนดถัดไปเปิดตามปกติ (ใช้ระบบ NodeStatus เดิม)
-- **Done when:** RunState เปลี่ยนตามที่ตาราง และ map save/load ยังทำงาน
-
----
-
-## Phase 3 · ข้อบังคับ Unity ที่เหลือ (อังคาร 13 – อังคาร 14 ต.ค.)
-
-T6, T8, T9 ทำคู่ขนานได้ (คนละไฟล์กัน)
-
-### T6 UI: Main Menu, Pause, Game Over, Victory, Settings
-- ฉากใหม่ `Assets/Scenes/MainMenu.unity` สร้างผ่าน editor script `Tools/TawanOS/UI/Build Menu Scenes` (ห้ามเขียน YAML ฉากเอง)
-  - ปุ่ม: เริ่มเกม, เล่นต่อ (แสดงเมื่อมี `run_save.json`), ตั้งค่า, เครดิต, ออก
-- Pause: prefab overlay ใช้ได้ทั้ง Map และ Combat กด `Esc` (Input System) → `Time.timeScale = 0` ปุ่ม: เล่นต่อ, ตั้งค่า, กลับเมนูหลัก
-- Settings: slider Master/BGM/SFX เรียก `AudioManager.SetVolume` (ค่าถูกเก็บ PlayerPrefs จาก T2)
-- GameOver และ Victory: overlay หรือฉากเล็ก ปุ่ม เริ่มใหม่ / เมนูหลัก
-- ใช้ฟอนต์ Sarabun/Charm ที่มีอยู่ (TMP) ข้อความภาษาไทย ปุ่มขนาดอย่างน้อย 44×44 px และ contrast ข้อความ 4.5:1 (WCAG AA)
-- **Done when:** กด Esc ในทั้งสองฉากแล้วเกมหยุด, ปรับ slider แล้วปิดเปิดเกมใหม่ค่ายังอยู่
-
-### T7 Scene transition + loading screen (ข้อ Scene Management)
-- `Assets/Scripts/GameFlow/SceneLoader.cs`: fade out → `SceneManager.LoadSceneAsync` แสดง progress → fade in
-- แทนที่ `SceneManager.LoadScene` ทุกจุดใน `GameFlowManager` ด้วย `SceneLoader.Load(name)`
-- **Done when:** ไม่มี `SceneManager.LoadScene(` เหลือใน `Assets/Scripts` นอกจากใน SceneLoader (เช็คด้วย grep)
-
-### T8 Particle / VFX
-- prefab ใน `Assets/VFX/` ใช้ `ParticleSystem` built-in:
-  - `VFX_IncenseSmoke` ควันธูปลอยช้า วางบนโต๊ะ CombatTestScene
-  - `VFX_CandleFlame` เปลวเทียน วางบนเทียนที่มีอยู่ (`CandleMat`)
-  - `VFX_CardPlayBurst` ระเบิดแสงสั้นๆ ตอน `OnCardPlayed` สีทองสำหรับมนต์ขาว สีแดงคล้ำสำหรับมนต์ดำ
+### [ ] B5 Particle / VFX
+- prefab ใน `Assets/VFX/` (ParticleSystem built-in) สร้างจาก editor script:
+  - `VFX_IncenseSmoke` บนโต๊ะ CombatTestScene และในฉากศาล
+  - `VFX_CandleFlame` บนเทียน (`CandleMat`)
+  - `VFX_CardPlayBurst` ตอน `OnCardPlayed` สีทอง = มนต์ขาว, แดงคล้ำ = มนต์ดำ
   - `VFX_CorruptionBurst` ตอน `OnCurseBackfireTriggered`
-- สร้าง prefab ผ่าน editor script เพื่อให้รันซ้ำได้
-- **Done when:** prefab 4 ตัวอยู่ใน `Assets/VFX/` และถูกเรียกใช้ในฉาก/โค้ดจริง
+  - `VFX_BurnCard` ตอนเผาการ์ดที่เมรุ
+- **Done when:** prefab 5 ตัวมีอยู่และถูกใช้ในฉาก/โค้ดจริง
 
-### T9 Animator Controller (ข้อ Animation)
-- โจทย์ต้องการ Animator Controller / State Machine จริง DOTween อย่างเดียวไม่นับ
-- ทำ `Assets/Animation/EnemyPresence.controller` สำหรับศัตรูฝั่งตรงข้ามโต๊ะ (หรือ placeholder ที่มีอยู่):
-  states `Idle` → `Attack` → `Hit` → `Death` ด้วย trigger `attack`, `hit`, `die` และ clip ที่สร้างจาก transform (ขยับ/สั่น/จางหาย) ได้ ไม่ต้องมี rig
-- ตัวขับ: `EnemyAnimatorDriver.cs` subscribe `CombatManager.OnEnemyAction`, `TakeDamage` ฝั่งศัตรู, `OnCombatEnded`
-- ทางเลือกเพิ่ม: Animator ของปุ่มเมนูหรือมือผู้เล่น
-- **Done when:** controller มีอย่างน้อย 4 state + transition ด้วย parameter และเห็นทำงานตอนต่อสู้
+### [ ] B6 Animator Controller (ข้อ Animation)
+- DOTween อย่างเดียวไม่นับ ต้องเป็น Animator Controller ที่มี state + transition
+- `Assets/Animation/EnemyPresence.controller`: `Idle` → `Attack` → `Hit` → `Death` ด้วย trigger `attack`, `hit`, `die` clip สร้างจาก transform (ขยับ/สั่น/จาง) ไม่ต้องมี rig
+- `EnemyAnimatorDriver.cs` subscribe `CombatManager.OnEnemyAction`, ศัตรูโดนดาเมจ, `OnCombatEnded`
+- ทางเลือกเพิ่ม: Animator ปุ่ม Main Menu (Normal/Highlighted/Pressed)
+- **Done when:** controller มีอย่างน้อย 4 state + transition ด้วย parameter และทำงานตอนต่อสู้
 
-### T10 Build settings + BuildScript
-- Build scenes ตามลำดับ: `MainMenu`, `MapTestScene`, `CombatTestScene` และเอา `SampleScene` ออก
-- `Assets/Scripts/Editor/BuildScript.cs` namespace `TawanOS.EditorTools` method `BuildWindows()` → `Build/Windows/KhwanEuyKhwanMa.exe` exit code ≠ 0 ถ้า build ล้ม
-- **Done when:** build จาก CLI สำเร็จ และเปิด exe แล้วเริ่มจาก Main Menu
+### [ ] B7 ผูกภาพการ์ดจาก Drive
+- ภาพอยู่ที่ `Assets/Art/Cards/` ชื่อ `s_<cardId>_<ชื่อไทย>.png` (ถ้ายังไม่มี ให้แจ้ง PM ให้ import)
+- `Assets/Scripts/CardEngine/Editor/CardArtBinder.cs`: ตั้ง importer เป็น Sprite, ตัด `s_xxxx` จากชื่อไฟล์, ใส่ `artwork` ของ `CardDataSO` ที่ `cardId` ตรงกัน **ไม่แตะ `cardImage`** ของ 5 ใบที่ตั้งไว้แล้ว
+- MenuItem `Tools/TawanOS/Card Engine/Bind Card Art` + `BindFromCli()`
+- **Done when:** log `bound=29 missing=<จำนวน> orphan=0` และการ์ดในเกมแสดงภาพ
 
 ---
 
-## Phase 4 · ทดสอบและเอกสาร (พุธ 15 – จันทร์ 19 ต.ค.)
+## Phase C · ทดสอบและเอกสาร (พุธ 15 – จันทร์ 19 ต.ค.)
 
-### T11 Test ที่ต้องผ่านก่อน Playtest (พุธ 14 ต.ค. เย็น)
+### [ ] C1 Gate ก่อน Playtest (อังคาร 14 ต.ค. เย็น)
 - [ ] compile ไม่มี `error CS`
 - [ ] `AutomatedCombatFlowTest` ผ่าน
-- [ ] `AutomatedRunFlowTest` ผ่าน (T4)
-- [ ] EditMode tests ผ่านทั้งหมด (`AudioLibraryTests`, `RunStateTests`, `CardArtBinderTests`)
-- [ ] Build Windows สำเร็จ
+- [ ] `AutomatedRunFlowTest` ผ่าน (A3)
+- [ ] EditMode tests ผ่านทั้งหมด
+- [ ] Build Windows สำเร็จ และเล่นใน .exe จาก Main Menu → ชนะ Boss ได้ 1 รอบ
 
-### T12 Playtest support
-- สร้าง `Docs/Testing/playtest_log.md` เป็นแบบฟอร์ม: ผู้เล่น, วันที่, เล่นถึงชั้นไหน, ชนะ/แพ้, เวลาที่ใช้, บั๊ก, ความเห็น, สิ่งที่แก้ (ก่อน/หลัง)
-- (เสริม) `RunTelemetry`: บันทึก CSV ลง `persistentDataPath` ทุกจบการต่อสู้: ชั้น, เทิร์น, ขวัญที่เหลือ, การ์ดที่ใช้ ใช้เป็นตัวเลขในรายงานส่วน Testing
+### [ ] C2 Playtest support
+- `Docs/Testing/playtest_log.md` แบบฟอร์ม: ผู้เล่น, วันที่, ชั้นที่ไปถึง, ชนะ/แพ้, เวลา, บั๊ก, ความเห็น, สิ่งที่แก้ (ก่อน/หลัง)
+- (เสริม) `RunTelemetry`: เขียน CSV ที่ `persistentDataPath` ทุกจบต่อสู้: ชั้น, ประเภทศัตรู, จำนวนเทิร์น, ขวัญที่เหลือ, การ์ดที่ใช้
 
-### T13 ข้อมูลสำหรับรายงานส่วน 7.4 Technical Documentation
-- `Docs/Report/unity_features.md` ตาราง: ข้อบังคับ → class/ไฟล์/ฉากที่ใช้ → อธิบาย 1 บรรทัด
-- `Docs/Report/class_diagram.md` Mermaid class diagram ของ class หลัก: GameFlowManager, SceneLoader, RunStateService, MapManager, CombatManager, CardManager, EffectResolver, EnemyCardPlayer, EnemyStateMachine, AudioManager
-- `Docs/Report/enemy_fsm.md` อธิบาย `EnemyStateMachine` เป็น state diagram (Mermaid `stateDiagram-v2`) สำหรับ bonus AI +6 ไม่ต้องอธิบายโค้ด
-- `Docs/Report/tech_issues.md` ปัญหาทางเทคนิคและวิธีแก้ ดึงจาก git log (เช่น turn loop ซ้อนกันใน GameFlowManager, การ flip กล้องแผนที่)
+### [ ] C3 ข้อมูลสำหรับรายงานส่วน 7.4 Technical Documentation
+- `Docs/Report/unity_features.md`: ข้อบังคับ 8 ข้อ → class/ไฟล์/ฉาก → หน้าที่ 1 บรรทัด
+- `Docs/Report/class_diagram.md`: Mermaid class diagram ของ GameFlowManager, RunState, SceneLoader, MapManager, CombatManager, CardManager, EffectResolver, EnemyCardPlayer, EnemyStateMachine, EventManager, ShopManager, RewardManager, MeruManager, AudioManager
+- `Docs/Report/enemy_fsm.md`: `EnemyStateMachine` เป็น `stateDiagram-v2` สำหรับ bonus AI (+6) ไม่ต้องอธิบายโค้ด
+- `Docs/Report/game_flow.md`: `flowchart` ของฉากทั้งหมดตามโค้ดจริง ใช้แทน Diagram เดิมในรายงาน
+- `Docs/Report/tech_issues.md`: ปัญหาทางเทคนิคและวิธีแก้ จาก git log (turn loop ซ้อน, flip กล้องแผนที่, AssetDatabase ใน build, HP ไม่ sync)
 
 ---
 
-## ลำดับเวลาโดยสรุป
+## ลำดับเวลา
 
-| วัน | Task |
+| วัน | งาน |
 |---|---|
-| จ. 5 – พ. 7 | T0.1, T0.2 (รอทีมตัดสิน) |
-| พ. 8 | T1, T2 |
-| พฤ. 9 – จ. 12 | T3, T4, T5 |
-| อ. 13 – อ. 14 | T6, T7, T8, T9, T10, T11 |
+| อ. 6 – พฤ. 8 | A0 – A7 |
+| ศ. 9 – จ. 12 | B1, B2, B3, B7 |
+| อ. 13 – อ. 14 | B4, B5, B6, C1 |
 | พ. 15 | Playtest รอบ 1 |
-| พฤ. 16 – จ. 19 | แก้จาก playtest, T12, T13 |
+| พฤ. 16 – จ. 19 | แก้จาก playtest, C2, C3 |
 | อ. 20 | build สุดท้ายขึ้น Drive (`Build/`, `Source/`), ซ้อมนำเสนอ |
 
 ## ไม่อยู่ใน scope (ใส่รายงานส่วน Future Work)
-- โหนดหมอกดำ (Visual Novel event) และเมรุ (อัปเกรด/ทิ้งการ์ด) ถ้าทีมยืนยันว่าตัด
-- ภาพการ์ดที่ยังขาด 13 ใบ ใช้ภาพ placeholder จาก `Card_Template_Base.png` ไปก่อน
+- อัปเกรดการ์ดที่เมรุ (ยังไม่มีการ์ดเวอร์ชันอัปเกรด)
+- โหนดวัด และจุดพักตอนเริ่มเกม ตาม Diagram
+- ลำดับการลงการ์ดและการทำงานของอาคมตาม Diagram (โค้ดให้ผู้เล่นลงก่อน และอาคมทำงานทันที)
