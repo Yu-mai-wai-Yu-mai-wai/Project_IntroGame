@@ -154,6 +154,16 @@ namespace TawanOS.GameFlow
             Changed();
         }
 
+        /// <summary>
+        /// Sets HP to an exact value, used to carry the Khwan left at the end of a combat back into the run
+        /// (plan task A2). Never below 1: the run ends through defeat, not through this call.
+        /// </summary>
+        public void SetCurrentHp(int hp)
+        {
+            CurrentHp = Mathf.Clamp(hp, 1, MaxHp);
+            Changed();
+        }
+
         public void ChangeMaxHp(int delta)
         {
             MaxHp = Mathf.Max(1, MaxHp + delta);

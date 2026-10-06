@@ -199,6 +199,12 @@ namespace TawanOS.GameFlow
                 CombatManager.Instance.OnCombatEnded += HandleCombatEnded;
                 combatEndHandled = false;
 
+                // Enter the fight with the Khwan the run has left (not full), see HandleCombatEnded for the way back
+                if (RunState.Current.IsPersistent)
+                {
+                    CombatManager.Instance.SetStartingKhwan(RunState.Current.CurrentHp, RunState.Current.MaxHp);
+                }
+
                 if (pendingEnemyProfile != null)
                 {
                     var profile = pendingEnemyProfile;
@@ -315,6 +321,13 @@ namespace TawanOS.GameFlow
                 new MapSaveManager().ClearSavedMap();
                 StartCoroutine(GoToMainMenuAfterDelay());
                 return;
+            }
+
+            // Khwan left after the fight is what the run keeps (plan task A2). Only a run that exists in a save
+            // is written back, so a combat scene opened on its own does not touch it.
+            if (RunState.Current.IsPersistent && CombatManager.Instance != null)
+            {
+                RunState.Current.SetCurrentHp(CombatManager.Instance.State.playerKhwan);
             }
 
             // The fight is won: a quit from here on no longer replays it

@@ -68,10 +68,28 @@ namespace TawanOS.CardEngine
             }
         }
 
+        // Khwan carried in from the run (plan task A2). Unset when the combat scene is opened on its own,
+        // so CombatTestScene and the smoke test keep starting at full Khwan.
+        private int? startingPlayerKhwan;
+        private int? startingMaxPlayerKhwan;
+
+        /// <summary>Sets the Khwan the player enters the next StartCombat with (current out of max).</summary>
+        public void SetStartingKhwan(int current, int max)
+        {
+            startingMaxPlayerKhwan = Mathf.Max(1, max);
+            startingPlayerKhwan = Mathf.Clamp(current, 1, startingMaxPlayerKhwan.Value);
+        }
+
+        private void ApplyPlayerStartingKhwan()
+        {
+            if (startingMaxPlayerKhwan.HasValue) state.maxPlayerKhwan = startingMaxPlayerKhwan.Value;
+            state.playerKhwan = startingPlayerKhwan ?? state.maxPlayerKhwan;
+        }
+
         public void StartCombat(EnemyProfileSO enemyProfile)
         {
             currentEnemyProfile = enemyProfile;
-            state.playerKhwan = state.maxPlayerKhwan;
+            ApplyPlayerStartingKhwan();
             state.enemyKhwan = enemyProfile != null ? enemyProfile.maxKhwan : 30;
             state.maxEnemyKhwan = state.enemyKhwan;
             state.currentCorruption = 0;
