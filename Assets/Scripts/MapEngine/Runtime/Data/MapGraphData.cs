@@ -42,6 +42,8 @@ namespace TawanOS.MapEngine
             return null;
         }
 
+        public NodeBlueprint GetNodeAt(Vector2Int pos) => GetNode(pos);
+
         public List<NodeBlueprint> GetNodesOnFloor(int floorIndex)
         {
             if (floorIndex >= 0 && floorIndex < floors.Count)

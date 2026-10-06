@@ -224,7 +224,7 @@ namespace TawanOS.EditorTools
                 var current = queue.Dequeue();
                 if (current.y == bossFloor) return true;
 
-                var node = graph.GetNodeAt(current);
+                var node = graph.GetNode(current);
                 if (node == null) continue;
 
                 foreach (var outPos in node.outgoingConnections)
