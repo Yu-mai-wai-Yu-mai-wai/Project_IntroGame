@@ -68,6 +68,7 @@ namespace TawanOS.CardEngine
                 if (handCards.Count >= maxHandSize)
                 {
                     Debug.LogWarning("[CardManager] Hand is full! Cannot draw more cards.");
+                    TawanOS.UI.PlayerNotice.Show(PlayBlockReasons.HandFull);
                     break;
                 }
 
@@ -101,6 +102,34 @@ namespace TawanOS.CardEngine
             return turns == null || !turns.isActiveAndEnabled || turns.CanPlayCard(card);
         }
 
+        /// <summary>
+        /// Why this card cannot be played right now, in Thai for the player, or null when it can be played.
+        /// Same checks and order as PlayCard (phase, Merit, target/board space).
+        /// </summary>
+        public string GetPlayBlockReason(CardInstance card)
+        {
+            if (card == null) return null;
+
+            var turns = TurnPhaseController.Instance;
+            if (turns != null && turns.isActiveAndEnabled && !turns.CanPlayCard(card))
+            {
+                return PlayBlockReasons.ForPhase(turns.CurrentPhase, card.cardType) ?? "ตอนนี้ยังเล่นการ์ดนี้ไม่ได้";
+            }
+
+            if (!CanAfford(card))
+            {
+                return PlayBlockReasons.NotEnoughMerit(card.meritCost, CombatManager.Instance.State.currentMerit);
+            }
+
+            var resolver = EffectResolver.Instance;
+            if (resolver != null && !resolver.CanResolve(card, casterIsPlayer: true))
+            {
+                return card.cardType == CardType.Incantation ? PlayBlockReasons.NoTarget : PlayBlockReasons.BoardFull;
+            }
+
+            return null;
+        }
+
         public bool PlayCard(CardInstance card, object target = null)
         {
             if (card == null || !handCards.Contains(card)) return false;
@@ -108,6 +137,7 @@ namespace TawanOS.CardEngine
             if (!IsAllowedNow(card))
             {
                 Debug.Log($"[CardManager] {card.cardNameThai} cannot be played in this phase");
+                TawanOS.UI.PlayerNotice.Show(GetPlayBlockReason(card));
                 return false;
             }
 
@@ -123,6 +153,7 @@ namespace TawanOS.CardEngine
                 Debug.Log(card.cardType == CardType.Incantation
                     ? $"[CardManager] {card.cardNameThai} has no valid target right now"
                     : $"[CardManager] The board is full; {card.cardNameThai} cannot be played");
+                TawanOS.UI.PlayerNotice.Show(GetPlayBlockReason(card));
                 return false;
             }
 
@@ -131,6 +162,7 @@ namespace TawanOS.CardEngine
                 && !CombatManager.Instance.SpendMerit(card.meritCost))
             {
                 Debug.LogWarning($"[CardManager] Not enough Merit to play {card.cardNameThai} (Needs {card.meritCost})");
+                TawanOS.UI.PlayerNotice.Show(PlayBlockReasons.NotEnoughMerit(card.meritCost, CombatManager.Instance.State.currentMerit));
                 return false;
             }
 
@@ -168,6 +200,7 @@ namespace TawanOS.CardEngine
             if (handCards.Count >= maxHandSize)
             {
                 Debug.LogWarning("[CardManager] Hand is full! The pit gives nothing.");
+                TawanOS.UI.PlayerNotice.Show(PlayBlockReasons.HandFull);
                 return false;
             }
 
