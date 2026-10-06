@@ -86,3 +86,4 @@ MonoBehaviour:
   - key: sfx_turn_end
     variants:
     - {fileID: 8300000, guid: 2ace604462294f948b251509f930f8bb, type: 3}
+  mixer: {fileID: 24100000, guid: c572231dbc4d0cc45acf933280d44651, type: 2}

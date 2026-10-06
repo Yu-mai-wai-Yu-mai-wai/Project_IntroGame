@@ -22,6 +22,9 @@ namespace TawanOS.Audio
 
         public List<Entry> entries = new List<Entry>();
 
+        [Tooltip("Optional. When set, every AudioSource outputs to this mixer's Master group. Filled by Build Audio Library from Assets/MainMixer.mixer.")]
+        public UnityEngine.Audio.AudioMixer mixer;
+
         private static AudioLibrarySO cached;
         private Dictionary<string, Entry> lookup;
 

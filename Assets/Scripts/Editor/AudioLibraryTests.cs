@@ -34,6 +34,8 @@ namespace TawanOS.EditorTools
             failures += Expect("AudioLibrary loads through Resources", library != null);
             if (library != null)
             {
+                failures += Expect("AudioLibrary references MainMixer", library.mixer != null && library.mixer.name == "MainMixer");
+                failures += Expect("MainMixer has a Master group", library.mixer != null && library.mixer.FindMatchingGroups("Master").Length > 0);
                 foreach (string key in RequiredKeys)
                     failures += Expect($"key '{key}' has at least one clip", library.Contains(key));
             }
@@ -43,6 +45,9 @@ namespace TawanOS.EditorTools
             failures += Expect("VolumeToDb(1) = 0 dB", Mathf.Approximately(AudioManager.VolumeToDb(1f), 0f));
             failures += Expect("VolumeToDb(0.5) is about -6 dB", Mathf.Abs(AudioManager.VolumeToDb(0.5f) + 6.0206f) < 0.01f);
             failures += Expect("VolumeToDb(0) = -80 dB", AudioManager.VolumeToDb(0f) == -80f);
+
+            failures += Expect("Default music volume is below effects volume (effects are mastered quieter)",
+                AudioManager.DefaultVolume(AudioChannel.Bgm) < AudioManager.DefaultVolume(AudioChannel.Sfx));
 
             // B2: save, read back; restore whatever the developer had set
             foreach (AudioChannel channel in System.Enum.GetValues(typeof(AudioChannel)))

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace TawanOS.Audio
 {
@@ -29,6 +30,7 @@ namespace TawanOS.Audio
         private string currentBgmKey, currentAmbienceKey;
         private Coroutine crossfade;
         private AudioLibrarySO library;
+        private UnityEngine.Audio.AudioMixerGroup outputGroup;
         private readonly HashSet<string> warned = new HashSet<string>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -50,19 +52,41 @@ namespace TawanOS.Audio
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
+            library = AudioLibrarySO.Load();
+            if (library == null) Debug.LogWarning("[AudioManager] Resources/AudioLibrary not found. Run Tools/TawanOS/Audio/Build Audio Library.");
+            if (library != null && library.mixer != null)
+            {
+                var groups = library.mixer.FindMatchingGroups("Master");
+                if (groups.Length > 0) outputGroup = groups[0];
+            }
+
             bgmA = NewSource("BgmA", loop: true);
             bgmB = NewSource("BgmB", loop: true);
             ambience = NewSource("Ambience", loop: true);
             sfx = NewSource("Sfx", loop: false);
             bgmActive = bgmA;
-            library = AudioLibrarySO.Load();
-            if (library == null) Debug.LogWarning("[AudioManager] Resources/AudioLibrary not found. Run Tools/TawanOS/Audio/Build Audio Library.");
             ApplyVolumes();
+
+            // Most game scenes ship without an AudioListener, and Unity plays nothing without one.
+            // This object lives for the whole session, so it owns the one listener; others get switched off.
+            gameObject.AddComponent<AudioListener>();
+            SceneManager.sceneLoaded += OnSceneLoadedMuteOtherListeners;
+            MuteOtherListeners();
         }
 
         private void OnDestroy()
         {
+            SceneManager.sceneLoaded -= OnSceneLoadedMuteOtherListeners;
             if (Instance == this) Instance = null;
+        }
+
+        private void OnSceneLoadedMuteOtherListeners(Scene scene, LoadSceneMode mode) => MuteOtherListeners();
+
+        private void MuteOtherListeners()
+        {
+            var own = GetComponent<AudioListener>();
+            foreach (var listener in FindObjectsByType<AudioListener>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (listener != own && listener.enabled) listener.enabled = false;
         }
 
         private AudioSource NewSource(string name, bool loop)
@@ -73,6 +97,7 @@ namespace TawanOS.Audio
             src.playOnAwake = false;
             src.loop = loop;
             src.spatialBlend = 0f;
+            if (outputGroup != null) src.outputAudioMixerGroup = outputGroup;
             return src;
         }
 
@@ -166,7 +191,11 @@ namespace TawanOS.Audio
             }
         }
 
-        public static float LoadVolume(AudioChannel channel) => Mathf.Clamp01(PlayerPrefs.GetFloat(PrefKey(channel), 1f));
+        // The card and UI sound effects were mastered 10-20 dB quieter than the music (measured with ffmpeg
+        // volumedetect, see PLAN B1), so music starts lower to keep effects audible. Players can change it in Settings.
+        public static float DefaultVolume(AudioChannel channel) => channel == AudioChannel.Bgm ? 0.5f : 1f;
+
+        public static float LoadVolume(AudioChannel channel) => Mathf.Clamp01(PlayerPrefs.GetFloat(PrefKey(channel), DefaultVolume(channel)));
 
         public static void SaveVolume(AudioChannel channel, float value)
         {

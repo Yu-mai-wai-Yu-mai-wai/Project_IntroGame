@@ -15,6 +15,7 @@ namespace TawanOS.EditorTools
     {
         private const string AudioRoot = "Assets/Audio";
         private const string LibraryPath = "Assets/Resources/AudioLibrary.asset";
+        private const string MixerPath = "Assets/MainMixer.mixer";
 
         [MenuItem("Tools/TawanOS/Audio/Build Audio Library")]
         public static void RunFromMenu() { Build(); }
@@ -47,6 +48,9 @@ namespace TawanOS.EditorTools
                 library = ScriptableObject.CreateInstance<AudioLibrarySO>();
                 AssetDatabase.CreateAsset(library, LibraryPath);
             }
+
+            library.mixer = AssetDatabase.LoadAssetAtPath<UnityEngine.Audio.AudioMixer>(MixerPath);
+            if (library.mixer == null) Debug.LogWarning($"[AudioLibraryBuilder] {MixerPath} not found; audio plays without a mixer.");
 
             library.entries = new List<AudioLibrarySO.Entry>();
             foreach (var pair in byKey)
