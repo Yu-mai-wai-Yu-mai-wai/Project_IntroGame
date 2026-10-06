@@ -331,16 +331,18 @@ namespace TawanOS.MapEngine
                 double roll = random.NextDouble();
                 if (floorIndex < 4)
                 {
-                    if (roll < 0.65) rolledType = NodeType.MinorEnemy;
+                    if (roll < 0.50) rolledType = NodeType.MinorEnemy;
+                    else if (roll < 0.70) rolledType = NodeType.Event;
                     else if (roll < 0.85) rolledType = NodeType.Store;
                     else rolledType = NodeType.RestSite;
                 }
                 else
                 {
-                    if (roll < 0.45) rolledType = NodeType.MinorEnemy;
-                    else if (roll < 0.65) rolledType = (floorIndex >= minElite) ? NodeType.EliteEnemy : NodeType.MinorEnemy;
-                    else if (roll < 0.80) rolledType = NodeType.Treasure;
-                    else if (roll < 0.90) rolledType = NodeType.Store;
+                    if (roll < 0.35) rolledType = NodeType.MinorEnemy;
+                    else if (roll < 0.52) rolledType = (floorIndex >= minElite) ? NodeType.EliteEnemy : NodeType.MinorEnemy;
+                    else if (roll < 0.70) rolledType = NodeType.Event;
+                    else if (roll < 0.82) rolledType = NodeType.Treasure;
+                    else if (roll < 0.91) rolledType = NodeType.Store;
                     else rolledType = NodeType.RestSite;
                 }
 

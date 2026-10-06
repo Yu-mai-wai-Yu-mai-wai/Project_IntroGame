@@ -148,8 +148,8 @@ Transform:
   m_GameObject: {fileID: 108837748}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 2.2000628, y: -0.95, z: 2.415776}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalPosition: {x: 2.28, y: -0.95, z: 2.415776}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 619568962}
@@ -168,6 +168,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.BoardSlotView
   side: 0
   slotIndex: 3
+  cardFill: 0.95
   slotFrameImage: {fileID: 0}
   cardArtworkImage: {fileID: 0}
   nameText: {fileID: 0}
@@ -832,8 +833,8 @@ Transform:
   m_GameObject: {fileID: 468630060}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -2.2000628, y: -0.95, z: 7.584223}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalPosition: {x: -2.3, y: -0.95, z: 7.584223}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 869846393}
@@ -852,6 +853,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.BoardSlotView
   side: 1
   slotIndex: 1
+  cardFill: 0.95
   slotFrameImage: {fileID: 0}
   cardArtworkImage: {fileID: 0}
   nameText: {fileID: 0}
@@ -966,8 +968,8 @@ Transform:
   m_GameObject: {fileID: 474403008}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -2.2000628, y: -0.95, z: 2.415776}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalPosition: {x: -2.29, y: -0.95, z: 2.415776}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 619568962}
@@ -986,6 +988,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.BoardSlotView
   side: 0
   slotIndex: 1
+  cardFill: 0.95
   slotFrameImage: {fileID: 0}
   cardArtworkImage: {fileID: 0}
   nameText: {fileID: 0}
@@ -1290,8 +1293,8 @@ Transform:
   m_GameObject: {fileID: 603374515}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 2.2000628, y: -0.95, z: 7.584223}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalPosition: {x: 2.28, y: -0.95, z: 7.584223}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 869846393}
@@ -1310,6 +1313,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.BoardSlotView
   side: 1
   slotIndex: 3
+  cardFill: 0.95
   slotFrameImage: {fileID: 0}
   cardArtworkImage: {fileID: 0}
   nameText: {fileID: 0}
@@ -1460,8 +1464,8 @@ Transform:
   m_GameObject: {fileID: 629996791}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 7.1919136, y: -0.95, z: 0.62210023}
-  m_LocalScale: {x: 1.4, y: 1.3999997, z: 1}
+  m_LocalPosition: {x: 7.2, y: -0.95, z: 0.66}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1905956679}
@@ -1563,6 +1567,11 @@ MonoBehaviour:
   pileColor: {r: 0.25, g: 0.1, b: 0.15, a: 1}
   pileMaterial: {fileID: 2100000, guid: 8a1fa5c27d57e834da519fe28c90845c, type: 2}
   heightLerpSpeed: 10
+--- !u!1 &659551447 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -5347870351087963657, guid: 7c525f6b0f481174b951b612cda17d30, type: 3}
+  m_PrefabInstance: {fileID: 670939038}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &670939038
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2170,7 +2179,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: -0.95, z: 7.584223}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 869846393}
@@ -2189,6 +2198,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.BoardSlotView
   side: 1
   slotIndex: 2
+  cardFill: 0.95
   slotFrameImage: {fileID: 0}
   cardArtworkImage: {fileID: 0}
   nameText: {fileID: 0}
@@ -2473,7 +2483,8 @@ MonoBehaviour:
   drawFlyDuration: 0.45
   drawStagger: 0.12
   playFlyDuration: 0.4
-  playLingerTime: 0.6
+  showcaseHoldTime: 1.6
+  showcaseInDuration: 0.3
   pileCardSize: {x: 1.96, y: 2.8}
   thicknessPerCard: 0.02
 --- !u!1 &1305718491
@@ -2505,8 +2516,8 @@ Transform:
   m_GameObject: {fileID: 1305718491}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 4.4001255, y: -0.95, z: 2.415776}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalPosition: {x: 4.54, y: -0.95, z: 2.415776}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 619568962}
@@ -2525,6 +2536,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.BoardSlotView
   side: 0
   slotIndex: 4
+  cardFill: 0.95
   slotFrameImage: {fileID: 0}
   cardArtworkImage: {fileID: 0}
   nameText: {fileID: 0}
@@ -2707,8 +2719,8 @@ Transform:
   m_GameObject: {fileID: 1397705451}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -4.4001255, y: -0.95, z: 7.584223}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalPosition: {x: -4.54, y: -0.95, z: 7.584223}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 869846393}
@@ -2727,6 +2739,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.BoardSlotView
   side: 1
   slotIndex: 0
+  cardFill: 0.95
   slotFrameImage: {fileID: 0}
   cardArtworkImage: {fileID: 0}
   nameText: {fileID: 0}
@@ -2824,6 +2837,7 @@ GameObject:
   - component: {fileID: 1425064174}
   - component: {fileID: 1425064173}
   - component: {fileID: 1425064172}
+  - component: {fileID: 1425064177}
   - component: {fileID: 1425064176}
   m_Layer: 0
   m_Name: CombatManagers
@@ -2886,6 +2900,7 @@ MonoBehaviour:
     enemyStatuses: []
   currentPhase: 0
   firstTurnMerit: 2
+  enemyPlaySpeed: 1
   currentEnemyProfile: {fileID: 11400000, guid: 738c6c36a65257743a398863269831ad, type: 2}
   nextEnemyMove:
     intent: 0
@@ -2937,6 +2952,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.TurnPhaseController
   drawCount: 1
+  drawOnFirstTurn: 0
   openingHandSize: 3
   drawPhaseStartDelay: 0.3
   discardHandAtEnd: 0
@@ -2945,6 +2961,23 @@ MonoBehaviour:
   enemyPhaseEndDelay: 0.4
   endTurnKey: 32
   showDebugLabel: 1
+--- !u!114 &1425064177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1425064171}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bac5f8ef07eec0b469b0e9de8ea43618, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.GraveyardView3D
+  graveyardObject: {fileID: 659551447}
+  tintOnHover: 1
+  hoverColor: {r: 0.75, g: 0.7, b: 0.85, a: 1}
+  slabSize: {x: 1, y: 0.12, z: 1.35}
+  slabColor: {r: 0.22, g: 0.21, b: 0.23, a: 1}
 --- !u!21 &1560884015
 Material:
   serializedVersion: 8
@@ -3243,8 +3276,8 @@ Transform:
   m_GameObject: {fileID: 1660141963}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -4.4001255, y: -0.95, z: 2.415776}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalPosition: {x: -4.55, y: -0.95, z: 2.415776}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 619568962}
@@ -3263,6 +3296,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.BoardSlotView
   side: 0
   slotIndex: 0
+  cardFill: 0.95
   slotFrameImage: {fileID: 0}
   cardArtworkImage: {fileID: 0}
   nameText: {fileID: 0}
@@ -3631,7 +3665,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: -7.14419, y: -0.95, z: 9.6952095}
-  m_LocalScale: {x: 1.4, y: 1.3999999, z: 1}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1905956679}
@@ -3650,6 +3684,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.BoardSlotView
   side: 1
   slotIndex: 0
+  cardFill: 0.95
   slotFrameImage: {fileID: 0}
   cardArtworkImage: {fileID: 0}
   nameText: {fileID: 0}
@@ -3764,8 +3799,8 @@ Transform:
   m_GameObject: {fileID: 1874202470}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 4.4001255, y: -0.95, z: 7.584223}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalPosition: {x: 4.56, y: -0.95, z: 7.584223}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 869846393}
@@ -3784,6 +3819,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.BoardSlotView
   side: 1
   slotIndex: 4
+  cardFill: 0.95
   slotFrameImage: {fileID: 0}
   cardArtworkImage: {fileID: 0}
   nameText: {fileID: 0}
@@ -3934,7 +3970,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: -0.95, z: 2.415776}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalScale: {x: 1.80544, y: 2.99026, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 619568962}
@@ -3953,6 +3989,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.BoardSlotView
   side: 0
   slotIndex: 2
+  cardFill: 0.95
   slotFrameImage: {fileID: 0}
   cardArtworkImage: {fileID: 0}
   nameText: {fileID: 0}

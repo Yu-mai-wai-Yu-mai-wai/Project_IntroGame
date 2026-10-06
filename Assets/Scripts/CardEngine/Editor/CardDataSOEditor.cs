@@ -152,7 +152,13 @@ namespace TawanOS.CardEngine
             Prop("statFontSize", "สะเทือนขวัญ / ขวัญ");
             Prop("descriptionFontSize", "คำอธิบาย", "ยังย่อเองถ้าข้อความยาวเกินกล่อง");
 
+            Section("อัพเกรด (เมรุ)");
+            Prop("upgradedCard", "การ์ดเมื่ออัพเกรด", "ลากการ์ดเวอร์ชันอัพเกรดมาใส่ (เว้นว่าง = อัพเกรดไม่ได้). " +
+                 "การ์ดเวอร์ชันอัพเกรดจะไม่ถูกสุ่มแจกในรางวัล ร้าน หรือหลุมจั่ว");
+
             Section("รูป");
+            Prop("cardImage", "ภาพการ์ดสำเร็จ (PNG)", "ภาพเต็มใบที่มีชื่อ ค่าร่าย คำอธิบายครบแล้ว: Unity เขียนเพิ่มแค่สะเทือนขวัญและขวัญ " +
+                 "(เว้นว่าง = ใช้กรอบ + ภาพประกอบ + ข้อความแบบเดิมด้านล่าง)");
             Prop("cardBackground", "กรอบ / พื้นหลัง", "เว้นว่าง = ใช้กรอบตามสาย (ทอง = มนต์ขาว, แดง = มนต์ดำ)");
             Prop("artwork", "ภาพประกอบ", "วางในช่องภาพของกรอบ");
 
@@ -205,23 +211,28 @@ namespace TawanOS.CardEngine
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
-            // Frame: the card's own background, else the default frame of its school
-            Sprite frame = card.cardBackground != null
-                ? card.cardBackground
+            // Frame: the finished card PNG, else the card's own background, else the default frame of its school
+            bool printed = card.cardImage != null;
+            Sprite frame = printed ? card.cardImage
+                : card.cardBackground != null ? card.cardBackground
                 : CardFaceLayout.DefaultFrame(whiteFrame, blackFrame, card.magicSchool);
             if (frame != null) DrawSprite(r, frame, ScaleMode.StretchToFill);
             else EditorGUI.DrawRect(r, card.magicSchool == MagicSchool.WhiteMagic ? new Color(0.85f, 0.8f, 0.55f) : new Color(0.35f, 0.1f, 0.15f));
 
-            if (card.artwork != null) DrawSprite(BoxRect(r, CardFaceLayout.Artwork), card.artwork, ScaleMode.ScaleToFit);
-
             Color text = frame != null ? Color.white : (card.magicSchool == MagicSchool.WhiteMagic ? new Color(0.12f, 0.08f, 0.05f) : new Color(0.95f, 0.9f, 0.85f));
             Color typeColor = frame != null ? new Color(0.95f, 0.72f, 0.72f) : text;
-
-            string cost = card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost.ToString() : card.corruptionGain.ToString();
             float Fs(CardFaceLayout.Text part) => CardFaceLayout.FontScale(card, part);
-            DrawText(r, CardFaceLayout.Cost.Scaled(Fs(CardFaceLayout.Text.Cost)), cost, text, FontStyle.Bold);
-            DrawText(r, CardFaceLayout.Name.Scaled(Fs(CardFaceLayout.Text.Name)), string.IsNullOrEmpty(card.cardNameThai) ? "ชื่อการ์ด" : card.cardNameThai, text, FontStyle.Bold);
-            DrawText(r, CardFaceLayout.Type.Scaled(Fs(CardFaceLayout.Text.Type)), card.GetFormattedTypeText().Replace(" • ", "  "), typeColor, FontStyle.Normal);
+
+            // A finished card PNG has everything but attack / Khwan printed on it
+            if (!printed)
+            {
+                if (card.artwork != null) DrawSprite(BoxRect(r, CardFaceLayout.Artwork), card.artwork, ScaleMode.ScaleToFit);
+
+                string cost = card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost.ToString() : card.corruptionGain.ToString();
+                DrawText(r, CardFaceLayout.Cost.Scaled(Fs(CardFaceLayout.Text.Cost)), cost, text, FontStyle.Bold);
+                DrawText(r, CardFaceLayout.Name.Scaled(Fs(CardFaceLayout.Text.Name)), string.IsNullOrEmpty(card.cardNameThai) ? "ชื่อการ์ด" : card.cardNameThai, text, FontStyle.Bold);
+                DrawText(r, CardFaceLayout.Type.Scaled(Fs(CardFaceLayout.Text.Type)), card.GetFormattedTypeText().Replace(" • ", "  "), typeColor, FontStyle.Normal);
+            }
 
             if (card.cardType == CardType.Familiar) DrawText(r, CardFaceLayout.Attack.Scaled(Fs(CardFaceLayout.Text.Stat)), card.familiarDamage.ToString(), text, FontStyle.Bold);
             if (card.cardType == CardType.Familiar || (card.cardType == CardType.Amulet && card.familiarHealth > 0))
@@ -229,6 +240,7 @@ namespace TawanOS.CardEngine
                 DrawText(r, CardFaceLayout.Khwan.Scaled(Fs(CardFaceLayout.Text.Stat)), card.familiarHealth.ToString(), text, FontStyle.Bold);
             }
 
+            if (printed) return;
             string description;
             try { description = string.Format(card.descriptionFormat ?? "", card.baseValue); }
             catch { description = card.descriptionFormat ?? ""; }

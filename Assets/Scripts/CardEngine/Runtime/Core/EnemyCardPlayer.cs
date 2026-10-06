@@ -9,8 +9,9 @@ namespace TawanOS.CardEngine
     // Magic builds Corruption. Active only when the EnemyProfileSO has a non-empty deck.
     public class EnemyCardPlayer
     {
-        private const float DelayBeforePlay = 0.6f;
-        private const float DelayAfterPlay = 0.4f;
+        // Play pacing at speed 1; CombatManager.EnemyPlaySpeed divides these
+        private const float DelayBeforePlay = 0.9f;
+        private const float DelayAfterPlay = 0.7f;
         private const float DrawAnimationBase = 0.45f;
         private const float DrawAnimationStagger = 0.12f;
 
@@ -22,6 +23,12 @@ namespace TawanOS.CardEngine
         public event System.Action<CardInstance> OnCardDrawn;
         public event System.Action<CardInstance> OnCardPlayed;
 
+        // Seconds the view needs to show a played card before its effect lands (e.g. the incantation showcase)
+        public System.Func<CardInstance, float> RevealTime;
+
+        // The card the incantation being played acts on (set before OnCardPlayed, so views can point at it)
+        public CardInstance PlayingTarget { get; private set; }
+
         // True while the opening hand is being drawn, so views can fly the cards in all at once
         public bool IsOpeningDraw { get; private set; }
 
@@ -29,10 +36,12 @@ namespace TawanOS.CardEngine
         public IReadOnlyList<CardInstance> Hand => hand;
         public int DrawCount => drawPile.Count;
         public int DiscardCount => discardPile.Count;
+        public IReadOnlyList<CardInstance> DiscardPile => discardPile;
 
         public void Init(EnemyProfileSO enemyProfile)
         {
             profile = enemyProfile;
+            pitDraws = 0;
             drawPile.Clear();
             hand.Clear();
             discardPile.Clear();
@@ -67,6 +76,10 @@ namespace TawanOS.CardEngine
         private const float PitDrawScoreNeeded = 2.5f;
         private int pitDrawsThisTurn;
 
+        // Same climbing price as the player's: the Nth pull this fight costs N Corruption
+        private int pitDraws;
+        public int NextPitCorruption => pitDraws + 1;
+
         public IEnumerator PlayTurn(CombatManager combat, int turn, EnemyCardPlayStyle style)
         {
             yield return DrawForTurn();
@@ -74,11 +87,12 @@ namespace TawanOS.CardEngine
         }
 
         // Start of the enemy's turn: its draw. Merit was already refilled by CombatManager.RefillMeritForTurn.
-        public IEnumerator DrawForTurn()
+        // draw = false still starts the turn (resets the per-turn counters) but skips the card draw.
+        public IEnumerator DrawForTurn(bool draw = true)
         {
             playedThisTurn = 0;
             pitDrawsThisTurn = 0;
-            if (!Active) yield break;
+            if (!Active || !draw) yield break;
 
             int drawn = Draw(profile.drawPerTurn);
             if (drawn > 0)
@@ -97,12 +111,13 @@ namespace TawanOS.CardEngine
             if (resolver == null || !Active) yield break;
 
             bool costsEnabled = CardManager.Instance != null && CardManager.Instance.costSystemEnabled;
+            float speed = combat.EnemyPlaySpeed;
             int played = 0;
 
             // A thin or losing hand may be worth topping up from the pit before playing
             if (PitDrawScore(state, style, costsEnabled, nothingToPlay: false) >= PitDrawScoreNeeded && TryDrawFromPit(combat))
             {
-                yield return new WaitForSeconds(PitDrawDelay);
+                yield return new WaitForSeconds(PitDrawDelay / speed);
             }
 
             while (playedThisTurn < profile.maxCardsPerTurn && !combat.IsCombatOver)
@@ -113,11 +128,11 @@ namespace TawanOS.CardEngine
                     // Nothing to play in this phase: the pit is worth more now, then look again
                     if (PitDrawScore(state, style, costsEnabled, nothingToPlay: true) < PitDrawScoreNeeded) break;
                     if (!TryDrawFromPit(combat)) break;
-                    yield return new WaitForSeconds(PitDrawDelay);
+                    yield return new WaitForSeconds(PitDrawDelay / speed);
                     continue;
                 }
 
-                yield return new WaitForSeconds(DelayBeforePlay);
+                yield return new WaitForSeconds(DelayBeforePlay / speed);
                 if (combat.IsCombatOver) break;
 
                 // White Magic spends Merit exactly like the player's (checked again in case it changed)
@@ -127,10 +142,16 @@ namespace TawanOS.CardEngine
                 }
 
                 hand.Remove(card);
+                PlayingTarget = resolver.PickTarget(card, casterIsPlayer: false);
                 OnCardPlayed?.Invoke(card);
 
                 combat.ReportEnemyAction($"ศัตรูใช้ {card.cardNameThai}");
-                resolver.ResolveCardEffect(card, null, casterIsPlayer: false);
+
+                // Let the card be seen before it takes effect
+                float reveal = RevealTime != null ? RevealTime(card) : 0f;
+                if (reveal > 0f) yield return new WaitForSeconds(reveal);
+                resolver.ResolveCardEffect(card, PlayingTarget, casterIsPlayer: false);
+                PlayingTarget = null;
 
                 if (costsEnabled && card.magicSchool == MagicSchool.BlackMagic && card.corruptionGain > 0)
                 {
@@ -141,7 +162,7 @@ namespace TawanOS.CardEngine
                 played++;
                 playedThisTurn++;
 
-                yield return new WaitForSeconds(DelayAfterPlay);
+                yield return new WaitForSeconds(DelayAfterPlay / speed);
             }
 
             if (played == 0 && filter == null) combat.ReportEnemyAction("ศัตรูไม่มีการ์ดที่ใช้ได้");
@@ -154,7 +175,7 @@ namespace TawanOS.CardEngine
         {
             if (hand.Count >= profile.maxHandSize || pitDrawsThisTurn >= MaxPitDrawsPerTurn) return float.MinValue;
 
-            int corruptionAfter = s.enemyCorruption + CardManager.PitCorruptionGain;
+            int corruptionAfter = s.enemyCorruption + NextPitCorruption;
             if (corruptionAfter >= s.enemyCorruptionThreshold) return float.MinValue;
 
             float score = 0f;
@@ -196,7 +217,7 @@ namespace TawanOS.CardEngine
         {
             var state = combat.State;
             if (pitDrawsThisTurn >= MaxPitDrawsPerTurn || hand.Count >= profile.maxHandSize) return false;
-            if (state.enemyCorruption + CardManager.PitCorruptionGain >= state.enemyCorruptionThreshold) return false;
+            if (state.enemyCorruption + NextPitCorruption >= state.enemyCorruptionThreshold) return false;
 
             var template = CardManager.PickPitCard();
             if (template == null) return false;
@@ -208,7 +229,9 @@ namespace TawanOS.CardEngine
             DrawPitView3D.Instance?.PlayUseEffect();
 
             combat.ReportEnemyAction("ศัตรูจั่วการ์ดจากหลุมจั่ว");
-            combat.AddEnemyCorruption(CardManager.PitCorruptionGain);
+            int cost = NextPitCorruption;
+            pitDraws++;
+            combat.AddEnemyCorruption(cost);
             return true;
         }
 
@@ -256,13 +279,8 @@ namespace TawanOS.CardEngine
             {
                 if (hand.Count >= profile.maxHandSize) break;
 
-                if (drawPile.Count == 0)
-                {
-                    if (discardPile.Count == 0) break;
-                    drawPile.AddRange(discardPile);
-                    discardPile.Clear();
-                    Shuffle(drawPile);
-                }
+                // An empty draw pile stays empty: the graveyard is not shuffled back in
+                if (drawPile.Count == 0) break;
 
                 var card = drawPile[0];
                 hand.Add(card);

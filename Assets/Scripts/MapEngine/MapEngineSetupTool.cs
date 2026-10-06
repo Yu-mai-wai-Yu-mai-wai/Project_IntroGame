@@ -44,6 +44,7 @@ namespace TawanOS.MapEngine
             var treasureProfile = CreateOrGetProfile(baseFolder + "/Profiles/TreasureProfile.asset", NodeType.Treasure, "Sacred Offering", "Ancient treasure chest left behind by past practitioners.", crimsonBase, "OfferingIcon.png");
             var storeProfile = CreateOrGetProfile(baseFolder + "/Profiles/StoreProfile.asset", NodeType.Store, "Bodhi Tree Merchant", "An enigmatic merchant trading talismans and sacred offerings.", crimsonBase, "ShrineIcon.png");
             var bossProfile = CreateOrGetProfile(baseFolder + "/Profiles/BossProfile.asset", NodeType.Boss, "The Sovereign Spirit", "The ancient overlord reigning over the temple grounds.", crimsonBase, "GraveyardIcon.png");
+            var eventProfile = CreateOrGetProfile(baseFolder + "/Profiles/EventProfile.asset", NodeType.Event, "Unknown Omen", "A strange occurrence on the path. Your choices shape what you gain... or lose.", crimsonBase, "event-question.png");
 
             // 2. Create Biome Profile
             string biomePath = baseFolder + "/Profiles/DefaultBiome.asset";
@@ -87,6 +88,7 @@ namespace TawanOS.MapEngine
                 config.nodeProfiles.Add(treasureProfile);
                 config.nodeProfiles.Add(storeProfile);
                 config.nodeProfiles.Add(bossProfile);
+                config.nodeProfiles.Add(eventProfile);
 
                 AssetDatabase.CreateAsset(config, configPath);
             }
@@ -100,6 +102,7 @@ namespace TawanOS.MapEngine
                 if (treasureProfile != null && !config.nodeProfiles.Contains(treasureProfile)) config.nodeProfiles.Add(treasureProfile);
                 if (storeProfile != null && !config.nodeProfiles.Contains(storeProfile)) config.nodeProfiles.Add(storeProfile);
                 if (bossProfile != null && !config.nodeProfiles.Contains(bossProfile)) config.nodeProfiles.Add(bossProfile);
+                if (eventProfile != null && !config.nodeProfiles.Contains(eventProfile)) config.nodeProfiles.Add(eventProfile);
                 EditorUtility.SetDirty(config);
             }
 

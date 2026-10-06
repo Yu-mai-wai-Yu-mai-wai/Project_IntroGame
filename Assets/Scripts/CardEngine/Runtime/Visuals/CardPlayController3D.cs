@@ -158,15 +158,24 @@ namespace TawanOS.CardEngine
             if (!keepCamera) MoveCameraHome();
         }
 
+        // Where a card held from the hand under `handParent` waits, in world space (also used to show
+        // the enemy's incantations in the same spot)
+        public bool TryGetHeldWorldPoint(Transform handParent, out Vector3 world)
+        {
+            world = Vector3.zero;
+            if (cam == null) cam = Camera.main;
+            if (cam == null || handParent == null) return false;
+
+            float depth = Vector3.Dot(handParent.position - cam.transform.position, cam.transform.forward);
+            world = cam.ViewportToWorldPoint(new Vector3(heldViewportPosition.x, heldViewportPosition.y, depth));
+            return true;
+        }
+
         private void MoveToHeldPosition(CardView3D view)
         {
-            if (cam == null) cam = Camera.main;
-            var parent = view.transform.parent;
-            if (cam == null || parent == null) return;
-
             // The hand follows the camera, so a point fixed in the hand's space stays put on screen
-            float depth = Vector3.Dot(parent.position - cam.transform.position, cam.transform.forward);
-            Vector3 world = cam.ViewportToWorldPoint(new Vector3(heldViewportPosition.x, heldViewportPosition.y, depth));
+            var parent = view.transform.parent;
+            if (!TryGetHeldWorldPoint(parent, out var world)) return;
             Vector3 local = parent.InverseTransformPoint(world);
 
             var t = view.transform;

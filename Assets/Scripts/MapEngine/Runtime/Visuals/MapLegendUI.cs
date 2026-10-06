@@ -51,8 +51,8 @@ namespace TawanOS.MapEngine
             {
                 "⚔️ <b>Minor Enemy</b>: Regular monster encounter.",
                 "💎 <b>Elite Enemy</b>: Mini-boss with rare rewards.",
-                "🔥 <b>Rest Site</b>: Heal HP or upgrade cards.",
-                "🎁 <b>Treasure</b>: Open relic & gold mystery chest.",
+                "🔥 <b>Meru</b>: Burn a card out of the deck, or upgrade one.",
+                "🎁 <b>Offering Pile</b>: A short tale, then pick a card from the offerings.",
                 "🛒 <b>Shop Merchant</b>: Buy cards & relics.",
                 "👑 <b>Boss</b>: Final boss of this act!"
             };

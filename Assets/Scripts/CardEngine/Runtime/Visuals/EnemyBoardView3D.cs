@@ -116,7 +116,7 @@ namespace TawanOS.CardEngine
                 .OnComplete(() => t.localPosition = Vector3.zero);
             t.DOLocalRotateQuaternion(Quaternion.identity, placeDuration)
                 .OnComplete(() => t.localRotation = Quaternion.identity);
-            t.DOScale(cardPrefab.transform.localScale, placeDuration);
+            t.DOScale(slot.FitCardScale(cardPrefab.transform.localScale), placeDuration);
 
             views[index] = view;
         }

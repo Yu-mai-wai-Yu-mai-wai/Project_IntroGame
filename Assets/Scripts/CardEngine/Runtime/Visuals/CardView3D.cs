@@ -32,6 +32,8 @@ namespace TawanOS.CardEngine
         public Color typeTextOnArt = new Color(0.95f, 0.72f, 0.72f);
         public Color textOnPlainWhite = new Color(0.12f, 0.08f, 0.05f);
         public Color textOnPlainBlack = new Color(0.95f, 0.9f, 0.85f);
+        [Tooltip("Khwan number colour while a Familiar / Amulet has lost Khwan (below its max).")]
+        public Color khwanDamagedColor = new Color(0.9f, 0.1f, 0.1f);
 
         [Header("Interaction Settings")]
         public float hoverLift = 1f;
@@ -52,6 +54,7 @@ namespace TawanOS.CardEngine
         // Face text laid out like the card design: cost top-left, name + type top-right,
         // attack / Khwan in the middle band, ability text in the bottom box. nameLabel is the name.
         private TMP_Text costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel;
+        private Color faceTextColor = Color.white; // the face's normal text colour (khwanLabel goes back to it when healed)
 
         public Vector3 BaseScale => baseLocalScale;
         public bool IsInHand => !isPlacedOnBoard && enabled;
@@ -112,9 +115,12 @@ namespace TawanOS.CardEngine
 
             BuildFacePictures();
             BuildFaceText();
+            ApplyFaceVisibility(); // the labels BuildFaceText just made follow the face too
             ApplyDrawOrder();
-            RefreshLabel();
         }
+
+        // A finished card PNG already has everything printed on it except attack and Khwan
+        private bool HasCardImage => CardData != null && CardData.cardImage != null;
 
         // The frame, artwork and text are all transparent and sit a hair apart, so Unity's distance sort
         // could draw the frame over the text while the card moves. A Sorting Group keeps each card's parts
@@ -142,7 +148,7 @@ namespace TawanOS.CardEngine
         private void BuildFacePictures()
         {
             Sprite background = FaceBackground();
-            Sprite artwork = CardData.artwork;
+            Sprite artwork = HasCardImage ? null : CardData.artwork;
 
             backgroundFace = SetFacePicture(backgroundFace, "FaceBackground", background, Vector2.one, 0f, FaceZ, keepAspect: false);
             artworkFace = SetFacePicture(artworkFace, "FaceArtwork", artwork, CardFaceLayout.Artwork.size, CardFaceLayout.Artwork.center.y, FaceZ - 0.005f, keepAspect: true);
@@ -151,9 +157,10 @@ namespace TawanOS.CardEngine
             ApplyFaceVisibility();
         }
 
-        // The card's own background, else the default frame of its magic school
+        // The finished card PNG, else the card's own background, else the default frame of its magic school
         private Sprite FaceBackground()
         {
+            if (CardData.cardImage != null) return CardData.cardImage;
             if (CardData.cardBackground != null) return CardData.cardBackground;
             return CardFaceLayout.DefaultFrame(defaultWhiteFrame, defaultBlackFrame, CardData.magicSchool);
         }
@@ -221,9 +228,11 @@ namespace TawanOS.CardEngine
             bool hasFrame = backgroundFace != null && backgroundFace.gameObject.activeSelf && backgroundFace.sprite != null;
             if (cardRenderer != null) cardRenderer.enabled = !(faceVisible && hasFrame);
 
-            foreach (var label in new[] { costLabel, typeLabel, descriptionLabel })
+            // A finished card PNG has these printed on it
+            bool printed = HasCardImage;
+            foreach (var label in new[] { nameLabel, costLabel, typeLabel, descriptionLabel })
             {
-                if (label != null) label.gameObject.SetActive(faceVisible);
+                if (label != null) label.gameObject.SetActive(faceVisible && !printed);
             }
             RefreshLabel(); // attack / Khwan follow the face too
         }
@@ -254,6 +263,7 @@ namespace TawanOS.CardEngine
             {
                 khwanLabel.gameObject.SetActive(hasKhwan && faceVisible);
                 khwanLabel.text = CardData.familiarHealth.ToString();
+                khwanLabel.color = CardData.familiarHealth < CardData.maxKhwan ? khwanDamagedColor : faceTextColor;
             }
             if (descriptionLabel != null) descriptionLabel.text = Description(CardData);
         }
@@ -297,6 +307,7 @@ namespace TawanOS.CardEngine
 
             bool onArt = FaceBackground() != null;
             Color main = onArt ? textOnArt : (CardData.magicSchool == MagicSchool.WhiteMagic ? textOnPlainWhite : textOnPlainBlack);
+            faceTextColor = main;
             foreach (var label in new[] { nameLabel, costLabel, attackLabel, khwanLabel, descriptionLabel }) label.color = main;
             typeLabel.color = onArt ? typeTextOnArt : main;
         }
@@ -424,7 +435,7 @@ namespace TawanOS.CardEngine
             // Local rotation identity: the card inherits the slot's tilt and lies flat on the table.
             transform.DOLocalRotateQuaternion(Quaternion.identity, 0.3f)
                 .OnComplete(() => transform.localRotation = Quaternion.identity);
-            transform.DOScale(baseLocalScale, 0.3f);
+            transform.DOScale(targetSlot.FitCardScale(baseLocalScale), 0.3f);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
 

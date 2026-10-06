@@ -37,8 +37,9 @@ namespace TawanOS.CardEngine
         Defeat
     }
 
-    // One turn: Draw -> player plays familiars/amulets -> enemy does the same -> player casts
-    // incantations -> enemy does the same -> board clash -> End, then the next turn starts.
+    // One turn: Draw -> enemy plays familiars/amulets -> player does the same -> enemy casts
+    // incantations -> player does the same -> board clash -> End, then the next turn starts.
+    // (Declaration order is not play order; values are kept as-is.)
     public enum TurnPhase
     {
         None,

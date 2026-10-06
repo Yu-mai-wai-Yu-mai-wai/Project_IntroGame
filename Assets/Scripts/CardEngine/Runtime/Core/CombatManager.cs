@@ -16,6 +16,11 @@ namespace TawanOS.CardEngine
         [Tooltip("Merit available on turn 1; it grows by 1 each following turn up to the max.")]
         [SerializeField] private int firstTurnMerit = 2;
 
+        [Header("Enemy Pacing")]
+        [Tooltip("How fast the enemy plays its cards and shows its incantations. 1 = normal, 0.5 = half speed, 2 = double speed.")]
+        [Range(0.25f, 3f)]
+        [SerializeField] private float enemyPlaySpeed = 1f;
+
         [Header("Active Enemy")]
         public EnemyProfileSO currentEnemyProfile;
         public EnemyMove nextEnemyMove;
@@ -23,6 +28,7 @@ namespace TawanOS.CardEngine
         private readonly EnemyCardPlayer enemyCards = new EnemyCardPlayer();
         public EnemyCardPlayer EnemyCards => enemyCards;
         public int FirstTurnMerit => firstTurnMerit;
+        public float EnemyPlaySpeed => Mathf.Max(0.05f, enemyPlaySpeed);
         public bool IsCombatOver => currentPhase == CombatPhase.Victory || currentPhase == CombatPhase.Defeat;
         public event Action<string> OnEnemyAction;
 
@@ -199,7 +205,7 @@ namespace TawanOS.CardEngine
         }
 
         // Start of the enemy's turn: its shield resets, its start-of-turn abilities fire, it draws
-        public IEnumerator EnemyTurnStart()
+        public IEnumerator EnemyTurnStart(bool draw = true)
         {
             // Enemy shield does not carry over into the enemy's own turn
             state.enemyShield = 0;
@@ -207,7 +213,7 @@ namespace TawanOS.CardEngine
 
             EffectResolver.Instance?.TriggerTurnStart(isPlayer: false);
 
-            yield return enemyCards.DrawForTurn();
+            yield return enemyCards.DrawForTurn(draw);
         }
 
         // The enemy plays the cards `filter` allows (null = any)

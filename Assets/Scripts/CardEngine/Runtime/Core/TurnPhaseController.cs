@@ -4,17 +4,19 @@ using UnityEngine;
 
 namespace TawanOS.CardEngine
 {
-    // The turn loop. Every turn: Draw -> the player plays familiars/amulets -> the enemy plays
-    // familiars/amulets -> the player casts incantations -> the enemy casts incantations -> the board
-    // clash -> End. Add it to any object in the combat scene; while it is enabled, CombatManager hands
+    // The turn loop. Every turn: Draw -> the enemy plays familiars/amulets -> the player plays
+    // familiars/amulets -> the enemy casts incantations -> the player casts incantations -> the board
+    // clash -> End. The enemy always commits first, so the player answers what it put down. Add it to any object in the combat scene; while it is enabled, CombatManager hands
     // the turn flow over to it. The End Turn button and the Space key finish each of the player's phases.
     public class TurnPhaseController : MonoBehaviour
     {
         public static TurnPhaseController Instance { get; private set; }
 
         [Header("Draw Phase")]
-        [Tooltip("Cards drawn at the start of every turn, including turn 1. -1 = use CardManager.defaultDrawCount")]
+        [Tooltip("Cards drawn at the start of every turn. -1 = use CardManager.defaultDrawCount")]
         public int drawCount = 1;
+        [Tooltip("Off = the opening hand is the whole turn-1 hand (no turn draw on turn 1), for both sides.")]
+        public bool drawOnFirstTurn = false;
         [Tooltip("Opening hand: drawn all at once when the game starts, before turn 1. -1 = CardManager.defaultDrawCount")]
         public int openingHandSize = 3;
         public float drawPhaseStartDelay = 0.3f;
@@ -34,6 +36,9 @@ namespace TawanOS.CardEngine
 
         public TurnPhase CurrentPhase { get; private set; } = TurnPhase.None;
         public int TurnNumber { get; private set; }
+
+        // Turn 1 plays from the opening hand alone unless drawOnFirstTurn is on
+        private bool SkipsTurnDraw => TurnNumber == 1 && !drawOnFirstTurn;
 
         public event Action<TurnPhase> OnPhaseChanged;
         public event Action<int> OnTurnStarted;
@@ -133,7 +138,7 @@ namespace TawanOS.CardEngine
                 var cards = CardManager.Instance;
                 if (cards != null)
                 {
-                    int count = drawCount >= 0 ? drawCount : cards.defaultDrawCount;
+                    int count = SkipsTurnDraw ? 0 : drawCount >= 0 ? drawCount : cards.defaultDrawCount;
                     cards.DrawCards(count);
 
                     // Let the fly-in animation play out before the player can act
@@ -151,12 +156,9 @@ namespace TawanOS.CardEngine
                 bool enemyActs = enemyActsAfterEnd && combat != null;
 
                 // The enemy's turn starts at the same time: shield reset, start-of-turn abilities, its draw
-                if (enemyActs) yield return combat.EnemyTurnStart();
+                if (enemyActs) yield return combat.EnemyTurnStart(draw: !SkipsTurnDraw);
 
-                // --- 1. Player: familiars / amulets ---
-                yield return PlayerPhase(TurnPhase.PlayerBoard);
-
-                // --- 2. Enemy: familiars / amulets ---
+                // --- 1. Enemy: familiars / amulets ---
                 if (enemyActs)
                 {
                     SetPhase(TurnPhase.EnemyBoard);
@@ -165,11 +167,11 @@ namespace TawanOS.CardEngine
                     if (combat.IsCombatOver) break;
                 }
 
-                // --- 3. Player: incantations ---
-                yield return PlayerPhase(TurnPhase.PlayerSpell);
+                // --- 2. Player: familiars / amulets ---
+                yield return PlayerPhase(TurnPhase.PlayerBoard);
                 if (combat != null && combat.IsCombatOver) break;
 
-                // --- 4. Enemy: incantations (an enemy without a deck uses its telegraphed move here) ---
+                // --- 3. Enemy: incantations (an enemy without a deck uses its telegraphed move here) ---
                 if (enemyActs)
                 {
                     SetPhase(TurnPhase.EnemySpell);
@@ -177,10 +179,24 @@ namespace TawanOS.CardEngine
                     combat.ResolveEnemyIntentMove();
                     yield return new WaitForSeconds(enemyPhaseEndDelay);
                     if (combat.IsCombatOver) break;
+                }
 
-                    // --- 5. Board clash, then end-of-round ticks ---
+                // --- 4. Player: incantations ---
+                yield return PlayerPhase(TurnPhase.PlayerSpell);
+                if (combat != null && combat.IsCombatOver) break;
+
+                // --- 5. Board clash, then end-of-round ticks ---
+                if (enemyActs)
+                {
                     SetPhase(TurnPhase.Clash);
+
+                    // The clash is watched from the top view, locked until it is over
+                    var rig = CombatCameraRig3D.Ensure();
+                    rig.SetLocked(true);
+                    yield return new WaitForSeconds(rig.moveDuration);
+
                     yield return combat.ClashAndRoundEnd();
+                    rig.SetLocked(false);
                     if (combat.IsCombatOver) break;
                 }
 

@@ -17,6 +17,10 @@ namespace TawanOS.CardEngine
         public SlotSide side = SlotSide.Player;
         public int slotIndex = 0;
 
+        [Header("Card Fit")]
+        [Tooltip("Card width as a fraction of the slot's width (1 = exactly as wide). The card keeps its own shape, so its height follows.")]
+        [Range(0.5f, 1f)] public float cardFill = 1f;
+
         [Header("UI Elements")]
         public Image slotFrameImage;
         public Image cardArtworkImage;
@@ -26,6 +30,23 @@ namespace TawanOS.CardEngine
         public GameObject emptyRoot;
 
         private CardInstance currentCard;
+
+        // Local scale for a card parented to this slot: as wide as the slot's mesh (a quad lying in the
+        // slot's local X/Y), with the card's own shape kept, so it may reach past the slot's ends.
+        // cardScale is the card's normal scale; its thickness is kept. Worked out in world size and then
+        // divided by the slot's own scale, so a slot scaled unevenly (e.g. 1.8 x 3) does not stretch the card.
+        public Vector3 FitCardScale(Vector3 cardScale)
+        {
+            var meshFilter = GetComponent<MeshFilter>();
+            if (meshFilter == null || meshFilter.sharedMesh == null || cardScale.x <= 0f || cardScale.y <= 0f) return cardScale;
+
+            Vector3 slotScale = transform.lossyScale;
+            if (slotScale.x == 0f || slotScale.y == 0f || slotScale.z == 0f) return cardScale;
+
+            float width = meshFilter.sharedMesh.bounds.size.x * Mathf.Abs(slotScale.x) * cardFill;
+            float height = width * cardScale.y / cardScale.x;
+            return new Vector3(width / Mathf.Abs(slotScale.x), height / Mathf.Abs(slotScale.y), cardScale.z / Mathf.Abs(slotScale.z));
+        }
 
         private void Start()
         {

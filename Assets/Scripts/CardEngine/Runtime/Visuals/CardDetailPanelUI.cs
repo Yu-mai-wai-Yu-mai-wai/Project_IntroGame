@@ -63,10 +63,16 @@ namespace TawanOS.CardEngine
         public void Show(CardView3D view)
         {
             if (view == null || view.CardData == null) return;
-            Build(view.nameLabel != null ? view.nameLabel.font : null);
+            Show(view.CardData, view.defaultWhiteFrame, view.defaultBlackFrame, view.nameLabel != null ? view.nameLabel.font : null);
+        }
 
-            var card = view.CardData;
-            FillCardFace(card, view);
+        // For cards that have no view on the table (e.g. the graveyard screen)
+        public void Show(CardInstance card, Sprite defaultWhiteFrame, Sprite defaultBlackFrame, TMP_FontAsset font)
+        {
+            if (card == null) return;
+            Build(font);
+
+            FillCardFace(card, defaultWhiteFrame, defaultBlackFrame);
             FillPanel(card);
 
             isOpen = true;
@@ -102,26 +108,28 @@ namespace TawanOS.CardEngine
 
         // ---------------------------------------------------------------- content
 
-        private void FillCardFace(CardInstance card, CardView3D view)
+        private void FillCardFace(CardInstance card, Sprite defaultWhiteFrame, Sprite defaultBlackFrame)
         {
-            Sprite frame = card.cardBackground != null
-                ? card.cardBackground
-                : CardFaceLayout.DefaultFrame(view.defaultWhiteFrame, view.defaultBlackFrame, card.magicSchool);
+            // A finished card PNG has everything but attack / Khwan printed on it
+            bool printed = card.cardImage != null;
+            Sprite frame = printed ? card.cardImage
+                : card.cardBackground != null ? card.cardBackground
+                : CardFaceLayout.DefaultFrame(defaultWhiteFrame, defaultBlackFrame, card.magicSchool);
 
             frameImage.sprite = frame;
             frameImage.color = frame != null ? Color.white : SchoolColor(card.magicSchool);
             artImage.sprite = card.artwork;
-            artImage.enabled = card.artwork != null;
+            artImage.enabled = !printed && card.artwork != null;
 
             bool familiar = card.cardType == CardType.Familiar;
             bool hasKhwan = familiar || card.maxKhwan > 0;
 
-            faceCost.text = card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost.ToString() : card.corruptionGain.ToString();
-            faceName.text = card.cardNameThai;
-            faceType.text = TypeLine(card);
+            faceCost.text = printed ? "" : card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost.ToString() : card.corruptionGain.ToString();
+            faceName.text = printed ? "" : card.cardNameThai;
+            faceType.text = printed ? "" : TypeLine(card);
             faceAttack.text = familiar ? AttackOf(card).ToString() : "";
             faceKhwan.text = hasKhwan ? card.familiarHealth.ToString() : "";
-            faceDescription.text = Description(card);
+            faceDescription.text = printed ? "" : Description(card);
 
             faceType.color = frame != null ? new Color(0.95f, 0.72f, 0.72f) : Color.white;
 
