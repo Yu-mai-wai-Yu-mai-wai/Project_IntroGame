@@ -27,14 +27,11 @@ namespace TawanOS.GameFlow
         private const string ShopSceneName = "ShopScene";
         private const string RewardSceneName = "RewardScene";
         private const string MeruSceneName = "MeruScene";
+        public const string VictorySceneName = "VictoryScene";
         private const float VictoryPanelDelaySeconds = 2f;
         private const float DefeatPanelDelaySeconds = 3f;
 
-        // TODO: replace with a proper per-biome encounter table once more enemies exist.
-        private const string MinorEnemyAssetPath = "Assets/CardEngineData/Enemies/PraiGhostProfile.asset";
-        private const string EliteEnemyAssetPath = "Assets/CardEngineData/Enemies/PraiGhostProfile.asset";
-        private const string BossEnemyAssetPath = "Assets/CardEngineData/Enemies/PhiTaiHongBossProfile.asset";
-
+        private NodeType currentCombatNodeType = NodeType.MinorEnemy;
         private EnemyProfileSO pendingEnemyProfile;
         private int? pendingEventFloor;
         private bool pendingOffering; // กองของเซ่น: EventScene plays the offering story instead of a random event
@@ -84,9 +81,9 @@ namespace TawanOS.GameFlow
         // ---------------------------------------------------------------- main menu
 
         /// <summary>Wipes the saved run and map, then starts a fresh run on a newly rolled map.</summary>
-        public void StartNewGame()
+        public void StartNewGame(int totalFloors = RunState.DefaultTotalFloors)
         {
-            RunState.StartNewRun();
+            RunState.StartNewRun(totalFloors);
             new MapSaveManager().ClearSavedMap();
             ResetPendingState();
             SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
@@ -121,6 +118,7 @@ namespace TawanOS.GameFlow
         private void ResetPendingState()
         {
             StopAllCoroutines();
+            currentCombatNodeType = NodeType.MinorEnemy;
             pendingEnemyProfile = null;
             pendingEventFloor = null;
             pendingOffering = false;
@@ -202,6 +200,13 @@ namespace TawanOS.GameFlow
             {
                 CombatManager.Instance.OnCombatEnded -= HandleCombatEnded;
                 CombatManager.Instance.OnCombatEnded += HandleCombatEnded;
+                combatEndHandled = false;
+
+                // Enter the fight with the Khwan the run has left (not full), see HandleCombatEnded for the way back
+                if (RunState.Current.IsPersistent)
+                {
+                    CombatManager.Instance.SetStartingKhwan(RunState.Current.CurrentHp, RunState.Current.MaxHp);
+                }
 
                 if (pendingEnemyProfile != null)
                 {
@@ -216,6 +221,7 @@ namespace TawanOS.GameFlow
 
         private void HandleCombatNodeEntered(NodeType nodeType)
         {
+            currentCombatNodeType = nodeType;
             RunState.Current.SetResume(ResumeKind.Combat, nodeType);
             pendingEnemyProfile = ResolveEnemyProfile(nodeType);
             pendingVictoryIncense = RollIncense(nodeType switch
@@ -230,14 +236,14 @@ namespace TawanOS.GameFlow
                 NodeType.EliteEnemy => RewardTier.Elite,
                 _ => RewardTier.Minor,
             };
-            SceneManager.LoadScene(CombatSceneName, LoadSceneMode.Single);
+            if (Application.isPlaying) SceneManager.LoadScene(CombatSceneName, LoadSceneMode.Single);
         }
 
         private void HandleEventNodeEntered(int floor)
         {
             RunState.Current.SetResume(ResumeKind.Event, NodeType.Event, floor);
             pendingEventFloor = floor;
-            SceneManager.LoadScene(EventSceneName, LoadSceneMode.Single);
+            if (Application.isPlaying) SceneManager.LoadScene(EventSceneName, LoadSceneMode.Single);
         }
 
         // กองของเซ่น: a short story in EventScene, then the card reward screen
@@ -245,7 +251,7 @@ namespace TawanOS.GameFlow
         {
             RunState.Current.SetResume(ResumeKind.Event, NodeType.Treasure, floor);
             pendingOffering = true;
-            SceneManager.LoadScene(EventSceneName, LoadSceneMode.Single);
+            if (Application.isPlaying) SceneManager.LoadScene(EventSceneName, LoadSceneMode.Single);
         }
 
         private void HandleEventCardReward()
@@ -260,23 +266,24 @@ namespace TawanOS.GameFlow
         private void HandleEventFinished()
         {
             RunState.Current.ClearResume();
-            SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+            if (Application.isPlaying) SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
         }
 
         private void HandleEventCombatRequested(EnemyProfileSO enemy)
         {
+            currentCombatNodeType = NodeType.MinorEnemy;
             // The event's enemy is not saved by reference; a resumed fight uses the minor-enemy encounter
             RunState.Current.SetResume(ResumeKind.Combat, NodeType.MinorEnemy);
             pendingEnemyProfile = enemy;
             pendingVictoryIncense = RollIncense(EventFightIncense);
             pendingRewardTier = RewardTier.Minor;
-            SceneManager.LoadScene(CombatSceneName, LoadSceneMode.Single);
+            if (Application.isPlaying) SceneManager.LoadScene(CombatSceneName, LoadSceneMode.Single);
         }
 
         private void HandleStoreNodeEntered()
         {
             RunState.Current.SetResume(ResumeKind.Shop, NodeType.Store);
-            SceneManager.LoadScene(ShopSceneName, LoadSceneMode.Single);
+            if (Application.isPlaying) SceneManager.LoadScene(ShopSceneName, LoadSceneMode.Single);
         }
 
         // เมรุ: burn a card or upgrade one, then back to the map
@@ -285,34 +292,47 @@ namespace TawanOS.GameFlow
             if (!Application.CanStreamedLevelBeLoaded(MeruSceneName))
             {
                 Debug.LogWarning("[GameFlowManager] MeruScene is not in Build Settings (run Tools > TawanOS > Meru > Setup Meru Scene) - the node does nothing.");
-                if (SceneManager.GetActiveScene().name != MapSceneName) SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+                if (SceneManager.GetActiveScene().name != MapSceneName && Application.isPlaying) SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
                 return;
             }
             RunState.Current.SetResume(ResumeKind.Meru, NodeType.RestSite);
-            SceneManager.LoadScene(MeruSceneName, LoadSceneMode.Single);
+            if (Application.isPlaying) SceneManager.LoadScene(MeruSceneName, LoadSceneMode.Single);
         }
 
         private void HandleMeruFinished()
         {
             RunState.Current.ClearResume();
-            SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+            if (Application.isPlaying) SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
         }
 
         private void HandleShopClosed()
         {
             RunState.Current.ClearResume();
-            SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+            if (Application.isPlaying) SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
         }
+
+        // One combat pays out or ends the run once, even if the end event were to fire twice (plan task A8)
+        private bool combatEndHandled;
 
         private void HandleCombatEnded(bool isVictory)
         {
+            if (combatEndHandled) return;
+            combatEndHandled = true;
+
             if (!isVictory)
             {
                 // Defeat ends the run: the save goes, the Defeat panel shows, then back to the menu
                 RunState.EndRun();
                 new MapSaveManager().ClearSavedMap();
-                StartCoroutine(GoToMainMenuAfterDelay());
+                if (Application.isPlaying) StartCoroutine(GoToMainMenuAfterDelay());
                 return;
+            }
+
+            // Khwan left after the fight is what the run keeps (plan task A2). Only a run that exists in a save
+            // is written back, so a combat scene opened on its own does not touch it.
+            if (RunState.Current.IsPersistent && CombatManager.Instance != null)
+            {
+                RunState.Current.SetCurrentHp(CombatManager.Instance.State.playerKhwan);
             }
 
             // The fight is won: a quit from here on no longer replays it
@@ -324,17 +344,26 @@ namespace TawanOS.GameFlow
             RunState.Current.AddIncense(reward);
             Debug.Log($"[GameFlowManager] Victory: +{reward} incense (total {RunState.Current.Incense})");
 
+            // Plan Task A3: Defeating the Boss ends the run with victory! Clear save and show Victory screen
+            if (currentCombatNodeType == NodeType.Boss || pendingRewardTier == RewardTier.Boss)
+            {
+                RunState.EndRun();
+                new MapSaveManager().ClearSavedMap();
+                if (Application.isPlaying) StartCoroutine(GoToVictoryAfterDelay());
+                return;
+            }
+
             hasPendingReward = true;
             rewardIncense = reward;
             rewardTier = pendingRewardTier;
             pendingRewardTier = RewardTier.Minor;
 
-            StartCoroutine(GoToRewardAfterDelay());
+            if (Application.isPlaying) StartCoroutine(GoToRewardAfterDelay());
         }
 
         private void HandleRewardFinished()
         {
-            SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+            if (Application.isPlaying) SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
         }
 
         private static int RollIncense(Vector2Int range)
@@ -381,36 +410,50 @@ namespace TawanOS.GameFlow
             // RewardScene is built by a setup tool; until it exists, go straight back to the map
             if (Application.CanStreamedLevelBeLoaded(RewardSceneName))
             {
-                SceneManager.LoadScene(RewardSceneName, LoadSceneMode.Single);
+                if (Application.isPlaying) SceneManager.LoadScene(RewardSceneName, LoadSceneMode.Single);
             }
             else
             {
                 Debug.LogWarning("[GameFlowManager] RewardScene is not in Build Settings (run Tools > TawanOS > Rewards > Setup Reward Scene) - skipping the card reward.");
                 hasPendingReward = false;
-                SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+                if (Application.isPlaying) SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+            }
+        }
+
+        private System.Collections.IEnumerator GoToVictoryAfterDelay()
+        {
+            yield return new WaitForSeconds(VictoryPanelDelaySeconds);
+            LoadVictoryScene();
+        }
+
+        private void LoadVictoryScene()
+        {
+            if (Application.CanStreamedLevelBeLoaded(VictorySceneName))
+            {
+                if (Application.isPlaying) SceneManager.LoadScene(VictorySceneName, LoadSceneMode.Single);
+            }
+            else
+            {
+                Debug.LogWarning("[GameFlowManager] VictoryScene is not in Build Settings (run Tools > TawanOS > Game Flow > Setup Victory Scene) - returning to Main Menu.");
+                if (Application.isPlaying) SceneManager.LoadScene(MainMenuSceneName, LoadSceneMode.Single);
             }
         }
 
         private EnemyProfileSO ResolveEnemyProfile(NodeType nodeType)
         {
-            string path = nodeType switch
+            var table = EncounterTableSO.Load();
+            if (table == null)
             {
-                NodeType.Boss => BossEnemyAssetPath,
-                NodeType.EliteEnemy => EliteEnemyAssetPath,
-                _ => MinorEnemyAssetPath,
-            };
+                Debug.LogError($"[GameFlowManager] Resources/{EncounterTableSO.ResourceName}.asset is missing (run Tools > TawanOS > Game Flow > Create Encounter Table)");
+                return null;
+            }
 
-#if UNITY_EDITOR
-            var profile = UnityEditor.AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(path);
+            var profile = table.Pick(nodeType);
             if (profile == null)
             {
-                Debug.LogError($"[GameFlowManager] Could not load EnemyProfileSO at '{path}' for node type {nodeType}");
+                Debug.LogError($"[GameFlowManager] The encounter table has no enemy for node type {nodeType}");
             }
             return profile;
-#else
-            Debug.LogError("[GameFlowManager] Runtime (non-editor) enemy profile resolution is not implemented yet - needs a Resources-based encounter table.");
-            return null;
-#endif
         }
     }
 }

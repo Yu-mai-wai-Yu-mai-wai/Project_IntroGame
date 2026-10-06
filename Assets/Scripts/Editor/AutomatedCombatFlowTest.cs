@@ -39,7 +39,8 @@ namespace TawanOS.EditorTools
         private const string KeyStep = "ACFT_Step";
         private const string KeyErrors = "ACFT_Errors";
         private const string KeyStepStart = "ACFT_StepStart";
-        private const string KeyFrameBudget = "ACFT_FrameBudget";
+        private const string KeyRunStart = "ACFT_RunStart";
+        private const float GlobalBudgetSeconds = 240f;
 
         static AutomatedCombatFlowTest()
         {
@@ -54,10 +55,16 @@ namespace TawanOS.EditorTools
 
         public static void Run()
         {
+            // The test must start from a fresh run: a map save left by an earlier run (or by playing) makes the
+            // first attainable node a later-floor Event/Shop node and the test times out waiting for combat.
+            // This deletes the run save and the saved map of this machine's Editor profile.
+            TawanOS.GameFlow.RunState.DeleteSave();
+            new MapSaveManager().ClearSavedMap();
+
             SessionState.SetBool(KeyRunning, true);
             SessionState.SetInt(KeyStep, (int)Step.EnterPlayMode);
             SessionState.SetInt(KeyErrors, 0);
-            SessionState.SetInt(KeyFrameBudget, 0);
+            SessionState.SetFloat(KeyRunStart, (float)EditorApplication.timeSinceStartup);
             SessionState.SetFloat(KeyStepStart, (float)EditorApplication.timeSinceStartup);
 
             Application.logMessageReceived += HandleLog;
@@ -137,11 +144,15 @@ namespace TawanOS.EditorTools
                     break;
 
                 case Step.ClickNode:
+                    // The map is random each run, so only a combat node is a valid target: an Event/Shop/Treasure
+                    // node never loads CombatTestScene and the step would time out (fixed 6 Oct, plan task A8 run)
                     var node = Object.FindObjectsByType<MapNodeView>(FindObjectsSortMode.None)
-                        .FirstOrDefault(n => n.NodeData != null && n.NodeData.status == NodeStatus.Attainable);
+                        .FirstOrDefault(n => n.NodeData != null
+                            && n.NodeData.status == NodeStatus.Attainable
+                            && (n.NodeData.type == NodeType.MinorEnemy || n.NodeData.type == NodeType.EliteEnemy));
                     if (node == null)
                     {
-                        if (TimedOut(5)) Fail("No Attainable MapNodeView found to click");
+                        if (TimedOut(5)) Fail("No Attainable combat MapNodeView (MinorEnemy/EliteEnemy) found to click");
                         break;
                     }
                     Debug.Log($"[AutomatedCombatFlowTest] Clicking node type={node.NodeData.type} at {node.NodeData.gridPosition}");
@@ -211,7 +222,7 @@ namespace TawanOS.EditorTools
                         AdvanceTo(Step.Done);
                         Finish(0);
                     }
-                    else if (TimedOut(20))
+                    else if (TimedOut(90))
                     {
                         Fail($"Round never resolved back to PlayerTurn/Victory/Defeat, stuck at {phase}");
                     }
@@ -221,11 +232,11 @@ namespace TawanOS.EditorTools
                     break;
             }
 
-            int frameBudget = SessionState.GetInt(KeyFrameBudget, 0) + 1;
-            SessionState.SetInt(KeyFrameBudget, frameBudget);
-            if (frameBudget > 20000)
+            // Wall-clock budget, not a frame count: in batch mode EditorApplication.update runs thousands of times
+            // a second, so a frame budget ran out during a normal enemy spell animation (6 Oct)
+            if (EditorApplication.timeSinceStartup - SessionState.GetFloat(KeyRunStart, 0f) > GlobalBudgetSeconds)
             {
-                Fail("Global frame budget exceeded, aborting to avoid hanging the process");
+                Fail($"Global time budget ({GlobalBudgetSeconds}s) exceeded, aborting to avoid hanging the process");
             }
         }
     }

@@ -40,9 +40,9 @@ MonoBehaviour:
           amount: 15
           relicId: 
           enemy: {fileID: 0}
-        - type: 6
-          amount: 0
-          relicId: "\u0E1E\u0E23\u0E30\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E40\u0E01\u0E48\u0E32"
+        - type: 4
+          amount: 25
+          relicId: 
           enemy: {fileID: 0}
         nextPageId: 
     - label: "\u0E44\u0E2B\u0E27\u0E49\u0E41\u0E25\u0E49\u0E27\u0E02\u0E2D\u0E1E\u0E23"

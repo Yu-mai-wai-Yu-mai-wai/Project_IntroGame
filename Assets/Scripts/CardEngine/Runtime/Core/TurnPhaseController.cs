@@ -280,10 +280,20 @@ namespace TawanOS.CardEngine
             }
         }
 
+        // Developer overlay (English, small): only in the Editor and Development builds, off until F3 is pressed.
+        // Players get the TurnBannerView instead (plan tasks H1, G3).
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        private bool debugOverlayVisible;
+
         private void OnGUI()
         {
+            if (Event.current != null && Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.F3)
+            {
+                debugOverlayVisible = !debugOverlayVisible;
+            }
+
             if (CombatCameraRig3D.HideOverlay) return; // the board-only camera view hides all UI
-            if (!showDebugLabel) return;
+            if (!showDebugLabel || !debugOverlayVisible) return;
             GUI.Label(new Rect(10, 10, 500, 24), $"Turn {TurnNumber}  |  Phase: {CurrentPhase}  |  [{endTurnKey}] next phase");
             if (CombatManager.Instance != null)
             {
@@ -292,5 +302,6 @@ namespace TawanOS.CardEngine
                     $"Enemy AI: {CombatManager.Instance.EnemyAIStateName}  |  Next: {(move != null ? $"{move.intent} {move.baseValue}" : "-")}");
             }
         }
+#endif
     }
 }

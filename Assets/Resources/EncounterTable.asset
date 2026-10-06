@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c92fda0ddf254fc4ea72392fecd83e83, type: 3}
+  m_Name: EncounterTable
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.GameFlow.EncounterTableSO
+  minor:
+  - {fileID: 11400000, guid: 0dcca0e7068694d4e8e84167d7894090, type: 2}
+  - {fileID: 11400000, guid: 738c6c36a65257743a398863269831ad, type: 2}
+  - {fileID: 11400000, guid: a521b449b11f44318bf9b45fa9df1c63, type: 2}
+  elite:
+  - {fileID: 11400000, guid: f3752d3d991f46bd9a24237565b408d3, type: 2}
+  boss:
+  - {fileID: 11400000, guid: 89f39d63277479a45a1f21ccc8f7e1e0, type: 2}

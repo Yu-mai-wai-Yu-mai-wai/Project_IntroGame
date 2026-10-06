@@ -9,9 +9,6 @@ EditorBuildSettings:
     path: Assets/Scenes/MainMenu.unity
     guid: e71200256afb9f44a9a22b77938a7368
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 1
     path: Assets/Scenes/CombatTestScene.unity
     guid: 9e1ca5b40d66acd41b415172d3dd740e
   - enabled: 1
@@ -26,6 +23,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/RewardScene.unity
     guid: 08cba1090e573e6409c38b857ec5629a
+  - enabled: 1
+    path: Assets/Scenes/MeruScene.unity
+    guid: 6be46ef75f4fc9b45b6fe20487db820d
+  - enabled: 1
+    path: Assets/Scenes/VictoryScene.unity
+    guid: b1d6b3c77a5c58c4b812b53a466b297b
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyId: enemy_boss
   enemyName: "\u0E1C\u0E35\u0E15\u0E32\u0E22\u0E42\u0E2B\u0E07 (\u0E1A\u0E2D\u0E2A\u0E43\u0E2B\u0E0D\u0E48)"
   portrait: {fileID: 0}
-  maxKhwan: 1
+  maxKhwan: 60
   moves:
   - intent: 0
     baseValue: 8

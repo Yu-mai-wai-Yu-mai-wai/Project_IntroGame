@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using TawanOS.GameFlow;
 
 namespace TawanOS.MapEngine
 {
@@ -61,6 +62,12 @@ namespace TawanOS.MapEngine
 #endif
             }
 
+            if (config != null && RunState.Current != null && RunState.Current.TotalFloors > 0 && config.totalFloors != RunState.Current.TotalFloors)
+            {
+                config = Instantiate(config);
+                config.totalFloors = RunState.Current.TotalFloors;
+            }
+
             if (autoGenerateOnStart && config != null)
             {
                 InitializeEngine();
@@ -74,6 +81,12 @@ namespace TawanOS.MapEngine
         public void InitializeEngine()
         {
             ClearMap();
+
+            if (config != null && RunState.Current != null && RunState.Current.TotalFloors > 0 && config.totalFloors != RunState.Current.TotalFloors)
+            {
+                config = Instantiate(config);
+                config.totalFloors = RunState.Current.TotalFloors;
+            }
 
             if (nodeParentTransform == null) nodeParentTransform = nodesParent != null ? nodesParent : transform;
             if (pathParentTransform == null) pathParentTransform = pathsParent != null ? pathsParent : transform;
@@ -131,7 +144,7 @@ namespace TawanOS.MapEngine
                     {
                         if (node == null) continue;
                         if (node.gridPosition.x >= cfg.mapWidth || node.gridPosition.y > cfg.totalFloors) return false;
-                        if (!TableNodeFbxNames.ContainsKey(node.gridPosition)) return false;
+                        if (!TryGetTableNodeFbxName(node.gridPosition, cfg.totalFloors, out _)) return false;
                     }
                 }
             }
@@ -261,6 +274,33 @@ namespace TawanOS.MapEngine
             { new Vector2Int(1, 7),  "Node.018" },
         };
 
+        public static readonly Dictionary<Vector2Int, string> TableNodeFbxNamesShort = new Dictionary<Vector2Int, string>
+        {
+            { new Vector2Int(0, -1), "Node.001" },
+            { new Vector2Int(1, -1), "Node.001" },
+            { new Vector2Int(0, 0),  "Node" },
+            { new Vector2Int(1, 0),  "Node.003" },
+            { new Vector2Int(2, 0),  "Node.002" },
+            { new Vector2Int(0, 1),  "Node.004" },
+            { new Vector2Int(1, 1),  "Node.005" },
+            { new Vector2Int(0, 2),  "Node.006" },
+            { new Vector2Int(1, 2),  "Node.008" },
+            { new Vector2Int(2, 2),  "Node.007" },
+            { new Vector2Int(0, 3),  "Node.016" },
+            { new Vector2Int(1, 3),  "Node.017" },
+            { new Vector2Int(0, 4),  "Node.018" },
+            { new Vector2Int(1, 4),  "Node.018" },
+        };
+
+        public static bool TryGetTableNodeFbxName(Vector2Int gridPos, int totalFloors, out string nodeName)
+        {
+            if (totalFloors <= 4)
+            {
+                if (TableNodeFbxNamesShort.TryGetValue(gridPos, out nodeName)) return true;
+            }
+            return TableNodeFbxNames.TryGetValue(gridPos, out nodeName);
+        }
+
         public static readonly Dictionary<string, Vector3> TablePedestalWorldPositions = new Dictionary<string, Vector3>
         {
             // Fallback only (live pedestal transforms win). Unity pos = (-fbxX, fbxY, fbxZ) / 100.
@@ -296,7 +336,7 @@ namespace TawanOS.MapEngine
 
             if (configData != null && configData.use3DTableMode)
             {
-                if (TableNodeFbxNames.TryGetValue(gridPos, out string nodeName))
+                if (TryGetTableNodeFbxName(gridPos, configData.totalFloors, out string nodeName))
                 {
                     if (environmentTransform == null)
                     {
@@ -555,10 +595,13 @@ namespace TawanOS.MapEngine
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.R))
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // Debug map reset is reserved for Editor/Dev builds under F3 to prevent player wipes
+            if (Input.GetKey(KeyCode.F3) && Input.GetKeyDown(KeyCode.R))
             {
                 ResetAndRegenerate();
             }
+#endif
         }
 
         public void ResetAndRegenerate()
@@ -610,6 +653,11 @@ namespace TawanOS.MapEngine
                     {
                         float targetX;
                         if (floorIndex < 0) targetX = 18.6f;
+                        else if (config.totalFloors <= 4)
+                        {
+                            float[] floorXs4 = { 13.55f, 9.65f, 5.80f, -11.54f, -15.47f };
+                            targetX = floorXs4[Mathf.Clamp(floorIndex, 0, floorXs4.Length - 1)];
+                        }
                         else if (floorIndex >= 7) targetX = -15.5f;
                         else
                         {

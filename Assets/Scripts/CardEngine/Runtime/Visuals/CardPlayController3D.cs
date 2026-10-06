@@ -115,21 +115,12 @@ namespace TawanOS.CardEngine
             var resolver = EffectResolver.Instance;
             if (cards == null || resolver == null) return false;
 
-            if (!cards.IsAllowedNow(card))
+            // One place decides why a card cannot be played; the player sees the reason on screen, not only in the Console
+            var reason = cards.GetPlayBlockReason(card);
+            if (reason != null)
             {
-                Debug.Log($"[CardPlay] {card.cardNameThai} cannot be played in this phase");
-                return false;
-            }
-            if (!cards.CanAfford(card))
-            {
-                Debug.LogWarning($"[CardPlay] Not enough Merit to play {card.cardNameThai} (Needs {card.meritCost})");
-                return false;
-            }
-            if (!resolver.CanResolve(card, casterIsPlayer: true))
-            {
-                Debug.Log(card.cardType == CardType.Incantation
-                    ? $"[CardPlay] {card.cardNameThai} has no valid target right now"
-                    : $"[CardPlay] The board is full; {card.cardNameThai} cannot be played");
+                Debug.Log($"[CardPlay] {card.cardNameThai} cannot be played: {reason}");
+                TawanOS.UI.PlayerNotice.Show(reason);
                 return false;
             }
             return true;
