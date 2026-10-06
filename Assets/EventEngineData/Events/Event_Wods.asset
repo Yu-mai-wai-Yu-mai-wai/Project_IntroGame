@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2914eaf69061c8b47b7cfff965c1db2c, type: 3}
-  m_Name: what
+  m_Name: Event_Wods
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.EventEngine.EventDataSO
-  eventId: What
-  title: "\u0E27\u0E2D\u0E14\u0E2A\u0E4C\u0E48"
+  eventId: wods
+  title: "\u0E27\u0E2D\u0E14\u0E2A\u0E4C"
   speakerName: "\u0E02\u0E27\u0E31\u0E0D"
   illustration: {fileID: 0}
   minFloor: 0
@@ -64,5 +64,5 @@ MonoBehaviour:
         - type: 7
           amount: 5
           relicId: 
-          enemy: {fileID: 0}
+          enemy: {fileID: 11400000, guid: 0dcca0e7068694d4e8e84167d7894090, type: 2}
         nextPageId: 

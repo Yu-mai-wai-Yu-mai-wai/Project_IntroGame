@@ -17,7 +17,7 @@ MonoBehaviour:
   baseColor: {r: 0.3529, g: 0.0941, b: 0.0627, a: 1}
   hoverColor: {r: 0.52935, g: 0.14115, b: 0.094050005, a: 1}
   visitedColor: {r: 0.17645, g: 0.04705, b: 0.03135, a: 1}
-  title: Unknown Omen
+  title: "\u0E2B\u0E21\u0E2D\u0E01\u0E14\u0E33"
   description: A strange occurrence on the path. Your choices shape what you gain...
     or lose.
 --- !u!213 &1079489357936684028
@@ -251,7 +251,7 @@ Sprite:
   m_IsPolygon: 0
   m_PackingTag: 
   m_RenderDataKey:
-    00000000000000000000000000000000: 0
+    11f313dad44e2de479dcf47cd9968b3b: 7267505597926597796
   m_AtlasTags: []
   m_SpriteAtlas: {fileID: 0}
   m_RD:

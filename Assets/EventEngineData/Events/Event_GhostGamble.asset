@@ -17,7 +17,7 @@ MonoBehaviour:
   speakerName: "\u0E40\u0E08\u0E49\u0E32\u0E21\u0E37\u0E2D\u0E44\u0E23\u0E49\u0E2B\u0E19\u0E49\u0E32"
   illustration: {fileID: 0}
   minFloor: 0
-  repeatable: 1
+  repeatable: 0
   pages:
   - pageId: start
     speakerOverride: 
