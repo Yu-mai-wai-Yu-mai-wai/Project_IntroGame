@@ -9,7 +9,8 @@ namespace TawanOS.MapEngine
         RestSite,
         Treasure,
         Store,
-        Boss
+        Boss,
+        Event // Appended last so saved maps (enum stored as int) keep their node types
     }
 
     public enum NodeStatus

@@ -12,6 +12,18 @@ namespace TawanOS.CardEngine
 
         private static CardCatalogSO cached;
 
+        // A card that is another card's upgraded version: only reached by upgrading at the เมรุ
+        public bool IsUpgradedVersion(CardDataSO card)
+        {
+            return card != null && cards.Exists(c => c != null && c.upgradedCard == card);
+        }
+
+        // The cards random pools (rewards, shop, the pit) draw from: every card except upgraded versions
+        public List<CardDataSO> BaseCards()
+        {
+            return cards.FindAll(c => c != null && !IsUpgradedVersion(c));
+        }
+
         public static CardCatalogSO Load()
         {
             if (cached == null) cached = Resources.Load<CardCatalogSO>("CardCatalog");

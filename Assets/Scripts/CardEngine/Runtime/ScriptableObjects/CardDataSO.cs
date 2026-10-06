@@ -52,7 +52,14 @@ namespace TawanOS.CardEngine
         [Tooltip("ความสามารถของการ์ด (ว่าง = การ์ดแบบเดิมที่ใช้ baseValue/targetType)")]
         public List<CardAbility> abilities = new List<CardAbility>();
 
+        [Header("Upgrade")]
+        [Tooltip("การ์ดที่ได้เมื่ออัพเกรดใบนี้ที่เมรุ (เว้นว่าง = อัพเกรดไม่ได้). การ์ดที่เป็นเวอร์ชันอัพเกรดจะไม่ถูกสุ่มแจกในรางวัล / ร้าน / หลุมจั่ว")]
+        public CardDataSO upgradedCard;
+
         [Header("Visuals & Audio")]
+        [Tooltip("ภาพการ์ดสำเร็จเต็มใบ (PNG ที่มีชื่อ ค่าร่าย คำอธิบาย ครบแล้ว) ใส่แล้ว Unity จะเขียนเพิ่มแค่ สะเทือนขวัญ และ ขวัญ " +
+                 "(เว้นว่าง = ประกอบหน้าการ์ดจากกรอบ + ภาพประกอบ + ข้อความแบบเดิม)")]
+        public Sprite cardImage;
         [Tooltip("ภาพพื้นหลังการ์ดเต็มใบที่ Art วาด (วางพื้นหลังได้เลย)")]
         public Sprite cardBackground;
         [Tooltip("รูปภาพประกอบการ์ดตรงกลาง")]

@@ -7,6 +7,7 @@ namespace TawanOS.CardEngine
     //  - C key or the button at the top-right toggles the board-only top view: UI and both hands are hidden
     //    and the camera zooms until the two board rows fill the screen
     //  - Holding a card (CardPlayController3D) switches to the top view until the card is played / put back
+    //  - The board clash locks the top view (SetLocked): C and the button do nothing until it is over
     //  - Right-click a card to open its detail screen (CardDetailPanelUI)
     // The zoom narrows the field of view instead of moving the camera down, and the hands (which follow
     // the camera) are scaled to match, so they keep their size and place on screen.
@@ -39,6 +40,7 @@ namespace TawanOS.CardEngine
 
         private bool userTop;
         private int topRequests;
+        private bool locked;
 
         private enum View { Home, TopWithHands, BoardOnly }
         private View appliedView = View.Home;
@@ -53,14 +55,15 @@ namespace TawanOS.CardEngine
         private EnemyHandView3D enemyHand;
         private Vector3 enemyHandOffset, enemyHandScale;
 
-        public bool IsTopView => userTop || topRequests > 0;
+        public bool IsTopView => locked || userTop || topRequests > 0;
+        public bool IsLocked => locked;
 
-        // The C view: only the board, no UI and no hands (a held card brings the hands back)
-        public bool IsBoardOnlyView => userTop && topRequests == 0;
+        // The C view: only the board, no UI and no hands (a held card or the locked view brings them back)
+        public bool IsBoardOnlyView => userTop && topRequests == 0 && !locked;
         public static bool HideOverlay => Instance != null && Instance.IsBoardOnlyView;
 
-        // The card detail screen is showing (or closed this frame): clicks should not also pick up or play cards
-        public static bool BlocksInput => CardDetailPanelUI.BlocksInput;
+        // The card detail or graveyard screen is showing (or closed this frame): clicks should not also pick up or play cards
+        public static bool BlocksInput => CardDetailPanelUI.BlocksInput || GraveyardPanelUI.BlocksInput;
 
         // AfterSceneLoad fires only for the first scene played; the combat scene is usually loaded later from the map.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -119,7 +122,16 @@ namespace TawanOS.CardEngine
 
         public void ToggleTopView()
         {
+            if (locked) return;
             userTop = !userTop;
+            Apply();
+        }
+
+        // Holds the top view (with hands and UI) and ignores the player's toggle until unlocked
+        public void SetLocked(bool on)
+        {
+            if (locked == on) return;
+            locked = on;
             Apply();
         }
 
@@ -138,10 +150,10 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
-            if (Input.GetKeyDown(toggleKey) && !CardDetailPanelUI.IsOpen) ToggleTopView();
+            if (Input.GetKeyDown(toggleKey) && !CardDetailPanelUI.IsOpen && !GraveyardPanelUI.IsOpen) ToggleTopView();
 
             // Right-click a card: its detail screen. A held card or a target choice uses right-click to cancel.
-            if (!Input.GetMouseButtonDown(1) || CardDetailPanelUI.BlocksInput
+            if (!Input.GetMouseButtonDown(1) || BlocksInput
                 || CardPlayController3D.BlocksInput || CardTargeting3D.BlocksInput) return;
 
             var view = CardUnderMouse();
@@ -194,7 +206,7 @@ namespace TawanOS.CardEngine
             SetUiHidden(want == View.BoardOnly);
         }
 
-        // Every screen UI canvas except the card detail screen
+        // Every screen UI canvas except the card detail and graveyard screens
         private void SetUiHidden(bool hide)
         {
             if (hide)
@@ -202,7 +214,7 @@ namespace TawanOS.CardEngine
                 foreach (var canvas in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
                 {
                     if (!canvas.isRootCanvas || !canvas.enabled || canvas.renderMode == RenderMode.WorldSpace) continue;
-                    if (canvas.GetComponentInParent<CardDetailPanelUI>() != null) continue;
+                    if (canvas.GetComponentInParent<CardDetailPanelUI>() != null || canvas.GetComponentInParent<GraveyardPanelUI>() != null) continue;
                     canvas.enabled = false;
                     hiddenCanvases.Add(canvas);
                 }
@@ -352,7 +364,7 @@ namespace TawanOS.CardEngine
 
         private void OnGUI()
         {
-            if (!showToggleButton || CardDetailPanelUI.IsOpen || IsBoardOnlyView) return;
+            if (!showToggleButton || locked || CardDetailPanelUI.IsOpen || GraveyardPanelUI.IsOpen || IsBoardOnlyView) return;
             string label = IsTopView ? $"มุมปกติ ({toggleKey})" : $"มุมบน ({toggleKey})";
             if (GUI.Button(new Rect(Screen.width - 150, 10, 140, 30), label)) ToggleTopView();
         }

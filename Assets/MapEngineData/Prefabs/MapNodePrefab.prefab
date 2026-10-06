@@ -52,6 +52,7 @@ MonoBehaviour:
   baseScale: {x: 1, y: 1, z: 1}
   hoverScale: {x: 1.25, y: 1.25, z: 1.25}
   animationSpeed: 0.2
+  iconWorldSize: 1.2
 --- !u!135 &3011679602091436530
 SphereCollider:
   m_ObjectHideFlags: 0

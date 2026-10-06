@@ -27,6 +27,10 @@ namespace TawanOS.MapEngine
 
         public MapGraphData CurrentGraph { get; private set; }
         public event System.Action<NodeType> OnCombatNodeEntered;
+        public event System.Action<int> OnEventNodeEntered; // Arg: map floor of the node
+        public event System.Action OnStoreNodeEntered;
+        public event System.Action<int> OnTreasureNodeEntered; // กองของเซ่น. Arg: map floor of the node
+        public event System.Action OnRestNodeEntered; // เมรุ
 
         private IMapGenerator generator;
         private IMapSaveSystem saveSystem;
@@ -453,6 +457,22 @@ namespace TawanOS.MapEngine
             if (nodeData.type == NodeType.MinorEnemy || nodeData.type == NodeType.EliteEnemy || nodeData.type == NodeType.Boss)
             {
                 OnCombatNodeEntered?.Invoke(nodeData.type);
+            }
+            else if (nodeData.type == NodeType.Event)
+            {
+                OnEventNodeEntered?.Invoke(nodeData.gridPosition.y);
+            }
+            else if (nodeData.type == NodeType.Store)
+            {
+                OnStoreNodeEntered?.Invoke();
+            }
+            else if (nodeData.type == NodeType.Treasure)
+            {
+                OnTreasureNodeEntered?.Invoke(nodeData.gridPosition.y);
+            }
+            else if (nodeData.type == NodeType.RestSite)
+            {
+                OnRestNodeEntered?.Invoke();
             }
         }
 

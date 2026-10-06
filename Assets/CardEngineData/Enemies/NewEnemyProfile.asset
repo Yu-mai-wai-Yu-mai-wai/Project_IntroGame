@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyId: enemy_prai
   enemyName: "\u0E1C\u0E35\u0E1E\u0E23\u0E32\u0E22"
   portrait: {fileID: 0}
-  maxKhwan: 30
+  maxKhwan: 1
   deck:
   - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
   - {fileID: 11400000, guid: 904986997b8348699a37abc9397be673, type: 2}

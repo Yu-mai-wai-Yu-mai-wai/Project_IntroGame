@@ -20,6 +20,7 @@ namespace TawanOS.CardEngine
         public int familiarHealth;
         public int familiarDamage;
         public TargetType targetType;
+        public Sprite cardImage; // finished full-card PNG: only attack / Khwan are drawn over it
         public Sprite cardBackground;
         public Sprite artwork;
         public Sprite frameBorder;
@@ -81,6 +82,7 @@ namespace TawanOS.CardEngine
                 familiarHealth = template.familiarHealth;
                 familiarDamage = template.familiarDamage;
                 targetType = template.targetType;
+                cardImage = template.cardImage;
                 cardBackground = template.cardBackground != null ? template.cardBackground : template.frameBorder;
                 artwork = template.artwork;
                 frameBorder = template.frameBorder;

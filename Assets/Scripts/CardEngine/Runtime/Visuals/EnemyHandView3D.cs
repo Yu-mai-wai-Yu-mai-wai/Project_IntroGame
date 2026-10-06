@@ -36,8 +36,13 @@ namespace TawanOS.CardEngine
         [Header("Animation")]
         public float drawFlyDuration = 0.45f;
         public float drawStagger = 0.12f;
+        [Tooltip("Incantations: time to fly from the showcase into the graveyard.")]
         public float playFlyDuration = 0.4f;
-        public float playLingerTime = 0.6f;
+
+        [Header("Incantation Showcase")]
+        [Tooltip("A cast incantation waits where the player's card waits while being played (same spot and size), for this long before it takes effect. Durations are divided by CombatManager's Enemy Play Speed.")]
+        public float showcaseHoldTime = 1.6f;
+        public float showcaseInDuration = 0.3f;
 
         [Header("Draw Pile")]
         public Vector2 pileCardSize = new Vector2(0.7f, 1f);
@@ -48,6 +53,7 @@ namespace TawanOS.CardEngine
         private EnemyCardPlayer enemyCards;
         private Camera cam;
         private Transform container;
+        private Transform playerHandParent; // the player's hand cards sit under it
 
         // The object the enemy's hand cards sit under (CombatCameraRig3D scales it with the camera zoom)
         public Transform Container => container;
@@ -91,6 +97,7 @@ namespace TawanOS.CardEngine
             if (playerHand != null)
             {
                 if (cardPrefab == null) cardPrefab = playerHand.cardPrefab;
+                playerHandParent = playerHand.handContainer != null ? playerHand.handContainer : playerHand.transform;
                 cardSpacing = playerHand.cardSpacing;
                 maxTotalWidth = playerHand.maxTotalWidth;
                 arcAngle = playerHand.arcAngle;
@@ -122,12 +129,14 @@ namespace TawanOS.CardEngine
             enemyCards = combat.EnemyCards;
             enemyCards.OnCardDrawn += HandleDrawn;
             enemyCards.OnCardPlayed += HandlePlayed;
+            enemyCards.RevealTime = RevealTime;
         }
 
         private void OnDestroy()
         {
             if (enemyCards == null) return;
             enemyCards.OnCardDrawn -= HandleDrawn;
+            enemyCards.RevealTime = null;
             enemyCards.OnCardPlayed -= HandlePlayed;
         }
 
@@ -260,11 +269,58 @@ namespace TawanOS.CardEngine
                 return;
             }
 
-            t.DOMove(tableCenter, playFlyDuration).SetEase(Ease.OutCubic);
-            t.DORotateQuaternion(tableRotation, playFlyDuration);
-            Destroy(view.gameObject, playFlyDuration + playLingerTime);
+            // Incantation: wait where the player's card waits while being played, then go to the graveyard.
+            // The arrow shows which card it acts on while it waits.
+            if (enemyCards.PlayingTarget != null)
+            {
+                CardTargeting3D.Ensure().PointAt(enemyCards.PlayingTarget, RevealTime(card), enemy: true);
+            }
+
+            float speed = Speed;
+            float fly = playFlyDuration / speed;
+
+            var seq = DOTween.Sequence().SetTarget(t);
+            if (TryGetHeldPose(out var heldPos, out var heldRot, out var heldScale))
+            {
+                float showIn = showcaseInDuration / speed;
+                seq.Append(t.DOMove(heldPos, showIn).SetEase(Ease.OutQuad))
+                   .Join(t.DORotateQuaternion(heldRot, showIn))
+                   .Join(t.DOScale(heldScale, showIn))
+                   .AppendInterval(showcaseHoldTime / speed);
+            }
+            Vector3 grave = GraveyardView3D.Instance != null ? GraveyardView3D.Instance.DropPoint : tableCenter;
+            seq.Append(t.DOMove(grave, fly).SetEase(Ease.InCubic))
+               .Join(t.DORotateQuaternion(tableRotation, fly))
+               .Join(t.DOScale(Vector3.zero, fly).SetEase(Ease.InQuad))
+               .OnComplete(() => { if (view != null) Destroy(view.gameObject); });
 
             layoutDirty = true;
+        }
+
+        private static float Speed => CombatManager.Instance != null ? CombatManager.Instance.EnemyPlaySpeed : 1f;
+
+        // How long EnemyCardPlayer waits before an incantation lands: until its showcase has been read
+        private float RevealTime(CardInstance card)
+        {
+            if (card == null || card.cardType != CardType.Incantation || cardPrefab == null) return 0f;
+            return (showcaseInDuration + showcaseHoldTime) / Speed;
+        }
+
+        // Same spot, facing and size as a card the player is about to play (CardPlayController3D)
+        private bool TryGetHeldPose(out Vector3 position, out Quaternion rotation, out Vector3 localScale)
+        {
+            position = Vector3.zero;
+            rotation = Quaternion.identity;
+            localScale = Vector3.one;
+
+            var play = CardPlayController3D.Ensure();
+            if (!play.TryGetHeldWorldPoint(playerHandParent, out position)) return false;
+
+            rotation = playerHandParent.rotation;
+            Vector3 world = Vector3.Scale(playerHandParent.lossyScale, cardPrefab.transform.localScale * play.heldScale);
+            Vector3 parent = transform.lossyScale;
+            localScale = new Vector3(world.x / parent.x, world.y / parent.y, world.z / parent.z);
+            return true;
         }
 
         private void SetFace(CardView3D view, CardInstance card, bool faceUp)

@@ -45,6 +45,7 @@ namespace TawanOS.CardEngine
             drawPile.Clear();
             handCards.Clear();
             discardPile.Clear();
+            pitDraws = 0;
 
             if (startingDeck != null)
             {
@@ -70,17 +71,11 @@ namespace TawanOS.CardEngine
                     break;
                 }
 
+                // An empty draw pile stays empty: the graveyard is not shuffled back in
                 if (drawPile.Count == 0)
                 {
-                    if (discardPile.Count > 0)
-                    {
-                        ReshuffleDiscardIntoDraw();
-                    }
-                    else
-                    {
-                        Debug.Log("[CardManager] Both draw and discard piles are empty.");
-                        break;
-                    }
+                    Debug.Log("[CardManager] Draw pile is empty.");
+                    break;
                 }
 
                 CardInstance drawnCard = drawPile[0];
@@ -160,8 +155,10 @@ namespace TawanOS.CardEngine
         }
 
         // หลุมจั่ว: the player clicks the pit to draw one random card out of every card in the game.
-        // Each pull costs Corruption, whatever the debug cost switch says, since that is the pit's price.
-        public const int PitCorruptionGain = 1;
+        // Each pull costs Corruption, whatever the debug cost switch says, since that is the pit's price,
+        // and the price climbs through the fight: 1st pull 1, 2nd pull 2, 3rd pull 3...
+        private int pitDraws;
+        public int NextPitCorruption => pitDraws + 1;
 
         public bool DrawFromPit()
         {
@@ -182,7 +179,9 @@ namespace TawanOS.CardEngine
             DrawPitView3D.Instance?.PlayUseEffect();
             Debug.Log($"[CardManager] Pit drew {drawn.cardNameThai}");
 
-            combat?.AddCorruption(PitCorruptionGain);
+            int cost = NextPitCorruption;
+            pitDraws++;
+            combat?.AddCorruption(cost);
             return true;
         }
 
@@ -193,7 +192,7 @@ namespace TawanOS.CardEngine
             var pool = new List<CardDataSO>();
             if (catalog != null)
             {
-                foreach (var template in catalog.cards) if (template != null) pool.Add(template);
+                pool.AddRange(catalog.BaseCards());
             }
             if (pool.Count == 0)
             {

@@ -306,6 +306,15 @@ namespace TawanOS.CardEngine
             return result;
         }
 
+        // The card an incantation would act on if the caster lets the game choose (the enemy always does).
+        // null = the card needs no chosen target, or nothing on the board fits.
+        public CardInstance PickTarget(CardInstance card, bool casterIsPlayer)
+        {
+            var a = GetTargetedAbility(card);
+            if (a == null) return null;
+            return AutoPick(a, BoardOf(a.target == AbilityTarget.FriendlyCard ? casterIsPlayer : !casterIsPlayer));
+        }
+
         private CardInstance AutoPick(CardAbility a, List<CardInstance> pool)
         {
             CardInstance best = null;

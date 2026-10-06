@@ -54,9 +54,18 @@ namespace TawanOS.CardEngine
             }
         }
 
-        // Halfway between the player's and the enemy's board rows, right of the rightmost column
         private bool TryPlaceMiddleRight()
         {
+            if (!TryFindMiddleRight(gapRightOfBoard, out var position)) return false;
+            transform.position = position;
+            return true;
+        }
+
+        // Halfway between the player's and the enemy's board rows, gap to the right of the rightmost column
+        // (also used by the graveyard, GraveyardView3D)
+        public static bool TryFindMiddleRight(float gap, out Vector3 position)
+        {
+            position = Vector3.zero;
             Vector3 playerSum = Vector3.zero, enemySum = Vector3.zero;
             int playerCount = 0, enemyCount = 0;
             float maxX = float.MinValue;
@@ -81,7 +90,7 @@ namespace TawanOS.CardEngine
             if (playerCount == 0 || enemyCount == 0) return false;
 
             Vector3 middle = (playerSum / playerCount + enemySum / enemyCount) * 0.5f;
-            transform.position = new Vector3(maxX + gapRightOfBoard, middle.y, middle.z);
+            position = new Vector3(maxX + gap, middle.y, middle.z);
             return true;
         }
 
