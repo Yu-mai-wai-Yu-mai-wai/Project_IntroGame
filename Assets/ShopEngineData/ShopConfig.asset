@@ -67,7 +67,7 @@ MonoBehaviour:
       \u0E0A\u0E33\u0E23\u0E30\u0E2A\u0E34\u0E48\u0E07\u0E2D\u0E31\u0E1B\u0E21\u0E07\u0E04\u0E25"
     icon: {fileID: 21300000, guid: 159329041247410f9cede9510666cdb8, type: 3}
     price: 50
-  amuletsForSale: 3
+  amuletsForSale: 0
   blessingIcon: {fileID: 21300000, guid: 62eae6fe3c3cddd4187fb16cb28de182, type: 3}
   blessingPrice: 30
   blessingHealPercent: 0.3

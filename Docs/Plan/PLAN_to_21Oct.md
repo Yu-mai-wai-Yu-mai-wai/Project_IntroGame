@@ -96,7 +96,8 @@
 - เปลี่ยนชื่อโหนดใน `MapEngineData/Profiles/EventProfile.asset` จาก `Unknown Omen` เป็น `หมอกดำ`
 - **Done when:** catalog มี 5 อีเวนต์ และเล่นโหนดหมอกดำ 5 ครั้งไม่เจอเรื่องซ้ำ (catalog เลือกจากที่ยังไม่เคยเจอ)
 
-### [ ] A6 เครื่องรางติดตัว (relic)
+### [x] A6 เครื่องรางติดตัว (relic)
+- **เสร็จ 6 ต.ค. (ทางเลือก ก):** `ShopConfig.amuletsForSale = 0`; อีเวนต์ GhostGamble/WanderingShaman ใช้ `CardReward`, WellVoice (ธูป 40) และ SpiritHouse (+ธูป 25) ตัด `GainRelic` ออก; `EventEngineSetupTool.cs` แก้ให้ตรงกัน เพื่อไม่ให้กด setup ซ้ำแล้ว relic กลับมา; `EventCatalogTests` PASS 46/46. ข้อความ resultText ในอีเวนต์ยังพูดถึงของ (ปิ่น, ตะกรุด, พระเครื่อง) ให้ทีม Game Design ปรับ
 - ปัญหา: `RunState.AddRelic` เก็บ id แต่ไม่มีโค้ดใช้ ผู้เล่นเสียธูปฟรี
 - ทางเลือก ก (default ตาม D3): ซ่อน amulet ใน `ShopConfig` และเอา effect `GainRelic` ออกจากอีเวนต์ที่ใช้ แทนด้วย `GainIncense` หรือ `CardReward`
 - ทางเลือก ข (ถ้าทีมเลือกทำ): `RelicEffects` ใน `TawanOS.GameFlow` อ่าน `RunState.RelicIds` ตอนเริ่ม combat แล้วใช้ effect ที่มีอยู่แล้ว (`AddShield`, `AddMerit`, `RaiseCorruptionThreshold`, `ApplyStatus`) map จาก relicId ทีละตัว
