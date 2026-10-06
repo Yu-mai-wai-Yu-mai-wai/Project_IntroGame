@@ -51,20 +51,27 @@
 
 ทำก่อนทุกอย่าง เพราะกระทบเกณฑ์ "เล่นจนจบ Win/Lose ได้จริง" (15%)
 
-### [ ] A0 BuildScript (ทำก่อนเพื่อจับบั๊กที่เกิดเฉพาะใน build)
+### [x] A0 BuildScript (ทำก่อนเพื่อจับบั๊กที่เกิดเฉพาะใน build)
+- **เสร็จ 6 ต.ค.** commit `aa6692d` build ผ่านเมนูใน Editor ที่เปิดอยู่: `Result=Succeeded`, 6 scene, 0 error, 487 warning, 242 MB, 316 วินาที ยังไม่ได้ทดสอบเส้นทาง `-executeMethod` + exit code (ต้องปิด Editor) และยังไม่ได้เปิด `.exe` เล่น
+- ผลข้างเคียงที่พบ: การ build ทำให้ Unity แก้ `PC_RPAsset`, `UniversalRenderPipelineGlobalSettings`, `ProjectSettings.asset` (เพิ่ม preloaded InputActions) และ `UnityConnectSettings` (Enabled 0→1) ไม่ได้ commit ไว้ ต้องให้ทีมตัดสินว่าจะเก็บ `preloadedAssets` ของ Input Actions ไหม เพราะ build จริงต้องใช้
 - `Assets/Scripts/Editor/BuildScript.cs` namespace `TawanOS.EditorTools`, method `BuildWindows()`
 - ใช้ scene จาก `EditorBuildSettings` ที่ enabled, เอา `SampleScene` ออกจาก Build Settings
 - output `Build/Windows/KhwanEuyKhwanMa.exe`, `EditorApplication.Exit(1)` ถ้า `BuildReport.summary.result != Succeeded`
 - **Done when:** build จาก CLI สำเร็จ, Build Settings ไม่มี `SampleScene`
 
-### [ ] A1 ศัตรูโหลดได้ใน build
+### [x] A1 ศัตรูโหลดได้ใน build
+- **เสร็จ 6 ต.ค.** commit `bca8da0` `EncounterTableSO` + `Resources/EncounterTable.asset`, `EncounterTableTests` ผ่าน 8 ข้อ, smoke test ผ่าน (`EnemyKhwan=30`) ยังไม่ได้เปิด `.exe` เล่นเพื่อดูชื่อ Boss ใน build จริง
+- พบเพิ่ม: `MapPathPrefab` ไม่มี material (อาศัย `AssetDatabase` ใน Editor เติมให้) ผูก `String.mat` ใน prefab แล้ว `MapManager.config` ผูกใน scene แล้ว (ไม่ต้องแก้) การเรียก `AssetDatabase` ที่เหลือใน runtime อยู่ใน `#if UNITY_EDITOR` ทั้งหมด หรือเป็นตัวช่วยทดสอบ (`EventManager.TakeEditorTestEvent`)
 - ปัญหา: `GameFlowManager.ResolveEnemyProfile` ใช้ `AssetDatabase` ใน `#if UNITY_EDITOR` ส่วน build คืน `null` ทำให้ทุกการต่อสู้ได้ศัตรูเปล่าขวัญ 30
 - แก้: สร้าง `EncounterTableSO` (`TawanOS.GameFlow`) มี list `minor`, `elite`, `boss` เป็น `EnemyProfileSO` เก็บที่ `Assets/Resources/EncounterTable.asset` โหลดด้วย `Resources.Load` แล้วสุ่มจาก list ตาม `NodeType` ลบ path string ทั้งหมดออก
 - ใส่ค่าเริ่ม: minor = PraiGhost, elite = PraiGhost (จนกว่าจะมีศัตรูใหม่), boss = PhiTaiHongBoss
 - `EventManager` ส่งศัตรูจากอีเวนต์เป็น reference อยู่แล้ว ส่วน `TakeEditorTestEvent` ที่ใช้ `AssetDatabase` เป็นตัวช่วยทดสอบใน Editor ที่คืน null ใน build โดยตั้งใจ ไม่ต้องแก้
 - **Done when:** ไม่มีโค้ด runtime ที่ต้องพึ่ง `AssetDatabase` เพื่อให้เกมทำงาน (ยกเว้นตัวช่วยทดสอบใน Editor) และใน build การต่อสู้ Boss แสดงชื่อผีตายโหง
 
-### [ ] A2 ขวัญต่อเนื่องข้ามการต่อสู้
+### [x] A2 ขวัญต่อเนื่องข้ามการต่อสู้
+- **เสร็จ 6 ต.ค. (ส่วนที่ทดสอบอัตโนมัติได้)** `CombatManager.SetStartingKhwan`, `RunState.SetCurrentHp`, `GameFlowManager` ส่งค่าตอนเข้าฉากต่อสู้และเขียนกลับหลังชนะ `RunStateCombatSyncTests` ผ่าน 7 ข้อ (HP 23/50 → เริ่มที่ 23; จบที่ 17 → run = 17; clamp 1..max; ไม่มี run → เต็ม) A8, A1 และ smoke test ยังผ่าน
+- **ยังไม่ได้ทดสอบ:** เส้นทางจริงผ่าน `GameFlowManager` (เงื่อนไข `RunState.IsPersistent`) smoke test เริ่มจาก MapTestScene โดยไม่มี run ที่เซฟ จึงไม่ผ่านกิ่งนี้ ให้ทดสอบมือ: เริ่มเกมใหม่ → สู้จนขวัญลด → ชนะ → เข้าต่อสู้ถัดไป ต้องเริ่มด้วยขวัญที่เหลือ และ HUD แสดงค่านั้น
+- `StartCombat` ยังรีเซ็ตมลทินทุกต่อสู้ (PM ตัดสินให้คงไว้)
 - ปัญหา: `CombatManager.StartCombat` ตั้ง `playerKhwan = maxPlayerKhwan` (50) ทุกครั้ง และไม่เขียนค่ากลับ `RunState` ทำให้ฟื้นขวัญที่ร้าน หรือเสียขวัญจากอีเวนต์ไม่มีผล
 - แก้:
   - ตอนเริ่มต่อสู้ (ใน `GameFlowManager.HandleSceneLoaded` ฝั่ง combat หรือใน `StartCombat`): ถ้า `RunState.Current.IsPersistent` ให้ `maxPlayerKhwan = RunState.MaxHp`, `playerKhwan = RunState.CurrentHp` ถ้าไม่ใช่ (เปิด CombatTestScene ตรงๆ) ใช้ค่าเดิม เพื่อไม่ให้ smoke test พัง
