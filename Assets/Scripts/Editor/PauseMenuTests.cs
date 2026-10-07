@@ -93,8 +93,17 @@ namespace TawanOS.EditorTools
                 failures += Expect("summary names the enemy", text.Contains("ผีป่าช้า"));
                 failures += Expect("summary shows incense", text.Contains("ธูปที่สะสม 77"));
                 failures += Expect("summary shows the deck size", text.Contains("สำรับ 9 ใบ"));
-                Object.DestroyImmediate(screen.gameObject);
+                // a scene change must remove the page: it can never be left on top of the main menu
+                typeof(GameOverScreen).GetMethod("OnActiveSceneChanged", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(screen, new object[] { default(Scene), default(Scene) });
+                failures += Expect("active scene change asks the page to destroy itself", screen == null || screen.gameObject == null || screen.destroyRequested);
+                if (screen != null && screen.gameObject != null) Object.DestroyImmediate(screen.gameObject);
                 failures += Expect("Game Over page is gone after destroy", !GameOverScreen.IsShowing);
+
+                // the delayed show only happens while the scene that was lost is still the active one
+                var active = SceneManager.GetActiveScene();
+                failures += Expect("Game Over may show while the same scene is active", GameOverScreen.ShouldShow(active, active));
+                failures += Expect("Game Over must not show for an invalid scene", !GameOverScreen.ShouldShow(default(Scene), active));
 
                 // ---- no timer bounces the player to the menu
                 string flow = ReadSource("Assets/Scripts/GameFlow/GameFlowManager.cs");

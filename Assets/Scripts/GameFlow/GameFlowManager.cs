@@ -403,8 +403,12 @@ namespace TawanOS.GameFlow
 
         private System.Collections.IEnumerator ShowGameOverAfterDelay(GameOverSummary summary)
         {
-            // A beat to see how the fight ended, then the page stays until the player picks a button
+            // A beat to see how the fight ended, then the page stays until the player picks a button.
+            // This coroutine outlives scenes (the manager is DontDestroyOnLoad), so it only shows the page if
+            // the scene where the fight was lost is still the active one.
+            var lostIn = SceneManager.GetActiveScene();
             yield return new WaitForSeconds(GameOverDelaySeconds);
+            if (!GameOverScreen.ShouldShow(lostIn, SceneManager.GetActiveScene())) yield break;
             GameOverScreen.Show(summary);
         }
 

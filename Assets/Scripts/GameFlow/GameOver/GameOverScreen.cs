@@ -83,6 +83,28 @@ namespace TawanOS.GameFlow
             rect.offsetMin = rect.offsetMax = Vector2.zero;
         }
 
+        /// <summary>True when a Game Over that was waiting on a timer should still appear: the scene where the
+        /// fight was lost is loaded and still the active one.</summary>
+        public static bool ShouldShow(Scene lostIn, Scene active)
+        {
+            return lostIn.IsValid() && lostIn.isLoaded && active.IsValid() && lostIn.handle == active.handle;
+        }
+
+        // Set when the page is told to go away; visible to tests because Destroy is deferred
+        public bool destroyRequested;
+
+        private void OnEnable() => SceneManager.activeSceneChanged += OnActiveSceneChanged;
+        private void OnDisable() => SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+
+        // The page belongs to the scene it was shown in; it must never stay on top of another scene
+        private void OnActiveSceneChanged(Scene previous, Scene next)
+        {
+            destroyRequested = true;
+            Time.timeScale = 1f;
+            if (Application.isPlaying) Destroy(gameObject);
+            else DestroyImmediate(gameObject);   // edit-mode tests
+        }
+
         private void OnDestroy()
         {
             if (Instance == this) Instance = null;
