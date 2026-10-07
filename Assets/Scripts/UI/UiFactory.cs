@@ -54,6 +54,33 @@ namespace TawanOS.UI
             rect.offsetMax = new Vector2(-inset, -inset);
         }
 
+        /// <summary>
+        /// A labelled button laid out with anchors inside <paramref name="parent"/>. The selected colour differs
+        /// from normal so a keyboard focus is visible. Unlike the other helpers it takes clicks.
+        /// </summary>
+        public static Button CreateButton(Transform parent, string name, string label, UIThemeSO theme,
+            Vector2 anchorMin, Vector2 anchorMax)
+        {
+            var rect = CreateRect(name, parent);
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            var image = rect.gameObject.AddComponent<Image>();
+            image.color = Color.white;
+            var button = rect.gameObject.AddComponent<Button>();
+            button.targetGraphic = image;
+            var colors = button.colors;
+            colors.normalColor = theme.crimson;
+            colors.highlightedColor = Color.Lerp(theme.crimson, theme.accent, 0.35f);
+            colors.selectedColor = Color.Lerp(theme.crimson, theme.accent, 0.35f);
+            colors.pressedColor = Color.Lerp(theme.crimson, theme.accent, 0.6f);
+            colors.disabledColor = new Color(theme.crimson.r, theme.crimson.g, theme.crimson.b, 0.4f);
+            button.colors = colors;
+            var text = CreateText(rect, "Label", label, theme.bodySize, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
+            Stretch(text.rectTransform, 0f);
+            return button;
+        }
+
         public static TextMeshProUGUI CreateText(Transform parent, string name, string value, float size, Color color,
             TextAlignmentOptions alignment, TMP_FontAsset font)
         {

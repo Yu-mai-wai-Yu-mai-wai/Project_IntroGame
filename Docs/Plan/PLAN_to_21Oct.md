@@ -199,7 +199,9 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - เพิ่มปุ่ม "ตั้งค่า" ใน `MainMenuUI`
 - **Done when:** EditMode test ตั้ง volume → อ่านจาก PlayerPrefs ได้ค่าเดิม; ปิดเปิดเกมแล้วค่า slider ยังอยู่
 
-### [ ] B3 Pause, Game Over, Victory (ข้อ UI/UX)
+### [~] B3 Pause, Game Over, Victory (ข้อ UI/UX) — โค้ดเสร็จ 7 ต.ค. ค้าง: ตะวันกดเล่นจริงใน Play mode
+- **เสร็จ:** `PauseMenu` (Esc หยุดเกมทุกฉากยกเว้น MainMenu/Victory/IntroStory; ไม่ชนกับ Esc ของการลากการ์ด/เล็ง/แผงการ์ด/สุสาน/Settings; ปุ่ม เล่นต่อ, ตั้งค่า, กลับเมนูหลัก), `GameOverScreen` (ข้อความ + สรุป run + ปุ่ม เริ่มใหม่/เมนูหลัก ไม่ปิดเอง) แทน `GoToMainMenuAfterDelay`, `PauseMenuTests` PASS (Red→Green) ปุ่มสูง >= 44 px ที่ 1080p
+- **ยังไม่ได้ทำใน B3:** ภาพตัวละครบนหน้า Game Over (B9), หน้า Victory ใช้ของ A3 เดิม
 - Pause: prefab overlay สร้างโดย `PauseMenu` ที่ auto-create แบบ `GameFlowManager` ทำงานทุกฉากยกเว้น MainMenu กด `Esc` (Input System) → `Time.timeScale = 0` ปุ่ม: เล่นต่อ, ตั้งค่า, กลับเมนูหลัก (save ไว้ก่อนออก)
 - Game Over: แทน panel 3 วินาทีเดิม เป็นหน้าที่มีข้อความ, สรุป run และปุ่ม "เริ่มใหม่" / "เมนูหลัก" ไม่เด้งกลับเอง
 - Victory: หน้าจาก A3
