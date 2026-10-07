@@ -40,6 +40,11 @@ namespace TawanOS.MapEngine
 
         [MenuItem("Tools/TawanOS/Map Engine/Setup Test Scene & Profiles")]
         [MenuItem("Window/TawanOS Map Engine Setup")]
+        private static void SetupTestSceneAndProfiles_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Test Scene & Profiles")) SetupTestSceneAndProfiles();
+        }
+
         public static void SetupTestSceneAndProfiles()
         {
             if (Application.isPlaying)

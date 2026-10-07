@@ -27,6 +27,11 @@ namespace TawanOS.ShopEngine
         private static readonly Color Crimson = new Color(0.55f, 0.15f, 0.1f);
 
         [MenuItem("Tools/TawanOS/Shop Engine/Setup Shop Scene (Spirit House)")]
+        private static void SetupShopScene_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Shop Scene (Spirit House)")) SetupShopScene();
+        }
+
         public static void SetupShopScene()
         {
             if (Application.isPlaying)

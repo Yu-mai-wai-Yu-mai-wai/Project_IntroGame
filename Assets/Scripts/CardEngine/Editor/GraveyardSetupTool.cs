@@ -13,6 +13,11 @@ namespace TawanOS.CardEngine
         private const string GraveyardModelName = "GraveyardZone";
 
         [MenuItem("Tools/TawanOS/Card Engine/Hook Up Graveyard (GraveyardZone)")]
+        private static void HookUpGraveyard_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Hook Up Graveyard (GraveyardZone)")) HookUpGraveyard();
+        }
+
         public static void HookUpGraveyard()
         {
             if (Application.isPlaying)

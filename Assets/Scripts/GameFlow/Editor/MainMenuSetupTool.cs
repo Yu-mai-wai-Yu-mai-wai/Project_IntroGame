@@ -39,6 +39,11 @@ namespace TawanOS.GameFlow
         private static readonly Color Muted = new Color(0.66f, 0.61f, 0.54f);
 
         [MenuItem("Tools/TawanOS/Main Menu/Setup Main Menu Scene")]
+        private static void SetupMainMenu_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Main Menu Scene")) SetupMainMenu();
+        }
+
         public static void SetupMainMenu()
         {
             if (Application.isPlaying)

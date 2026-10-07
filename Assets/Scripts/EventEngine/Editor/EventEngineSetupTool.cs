@@ -31,6 +31,11 @@ namespace TawanOS.EventEngine
         private static readonly Color Teal = new Color(0.55f, 0.9f, 0.85f);
 
         [MenuItem("Tools/TawanOS/Event Engine/Setup Event Scene & Sample Events")]
+        private static void SetupEventScene_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Event Scene & Sample Events")) SetupEventScene();
+        }
+
         public static void SetupEventScene()
         {
             if (Application.isPlaying)

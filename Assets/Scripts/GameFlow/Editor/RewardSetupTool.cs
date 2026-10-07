@@ -23,6 +23,11 @@ namespace TawanOS.GameFlow
         private static readonly Color Muted = new Color(0.66f, 0.61f, 0.54f);
 
         [MenuItem("Tools/TawanOS/Rewards/Setup Reward Scene")]
+        private static void SetupRewardScene_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Reward Scene")) SetupRewardScene();
+        }
+
         public static void SetupRewardScene()
         {
             if (Application.isPlaying)

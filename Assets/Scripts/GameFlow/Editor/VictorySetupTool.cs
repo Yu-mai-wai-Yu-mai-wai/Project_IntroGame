@@ -25,6 +25,11 @@ namespace TawanOS.GameFlow
         private static readonly Color DarkBg = new Color(0.05f, 0.035f, 0.04f);
 
         [MenuItem("Tools/TawanOS/Game Flow/Setup Victory Scene")]
+        private static void SetupVictoryScene_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Victory Scene")) SetupVictoryScene();
+        }
+
         public static void SetupVictoryScene()
         {
             if (Application.isPlaying)

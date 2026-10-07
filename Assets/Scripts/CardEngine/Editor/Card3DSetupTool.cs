@@ -9,6 +9,11 @@ namespace TawanOS.CardEngine
     public static class Card3DSetupTool
     {
         [MenuItem("Tools/TawanOS/Card Engine/Convert Hand To 3D Cube Cards")]
+        private static void ConvertHandTo3D_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Convert Hand To 3D Cube Cards")) ConvertHandTo3D();
+        }
+
         public static void ConvertHandTo3D()
         {
             if (Application.isPlaying)

@@ -56,6 +56,11 @@ namespace TawanOS.CardEngine
         }
 
         [MenuItem("Tools/TawanOS/Card Engine/Setup Thai Fonts & Fallbacks")]
+        private static void SetupThaiFonts_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Thai Fonts & Fallbacks")) SetupThaiFonts();
+        }
+
         public static void SetupThaiFonts()
         {
             Font ekkamaiFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/EkkamaiVibe-Regular.ttf");
@@ -183,6 +188,11 @@ namespace TawanOS.CardEngine
 
         [MenuItem("Tools/TawanOS/Card Engine/Setup Test Scene & Cards")]
         [MenuItem("Window/TawanOS Card Engine Setup")]
+        private static void MenuSetup_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Test Scene & Cards")) MenuSetup();
+        }
+
         public static void MenuSetup()
         {
             SetupTestSceneAndCards(true);
@@ -360,6 +370,11 @@ namespace TawanOS.CardEngine
         }
 
         [MenuItem("Tools/TawanOS/Card Engine/Rebuild Card Prefab (Art Full Layout)")]
+        private static void MenuRebuildCardPrefab_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Rebuild Card Prefab (Art Full Layout)")) MenuRebuildCardPrefab();
+        }
+
         public static void MenuRebuildCardPrefab()
         {
             string prefabPath = "Assets/CardEngineData/Prefabs/CardViewPrefab.prefab";

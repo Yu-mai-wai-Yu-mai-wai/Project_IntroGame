@@ -28,6 +28,11 @@ namespace TawanOS.GameFlow
             "แต่คืนนี้ ไฟจะรับของจากเจ้าได้เพียงอย่างเดียว\"";
 
         [MenuItem("Tools/TawanOS/Meru/Setup Meru Scene")]
+        private static void SetupMeruScene_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Meru Scene")) SetupMeruScene();
+        }
+
         public static void SetupMeruScene()
         {
             if (Application.isPlaying)

@@ -32,6 +32,11 @@ namespace TawanOS.SceneDressing
         private const int SlotsPerRow = 5;
 
         [MenuItem("Tools/TawanOS/Combat Scene/Apply Blender Dressing")]
+        private static void Apply_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Apply Blender Dressing")) Apply();
+        }
+
         public static void Apply()
         {
             var scene = EditorSceneManager.GetActiveScene();
