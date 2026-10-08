@@ -39,6 +39,18 @@ namespace TawanOS.ShopEngine
         [Min(0)] public int cardPricePerMerit = 8;
         [Range(0f, 0.5f)] public float priceVariance = 0.15f;
 
+        [Header("Card Shelf (how cards look and move)")]
+        [Tooltip("The real card face (same as the reward screen). Made by Tools > TawanOS > Shop Engine > Create Shop Card Template. Empty = the old item tiles.")]
+        public TawanOS.GameFlow.RewardCardView cardFaceTemplate;
+        [Tooltip("Shown on the deck pile at the bottom of the screen. Empty = Resources/RewardFx card back.")]
+        public Sprite deckPileSprite;
+        [Tooltip("Seconds a bought card lifts up before flying into the deck.")]
+        [Min(0f)] public float buyLiftDuration = 0.18f;
+        [Tooltip("Seconds a bought card takes to fly down into the deck pile.")]
+        [Min(0.05f)] public float buyFlyDuration = 0.5f;
+        [Tooltip("Card size when it reaches the deck (1 = shelf size).")]
+        [Range(0.05f, 1f)] public float buyEndScale = 0.3f;
+
         [Header("Amulets")]
         public List<ShopAmulet> amulets = new List<ShopAmulet>();
         [Min(0)] public int amuletsForSale = 3;
