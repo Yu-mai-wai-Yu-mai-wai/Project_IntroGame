@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using DG.Tweening;
 using TawanOS.CardEngine;
+using TawanOS.VFX;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -12,6 +14,8 @@ namespace TawanOS.GameFlow
     /// A card offered as a reward, drawn like the card in play: frame, artwork and the face text laid out
     /// by <see cref="CardFaceLayout"/> (a finished card PNG shows as it is, with only attack / Khwan on it).
     /// Click to take it.
+    /// Everything on the card lives under a runtime "Body" child, so the deal, flip, float and burn
+    /// (<see cref="RewardFxConfigSO"/>) can move it while the card row's layout keeps placing the root.
     /// </summary>
     public class RewardCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerClickHandler
     {
@@ -34,8 +38,14 @@ namespace TawanOS.GameFlow
         private CardDataSO shownCard;
         private bool ignoreClick; // this click closed the detail screen, it must not also take the card
 
+        private RectTransform body;
+        private Image back;
+        private UiBurnEffect burn;
+        private CanvasGroup group;
+
         private void Awake()
         {
+            EnsureBody();
             if (button != null) button.onClick.AddListener(() =>
             {
                 if (!ignoreClick) onPick?.Invoke();
@@ -43,8 +53,41 @@ namespace TawanOS.GameFlow
             });
         }
 
+        // Moves every child of the card under one "Body" rect that the animations drive
+        private void EnsureBody()
+        {
+            if (body != null) return;
+
+            var go = new GameObject("Body", typeof(RectTransform));
+            body = (RectTransform)go.transform;
+            body.SetParent(transform, false);
+            body.anchorMin = Vector2.zero;
+            body.anchorMax = Vector2.one;
+            body.offsetMin = body.offsetMax = Vector2.zero;
+            body.pivot = new Vector2(0.5f, 0.5f);
+
+            // Front to back, so the drawing order stays the same
+            var children = new System.Collections.Generic.List<Transform>();
+            foreach (Transform child in transform) if (child != body) children.Add(child);
+            foreach (var child in children) child.SetParent(body, false);
+
+            var backGo = new GameObject("CardBack", typeof(RectTransform), typeof(Image));
+            back = backGo.GetComponent<Image>();
+            back.rectTransform.SetParent(body, false);
+            back.rectTransform.anchorMin = Vector2.zero;
+            back.rectTransform.anchorMax = Vector2.one;
+            back.rectTransform.offsetMin = back.rectTransform.offsetMax = Vector2.zero;
+            back.raycastTarget = false;
+            back.gameObject.SetActive(false);
+
+            burn = body.gameObject.AddComponent<UiBurnEffect>();
+            group = GetComponent<CanvasGroup>();
+        }
+
         public void Setup(CardDataSO card, Action pick)
         {
+            EnsureBody();
+            ResetMotion();
             onPick = pick;
             shownCard = card;
             transform.localScale = Vector3.one;
@@ -99,14 +142,122 @@ namespace TawanOS.GameFlow
             rt.offsetMin = rt.offsetMax = Vector2.zero;
         }
 
-        public void SetResult(bool picked)
+        /// <summary>The picked card grows and glows; the others burn away (<paramref name="fx"/> null = they just fade).</summary>
+        public void SetResult(bool picked, RewardFxConfigSO fx = null)
         {
-            if (button != null) button.interactable = false;
+            SetInteractable(false);
             if (pickedHighlight != null) pickedHighlight.SetActive(picked);
             transform.DOKill();
-            transform.DOScale(picked ? 1.12f : 0.9f, 0.25f).SetEase(Ease.OutBack);
-            var group = GetComponent<CanvasGroup>();
-            if (group != null) group.DOFade(picked ? 1f : 0.35f, 0.25f);
+
+            if (picked)
+            {
+                transform.DOScale(1.12f, 0.25f).SetEase(Ease.OutBack);
+                return;
+            }
+
+            if (fx == null)
+            {
+                transform.DOScale(0.9f, 0.25f).SetEase(Ease.OutBack);
+                if (group != null) group.DOFade(0.35f, 0.25f);
+                return;
+            }
+
+            DOVirtual.DelayedCall(fx.burnDelay, () =>
+            {
+                if (burn == null) return;
+                burn.Play(fx.burnMaterial, fx.burnDuration, fx.embersPerSecond, fx.glowColor, fx.charColor, fx.smokeTexture);
+            }).SetTarget(transform).SetLink(gameObject);
+        }
+
+        // ---------------------------------------------------------------- deal / flip / float
+
+        public void SetInteractable(bool on)
+        {
+            if (button != null) button.interactable = on;
+        }
+
+        /// <summary>Hides the card, face down, until <see cref="DealIn"/> brings it in.</summary>
+        public void PrepareFaceDown(Sprite cardBack)
+        {
+            EnsureBody();
+            SetInteractable(false);
+            if (back != null)
+            {
+                back.sprite = cardBack;
+                back.color = cardBack != null ? Color.white : new Color(0.12f, 0.08f, 0.08f);
+                back.gameObject.SetActive(true);
+                back.transform.SetAsLastSibling();
+            }
+            if (group != null) group.alpha = 0f;
+        }
+
+        /// <summary>Flies the face-down card from <paramref name="fromWorld"/> into its place in the row.</summary>
+        public IEnumerator DealIn(Vector3 fromWorld, RewardFxConfigSO fx)
+        {
+            if (group != null) group.alpha = 1f;
+            body.position = fromWorld;
+            body.localEulerAngles = new Vector3(0f, 0f, fx.dealStartTilt);
+            body.DOAnchorPos(Vector2.zero, fx.dealFlyDuration).SetEase(Ease.OutCubic).SetLink(gameObject);
+            body.DOLocalRotate(Vector3.zero, fx.dealFlyDuration).SetEase(Ease.OutCubic).SetLink(gameObject);
+            AudioHook("sfx_card_draw");
+            yield return new WaitForSeconds(fx.dealFlyDuration);
+        }
+
+        /// <summary>Turns the card face up: squeezes to an edge, swaps the back for the face, opens again.</summary>
+        public IEnumerator Flip(RewardFxConfigSO fx)
+        {
+            float half = fx.flipDuration * 0.5f;
+            body.DOAnchorPosY(14f, half).SetEase(Ease.OutSine).SetLink(gameObject);
+            body.DOScaleX(0f, half).SetEase(Ease.InSine).SetLink(gameObject);
+            yield return new WaitForSeconds(half);
+
+            if (back != null) back.gameObject.SetActive(false);
+            AudioHook("sfx_card_play");
+
+            body.DOAnchorPosY(0f, half).SetEase(Ease.InSine).SetLink(gameObject);
+            body.DOScaleX(1f, half).SetEase(Ease.OutBack).SetLink(gameObject);
+            yield return new WaitForSeconds(half);
+        }
+
+        /// <summary>Starts the endless gentle up-and-down; <paramref name="phase"/> (0..1) desyncs the cards.</summary>
+        public void StartFloat(RewardFxConfigSO fx, float phase)
+        {
+            float half = fx.floatPeriod * 0.5f;
+            body.anchoredPosition = Vector2.zero;
+            body.DOAnchorPosY(fx.floatHeight, half).SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo)
+                .SetDelay(phase * half).SetLink(gameObject);
+            if (fx.floatSway > 0f)
+            {
+                body.localEulerAngles = new Vector3(0f, 0f, -fx.floatSway);
+                body.DOLocalRotate(new Vector3(0f, 0f, fx.floatSway), half * 1.35f).SetEase(Ease.InOutSine)
+                    .SetLoops(-1, LoopType.Yoyo).SetDelay(phase * half * 1.35f).SetLink(gameObject);
+            }
+        }
+
+        // Face up, in place, nothing burning: the card as Setup draws it
+        private void ResetMotion()
+        {
+            DOTween.Kill(transform);
+            if (body != null)
+            {
+                body.DOKill();
+                body.anchoredPosition = Vector2.zero;
+                body.localEulerAngles = Vector3.zero;
+                body.localScale = Vector3.one;
+            }
+            if (burn != null) burn.Restore();
+            if (back != null) back.gameObject.SetActive(false);
+            if (group != null)
+            {
+                group.DOKill();
+                group.alpha = 1f;
+            }
+        }
+
+        // Sound goes through the AudioManager when the scene has one (same ids as the combat cards)
+        private static void AudioHook(string id)
+        {
+            TawanOS.Audio.AudioManager.Instance?.PlaySfx(id);
         }
 
         public void OnPointerDown(PointerEventData eventData)
