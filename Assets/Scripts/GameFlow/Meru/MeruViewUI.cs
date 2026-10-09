@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using TawanOS.CardEngine;
 using TMPro;
 using UnityEngine;
@@ -156,13 +157,34 @@ namespace TawanOS.GameFlow
             }
             if (resultCard != null)
             {
-                // Burn: the card that was burnt, faded. Upgrade: the new card.
+                // Burn: the card that was burnt goes up in flames (same burn as the reward screen). Upgrade: the new card.
                 var shown = doneAction == MeruAction.Burn ? card : card.upgradedCard;
                 resultCard.gameObject.SetActive(true);
                 resultCard.Setup(shown, null);
                 if (resultCard.button != null) resultCard.button.interactable = false;
-                var group = resultCard.GetComponent<CanvasGroup>();
-                if (group != null) group.alpha = doneAction == MeruAction.Burn ? 0.4f : 1f;
+                if (doneAction == MeruAction.Burn) PlayBurn();
+            }
+        }
+
+        // The card is shown whole, then burns from the bottom-right corner; the text and the way out come after
+        private void PlayBurn()
+        {
+            var fx = RewardFxConfigSO.Load();
+            resultCard.SetResult(false, fx);
+            DOVirtual.DelayedCall(fx.burnDelay, () => TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on"))
+                .SetLink(gameObject);
+
+            float burnEnd = fx.burnDelay + fx.burnDuration;
+            if (resultText != null)
+            {
+                resultText.alpha = 0f;
+                resultText.DOKill();
+                resultText.DOFade(1f, 0.5f).SetDelay(burnEnd * 0.6f).SetLink(gameObject);
+            }
+            if (continueButton != null)
+            {
+                continueButton.interactable = false;
+                DOVirtual.DelayedCall(burnEnd, () => continueButton.interactable = true).SetLink(gameObject);
             }
         }
 
