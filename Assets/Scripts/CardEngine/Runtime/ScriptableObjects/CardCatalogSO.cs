@@ -12,9 +12,12 @@ namespace TawanOS.CardEngine
 
         [Header("Default Frames (cards without a Card Background)")]
         [Tooltip("For card screens in scenes with no card on the table (e.g. the deck viewer on the map). " +
-                 "Tools > TawanOS > Card Engine > Copy Default Frames To Card Catalog fills them from CardCube3DPrefab.")]
+                 "Tools > TawanOS > Card Engine > Fill Card Catalog Defaults fills them from CardCube3DPrefab.")]
         public Sprite defaultWhiteFrame;
         public Sprite defaultBlackFrame;
+
+        [Tooltip("The deck a new run starts with (RunState seeds it on New Game, so the map's deck screen shows it before the first fight).")]
+        public DeckConfigSO starterDeck;
 
         private static CardCatalogSO cached;
 
