@@ -49,6 +49,10 @@ namespace TawanOS.GameFlow
             if (fullModeButton != null) fullModeButton.onClick.AddListener(() => StartGameWithMode(7));
             if (shortModeButton != null) shortModeButton.onClick.AddListener(() => StartGameWithMode(4));
             if (modeCancelButton != null) modeCancelButton.onClick.AddListener(() => { if (modePanel != null) modePanel.SetActive(false); });
+
+            // The stage behind the menu turns gently with the cursor (tune it by adding the component to the camera)
+            var cam = Camera.main;
+            if (cam != null && cam.GetComponent<MouseParallaxCamera>() == null) cam.gameObject.AddComponent<MouseParallaxCamera>();
         }
 
         private void Start()
