@@ -118,14 +118,14 @@ namespace TawanOS.GameFlow
             menu.menuGroup = group;
             var g = group.transform;
 
-            // Logo enlarged to ~38% of the screen width (0.04 to 0.42 = 38%)
-            var logo = Img("Logo", g, new Vector2(0.04f, 0.62f), new Vector2(0.42f, 0.97f), Color.white, null);
+            // Logo box 38% wide x 43% tall (aspect kept); the subtitle shares its x range and is centred under it
+            var logo = Img("Logo", g, new Vector2(0.04f, 0.555f), new Vector2(0.42f, 0.985f), Color.white, null);
             logo.sprite = EnsureSprite(LogoPath);
             logo.preserveAspect = true;
             logo.enabled = logo.sprite != null;
             logo.raycastTarget = false;
             if (logo.sprite == null) Debug.LogWarning($"[MainMenuSetupTool] Logo not found at {LogoPath}.");
-            var subtitle = Text("Subtitle", g, new Vector2(0.045f, 0.54f), new Vector2(0.40f, 0.61f), bodyFont, 30, Muted, TextAlignmentOptions.TopLeft);
+            var subtitle = Text("Subtitle", g, new Vector2(0.04f, 0.515f), new Vector2(0.42f, 0.555f), bodyFont, 30, Muted, TextAlignmentOptions.Center);
             subtitle.text = "เส้นทางของหมอธรรม";
 
             // Menu buttons: width <= 20% (0.05 to 0.24 = 19%), height >= 44 px (0.07 * 1080 = 75.6 px)
