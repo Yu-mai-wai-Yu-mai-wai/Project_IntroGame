@@ -63,7 +63,7 @@ namespace TawanOS.CardEngine
         public static bool HideOverlay => Instance != null && Instance.IsBoardOnlyView;
 
         // The card detail or graveyard screen is showing (or closed this frame): clicks should not also pick up or play cards
-        public static bool BlocksInput => CardDetailPanelUI.BlocksInput || GraveyardPanelUI.BlocksInput;
+        public static bool BlocksInput => CardDetailPanelUI.BlocksInput || GraveyardPanelUI.BlocksInput || DeckViewerPanelUI.BlocksInput;
 
         // AfterSceneLoad fires only for the first scene played; the combat scene is usually loaded later from the map.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -151,7 +151,7 @@ namespace TawanOS.CardEngine
         private void Update()
         {
             if (TawanOS.UI.PauseMenu.IsPaused) return;
-            if (Input.GetKeyDown(toggleKey) && !CardDetailPanelUI.IsOpen && !GraveyardPanelUI.IsOpen) ToggleTopView();
+            if (Input.GetKeyDown(toggleKey) && !CardDetailPanelUI.IsOpen && !GraveyardPanelUI.IsOpen && !DeckViewerPanelUI.IsOpen) ToggleTopView();
 
             // Right-click a card: its detail screen. A held card or a target choice uses right-click to cancel.
             if (!Input.GetMouseButtonDown(1) || BlocksInput
@@ -365,7 +365,7 @@ namespace TawanOS.CardEngine
 
         private void OnGUI()
         {
-            if (!showToggleButton || locked || CardDetailPanelUI.IsOpen || GraveyardPanelUI.IsOpen || IsBoardOnlyView) return;
+            if (!showToggleButton || locked || CardDetailPanelUI.IsOpen || GraveyardPanelUI.IsOpen || DeckViewerPanelUI.IsOpen || IsBoardOnlyView) return;
             string label = IsTopView ? $"มุมปกติ ({toggleKey})" : $"มุมบน ({toggleKey})";
             if (GUI.Button(new Rect(Screen.width - 150, 10, 140, 30), label)) ToggleTopView();
         }

@@ -6,6 +6,7 @@ namespace TawanOS.CardEngine
     // built at that slot's world position and its height follows CardManager.DrawPile.Count.
     // The stack is a standalone object (not a child) because the slot is tilted and non-uniformly
     // scaled, which would distort a child mesh.
+    // Click the pile to list the cards left in it (DeckViewerPanelUI), sorted so the draw order stays hidden.
     public class DeckPileView3D : MonoBehaviour
     {
         [Header("Pile Look")]
@@ -41,6 +42,33 @@ namespace TawanOS.CardEngine
         private void OnDestroy()
         {
             if (pile != null) Destroy(pile.gameObject);
+        }
+
+        private void Update()
+        {
+            if (TawanOS.UI.PauseMenu.IsPaused || !Input.GetMouseButtonDown(0)) return;
+            if (CardTargeting3D.BlocksInput || CardPlayController3D.BlocksInput || CombatCameraRig3D.BlocksInput) return;
+            if (!IsPointerOver()) return;
+
+            DeckViewerPanelUI.Ensure().Show("กองจั่ว",
+                () => CardManager.Instance != null ? CardManager.Instance.DrawPile : null,
+                "กองจั่วหมดแล้ว");
+        }
+
+        // The pile has no collider (it must not intercept card mouse events), so test the ray against its box,
+        // and let anything else in front of it (a card in hand) win
+        private bool IsPointerOver()
+        {
+            var cam = Camera.main;
+            if (cam == null) return false;
+            if (UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return false;
+
+            var ray = cam.ScreenPointToRay(Input.mousePosition);
+            float height = Mathf.Max(currentThickness, minVisibleThickness);
+            var box = new Bounds(transform.position + Vector3.up * (height * 0.5f), new Vector3(cardSize.x, height, cardSize.y));
+            if (!box.IntersectRay(ray, out float distance)) return false;
+
+            return !Physics.Raycast(ray, out var hit, distance) || hit.transform.IsChildOf(transform);
         }
 
         private void LateUpdate()

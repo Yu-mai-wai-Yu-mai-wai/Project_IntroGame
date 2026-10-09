@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TawanOS.UI;
 using TawanOS.GameFlow;
+using TawanOS.CardEngine;
 
 namespace TawanOS.MapEngine
 {
@@ -180,8 +181,8 @@ namespace TawanOS.MapEngine
 
         private void OnDeckClicked()
         {
-            // Placeholder: When Deck Viewer modal is ready, open it here.
-            Debug.Log($"[MapPlayerStatusUI] Deck view requested ({DeckCount} cards).");
+            if (PauseMenu.IsPaused) return;
+            DeckViewerPanelUI.Ensure().Show("สำรับ", RunState.Current.Deck, "ยังไม่มีการ์ดในสำรับ");
         }
     }
 }

@@ -10,6 +10,12 @@ namespace TawanOS.CardEngine
     {
         public List<CardDataSO> cards = new List<CardDataSO>();
 
+        [Header("Default Frames (cards without a Card Background)")]
+        [Tooltip("For card screens in scenes with no card on the table (e.g. the deck viewer on the map). " +
+                 "Tools > TawanOS > Card Engine > Copy Default Frames To Card Catalog fills them from CardCube3DPrefab.")]
+        public Sprite defaultWhiteFrame;
+        public Sprite defaultBlackFrame;
+
         private static CardCatalogSO cached;
 
         // A card that is another card's upgraded version: only reached by upgrading at the เมรุ

@@ -160,6 +160,7 @@ namespace TawanOS.MapEngine
 
         private void OnMouseEnter()
         {
+            if (CardEngine.DeckViewerPanelUI.BlocksInput) return; // the deck screen is over the map
             if (NodeData != null && NodeData.status == NodeStatus.Attainable)
             {
                 if (pulseTween != null && pulseTween.IsActive()) pulseTween.Pause();
@@ -186,6 +187,7 @@ namespace TawanOS.MapEngine
 
         private void OnMouseDown()
         {
+            if (CardEngine.DeckViewerPanelUI.BlocksInput) return;
             if (NodeData != null && NodeData.status == NodeStatus.Attainable)
             {
                 OnNodeClicked?.Invoke(this);
