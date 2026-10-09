@@ -172,10 +172,10 @@ namespace TawanOS.StoryEngine
         public event Action OnStoryFinished;
 
         /// <summary>
-        /// A page asks for a tutorial fight (<see cref="StoryPage.tutorialFightEnemy"/>): the enemy, and the page to
+        /// A page asks for a tutorial fight (<see cref="StoryPage.tutorialFightEnemy"/>): that page, and the page to
         /// continue from afterwards. Without a listener (the story scene played on its own) the story just goes on.
         /// </summary>
-        public event Action<EnemyProfileSO, int> OnTutorialFightRequested;
+        public event Action<StoryPage, int> OnTutorialFightRequested;
 
         public StoryDataSO CurrentStory => story;
         public int PageIndex => pageIndex;
@@ -290,10 +290,10 @@ namespace TawanOS.StoryEngine
                 return;
             }
 
-            var fightEnemy = story.pages[pageIndex].tutorialFightEnemy;
-            if (fightEnemy != null && OnTutorialFightRequested != null)
+            var page = story.pages[pageIndex];
+            if (page.tutorialFightEnemy != null && OnTutorialFightRequested != null)
             {
-                LeaveForFight(fightEnemy, pageIndex + 1);
+                LeaveForFight(page, pageIndex + 1);
                 return;
             }
 
@@ -388,17 +388,17 @@ namespace TawanOS.StoryEngine
         }
 
         // Fades out like the end of the story, then hands over to the fight; GameFlowManager brings the story back
-        private void LeaveForFight(EnemyProfileSO enemy, int resumePage)
+        private void LeaveForFight(StoryPage page, int resumePage)
         {
             finished = true;
             if (rootGroup == null)
             {
-                OnTutorialFightRequested?.Invoke(enemy, resumePage);
+                OnTutorialFightRequested?.Invoke(page, resumePage);
                 return;
             }
             rootGroup.interactable = false;
             rootGroup.DOKill();
-            rootGroup.DOFade(0f, 0.5f).OnComplete(() => OnTutorialFightRequested?.Invoke(enemy, resumePage));
+            rootGroup.DOFade(0f, 0.5f).OnComplete(() => OnTutorialFightRequested?.Invoke(page, resumePage));
         }
 
         private void Finish()

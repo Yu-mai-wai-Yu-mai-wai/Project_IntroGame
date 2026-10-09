@@ -71,6 +71,13 @@ namespace TawanOS.CardEngine
         [Tooltip("Safety cap on cards played in one enemy turn.")]
         public int maxCardsPerTurn = 6;
 
+        [Header("Scripted Deck (tutorial bot)")]
+        [Tooltip("On = a scripted bot: the deck is not shuffled, turn N draws Cards Per Turn[N-1] cards in deck order " +
+                 "(the opening hand is turn 1's), every card drawn is played in that order when its phase comes and it " +
+                 "can afford it, and it never pulls from the pit. Start Hand Size and Draw Per Turn are ignored.")]
+        public bool scriptedDeck;
+        public List<int> cardsPerTurn = new List<int>();
+
         [Header("Moveset AI")]
         public List<EnemyMove> moves = new List<EnemyMove>();
 

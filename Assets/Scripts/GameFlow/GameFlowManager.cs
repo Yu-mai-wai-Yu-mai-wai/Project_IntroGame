@@ -46,6 +46,7 @@ namespace TawanOS.GameFlow
         private bool tutorialFightActive;
         private StoryDataSO storyToResume;
         private int storyResumePage = -1;
+        private System.Collections.Generic.List<CardDataSO> tutorialOpeningHand;
 
         // Filled on victory, consumed when RewardScene loads
         private bool hasPendingReward;
@@ -157,6 +158,7 @@ namespace TawanOS.GameFlow
             tutorialFightActive = false;
             storyToResume = null;
             storyResumePage = -1;
+            tutorialOpeningHand = null;
         }
 
         private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -242,6 +244,8 @@ namespace TawanOS.GameFlow
             if (CardManager.Instance != null)
             {
                 UseRunDeck(CardManager.Instance);
+                // The tutorial fight's fixed opening hand goes on top of the shuffled deck (CombatManager.Start)
+                if (tutorialFightActive) CardManager.Instance.fixedOpeningCards = tutorialOpeningHand;
             }
 
             if (CombatManager.Instance != null)
@@ -365,13 +369,14 @@ namespace TawanOS.GameFlow
         }
 
         // Not a map node: no resume point is saved, so quitting mid-fight continues the run on the map
-        private void HandleTutorialFightRequested(EnemyProfileSO enemy, int resumePage)
+        private void HandleTutorialFightRequested(StoryPage page, int resumePage)
         {
             tutorialFightActive = true;
             storyToResume = StoryPlayer.Instance != null ? StoryPlayer.Instance.CurrentStory : null;
             storyResumePage = resumePage;
+            tutorialOpeningHand = page.tutorialOpeningHand;
             currentCombatNodeType = NodeType.MinorEnemy;
-            pendingEnemyProfile = enemy;
+            pendingEnemyProfile = page.tutorialFightEnemy;
             pendingVictoryIncense = 0;
             pendingRewardTier = RewardTier.Minor;
             if (Application.isPlaying) SceneManager.LoadScene(CombatSceneName, LoadSceneMode.Single);

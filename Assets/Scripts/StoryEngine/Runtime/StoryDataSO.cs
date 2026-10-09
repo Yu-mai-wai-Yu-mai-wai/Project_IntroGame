@@ -45,5 +45,7 @@ namespace TawanOS.StoryEngine
         [Tooltip("Play a tutorial fight against this enemy after this page, with step-by-step hints; the story goes on from the " +
                  "next page whether it is won or lost. It costs no Khwan and pays nothing. Empty = no fight.")]
         public EnemyProfileSO tutorialFightEnemy;
+        [Tooltip("The player's opening hand in that fight, in order (cards from the run's deck). Empty = a normal shuffled draw.")]
+        public List<CardDataSO> tutorialOpeningHand = new List<CardDataSO>();
     }
 }
