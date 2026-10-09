@@ -56,6 +56,7 @@ namespace TawanOS.Settings
         public const string ReduceMotionKey = "reduce_motion";
 
         public const float DefaultVolume = 0.8f;
+        public const float DefaultMusicVolume = 0.5f; // music is mastered louder than effects, so it starts lower
         public const int DefaultFrameLimitIndex = 1; // 60
 
         /// <summary>Frame-rate caps offered in the menu; 0 = unlimited.</summary>
@@ -100,9 +101,11 @@ namespace TawanOS.Settings
 
         // ---------------------------------------------------------------- audio
 
+        public static float DefaultFor(VolumeChannel channel) => channel == VolumeChannel.Bgm ? DefaultMusicVolume : DefaultVolume;
+
         public static float GetVolume(VolumeChannel channel)
         {
-            return Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey(channel), DefaultVolume));
+            return Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey(channel), DefaultFor(channel)));
         }
 
         public static void SetVolume(VolumeChannel channel, float value)

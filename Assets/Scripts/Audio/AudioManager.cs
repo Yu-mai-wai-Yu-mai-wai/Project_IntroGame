@@ -219,7 +219,7 @@ namespace TawanOS.Audio
 
         // The card and UI sound effects were mastered 10-20 dB quieter than the music (measured with ffmpeg
         // volumedetect, see PLAN B1), so music starts lower to keep effects audible. Players can change it in Settings.
-        public static float DefaultVolume(AudioChannel channel) => TawanOS.Settings.GameSettings.DefaultVolume;
+        public static float DefaultVolume(AudioChannel channel) => channel == AudioChannel.Bgm ? TawanOS.Settings.GameSettings.DefaultMusicVolume : TawanOS.Settings.GameSettings.DefaultVolume;
 
         public static float LoadVolume(AudioChannel channel) => Mathf.Clamp01(PlayerPrefs.GetFloat(PrefKey(channel), DefaultVolume(channel)));
 
