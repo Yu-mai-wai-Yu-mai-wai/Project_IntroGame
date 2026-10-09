@@ -32,6 +32,8 @@ namespace TawanOS.GameFlow
         public const string VictorySceneName = "VictoryScene";
         private const string StorySceneName = "StoryScene";
         private const float VictoryPanelDelaySeconds = 2f;
+        // Only the tutorial fight uses this; a real defeat shows the Game Over page, which waits for the player
+        private const float DefeatPanelDelaySeconds = 3f;
         private const float GameOverDelaySeconds = 1.5f;
 
         private NodeType currentCombatNodeType = NodeType.MinorEnemy;

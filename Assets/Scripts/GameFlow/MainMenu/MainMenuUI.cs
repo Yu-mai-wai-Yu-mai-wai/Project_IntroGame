@@ -23,7 +23,6 @@ namespace TawanOS.GameFlow
         public TextMeshProUGUI continueInfoText;
         public Button settingsButton;
         public Button quitButton;
-        public Button settingsButton;
 
         [Header("Overwrite Confirmation")]
         public GameObject confirmPanel;
