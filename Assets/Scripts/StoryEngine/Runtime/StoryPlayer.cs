@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using TawanOS.CardEngine;
 using TawanOS.Settings;
+using TawanOS.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.TextCore;
@@ -217,7 +218,7 @@ namespace TawanOS.StoryEngine
             EnableThaiMarkPositioning(bodyText);
             EnableThaiMarkPositioning(speakerText);
             if (advanceButton != null) advanceButton.onClick.AddListener(Advance);
-            if (skipButton != null) skipButton.onClick.AddListener(Finish);
+            if (skipButton != null) skipButton.onClick.AddListener(Skip);
             if (nextIndicator != null)
             {
                 nextIndicator.gameObject.SetActive(false);
@@ -247,8 +248,14 @@ namespace TawanOS.StoryEngine
         private void Update()
         {
             if (finished) return;
+            if (askingSkip)
+            {
+                if (TawanOS.UI.EscapeKey.Use()) CloseSkipQuestion();
+                return;
+            }
+            if (Time.frameCount <= skipQuestionClosedFrame) return; // the click / key that answered the question
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) Advance();
-            else if (TawanOS.UI.EscapeKey.Use()) Finish();
+            else if (TawanOS.UI.EscapeKey.Use()) Skip();
         }
 
         /// <summary>Starts a story from its first page (or from <paramref name="startPage"/>, after a tutorial fight). An empty story finishes at once.</summary>
@@ -283,7 +290,7 @@ namespace TawanOS.StoryEngine
         /// <summary>Click / Space: finish typing the current line, or go to the next page.</summary>
         public void Advance()
         {
-            if (finished) return;
+            if (finished || askingSkip) return;
             if (isTyping)
             {
                 CompleteTyping();
@@ -385,6 +392,130 @@ namespace TawanOS.StoryEngine
             isTyping = false;
             bodyText.maxVisibleCharacters = int.MaxValue;
             if (nextIndicator != null) nextIndicator.gameObject.SetActive(true);
+        }
+
+        // ---------------------------------------------------------------- skipping
+
+        // "Skip the tutorial too?" is up (built in code on first use, over the story's own canvas)
+        private bool askingSkip;
+        private int skipQuestionClosedFrame = -1;
+        private GameObject skipQuestion;
+        private int fightPageAhead = -1;
+
+        public bool IsAskingSkip => askingSkip;
+
+        /// <summary>
+        /// Skip button / Esc. With a tutorial fight still ahead, asks whether to skip the tutorial as well
+        /// (<see cref="AnswerSkip"/>); otherwise the story ends and the game starts.
+        /// </summary>
+        public void Skip()
+        {
+            if (finished || story == null || askingSkip) return;
+
+            fightPageAhead = -1;
+            if (OnTutorialFightRequested != null)
+                fightPageAhead = story.pages.FindIndex(Mathf.Max(0, pageIndex), p => p.tutorialFightEnemy != null);
+
+            if (fightPageAhead < 0)
+            {
+                Finish();
+                return;
+            }
+
+            BuildSkipQuestion();
+            askingSkip = true;
+            skipQuestion.SetActive(true);
+        }
+
+        /// <summary>true = skip the tutorial too and start the game; false = skip the text and play the tutorial.</summary>
+        public void AnswerSkip(bool skipTutorial)
+        {
+            if (!askingSkip) return;
+            CloseSkipQuestion();
+            if (typingRoutine != null) StopCoroutine(typingRoutine);
+            isTyping = false;
+
+            if (skipTutorial) Finish();
+            else LeaveForFight(story.pages[fightPageAhead], fightPageAhead + 1);
+        }
+
+        private void CloseSkipQuestion()
+        {
+            askingSkip = false;
+            skipQuestionClosedFrame = Time.frameCount;
+            if (skipQuestion != null) skipQuestion.SetActive(false);
+        }
+
+        private void BuildSkipQuestion()
+        {
+            if (skipQuestion != null) return;
+            var theme = UIThemeSO.Current;
+
+            var canvas = UiFactory.CreateOverlayCanvas("SkipQuestionCanvas", 600, transform);
+            canvas.gameObject.AddComponent<GraphicRaycaster>();
+            var group = canvas.GetComponent<CanvasGroup>();
+            group.blocksRaycasts = true;
+            group.interactable = true;
+            skipQuestion = canvas.gameObject;
+
+            var dim = UiFactory.CreateImage("Dim", canvas.transform, new Color(0f, 0f, 0f, 0.7f));
+            dim.raycastTarget = true; // the click-anywhere-to-advance button behind it is not reached
+            UiFactory.Stretch(dim.rectTransform, 0f);
+
+            var panel = UiFactory.CreateImage("Panel", canvas.transform, theme.panel);
+            panel.raycastTarget = true;
+            var rt = panel.rectTransform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(720f, 0f);
+            var outline = panel.gameObject.AddComponent<Outline>();
+            outline.effectColor = theme.accent;
+            outline.effectDistance = new Vector2(2f, -2f);
+
+            var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(32, 32, 26, 26);
+            layout.spacing = 16f;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            panel.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            UiFactory.CreateText(rt, "Title", "ต้องการข้ามบทสอนเล่นด้วยไหม?", theme.titleSize, theme.accent, TextAlignmentOptions.Center,
+                theme.titleFont != null ? theme.titleFont : theme.bodyFont);
+            var body = UiFactory.CreateText(rt, "Body",
+                "ข้ามบทสอน: เริ่มการเดินทางบนแผนที่ทันที\nเล่นบทสอน: ข้ามเนื้อเรื่องไปสู้ในฝัน แล้วค่อยเล่าเรื่องต่อ",
+                26f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
+            body.lineSpacing = 12f;
+
+            var row = UiFactory.CreateRect("Buttons", rt);
+            var rowLayout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = 20f;
+            rowLayout.childAlignment = TextAnchor.MiddleCenter;
+            rowLayout.childControlWidth = rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+            SkipButton(row, "ยกเลิก (Esc)", theme.black, CloseSkipQuestion);
+            SkipButton(row, "เล่นบทสอน", theme.crimson, () => AnswerSkip(false));
+            SkipButton(row, "ข้ามบทสอน", theme.crimson, () => AnswerSkip(true));
+
+            skipQuestion.SetActive(false);
+        }
+
+        private static void SkipButton(Transform parent, string label, Color fill, Action onClick)
+        {
+            var theme = UIThemeSO.Current;
+            var image = UiFactory.CreateImage(label, parent, fill);
+            image.raycastTarget = true;
+            var button = image.gameObject.AddComponent<Button>();
+            button.targetGraphic = image;
+            button.onClick.AddListener(() => onClick());
+            var size = image.gameObject.AddComponent<LayoutElement>();
+            size.minHeight = 56f;
+            size.minWidth = 190f;
+            var text = UiFactory.CreateText(image.transform, "Label", label, 24f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
+            UiFactory.Stretch(text.rectTransform, 8f);
+            var outline = image.gameObject.AddComponent<Outline>();
+            outline.effectColor = theme.accent;
+            outline.effectDistance = new Vector2(1f, -1f);
         }
 
         // Fades out like the end of the story, then hands over to the fight; GameFlowManager brings the story back
