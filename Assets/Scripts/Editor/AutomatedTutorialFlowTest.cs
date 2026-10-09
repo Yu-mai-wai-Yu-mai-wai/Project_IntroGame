@@ -43,6 +43,7 @@ namespace TawanOS.EditorTools
         private const string KeyHp = "ATFT_Hp";
         private const string KeyIncense = "ATFT_Incense";
         private const string KeySeenHints = "ATFT_SeenHints";
+        private const string KeySkipChecked = "ATFT_SkipChecked";
 
         static AutomatedTutorialFlowTest()
         {
@@ -73,6 +74,7 @@ namespace TawanOS.EditorTools
             SessionState.SetInt(KeyErrors, 0);
             SessionState.SetInt(KeyResumePage, fightPage + 1);
             SessionState.SetString(KeySeenHints, "");
+            SessionState.SetBool(KeySkipChecked, false);
             SessionState.SetFloat(KeyStepStart, (float)EditorApplication.timeSinceStartup);
 
             Application.logMessageReceived += HandleLog;
@@ -221,6 +223,21 @@ namespace TawanOS.EditorTools
                         string title = coach.ShowingTitle;
                         if (Time.timeScale != 0f) { Fail($"Hint '{title}' is up but the fight is not frozen"); break; }
                         Debug.Log($"{Tag} hint '{title}' lit={coach.ShowingLit}");
+
+                        // First hint: "ข้ามบทสอน" must ask first, and "เล่นบทสอนต่อ" must leave the same hint up
+                        if (!SessionState.GetBool(KeySkipChecked, false))
+                        {
+                            SessionState.SetBool(KeySkipChecked, true);
+                            coach.PressSkip();
+                            if (!coach.IsConfirmingSkip) { Fail("The skip button did not ask before skipping"); break; }
+                            coach.AnswerSkip(false);
+                            if (coach.IsConfirmingSkip || !coach.IsShowingHint || coach.ShowingTitle != title || ActiveScene != "CombatTestScene")
+                            {
+                                Fail("Answering 'เล่นบทสอนต่อ' did not return to the same hint in the fight");
+                                break;
+                            }
+                            Debug.Log($"{Tag} ok   skip asks first; cancelling keeps the tutorial going");
+                        }
                         if (!coach.ShowingLit) { Fail($"Hint '{title}' found nothing on screen to light"); break; }
                         SessionState.SetString(KeySeenHints, SessionState.GetString(KeySeenHints, "") + "|" + title);
                         coach.Next();

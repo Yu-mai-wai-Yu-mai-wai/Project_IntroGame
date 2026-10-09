@@ -74,6 +74,11 @@ namespace TawanOS.UI
         private TextMeshProUGUI titleText, bodyText, stepText;
         private GameObject buttonsRow;
 
+        // "ข้ามบทสอน" asks first; the click that answers must not also close the hint behind it
+        private GameObject confirmRoot;
+        private bool confirming;
+        private int confirmClosedFrame = -1;
+
         private TurnPhaseController turns;
         private CombatManager combat;
 
@@ -237,7 +242,12 @@ namespace TawanOS.UI
             if (!showing && queue.Count > 0 && Time.unscaledTime - queuedAt >= SettleSeconds && !PauseMenu.IsPaused)
                 ShowNext();
 
-            if (showing && !current.final && !PauseMenu.IsPaused && Time.frameCount > closedFrame
+            if (confirming)
+            {
+                if (EscapeKey.Use()) CancelSkip();
+            }
+            else if (showing && !current.final && !PauseMenu.IsPaused && Time.frameCount > closedFrame
+                && Time.frameCount > confirmClosedFrame
                 && (Input.GetMouseButtonDown(0) && !OverSkipButton()
                     || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
             {
@@ -267,6 +277,18 @@ namespace TawanOS.UI
         public string ShowingTitle => showing && current != null ? current.title : null;
         public bool ShowingLit { get; private set; }
 
+        public bool IsConfirmingSkip => confirming;
+
+        /// <summary>Same as the "ข้ามบทสอน" button: asks whether to skip. <see cref="AnswerSkip"/> answers.</summary>
+        public void PressSkip() => AskSkip();
+
+        public void AnswerSkip(bool skip)
+        {
+            if (!confirming) return;
+            if (skip) Skip();
+            else CancelSkip();
+        }
+
         /// <summary>Same as a click on the dark screen: the next hint, or back to the fight.</summary>
         public void Next()
         {
@@ -281,8 +303,24 @@ namespace TawanOS.UI
             RestoreTime();
         }
 
+        private void AskSkip()
+        {
+            if (!showing || current.final) return;
+            confirming = true;
+            confirmRoot.SetActive(true);
+        }
+
+        private void CancelSkip()
+        {
+            confirming = false;
+            confirmClosedFrame = Time.frameCount;
+            confirmRoot.SetActive(false);
+        }
+
         private void Skip()
         {
+            confirming = false;
+            confirmRoot.SetActive(false);
             Close();
             queue.Clear();
             onSkip?.Invoke();
@@ -569,9 +607,55 @@ namespace TawanOS.UI
             rowLayout.childForceExpandWidth = false;
             rowLayout.childForceExpandHeight = false;
 
-            MakeButton(row, "ข้ามบทสอน", theme.black, theme.text, Skip); // child 0, see OverSkipButton
+            MakeButton(row, "ข้ามบทสอน", theme.black, theme.text, AskSkip); // child 0, see OverSkipButton
             stepText = UiFactory.CreateText(row, "Next", "", theme.labelSize, theme.accent, TextAlignmentOptions.Right, theme.bodyFont);
             stepText.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+
+            BuildConfirm(canvas.transform);
+        }
+
+        private void BuildConfirm(Transform parent)
+        {
+            var theme = UIThemeSO.Current;
+            var dim = UiFactory.CreateImage("SkipConfirm", parent, new Color(0f, 0f, 0f, 0.6f));
+            dim.raycastTarget = true; // nothing behind the question can be clicked
+            UiFactory.Stretch(dim.rectTransform, 0f);
+            confirmRoot = dim.gameObject;
+
+            var panel = UiFactory.CreateImage("Panel", dim.transform, theme.panel);
+            panel.raycastTarget = true;
+            var rt = panel.rectTransform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(640f, 0f);
+            var outline = panel.gameObject.AddComponent<Outline>();
+            outline.effectColor = theme.accent;
+            outline.effectDistance = new Vector2(2f, -2f);
+
+            var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(32, 32, 26, 26);
+            layout.spacing = 16f;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            panel.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            UiFactory.CreateText(rt, "Title", "ต้องการข้ามบทสอนเล่นไหม?", theme.titleSize, theme.accent, TextAlignmentOptions.Center,
+                theme.titleFont != null ? theme.titleFont : theme.bodyFont);
+            var body = UiFactory.CreateText(rt, "Body", "ขวัญจะตื่นจากฝันทันที และเรื่องจะดำเนินต่อ\nบทสอนนี้จะไม่กลับมาอีกใน run นี้",
+                26f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
+            body.lineSpacing = 12f;
+
+            var row = UiFactory.CreateRect("Buttons", rt);
+            var rowLayout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = 20f;
+            rowLayout.childAlignment = TextAnchor.MiddleCenter;
+            rowLayout.childControlWidth = rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+            MakeButton(row, "เล่นบทสอนต่อ (Esc)", theme.black, theme.text, CancelSkip);
+            MakeButton(row, "ข้ามบทสอน", theme.crimson, theme.text, Skip);
+
+            confirmRoot.SetActive(false);
         }
 
         private static RectTransform Shade(string name, Transform parent, Color color)
