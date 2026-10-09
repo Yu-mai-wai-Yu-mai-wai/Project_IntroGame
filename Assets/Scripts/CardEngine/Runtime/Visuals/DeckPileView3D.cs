@@ -21,6 +21,16 @@ namespace TawanOS.CardEngine
         private Transform pile;
         private float currentThickness;
 
+        // The pile's box in the world (also when empty): for clicks and the tutorial's spotlight
+        public Bounds PileBounds
+        {
+            get
+            {
+                float height = Mathf.Max(currentThickness, minVisibleThickness);
+                return new Bounds(transform.position + Vector3.up * (height * 0.5f), new Vector3(cardSize.x, height, cardSize.y));
+            }
+        }
+
         // Where drawn cards start flying from: the top face of the pile.
         public Vector3 DrawSpawnPosition => new Vector3(
             transform.position.x,
@@ -64,9 +74,7 @@ namespace TawanOS.CardEngine
             if (UnityEngine.EventSystems.EventSystem.current != null && UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject()) return false;
 
             var ray = cam.ScreenPointToRay(Input.mousePosition);
-            float height = Mathf.Max(currentThickness, minVisibleThickness);
-            var box = new Bounds(transform.position + Vector3.up * (height * 0.5f), new Vector3(cardSize.x, height, cardSize.y));
-            if (!box.IntersectRay(ray, out float distance)) return false;
+            if (!PileBounds.IntersectRay(ray, out float distance)) return false;
 
             return !Physics.Raycast(ray, out var hit, distance) || hit.transform.IsChildOf(transform);
         }
