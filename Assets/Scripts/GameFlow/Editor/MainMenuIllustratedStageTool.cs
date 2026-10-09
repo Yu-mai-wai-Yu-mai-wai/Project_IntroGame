@@ -107,17 +107,18 @@ namespace TawanOS.GameFlow
             SceneManager.MoveGameObjectToScene(stage, scene);
 
             // Far trees: the same painting mirrored, darker and smaller in the haze, far behind
+            // Far trees in cold grey-violet haze: the red trees in front stand out against them by hue
             var far = Layer("FarTrees", stage.transform, tree, spriteMat, depth: 30f, overscan: 1.2f, order: 0,
-                new Color(0.32f, 0.12f, 0.14f, 1f));
+                new Color(0.42f, 0.36f, 0.5f, 0.75f));
             far.transform.localScale = new Vector3(-far.transform.localScale.x, far.transform.localScale.y, 1f);
             Face(far, 0.3f);
             var farBreathe = far.gameObject.AddComponent<SpriteBreathe>();
             farBreathe.scaleAmount = 0f;
-            farBreathe.pulseAmount = 0.12f;
+            farBreathe.pulseAmount = 0.08f;
             farBreathe.pulsePeriod = 5.5f;
 
             Fog("FarFog", stage.transform, smokeMat, depth: 20f, order: 1, height: 9f,
-                new Color(0.32f, 0.16f, 0.18f, 0.2f), size: new Vector2(8f, 14f), rate: 3f, speed: 0.35f);
+                new Color(0.30f, 0.24f, 0.30f, 0.18f), size: new Vector2(8f, 14f), rate: 3f, speed: 0.35f);
 
             BuildEyes(stage.transform, eyes, spriteMat, depth: 16f, order: 2);
 
@@ -125,17 +126,17 @@ namespace TawanOS.GameFlow
             Face(main, 0.6f);
             var mainBreathe = main.gameObject.AddComponent<SpriteBreathe>();
             mainBreathe.scaleAmount = 0f;
-            mainBreathe.pulseAmount = 0.06f; // a slow red pulse in the bark, like a dying fire
+            mainBreathe.pulseAmount = 0.04f; // a slow red pulse in the bark, like a dying fire
             mainBreathe.pulsePeriod = 3.6f;
 
             // Thin mist wandering in front of the trees, then a heavier bank along the ground
             Fog("MidFog", stage.transform, smokeMat, depth: 8.5f, order: 4, height: 6f,
-                new Color(0.34f, 0.26f, 0.30f, 0.06f), size: new Vector2(8f, 13f), rate: 2.5f, speed: 0.3f);
+                new Color(0.34f, 0.26f, 0.30f, 0.035f), size: new Vector2(8f, 13f), rate: 2.5f, speed: 0.3f);
             Fog("GroundFog", stage.transform, smokeMat, depth: 6f, order: 4, height: 2.2f,
-                new Color(0.42f, 0.30f, 0.34f, 0.18f), size: new Vector2(4f, 7f), rate: 4f, speed: 0.4f, lowY: -4.2f);
+                new Color(0.42f, 0.30f, 0.34f, 0.12f), size: new Vector2(4f, 7f), rate: 4f, speed: 0.4f, lowY: -4.2f);
             Embers("EmbersBehind", stage.transform, emberMat, depthMin: 3f, depthMax: 9f, order: 4, rate: 6f);
 
-            var hero = Layer("Khwan", stage.transform, khwan, spriteMat, depth: 2f, overscan: 1.15f, order: 5, Color.white);
+            var hero = Layer("Khwan", stage.transform, khwan, spriteMat, depth: 2f, overscan: 1.15f, order: 5, new Color(0.88f, 0.88f, 0.88f, 1f));
             Face(hero, 1f);
             var heroBreathe = hero.gameObject.AddComponent<SpriteBreathe>();
             heroBreathe.scaleAmount = 0.004f;
@@ -161,7 +162,7 @@ namespace TawanOS.GameFlow
             cam.transform.SetPositionAndRotation(CameraPosition, Quaternion.identity);
             cam.fieldOfView = CameraFov;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.035f, 0.012f, 0.016f);
+            cam.backgroundColor = new Color(0.085f, 0.06f, 0.085f); // the haze between the trees, as in the reference
             cam.nearClipPlane = 0.1f;
             cam.farClipPlane = 200f;
 
@@ -273,9 +274,20 @@ namespace TawanOS.GameFlow
             }
             vignette.active = true;
             vignette.color.Override(new Color(0.07f, 0f, 0.02f));
-            vignette.intensity.Override(0.55f);
+            vignette.intensity.Override(0.4f);
             vignette.smoothness.Override(0.55f);
             vignette.rounded.Override(false);
+
+            // The painted trees are darker than in the reference: lift exposure and contrast (the UI is not affected)
+            if (!profile.TryGet(out ColorAdjustments color))
+            {
+                color = profile.Add<ColorAdjustments>(true);
+                AssetDatabase.AddObjectToAsset(color, profile);
+            }
+            color.active = true;
+            color.postExposure.Override(0.45f);
+            color.contrast.Override(18f);
+            color.saturation.Override(8f);
             EditorUtility.SetDirty(profile);
             AssetDatabase.SaveAssets();
             return profile;
