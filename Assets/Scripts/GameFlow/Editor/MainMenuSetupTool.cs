@@ -118,14 +118,14 @@ namespace TawanOS.GameFlow
             menu.menuGroup = group;
             var g = group.transform;
 
-            // Logo enlarged to ~38% of the screen width (0.04 to 0.42 = 38%)
-            var logo = Img("Logo", g, new Vector2(0.04f, 0.62f), new Vector2(0.42f, 0.97f), Color.white, null);
+            // Logo box 38% wide x 43% tall (aspect kept); the subtitle shares its x range and is centred under it
+            var logo = Img("Logo", g, new Vector2(0.04f, 0.555f), new Vector2(0.42f, 0.985f), Color.white, null);
             logo.sprite = EnsureSprite(LogoPath);
             logo.preserveAspect = true;
             logo.enabled = logo.sprite != null;
             logo.raycastTarget = false;
             if (logo.sprite == null) Debug.LogWarning($"[MainMenuSetupTool] Logo not found at {LogoPath}.");
-            var subtitle = Text("Subtitle", g, new Vector2(0.045f, 0.54f), new Vector2(0.40f, 0.61f), bodyFont, 30, Muted, TextAlignmentOptions.TopLeft);
+            var subtitle = Text("Subtitle", g, new Vector2(0.04f, 0.515f), new Vector2(0.42f, 0.555f), bodyFont, 30, Muted, TextAlignmentOptions.Center);
             subtitle.text = "เส้นทางของหมอธรรม";
 
             // Menu buttons: width <= 20% (0.05 to 0.24 = 19%), height >= 44 px (0.07 * 1080 = 75.6 px)
@@ -155,6 +155,55 @@ namespace TawanOS.GameFlow
             menu.fullModeButton = DialogButton("FullModeButton", modeBox.transform, new Vector2(0.08f, 0.38f), new Vector2(0.46f, 0.62f), "เล่นเต็ม (7 ชั้น)", new Color(0.55f, 0.15f, 0.1f), bodyFont, panelSprite);
             menu.shortModeButton = DialogButton("ShortModeButton", modeBox.transform, new Vector2(0.54f, 0.38f), new Vector2(0.92f, 0.62f), "เล่นสั้น (4 ชั้น)", new Color(0.2f, 0.35f, 0.25f), bodyFont, panelSprite);
             menu.modeCancelButton = DialogButton("CancelButton", modeBox.transform, new Vector2(0.31f, 0.10f), new Vector2(0.69f, 0.30f), "ยกเลิก", new Color(0.3f, 0.25f, 0.22f), bodyFont, panelSprite);
+        }
+
+        /// <summary>
+        /// Adds the Settings button to the MainMenu scene that is already built, without rebuilding the rest of it
+        /// (other setup tools rebuild their whole scene). Does nothing when the button is already there.
+        /// </summary>
+        [MenuItem("Tools/TawanOS/Main Menu/Add Settings Button")]
+        public static void AddSettingsButtonToScene()
+        {
+            if (Application.isPlaying)
+            {
+                EditorUtility.DisplayDialog("Cannot Setup in Play Mode", "Please exit Play Mode before running the Setup Tool.", "OK");
+                return;
+            }
+            if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+
+            Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            var menu = Object.FindFirstObjectByType<MainMenuUI>();
+            if (menu == null || menu.quitButton == null)
+            {
+                Debug.LogError($"[MainMenuSetupTool] {ScenePath} has no MainMenuUI with a quit button - run Setup Main Menu Scene first.");
+                if (Application.isBatchMode) EditorApplication.Exit(1);
+                return;
+            }
+            if (menu.settingsButton != null)
+            {
+                Debug.Log("[MainMenuSetupTool] Settings button already exists.");
+                return;
+            }
+
+            var sarabun = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var panelSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+            AddSettingsButton(menu, sarabun, panelSprite);
+
+            EditorUtility.SetDirty(menu);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log($"<color=green>[MainMenuSetupTool] Added the Settings button to {ScenePath}.</color>");
+        }
+
+        // Takes the quit button's slot and moves Quit one row down
+        private static void AddSettingsButton(MainMenuUI menu, TMP_FontAsset font, Sprite sprite)
+        {
+            var quit = (RectTransform)menu.quitButton.transform;
+            var button = MenuButton("SettingsButton", quit.parent, quit.anchorMin.y, "ตั้งค่า", font, sprite);
+            button.transform.SetSiblingIndex(quit.GetSiblingIndex());
+            quit.anchorMin -= new Vector2(0f, 0.12f);
+            quit.anchorMax -= new Vector2(0f, 0.12f);
+            menu.settingsButton = button;
         }
 
         private static Button MenuButton(string name, Transform parent, float y, string label, TMP_FontAsset font, Sprite sprite)

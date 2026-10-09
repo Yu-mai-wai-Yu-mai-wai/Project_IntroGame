@@ -40,6 +40,10 @@ namespace TawanOS.CardEngine
             Instance = this;
         }
 
+        // Cards to put on top of the draw pile, in this order, the next time the deck is set up (the tutorial
+        // fight's fixed opening hand). Only cards that are in the deck are moved; used once, then cleared.
+        [NonSerialized] public List<CardDataSO> fixedOpeningCards;
+
         public void InitializeDeck(List<CardDataSO> startingDeck)
         {
             drawPile.Clear();
@@ -59,6 +63,27 @@ namespace TawanOS.CardEngine
             }
 
             Shuffle(drawPile);
+            PutFixedCardsOnTop();
+        }
+
+        private void PutFixedCardsOnTop()
+        {
+            if (fixedOpeningCards == null) return;
+            int top = 0;
+            foreach (var wanted in fixedOpeningCards)
+            {
+                if (wanted == null) continue;
+                int at = drawPile.FindIndex(top, c => c.source == wanted);
+                if (at < 0)
+                {
+                    Debug.LogWarning($"[CardManager] Fixed opening card '{wanted.name}' is not in the deck - skipped.");
+                    continue;
+                }
+                var card = drawPile[at];
+                drawPile.RemoveAt(at);
+                drawPile.Insert(top++, card);
+            }
+            fixedOpeningCards = null;
         }
 
         public void DrawCards(int count)

@@ -145,6 +145,7 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
+            if (TawanOS.UI.PauseMenu.IsPaused) return;
             if (!active)
             {
                 if (pointOnlyUntil <= 0f) return;
@@ -162,7 +163,7 @@ namespace TawanOS.CardEngine
                 return;
             }
 
-            if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetMouseButtonDown(1) || TawanOS.UI.EscapeKey.Use())
             {
                 Cancel();
                 return;

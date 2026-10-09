@@ -180,9 +180,9 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
-            if (held == null) return;
+            if (held == null || TawanOS.UI.PauseMenu.IsPaused) return;
 
-            if (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetMouseButtonDown(1) || TawanOS.UI.EscapeKey.Use())
             {
                 // A target choice handles its own cancel
                 if (!CardTargeting3D.BlocksInput) Release(returnToHand: true);
@@ -195,6 +195,7 @@ namespace TawanOS.CardEngine
             if (boardCard) UpdateSlotHover();
 
             if (!Input.GetMouseButtonDown(0) || Time.frameCount == selectedFrame) return;
+            if (TawanOS.UI.TutorialCoach.Blocking) return; // the click that closes a tutorial hint, not a cast
             if (ClickedHandCard()) return; // that card's own click selects it instead
 
             if (boardCard)

@@ -4,6 +4,8 @@ using TawanOS.CardEngine;
 using TawanOS.EventEngine;
 using TawanOS.MapEngine;
 using TawanOS.ShopEngine;
+using TawanOS.StoryEngine;
+using TawanOS.UI;
 
 namespace TawanOS.GameFlow
 {
@@ -12,7 +14,7 @@ namespace TawanOS.GameFlow
     /// a story event or the spirit-house shop when that node is clicked on the map, and returns
     /// them to the map afterwards. Feeds the run deck into combat; a won fight pays incense and
     /// opens the card reward screen before returning to the map; a lost fight ends the run.
-    /// The main menu starts a run through <see cref="StartNewGame"/> or <see cref="ContinueGame"/>.
+    /// The main menu starts a run through <see cref="StartNewGame"/> (intro story first) or <see cref="ContinueGame"/>.
     /// Bootstraps itself before the first scene loads, so it works regardless of which scene is
     /// opened first (MainMenu, MapTestScene, EventScene, ShopScene or CombatTestScene).
     /// </summary>
@@ -28,7 +30,10 @@ namespace TawanOS.GameFlow
         private const string RewardSceneName = "RewardScene";
         private const string MeruSceneName = "MeruScene";
         public const string VictorySceneName = "VictoryScene";
+        private const string StorySceneName = "StoryScene";
         private const float VictoryPanelDelaySeconds = 2f;
+        // Only the tutorial fight uses this; a real defeat shows the Game Over page, which waits for the player
+        private const float DefeatPanelDelaySeconds = 3f;
         private const float GameOverDelaySeconds = 1.5f;
 
         private NodeType currentCombatNodeType = NodeType.MinorEnemy;
@@ -37,6 +42,13 @@ namespace TawanOS.GameFlow
         private bool pendingOffering; // กองของเซ่น: EventScene plays the offering story instead of a random event
         private int pendingVictoryIncense;
         private RewardTier pendingRewardTier = RewardTier.Minor;
+
+        // Tutorial fight in the intro story (StoryPage.tutorialFightEnemy): played from StoryScene, then back to
+        // the story at storyResumePage. It costs no Khwan, pays nothing and a loss does not end the run.
+        private bool tutorialFightActive;
+        private StoryDataSO storyToResume;
+        private int storyResumePage = -1;
+        private System.Collections.Generic.List<CardDataSO> tutorialOpeningHand;
 
         // Filled on victory, consumed when RewardScene loads
         private bool hasPendingReward;
@@ -80,13 +92,33 @@ namespace TawanOS.GameFlow
 
         // ---------------------------------------------------------------- main menu
 
-        /// <summary>Wipes the saved run and map, then starts a fresh run on a newly rolled map.</summary>
+        /// <summary>Wipes the saved run and map, plays the intro story, then starts on a newly rolled map.</summary>
         public void StartNewGame(int totalFloors = RunState.DefaultTotalFloors)
         {
             RunState.StartNewRun(totalFloors);
             new MapSaveManager().ClearSavedMap();
             ResetPendingState();
-            SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+
+            // StoryScene plays its default story (the intro); without it the run starts on the map
+            if (Application.CanStreamedLevelBeLoaded(StorySceneName))
+            {
+                SceneManager.LoadScene(StorySceneName, LoadSceneMode.Single);
+            }
+            else
+            {
+                Debug.LogWarning("[GameFlowManager] StoryScene is not in Build Settings (run Tools > TawanOS > Story > Setup Story Scene & Intro) - skipping the intro.");
+                SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+            }
+        }
+
+        /// <summary>
+        /// Back to the title screen from the Pause menu. The run is already saved (RunState writes on every change)
+        /// and its resume point is kept, so "เล่นต่อ" re-enters the node, a fight from its start.
+        /// </summary>
+        public void ReturnToMainMenu()
+        {
+            ResetPendingState();
+            SceneManager.LoadScene(MainMenuSceneName, LoadSceneMode.Single);
         }
 
         /// <summary>Loads the saved run and returns to where it was left: inside a node, or the map.</summary>
@@ -125,6 +157,10 @@ namespace TawanOS.GameFlow
             pendingVictoryIncense = 0;
             pendingRewardTier = RewardTier.Minor;
             hasPendingReward = false;
+            tutorialFightActive = false;
+            storyToResume = null;
+            storyResumePage = -1;
+            tutorialOpeningHand = null;
         }
 
         private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -161,6 +197,22 @@ namespace TawanOS.GameFlow
                 MeruManager.Instance.OnMeruFinished += HandleMeruFinished;
             }
 
+            if (StoryPlayer.Instance != null)
+            {
+                StoryPlayer.Instance.OnStoryFinished -= HandleStoryFinished;
+                StoryPlayer.Instance.OnStoryFinished += HandleStoryFinished;
+                StoryPlayer.Instance.OnTutorialFightRequested -= HandleTutorialFightRequested;
+                StoryPlayer.Instance.OnTutorialFightRequested += HandleTutorialFightRequested;
+
+                // Back from the tutorial fight: sceneLoaded runs before StoryPlayer.Start, so this replaces the default story
+                if (storyToResume != null)
+                {
+                    StoryPlayer.Instance.Begin(storyToResume, storyResumePage);
+                    storyToResume = null;
+                    storyResumePage = -1;
+                }
+            }
+
             if (ShopManager.Instance != null)
             {
                 ShopManager.Instance.OnShopClosed -= HandleShopClosed;
@@ -194,6 +246,8 @@ namespace TawanOS.GameFlow
             if (CardManager.Instance != null)
             {
                 UseRunDeck(CardManager.Instance);
+                // The tutorial fight's fixed opening hand goes on top of the shuffled deck (CombatManager.Start)
+                if (tutorialFightActive) CardManager.Instance.fixedOpeningCards = tutorialOpeningHand;
             }
 
             if (CombatManager.Instance != null)
@@ -202,8 +256,14 @@ namespace TawanOS.GameFlow
                 CombatManager.Instance.OnCombatEnded += HandleCombatEnded;
                 combatEndHandled = false;
 
-                // Enter the fight with the Khwan the run has left (not full), see HandleCombatEnded for the way back
-                if (RunState.Current.IsPersistent)
+                // Enter the fight with the Khwan the run has left (not full), see HandleCombatEnded for the way back.
+                // The tutorial fight is a dream: full Khwan, and nothing is written back.
+                if (tutorialFightActive)
+                {
+                    CombatManager.Instance.SetStartingKhwan(RunState.Current.MaxHp, RunState.Current.MaxHp);
+                    TutorialCoach.Begin(ReturnFromTutorialFight);
+                }
+                else if (RunState.Current.IsPersistent)
                 {
                     CombatManager.Instance.SetStartingKhwan(RunState.Current.CurrentHp, RunState.Current.MaxHp);
                 }
@@ -305,6 +365,43 @@ namespace TawanOS.GameFlow
             if (Application.isPlaying) SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
         }
 
+        private void HandleStoryFinished()
+        {
+            SceneManager.LoadScene(MapSceneName, LoadSceneMode.Single);
+        }
+
+        // Not a map node: no resume point is saved, so quitting mid-fight continues the run on the map
+        private void HandleTutorialFightRequested(StoryPage page, int resumePage)
+        {
+            tutorialFightActive = true;
+            storyToResume = StoryPlayer.Instance != null ? StoryPlayer.Instance.CurrentStory : null;
+            storyResumePage = resumePage;
+            tutorialOpeningHand = page.tutorialOpeningHand;
+            currentCombatNodeType = NodeType.MinorEnemy;
+            pendingEnemyProfile = page.tutorialFightEnemy;
+            pendingVictoryIncense = 0;
+            pendingRewardTier = RewardTier.Minor;
+            if (Application.isPlaying) SceneManager.LoadScene(CombatSceneName, LoadSceneMode.Single);
+        }
+
+        /// <summary>The tutorial fight is over (won, lost or skipped): back to the story, or the map if there is none.</summary>
+        public void ReturnFromTutorialFight()
+        {
+            if (!tutorialFightActive) return;
+            tutorialFightActive = false;
+            if (!Application.isPlaying) return;
+
+            bool hasStory = storyToResume != null && Application.CanStreamedLevelBeLoaded(StorySceneName);
+            if (!hasStory) storyToResume = null;
+            SceneManager.LoadScene(hasStory ? StorySceneName : MapSceneName, LoadSceneMode.Single);
+        }
+
+        private System.Collections.IEnumerator ReturnFromTutorialAfterDelay(float seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+            ReturnFromTutorialFight();
+        }
+
         private void HandleShopClosed()
         {
             RunState.Current.ClearResume();
@@ -318,6 +415,14 @@ namespace TawanOS.GameFlow
         {
             if (combatEndHandled) return;
             combatEndHandled = true;
+
+            // The tutorial fight touches nothing in the run, won or lost
+            if (tutorialFightActive)
+            {
+                if (Application.isPlaying)
+                    StartCoroutine(ReturnFromTutorialAfterDelay(isVictory ? VictoryPanelDelaySeconds : DefeatPanelDelaySeconds));
+                return;
+            }
 
             if (!isVictory)
             {

@@ -144,7 +144,7 @@ namespace TawanOS.Audio
             var clip = Resolve(key);
             if (clip != null)
             {
-                float vol = mixer != null ? 1f : LoadVolume(AudioChannel.Master) * LoadVolume(AudioChannel.Sfx);
+                float vol = mixer != null ? 1f : LoadVolume(AudioChannel.Sfx); // master = AudioListener.volume (GameSettings)
                 sfx.PlayOneShot(clip, vol);
             }
         }
@@ -189,14 +189,14 @@ namespace TawanOS.Audio
             // When mixer is present, master × bgm is handled by mixer groups; source stays at 1.
             // When mixer is absent (tests), multiply manually.
             if (mixer != null) return 1f;
-            return LoadVolume(AudioChannel.Master) * LoadVolume(AudioChannel.Bgm);
+            return LoadVolume(AudioChannel.Bgm); // master = AudioListener.volume (GameSettings)
         }
 
         private void ApplyVolumes()
         {
             if (mixer != null)
             {
-                mixer.SetFloat(MixerParamMaster, VolumeToDb(LoadVolume(AudioChannel.Master)));
+                mixer.SetFloat(MixerParamMaster, 0f); // master is applied once, through AudioListener.volume
                 mixer.SetFloat(MixerParamBgm, VolumeToDb(LoadVolume(AudioChannel.Bgm)));
                 mixer.SetFloat(MixerParamSfx, VolumeToDb(LoadVolume(AudioChannel.Sfx)));
             }
@@ -219,7 +219,7 @@ namespace TawanOS.Audio
 
         // The card and UI sound effects were mastered 10-20 dB quieter than the music (measured with ffmpeg
         // volumedetect, see PLAN B1), so music starts lower to keep effects audible. Players can change it in Settings.
-        public static float DefaultVolume(AudioChannel channel) => channel == AudioChannel.Bgm ? 0.5f : 1f;
+        public static float DefaultVolume(AudioChannel channel) => channel == AudioChannel.Bgm ? TawanOS.Settings.GameSettings.DefaultMusicVolume : TawanOS.Settings.GameSettings.DefaultVolume;
 
         public static float LoadVolume(AudioChannel channel) => Mathf.Clamp01(PlayerPrefs.GetFloat(PrefKey(channel), DefaultVolume(channel)));
 

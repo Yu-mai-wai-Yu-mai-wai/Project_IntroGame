@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using TawanOS.GameFlow;
+using TawanOS.Settings;
+using TawanOS.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -28,6 +30,8 @@ namespace TawanOS.EventEngine
 
         [Header("Header")]
         public Image illustration;
+        [Tooltip("Box behind the illustration. Empty = the illustration's parent. Hidden while a picture is shown so the picture blends into the background.")]
+        public Image illustrationFrame;
         public TextMeshProUGUI titleText;
         public TextMeshProUGUI speakerText;
 
@@ -54,6 +58,7 @@ namespace TawanOS.EventEngine
 
         private void Awake()
         {
+            SetupSoftEdge();
             if (choiceTemplate != null) choiceTemplate.gameObject.SetActive(false);
             if (skipTypingButton != null) skipTypingButton.onClick.AddListener(CompleteTyping);
         }
@@ -92,11 +97,40 @@ namespace TawanOS.EventEngine
             if (titleText != null) titleText.text = evt.title;
             if (illustration != null)
             {
+                ShowFrame(evt.illustration == null);
                 illustration.sprite = evt.illustration;
                 illustration.enabled = evt.illustration != null;
-                illustration.preserveAspect = true;
+                // Fit comes from the Image's own Preserve Aspect box in EventScene, so Play looks like edit mode
                 illustration.color = new Color(1f, 1f, 1f, 0f);
                 illustration.DOFade(1f, 0.6f);
+            }
+        }
+
+        public const float EventIllustrationFeather = 0.3f;
+
+        // The picture's edge fades into the scene background instead of ending at a hard rectangle.
+        // A SoftEdgeImage added in the scene (Tools/TawanOS/UI/Soften Edge) keeps its own sides.
+        private void SetupSoftEdge()
+        {
+            if (illustration == null) return;
+            if (illustrationFrame == null && illustration.transform.parent != null)
+            {
+                illustrationFrame = illustration.transform.parent.GetComponent<Image>();
+            }
+            // Only the right edge, which faces the narration panel
+            if (illustration.GetComponent<SoftEdgeImage>() == null) illustration.gameObject.AddComponent<SoftEdgeImage>().SetSides(right: EventIllustrationFeather);
+        }
+
+        // The frame (box, gold outline, "?") is only for an event without a picture
+        private void ShowFrame(bool show)
+        {
+            if (illustrationFrame == null || illustrationFrame == illustration) return;
+            illustrationFrame.enabled = show;
+            var outline = illustrationFrame.GetComponent<Outline>();
+            if (outline != null) outline.enabled = show;
+            foreach (var label in illustrationFrame.GetComponentsInChildren<TextMeshProUGUI>(true))
+            {
+                label.enabled = show;
             }
         }
 
@@ -140,7 +174,7 @@ namespace TawanOS.EventEngine
             float shown = 0f;
             while (shown < total)
             {
-                shown += charactersPerSecond * Time.deltaTime;
+                shown += GameSettings.CharactersPerSecond(charactersPerSecond) * Time.deltaTime;
                 bodyText.maxVisibleCharacters = Mathf.Min(total, Mathf.FloorToInt(shown));
                 yield return null;
             }

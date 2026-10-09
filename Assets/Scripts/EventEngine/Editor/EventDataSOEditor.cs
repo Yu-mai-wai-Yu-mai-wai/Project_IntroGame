@@ -17,7 +17,7 @@ namespace TawanOS.EventEngine
     public class EventDataSOEditor : Editor
     {
         public const string EventFolder = "Assets/EventEngineData/Events";
-        public const string CatalogPath = "Assets/EventEngineData/EventCatalog.asset";
+        public const string CatalogPath = "Assets/EventEngineData/Events/EventCatalog.asset";
         private const string ScenePath = "Assets/Scenes/EventScene.unity";
 
         private const string EndLabel = "— End event (\"Leave\" button) —";

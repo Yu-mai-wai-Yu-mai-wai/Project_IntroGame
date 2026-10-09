@@ -82,6 +82,7 @@ namespace TawanOS.CardEngine
         // Raycast instead of OnMouse* so the graveyard object needs no script of its own
         private void Update()
         {
+            if (TawanOS.UI.PauseMenu.IsPaused) return;
             bool over = IsPointerOver();
             if (over != hovered)
             {
