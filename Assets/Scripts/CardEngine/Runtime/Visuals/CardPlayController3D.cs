@@ -195,6 +195,7 @@ namespace TawanOS.CardEngine
             if (boardCard) UpdateSlotHover();
 
             if (!Input.GetMouseButtonDown(0) || Time.frameCount == selectedFrame) return;
+            if (TawanOS.UI.TutorialCoach.PointerOver) return; // a click on the tutorial hint box, not a cast
             if (ClickedHandCard()) return; // that card's own click selects it instead
 
             if (boardCard)

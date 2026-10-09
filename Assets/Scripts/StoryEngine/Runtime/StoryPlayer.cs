@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using TawanOS.CardEngine;
 using TawanOS.Settings;
 using TMPro;
 using UnityEngine;
@@ -170,6 +171,15 @@ namespace TawanOS.StoryEngine
 
         public event Action OnStoryFinished;
 
+        /// <summary>
+        /// A page asks for a tutorial fight (<see cref="StoryPage.tutorialFightEnemy"/>): the enemy, and the page to
+        /// continue from afterwards. Without a listener (the story scene played on its own) the story just goes on.
+        /// </summary>
+        public event Action<EnemyProfileSO, int> OnTutorialFightRequested;
+
+        public StoryDataSO CurrentStory => story;
+        public int PageIndex => pageIndex;
+
         [Tooltip("Played when nothing calls Begin() before Start (the intro).")]
         public StoryDataSO defaultStory;
 
@@ -241,8 +251,8 @@ namespace TawanOS.StoryEngine
             else if (TawanOS.UI.EscapeKey.Use()) Finish();
         }
 
-        /// <summary>Starts a story from its first page. An empty story finishes at once.</summary>
-        public void Begin(StoryDataSO storyToPlay)
+        /// <summary>Starts a story from its first page (or from <paramref name="startPage"/>, after a tutorial fight). An empty story finishes at once.</summary>
+        public void Begin(StoryDataSO storyToPlay, int startPage = 0)
         {
             story = storyToPlay;
             pageIndex = -1;
@@ -262,7 +272,12 @@ namespace TawanOS.StoryEngine
                 Finish();
                 return;
             }
-            ShowPage(0);
+            if (startPage >= story.pages.Count)
+            {
+                Finish();
+                return;
+            }
+            ShowPage(Mathf.Max(0, startPage));
         }
 
         /// <summary>Click / Space: finish typing the current line, or go to the next page.</summary>
@@ -272,6 +287,13 @@ namespace TawanOS.StoryEngine
             if (isTyping)
             {
                 CompleteTyping();
+                return;
+            }
+
+            var fightEnemy = story.pages[pageIndex].tutorialFightEnemy;
+            if (fightEnemy != null && OnTutorialFightRequested != null)
+            {
+                LeaveForFight(fightEnemy, pageIndex + 1);
                 return;
             }
 
@@ -363,6 +385,20 @@ namespace TawanOS.StoryEngine
             isTyping = false;
             bodyText.maxVisibleCharacters = int.MaxValue;
             if (nextIndicator != null) nextIndicator.gameObject.SetActive(true);
+        }
+
+        // Fades out like the end of the story, then hands over to the fight; GameFlowManager brings the story back
+        private void LeaveForFight(EnemyProfileSO enemy, int resumePage)
+        {
+            finished = true;
+            if (rootGroup == null)
+            {
+                OnTutorialFightRequested?.Invoke(enemy, resumePage);
+                return;
+            }
+            rootGroup.interactable = false;
+            rootGroup.DOKill();
+            rootGroup.DOFade(0f, 0.5f).OnComplete(() => OnTutorialFightRequested?.Invoke(enemy, resumePage));
         }
 
         private void Finish()

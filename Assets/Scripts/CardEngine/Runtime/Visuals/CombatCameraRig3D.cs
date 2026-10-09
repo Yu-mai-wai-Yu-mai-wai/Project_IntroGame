@@ -62,8 +62,10 @@ namespace TawanOS.CardEngine
         public bool IsBoardOnlyView => userTop && topRequests == 0 && !locked;
         public static bool HideOverlay => Instance != null && Instance.IsBoardOnlyView;
 
-        // The card detail or graveyard screen is showing (or closed this frame): clicks should not also pick up or play cards
-        public static bool BlocksInput => CardDetailPanelUI.BlocksInput || GraveyardPanelUI.BlocksInput || DeckViewerPanelUI.BlocksInput;
+        // A card screen is showing (or closed this frame), or the mouse is on the tutorial hint box:
+        // clicks should not also pick up or play cards
+        public static bool BlocksInput => CardDetailPanelUI.BlocksInput || GraveyardPanelUI.BlocksInput || DeckViewerPanelUI.BlocksInput
+            || TawanOS.UI.TutorialCoach.PointerOver;
 
         // AfterSceneLoad fires only for the first scene played; the combat scene is usually loaded later from the map.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]

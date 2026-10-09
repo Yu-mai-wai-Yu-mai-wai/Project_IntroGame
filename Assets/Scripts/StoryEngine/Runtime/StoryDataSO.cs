@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TawanOS.CardEngine;
 using UnityEngine;
 using UnityEngine.Video;
 
@@ -39,5 +40,10 @@ namespace TawanOS.StoryEngine
         public string speaker;
         [TextArea(3, 8)]
         public string text;
+
+        [Header("Tutorial Fight")]
+        [Tooltip("Play a tutorial fight against this enemy after this page, with step-by-step hints; the story goes on from the " +
+                 "next page whether it is won or lost. It costs no Khwan and pays nothing. Empty = no fight.")]
+        public EnemyProfileSO tutorialFightEnemy;
     }
 }
