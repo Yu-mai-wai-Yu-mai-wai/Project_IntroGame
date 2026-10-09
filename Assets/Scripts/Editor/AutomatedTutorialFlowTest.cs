@@ -12,10 +12,11 @@ namespace TawanOS.EditorTools
 {
     /// <summary>
     /// Headless check of the intro tutorial fight, driven like <see cref="AutomatedCombatFlowTest"/>:
-    /// New Game -> click through the intro until the dream page sends the player to CombatTestScene with the
-    /// tutorial hints up -> close each hint (checking it froze the fight and lit something on screen) up to the
-    /// board-phase ones -> lose the fight on purpose -> back in StoryScene on the page after the dream, with the
-    /// run's Khwan, incense and save untouched. Exits non-zero on a failed check or any logged error.
+    /// New Game -> press the story's skip, which must ask about the tutorial; "เล่นบทสอน" goes to the dream page's
+    /// fight in CombatTestScene with the tutorial hints up -> close each hint (checking it froze the fight and lit something on screen) up to the
+    /// board-phase ones -> end the phases until the clash hint (checking every text box stays on screen) -> lose the fight on purpose -> back in StoryScene on the page after the dream, with the
+    /// run's Khwan, incense and save untouched -> skip again: the rest of the story goes and the map loads.
+    /// Exits non-zero on a failed check or any logged error.
     /// Run with raw Unity.exe (no -quit): -executeMethod TawanOS.EditorTools.AutomatedTutorialFlowTest.Run
     /// Deletes the run save and the saved map of this machine's Editor profile, like the combat smoke test.
     /// </summary>
@@ -29,8 +30,10 @@ namespace TawanOS.EditorTools
             ClickThroughStory,
             WaitForCombat,
             WaitForPlayerPhase,
+            PlayToClash,
             LoseFight,
             WaitForStory,
+            WaitForMap,
             Done
         }
 
@@ -44,6 +47,7 @@ namespace TawanOS.EditorTools
         private const string KeyIncense = "ATFT_Incense";
         private const string KeySeenHints = "ATFT_SeenHints";
         private const string KeySkipChecked = "ATFT_SkipChecked";
+        private const string KeyStorySkipped = "ATFT_StorySkipped";
 
         static AutomatedTutorialFlowTest()
         {
@@ -75,6 +79,7 @@ namespace TawanOS.EditorTools
             SessionState.SetInt(KeyResumePage, fightPage + 1);
             SessionState.SetString(KeySeenHints, "");
             SessionState.SetBool(KeySkipChecked, false);
+            SessionState.SetBool(KeyStorySkipped, false);
             SessionState.SetFloat(KeyStepStart, (float)EditorApplication.timeSinceStartup);
 
             Application.logMessageReceived += HandleLog;
@@ -197,8 +202,20 @@ namespace TawanOS.EditorTools
                     }
                     else
                     {
-                        if (StoryPlayer.Instance != null) StoryPlayer.Instance.Advance();
-                        if (TimedOut(60)) Fail($"Still in {ActiveScene} after clicking through the story");
+                        // The skip button asks whether to skip the tutorial too; answering "เล่นบทสอน" skips the
+                        // text and goes to the fight instead of skipping the whole story
+                        var story = StoryPlayer.Instance;
+                        if (story != null && story.PageIndex >= 0)
+                        {
+                            if (story.IsAskingSkip) story.AnswerSkip(false);
+                            else if (!SessionState.GetBool(KeyStorySkipped, false))
+                            {
+                                story.Skip();
+                                if (!story.IsAskingSkip) { Fail("Skipping the story before the fight did not ask about the tutorial"); break; }
+                                SessionState.SetBool(KeyStorySkipped, true);
+                            }
+                        }
+                        if (TimedOut(60)) Fail($"Still in {ActiveScene} after skipping the story");
                     }
                     break;
 
@@ -239,6 +256,7 @@ namespace TawanOS.EditorTools
                             Debug.Log($"{Tag} ok   skip asks first; cancelling keeps the tutorial going");
                         }
                         if (!coach.ShowingLit) { Fail($"Hint '{title}' found nothing on screen to light"); break; }
+                        if (!coach.BoxOnScreen) { Fail($"Hint '{title}': the text box goes off the screen ({Screen.width}x{Screen.height})"); break; }
                         SessionState.SetString(KeySeenHints, SessionState.GetString(KeySeenHints, "") + "|" + title);
                         coach.Next();
                         break;
@@ -251,9 +269,35 @@ namespace TawanOS.EditorTools
                         if (Time.timeScale != 1f) { Fail($"Time scale left at {Time.timeScale} after the hints closed"); break; }
                         string problem = CheckTurnOne(turns);
                         if (problem != null) { Fail(problem); break; }
-                        AdvanceTo(Step.LoseFight);
+                        AdvanceTo(Step.PlayToClash);
                     }
                     else if (TimedOut(90)) Fail($"Never saw the board-phase hints (seen: {SessionState.GetString(KeySeenHints, "")})");
+                    break;
+
+                case Step.PlayToClash:
+                    // End the player's phases without playing, closing each hint the same checked way, until the
+                    // clash hint (both board rows lit, the biggest window) has been shown
+                    var clashCoach = TutorialCoach.Instance;
+                    if (clashCoach != null && clashCoach.IsShowingHint)
+                    {
+                        string title = clashCoach.ShowingTitle;
+                        Debug.Log($"{Tag} hint '{title}' lit={clashCoach.ShowingLit}");
+                        if (!clashCoach.ShowingLit) { Fail($"Hint '{title}' found nothing on screen to light"); break; }
+                        if (!clashCoach.BoxOnScreen) { Fail($"Hint '{title}': the text box goes off the screen ({Screen.width}x{Screen.height})"); break; }
+                        SessionState.SetString(KeySeenHints, SessionState.GetString(KeySeenHints, "") + "|" + title);
+                        clashCoach.Next();
+                        break;
+                    }
+                    if (SessionState.GetString(KeySeenHints, "").Contains("|การ์ดตีกัน"))
+                    {
+                        Debug.Log($"{Tag} ok   clash hint shown inside the screen");
+                        AdvanceTo(Step.LoseFight);
+                        break;
+                    }
+                    var phaseNow = TurnPhaseController.Instance;
+                    if (phaseNow != null && (phaseNow.CurrentPhase == TurnPhase.PlayerBoard || phaseNow.CurrentPhase == TurnPhase.PlayerSpell))
+                        phaseNow.RequestEndTurn();
+                    if (TimedOut(90)) Fail($"Never reached the clash hint (seen: {SessionState.GetString(KeySeenHints, "")})");
                     break;
 
                 case Step.LoseFight:
@@ -272,10 +316,23 @@ namespace TawanOS.EditorTools
                         if (run.CurrentHp != SessionState.GetInt(KeyHp, -1)) { Fail($"Khwan changed: {SessionState.GetInt(KeyHp, -1)} -> {run.CurrentHp}"); break; }
                         if (run.Incense != SessionState.GetInt(KeyIncense, -1)) { Fail($"Incense changed: {SessionState.GetInt(KeyIncense, -1)} -> {run.Incense}"); break; }
                         Debug.Log($"{Tag} ok   back in the story on page {expectedPage + 1}, Khwan {run.CurrentHp}, incense {run.Incense}, save kept");
-                        AdvanceTo(Step.Done);
+                        // Skipping after the fight: no fight left ahead, so no question - the rest of the story goes
+                        StoryPlayer.Instance.Skip();
+                        if (StoryPlayer.Instance.IsAskingSkip) { Fail("Skipping after the fight asked about the tutorial again"); break; }
+                        AdvanceTo(Step.WaitForMap);
                     }
                     else if (ActiveScene == "MainMenu" && TimedOut(1)) Fail("Losing the tutorial fight went to the main menu");
                     else if (TimedOut(20)) Fail($"Never returned to StoryScene (still in {ActiveScene})");
+                    break;
+
+                case Step.WaitForMap:
+                    if (ActiveScene == "MapTestScene")
+                    {
+                        Debug.Log($"{Tag} ok   skip in the story stopped at the fight, and after it went on to the map");
+                        AdvanceTo(Step.Done);
+                    }
+                    else if (ActiveScene == "CombatTestScene") Fail("Skipping after the fight started the tutorial fight again");
+                    else if (TimedOut(20)) Fail($"Skipping the rest of the story never reached the map (still in {ActiveScene})");
                     break;
 
                 case Step.Done:

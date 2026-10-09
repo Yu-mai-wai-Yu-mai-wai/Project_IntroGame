@@ -28,6 +28,8 @@ namespace TawanOS.UI
         private const float SettleSeconds = 0.5f;  // let cards land and the camera move before lighting a target
         private const float Padding = 0.012f;      // around the lit window, as a fraction of the screen
         private const float BorderPixels = 4f;
+        private const float ScreenMargin = 24f;    // the text box keeps this far from the screen edge (reference px)
+        private const float BoxGap = 20f;          // between the lit window and the text box (reference px)
 
         private enum Target
         {
@@ -66,6 +68,7 @@ namespace TawanOS.UI
         private bool frozeTime;
         private float timeScaleBefore = 1f;
 
+        private Canvas rootCanvas;
         private CanvasGroup group;
         private RectTransform shadeBottom, shadeTop, shadeLeft, shadeRight;
         private RectTransform frame;
@@ -277,6 +280,21 @@ namespace TawanOS.UI
         public string ShowingTitle => showing && current != null ? current.title : null;
         public bool ShowingLit { get; private set; }
 
+        /// <summary>The text box is entirely on screen (Screen Space Overlay: world corners are screen pixels).</summary>
+        public bool BoxOnScreen
+        {
+            get
+            {
+                if (box == null) return false;
+                PlaceSpotlight(current != null ? current.target : Target.None);
+                var corners = new Vector3[4];
+                box.GetWorldCorners(corners);
+                foreach (var c in corners)
+                    if (c.x < -0.5f || c.y < -0.5f || c.x > Screen.width + 0.5f || c.y > Screen.height + 0.5f) return false;
+                return true;
+            }
+        }
+
         public bool IsConfirmingSkip => confirming;
 
         /// <summary>Same as the "ข้ามบทสอน" button: asks whether to skip. <see cref="AnswerSkip"/> answers.</summary>
@@ -384,35 +402,56 @@ namespace TawanOS.UI
             PlaceBox(lit ? r : (Rect?)null);
         }
 
-        // Beside the lit window where there is the most room; in the middle when nothing is lit
+        // Beside the lit window, on the side where the box fits with the most room to spare; when it fits
+        // nowhere (a window as big as the screen, e.g. both board rows in the clash), on the side with the most
+        // room. Always kept fully on screen. Worked out in screen pixels from the box's real size.
         private void PlaceBox(Rect? lit)
         {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(box);
+            float scale = rootCanvas != null ? rootCanvas.scaleFactor : 1f;
+            Vector2 size = box.rect.size * scale;
+            float w = Screen.width, h = Screen.height;
+            float margin = ScreenMargin * scale, gap = BoxGap * scale;
+
+            Vector2 pos; // bottom-left corner, pixels
             if (lit == null)
             {
-                box.anchorMin = box.anchorMax = box.pivot = new Vector2(0.5f, 0.5f);
-                box.anchoredPosition = Vector2.zero;
-                return;
-            }
-
-            var r = lit.Value;
-            float above = 1f - r.yMax, below = r.yMin, left = r.xMin, right = 1f - r.xMax;
-            float centreX = Mathf.Clamp(r.center.x, 0.25f, 0.75f);
-            float centreY = Mathf.Clamp(r.center.y, 0.25f, 0.75f);
-            const float gap = 0.02f;
-
-            if (above >= 0.3f || below >= 0.3f)
-            {
-                bool putAbove = above >= below;
-                box.anchorMin = box.anchorMax = new Vector2(centreX, putAbove ? r.yMax + gap : r.yMin - gap);
-                box.pivot = new Vector2(0.5f, putAbove ? 0f : 1f);
+                pos = new Vector2((w - size.x) * 0.5f, (h - size.y) * 0.5f);
             }
             else
             {
-                bool putRight = right >= left;
-                box.anchorMin = box.anchorMax = new Vector2(putRight ? r.xMax + gap : r.xMin - gap, centreY);
-                box.pivot = new Vector2(putRight ? 0f : 1f, 0.5f);
+                var r = lit.Value;
+                var hole = Rect.MinMaxRect(r.xMin * w, r.yMin * h, r.xMax * w, r.yMax * h);
+                float midX = hole.center.x - size.x * 0.5f, midY = hole.center.y - size.y * 0.5f;
+
+                // Room on each side, minus what the box needs there (negative = does not fit)
+                float below = hole.yMin - gap - margin, above = h - hole.yMax - gap - margin;
+                float left = hole.xMin - gap - margin, right = w - hole.xMax - gap - margin;
+                var sides = new[]
+                {
+                    (spare: below - size.y, room: below, at: new Vector2(midX, hole.yMin - gap - size.y)),
+                    (spare: above - size.y, room: above, at: new Vector2(midX, hole.yMax + gap)),
+                    (spare: right - size.x, room: right, at: new Vector2(hole.xMax + gap, midY)),
+                    (spare: left - size.x, room: left, at: new Vector2(hole.xMin - gap - size.x, midY)),
+                };
+
+                int best = -1;
+                for (int i = 0; i < sides.Length; i++)
+                    if (sides[i].spare >= 0f && (best < 0 || sides[i].spare > sides[best].spare)) best = i;
+                if (best < 0)
+                {
+                    // Fits nowhere: over the edge of the window on the roomiest side, inside the screen
+                    best = 0;
+                    for (int i = 1; i < sides.Length; i++) if (sides[i].room > sides[best].room) best = i;
+                }
+                pos = sides[best].at;
             }
-            box.anchoredPosition = Vector2.zero;
+
+            pos.x = Mathf.Clamp(pos.x, margin, Mathf.Max(margin, w - margin - size.x));
+            pos.y = Mathf.Clamp(pos.y, margin, Mathf.Max(margin, h - margin - size.y));
+
+            box.anchorMin = box.anchorMax = box.pivot = Vector2.zero;
+            box.anchoredPosition = pos / scale;
         }
 
         private static void SetAnchors(RectTransform rt, float xMin, float yMin, float xMax, float yMax)
@@ -552,6 +591,7 @@ namespace TawanOS.UI
         {
             var theme = UIThemeSO.Current;
             var canvas = UiFactory.CreateOverlayCanvas("TutorialCanvas", 400, transform); // under the card screens (450+)
+            rootCanvas = canvas;
             canvas.gameObject.AddComponent<GraphicRaycaster>();
             group = canvas.GetComponent<CanvasGroup>();
             group.interactable = true;
