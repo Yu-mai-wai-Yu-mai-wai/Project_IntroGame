@@ -1,0 +1,97 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 953806624f8d4204ca33466fbfd4531b, type: 3}
+  m_Name: Story_Intro
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.StoryEngine.StoryDataSO
+  storyId: intro
+  pages:
+  - backgroundVideo: {fileID: 32900000, guid: 308583065f597574380fb2f5804befa7, type: 3}
+    background: {fileID: 0}
+    blackScreen: 0
+    speaker: 
+    text: "\u0E02\u0E27\u0E31\u0E0D \u0E19\u0E31\u0E01\u0E28\u0E36\u0E01\u0E29\u0E32\u0E0A\u0E32\u0E22
+      \u0E2D\u0E32\u0E22\u0E38 18 \u0E1B\u0E35 \u0E02\u0E27\u0E31\u0E0D\u0E40\u0E01\u0E34\u0E14\u0E41\u0E25\u0E30\u0E42\u0E15\u0E21\u0E32\u0E01\u0E31\u0E1A\u0E1E\u0E48\u0E2D\u0E41\u0E21\u0E48\u0E17\u0E35\u0E48\u0E2D\u0E35\u0E2A\u0E32\u0E19"
+    tutorialFightEnemy: {fileID: 0}
+    tutorialOpeningHand: []
+  - backgroundVideo: {fileID: 0}
+    background: {fileID: 0}
+    blackScreen: 0
+    speaker: 
+    text: "\u0E1E\u0E48\u0E2D\u0E02\u0E2D\u0E07\u0E02\u0E27\u0E31\u0E0D\u0E40\u0E1B\u0E47\u0E19\u0E2B\u0E21\u0E2D\u0E18\u0E23\u0E23\u0E21\u0E21\u0E32\u0E01\u0E1D\u0E35\u0E21\u0E37\u0E2D
+      \u0E17\u0E35\u0E48\u0E04\u0E2D\u0E22\u0E0A\u0E48\u0E27\u0E22\u0E40\u0E2B\u0E25\u0E37\u0E2D\u0E1C\u0E39\u0E49\u0E04\u0E19\u0E20\u0E32\u0E22\u0E43\u0E19\u0E2B\u0E21\u0E39\u0E48\u0E1A\u0E49\u0E32\u0E19"
+    tutorialFightEnemy: {fileID: 0}
+    tutorialOpeningHand: []
+  - backgroundVideo: {fileID: 0}
+    background: {fileID: 0}
+    blackScreen: 0
+    speaker: 
+    text: "\u0E41\u0E15\u0E48\u0E02\u0E27\u0E31\u0E0D\u0E01\u0E25\u0E31\u0E1A\u0E21\u0E2D\u0E07\u0E27\u0E48\u0E32\u0E21\u0E31\u0E19\u0E40\u0E1B\u0E47\u0E19\u0E40\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E07\u0E21\u0E07\u0E32\u0E22
+      \u0E08\u0E36\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E2A\u0E19\u0E43\u0E08\u0E2A\u0E32\u0E19\u0E15\u0E48\u0E2D\u0E2A\u0E34\u0E48\u0E07\u0E17\u0E35\u0E48\u0E1E\u0E48\u0E2D\u0E17\u0E33
+      \u0E41\u0E25\u0E30\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E21\u0E32\u0E40\u0E23\u0E35\u0E22\u0E19\u0E15\u0E48\u0E2D\u0E43\u0E19\u0E40\u0E21\u0E37\u0E2D\u0E07\u0E41\u0E17\u0E19"
+    tutorialFightEnemy: {fileID: 0}
+    tutorialOpeningHand: []
+  - backgroundVideo: {fileID: 0}
+    background: {fileID: 21300000, guid: d232ea2729360ad48af0459a79ed623d, type: 3}
+    blackScreen: 0
+    speaker: 
+    text: "\u0E04\u0E37\u0E19\u0E2B\u0E19\u0E36\u0E48\u0E07... \u0E43\u0E19\u0E02\u0E13\u0E30\u0E17\u0E35\u0E48\u0E02\u0E27\u0E31\u0E0D\u0E2B\u0E25\u0E31\u0E1A"
+    tutorialFightEnemy: {fileID: 0}
+    tutorialOpeningHand: []
+  - backgroundVideo: {fileID: 0}
+    background: {fileID: 21300000, guid: d232ea2729360ad48af0459a79ed623d, type: 3}
+    blackScreen: 0
+    speaker: 
+    text: "\u0E02\u0E27\u0E31\u0E0D\u0E1D\u0E31\u0E19\u0E40\u0E2B\u0E47\u0E19\u0E40\u0E07\u0E32\u0E14\u0E33\u0E21\u0E32\u0E01\u0E21\u0E32\u0E22\u0E01\u0E33\u0E25\u0E31\u0E07\u0E1A\u0E38\u0E01\u0E44\u0E1B\u0E17\u0E35\u0E48\u0E1A\u0E49\u0E32\u0E19\u0E02\u0E2D\u0E07\u0E40\u0E02\u0E32
+      \u0E41\u0E25\u0E30\u0E21\u0E35\u0E40\u0E2A\u0E35\u0E22\u0E07\u0E42\u0E2B\u0E22\u0E2B\u0E27\u0E19\u0E02\u0E2D\u0E07\u0E1E\u0E48\u0E2D\u0E41\u0E21\u0E48\u0E25\u0E2D\u0E14\u0E2D\u0E2D\u0E01\u0E21\u0E32"
+    tutorialFightEnemy: {fileID: 11400000, guid: d0b3c231e3ec2c34caf8af6f330ad687, type: 2}
+    tutorialOpeningHand:
+    - {fileID: 11400000, guid: 1ba19c6e581946ddb57e8cab6e2fbb94, type: 2}
+    - {fileID: 11400000, guid: 7590c4d9a3464f80a678bb0fed6a7a1a, type: 2}
+    - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
+  - backgroundVideo: {fileID: 0}
+    background: {fileID: 21300000, guid: ae5d8d81db7e3c04f9663ef01906ee09, type: 3}
+    blackScreen: 0
+    speaker: 
+    text: "\u0E02\u0E27\u0E31\u0E0D\u0E2A\u0E30\u0E14\u0E38\u0E49\u0E07\u0E15\u0E37\u0E48\u0E19..."
+    tutorialFightEnemy: {fileID: 0}
+    tutorialOpeningHand: []
+  - backgroundVideo: {fileID: 0}
+    background: {fileID: 21300000, guid: 75b6820ab2f1c1b4880f1c5310445b5c, type: 3}
+    blackScreen: 0
+    speaker: 
+    text: "\u0E2A\u0E31\u0E01\u0E1E\u0E31\u0E01\u0E01\u0E47\u0E23\u0E39\u0E49\u0E15\u0E31\u0E27\u0E27\u0E48\u0E32\u0E17\u0E38\u0E01\u0E2A\u0E34\u0E48\u0E07\u0E17\u0E35\u0E48\u0E40\u0E2B\u0E47\u0E19\u0E40\u0E1B\u0E47\u0E19\u0E1D\u0E31\u0E19
+      \u0E41\u0E15\u0E48\u0E14\u0E49\u0E27\u0E22\u0E04\u0E27\u0E32\u0E21\u0E01\u0E31\u0E07\u0E27\u0E25\u0E43\u0E08\u0E02\u0E27\u0E31\u0E0D\u0E08\u0E36\u0E07\u0E04\u0E34\u0E14\u0E17\u0E35\u0E48\u0E08\u0E30\u0E01\u0E25\u0E31\u0E1A\u0E44\u0E1B\u0E2B\u0E32\u0E1E\u0E48\u0E2D\u0E41\u0E21\u0E48\u0E17\u0E35\u0E48\u0E1A\u0E49\u0E32\u0E19\u0E40\u0E01\u0E34\u0E14"
+    tutorialFightEnemy: {fileID: 0}
+    tutorialOpeningHand: []
+  - backgroundVideo: {fileID: 32900000, guid: 308583065f597574380fb2f5804befa7, type: 3}
+    background: {fileID: 0}
+    blackScreen: 0
+    speaker: 
+    text: "\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E02\u0E27\u0E31\u0E0D\u0E01\u0E25\u0E31\u0E1A\u0E21\u0E32\u0E16\u0E36\u0E07\u0E1A\u0E49\u0E32\u0E19
+      \u0E01\u0E47\u0E1E\u0E1A\u0E01\u0E31\u0E1A\u0E1E\u0E48\u0E2D\u0E02\u0E2D\u0E07\u0E40\u0E02\u0E32\u0E17\u0E35\u0E48\u0E25\u0E49\u0E21\u0E1E\u0E31\u0E1A\u0E2D\u0E22\u0E39\u0E48\u0E01\u0E31\u0E1A\u0E1E\u0E37\u0E49\u0E19"
+    tutorialFightEnemy: {fileID: 0}
+    tutorialOpeningHand: []
+  - backgroundVideo: {fileID: 32900000, guid: 11ecc85867906b24ca6b728f04a37f8d, type: 3}
+    background: {fileID: 0}
+    blackScreen: 0
+    speaker: 
+    text: "\u0E1E\u0E48\u0E2D\u0E02\u0E27\u0E31\u0E0D\u0E43\u0E0A\u0E49\u0E41\u0E23\u0E07\u0E43\u0E08\u0E40\u0E2E\u0E37\u0E2D\u0E01\u0E2A\u0E38\u0E14\u0E17\u0E49\u0E32\u0E22\u0E1A\u0E2D\u0E01\u0E01\u0E31\u0E1A\u0E02\u0E27\u0E31\u0E0D\u0E27\u0E48\u0E32\u0E16\u0E39\u0E01\u0E40\u0E25\u0E48\u0E19\u0E21\u0E19\u0E15\u0E4C\u0E14\u0E33\u0E43\u0E2A\u0E48
+      \u0E01\u0E48\u0E2D\u0E19\u0E17\u0E35\u0E48\u0E1E\u0E48\u0E2D\u0E02\u0E2D\u0E07\u0E02\u0E27\u0E31\u0E0D\u0E08\u0E30\u0E2A\u0E25\u0E1A\u0E44\u0E1B"
+    tutorialFightEnemy: {fileID: 0}
+    tutorialOpeningHand: []
+  - backgroundVideo: {fileID: 32900000, guid: 308583065f597574380fb2f5804befa7, type: 3}
+    background: {fileID: 0}
+    blackScreen: 0
+    speaker: 
+    text: "\u0E40\u0E21\u0E37\u0E48\u0E2D\u0E23\u0E39\u0E49\u0E41\u0E1A\u0E1A\u0E19\u0E31\u0E49\u0E19\u0E02\u0E27\u0E31\u0E0D\u0E08\u0E36\u0E07\u0E23\u0E35\u0E1A\u0E2D\u0E2D\u0E01\u0E40\u0E14\u0E34\u0E19\u0E17\u0E32\u0E07\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E2B\u0E32\u0E17\u0E32\u0E07\u0E23\u0E31\u0E01\u0E29\u0E32\u0E1E\u0E48\u0E2D"
+    tutorialFightEnemy: {fileID: 0}
+    tutorialOpeningHand: []

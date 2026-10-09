@@ -73,6 +73,8 @@ namespace TawanOS.MapEngine
 
         private void Update()
         {
+            if (TawanOS.UI.PauseMenu.IsPaused) return;
+            if (CardEngine.DeckViewerPanelUI.BlocksInput) { isDragging = false; return; } // scrolling the deck screen, not the map
             HandleDragScroll();
         }
 

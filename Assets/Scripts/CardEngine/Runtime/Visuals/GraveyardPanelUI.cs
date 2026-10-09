@@ -101,7 +101,7 @@ namespace TawanOS.CardEngine
             if (Input.GetMouseButtonDown(0)) pressClosedDetail = CardDetailPanelUI.BlocksInput;
 
             if (isOpen && Time.frameCount > openedFrame && !CardDetailPanelUI.BlocksInput
-                && (Input.GetMouseButtonDown(1) || Input.GetKeyDown(KeyCode.Escape)))
+                && (Input.GetMouseButtonDown(1) || TawanOS.UI.EscapeKey.Use()))
             {
                 Hide();
             }

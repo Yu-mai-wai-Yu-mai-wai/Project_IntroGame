@@ -44,20 +44,47 @@ them into `Assets/Audio`, `Assets/Art`, `Assets/Video`. 13 cards have no art yet
 
 ## Unity command line (Windows)
 
-The editor must be closed for batch mode (project lock). Set once per shell:
+Use the Unity CLI (`unity`, docs: https://docs.unity.com/en-us/unity-cli/use-unity-cli), run from the repo root.
+It reads the editor version from `ProjectVersion.txt` and the project path from the current directory.
+Install it with `winget install Unity.CLI` if `unity --version` fails. The project already has `com.unity.pipeline`,
+which lets the CLI drive an editor that is open.
+
+**Editor open** (no project lock, preferred while working):
+
+| Purpose | Command |
+|---|---|
+| Is an editor connected? | `unity status` |
+| Compile check | `unity recompile` (reports compile errors; non-zero exit on failure) |
+| List / run editor tools | `unity command` lists them; `unity command editor_play`. Commands that take arguments (`menu --path ...`, `eval`) need `com.unity.pipeline` 0.6.0-exp.1+; the project has 0.3.1 |
+
+**Editor closed** (batch mode):
+
+| Purpose | Command |
+|---|---|
+| Compile check | `unity run . --no-tail -l Logs/compile.log -- -nographics` then search `Logs/compile.log` for `error CS` |
+| Run an editor method | `unity run . --no-tail -l Logs/run.log -- -nographics -executeMethod <Namespace.Class.Method>` |
+| EditMode tests | `unity test . --mode EditMode --output tests.xml` |
+| Windows build | `unity build . --target StandaloneWindows64 --execute-method TawanOS.EditorTools.BuildScript.BuildWindows -o Build/Windows` |
+
+`unity run` already adds `-batchmode -quit -projectPath -logFile`; passing `-quit` after `--` is an error (exit 6).
+Write logs under `Logs/` (git-ignored): Unity logs the Hub access token in the command-line section.
+
+**Fallback: raw `Unity.exe`.** Use it for the combat smoke test, because that test enters Play Mode from
+`EditorApplication.update` and calls `Exit` itself, and the `-quit` that `unity run` forces would end it early.
+Also use it if the CLI (still beta) misbehaves. The editor must be closed.
 
 ```powershell
-$UNITY = "D:\Unity_Editor\6000.3.19f1\Editor\Unity.exe"   # เครื่องของตะวัน (ตรวจแล้ว 6 ต.ค.) เครื่องอื่นแก้ path ให้ตรงกับที่ติดตั้ง
-$PROJ  = "D:\Unity2026PJ\Project_IntroGame"
+$UNITY = "C:\Program Files\Unity\Hub\Editor\6000.3.19f1\Editor\Unity.exe"   # แก้ path ให้ตรงกับเครื่อง (เครื่องตะวัน: D:\Unity_Editor\6000.3.19f1\Editor\Unity.exe)
+$PROJ  = (Get-Location).Path   # run from the repo root
 ```
 
 | Purpose | Command |
 |---|---|
-| Compile check | `& $UNITY -batchmode -nographics -quit -projectPath $PROJ -logFile compile.log` then search `compile.log` for `error CS` |
-| Run an editor method | `& $UNITY -batchmode -nographics -quit -projectPath $PROJ -executeMethod <Namespace.Class.Method> -logFile run.log` |
-| Combat smoke test | `& $UNITY -batchmode -projectPath $PROJ -executeMethod TawanOS.EditorTools.AutomatedCombatFlowTest.Run -logFile combat.log` (exits itself; check exit code) |
-| EditMode tests | `& $UNITY -batchmode -nographics -projectPath $PROJ -runTests -testPlatform EditMode -testResults tests.xml -logFile tests.log` (no `-quit` with `-runTests`) |
-| Windows build | `& $UNITY -batchmode -nographics -quit -projectPath $PROJ -executeMethod TawanOS.EditorTools.BuildScript.BuildWindows -logFile build.log` (BuildScript is created in task B0) |
+| Combat smoke test | `& $UNITY -batchmode -projectPath $PROJ -executeMethod TawanOS.EditorTools.AutomatedCombatFlowTest.Run -logFile Logs/combat.log` (exits itself; check exit code) |
+| Compile check | `& $UNITY -batchmode -nographics -quit -projectPath $PROJ -logFile Logs/compile.log` then search for `error CS` |
+| Run an editor method | `& $UNITY -batchmode -nographics -quit -projectPath $PROJ -executeMethod <Namespace.Class.Method> -logFile Logs/run.log` |
+| EditMode tests | `& $UNITY -batchmode -nographics -projectPath $PROJ -runTests -testPlatform EditMode -testResults tests.xml -logFile Logs/tests.log` (no `-quit` with `-runTests`) |
+| Windows build | `& $UNITY -batchmode -nographics -quit -projectPath $PROJ -executeMethod TawanOS.EditorTools.BuildScript.BuildWindows -logFile Logs/build.log` |
 
 Existing setup tools callable this way: `TawanOS.GameFlow.MeruSetupTool.SetupMeruScene`,
 `TawanOS.GameFlow.RewardSetupTool.SetupRewardScene`, `TawanOS.GameFlow.MainMenuSetupTool.SetupMainMenu`,

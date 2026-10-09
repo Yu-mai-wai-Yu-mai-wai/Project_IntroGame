@@ -52,7 +52,34 @@ namespace TawanOS.CardEngine
             {
                 if (template != null) drawPile.Add(new CardInstance(template));
             }
-            Shuffle(drawPile);
+            scriptTurn = 0;
+            if (!Scripted) Shuffle(drawPile);
+        }
+
+        // ---------------------------------------------------------------- scripted bot (EnemyProfileSO.scriptedDeck)
+
+        private bool Scripted => profile != null && profile.scriptedDeck;
+
+        // Turns started so far (DrawForTurn runs once per turn, also on turn 1 without a draw)
+        private int scriptTurn;
+
+        private int ScriptedDrawFor(int turn)
+        {
+            var counts = profile.cardsPerTurn;
+            return counts != null && turn >= 1 && turn <= counts.Count ? Mathf.Max(0, counts[turn - 1]) : 0;
+        }
+
+        // The first card in hand (in the order drawn) that this phase allows and the bot can pay for
+        private CardInstance ChooseScriptedCard(CombatStateData s, bool costsEnabled, System.Predicate<CardInstance> filter)
+        {
+            foreach (var card in hand)
+            {
+                if (filter != null && !filter(card)) continue;
+                if (EffectResolver.Instance != null && !EffectResolver.Instance.CanResolve(card, casterIsPlayer: false)) continue;
+                if (costsEnabled && card.magicSchool == MagicSchool.WhiteMagic && card.meritCost > s.enemyMerit) continue;
+                return card;
+            }
+            return null;
         }
 
         // Draws the whole opening hand in one go. Returns false when the enemy has no deck.
@@ -61,7 +88,7 @@ namespace TawanOS.CardEngine
             if (!Active) return false;
 
             IsOpeningDraw = true;
-            Draw(profile.startingHandSize);
+            Draw(Scripted ? ScriptedDrawFor(1) : profile.startingHandSize);
             IsOpeningDraw = false;
             return true;
         }
@@ -92,9 +119,10 @@ namespace TawanOS.CardEngine
         {
             playedThisTurn = 0;
             pitDrawsThisTurn = 0;
+            scriptTurn++;
             if (!Active || !draw) yield break;
 
-            int drawn = Draw(profile.drawPerTurn);
+            int drawn = Draw(Scripted ? ScriptedDrawFor(scriptTurn) : profile.drawPerTurn);
             if (drawn > 0)
             {
                 // Let the draw fly-in play out before the enemy starts acting
@@ -114,17 +142,18 @@ namespace TawanOS.CardEngine
             float speed = combat.EnemyPlaySpeed;
             int played = 0;
 
-            // A thin or losing hand may be worth topping up from the pit before playing
-            if (PitDrawScore(state, style, costsEnabled, nothingToPlay: false) >= PitDrawScoreNeeded && TryDrawFromPit(combat))
+            // A thin or losing hand may be worth topping up from the pit before playing (never for the scripted bot)
+            if (!Scripted && PitDrawScore(state, style, costsEnabled, nothingToPlay: false) >= PitDrawScoreNeeded && TryDrawFromPit(combat))
             {
                 yield return new WaitForSeconds(PitDrawDelay / speed);
             }
 
             while (playedThisTurn < profile.maxCardsPerTurn && !combat.IsCombatOver)
             {
-                var card = ChooseCard(state, style, costsEnabled, filter);
+                var card = Scripted ? ChooseScriptedCard(state, costsEnabled, filter) : ChooseCard(state, style, costsEnabled, filter);
                 if (card == null)
                 {
+                    if (Scripted) break;
                     // Nothing to play in this phase: the pit is worth more now, then look again
                     if (PitDrawScore(state, style, costsEnabled, nothingToPlay: true) < PitDrawScoreNeeded) break;
                     if (!TryDrawFromPit(combat)) break;

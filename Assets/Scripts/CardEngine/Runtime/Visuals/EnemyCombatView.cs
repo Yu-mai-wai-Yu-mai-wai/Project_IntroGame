@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
+using TawanOS.Settings;
 
 namespace TawanOS.CardEngine
 {
@@ -76,7 +77,7 @@ namespace TawanOS.CardEngine
             {
                 // Enemy took damage: visual feedback
                 UpdateDisplay();
-                if (visualRoot != null)
+                if (visualRoot != null && !GameSettings.ReduceMotion)
                 {
                     visualRoot.DOComplete();
                     visualRoot.DOShakePosition(shakeDuration, shakeStrength, 10, 90, false, true);

@@ -15,7 +15,7 @@ MonoBehaviour:
   eventId: wods
   title: "\u0E27\u0E2D\u0E14\u0E2A\u0E4C"
   speakerName: "\u0E02\u0E27\u0E31\u0E0D"
-  illustration: {fileID: 0}
+  illustration: {fileID: 21300000, guid: 875fd79f8aa3e6749a1b12f72aafd869, type: 3}
   minFloor: 0
   repeatable: 0
   pages:

@@ -8,7 +8,7 @@ namespace TawanOS.GameFlow
 {
     /// <summary>
     /// Title screen: New Game (asks before overwriting a saved run), Continue (only when a save
-    /// exists, with a one-line summary of it) and Quit.
+    /// exists, with a one-line summary of it), Settings and Quit.
     /// </summary>
     public class MainMenuUI : MonoBehaviour
     {
@@ -21,6 +21,7 @@ namespace TawanOS.GameFlow
         public Button newGameButton;
         public Button continueButton;
         public TextMeshProUGUI continueInfoText;
+        public Button settingsButton;
         public Button quitButton;
         public Button settingsButton;
 
@@ -42,8 +43,8 @@ namespace TawanOS.GameFlow
         {
             if (newGameButton != null) newGameButton.onClick.AddListener(OnNewGame);
             if (continueButton != null) continueButton.onClick.AddListener(OnContinue);
+            if (settingsButton != null) settingsButton.onClick.AddListener(() => SettingsPanel.Open());
             if (quitButton != null) quitButton.onClick.AddListener(OnQuit);
-            if (settingsButton != null) settingsButton.onClick.AddListener(OnSettings);
             if (confirmYesButton != null) confirmYesButton.onClick.AddListener(OnConfirmYes);
             if (confirmNoButton != null) confirmNoButton.onClick.AddListener(() => confirmPanel.SetActive(false));
             if (fullModeButton != null) fullModeButton.onClick.AddListener(() => StartGameWithMode(7));
@@ -110,14 +111,6 @@ namespace TawanOS.GameFlow
         {
             SetInteractable(false);
             GameFlowManager.Instance.ContinueGame();
-        }
-
-        private SettingsPanelUI settings;
-
-        private void OnSettings()
-        {
-            if (settings == null) settings = SettingsPanelUI.Create(transform);
-            settings.Open();
         }
 
         private void OnQuit()

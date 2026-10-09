@@ -69,13 +69,14 @@ namespace TawanOS.GameFlow
 
         // ---------------------------------------------------------------- run lifecycle
 
-        /// <summary>Fresh run from the main menu: default stats, starter deck on first use, autosave on.</summary>
+        /// <summary>Fresh run from the main menu: default stats, the starter deck, autosave on.</summary>
         public static void StartNewRun(int totalFloors = DefaultTotalFloors)
         {
             DeleteSave();
             Current.Reset();
             Current.TotalFloors = totalFloors > 0 ? totalFloors : DefaultTotalFloors;
             Current.IsPersistent = true;
+            Current.EnsureStarterDeck();
             Current.Save();
         }
 
@@ -89,6 +90,7 @@ namespace TawanOS.GameFlow
                 if (data == null) return false;
                 Current.Apply(data);
                 Current.IsPersistent = true;
+                Current.EnsureStarterDeck(); // a save from before the deck was seeded at New Game
                 Current.Changed();
                 return true;
             }
@@ -217,6 +219,18 @@ namespace TawanOS.GameFlow
             deck.AddRange(starterDeck.startingCards.FindAll(c => c != null));
             deckInitialized = true;
             Changed();
+        }
+
+        /// <summary>Seeds the run deck from the starter deck on Resources/CardCatalog, so it is there from the first map screen.</summary>
+        public void EnsureStarterDeck()
+        {
+            var catalog = CardCatalogSO.Load();
+            if (catalog == null || catalog.starterDeck == null)
+            {
+                Debug.LogWarning("[RunState] Resources/CardCatalog has no Starter Deck - the deck is seeded on the first fight instead.");
+                return;
+            }
+            EnsureDeck(catalog.starterDeck);
         }
 
         public void AddCard(CardDataSO card)

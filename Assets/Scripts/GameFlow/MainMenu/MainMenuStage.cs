@@ -1,3 +1,4 @@
+using TawanOS.Settings;
 using System.Collections.Generic;
 using TawanOS.UI;
 using UnityEngine;
@@ -61,10 +62,10 @@ namespace TawanOS.GameFlow
                 scarecrowTransform.localRotation = initialScarecrowRot * Quaternion.Euler(0f, rotY, rotZ);
             }
 
-            // 2. Red light flicker (respects SettingsPanelUI.ReduceFlicker for accessibility)
+            // 2. Red light flicker (respects GameSettings.ReduceMotion for accessibility)
             if (redLight != null)
             {
-                if (SettingsPanelUI.ReduceFlicker)
+                if (GameSettings.ReduceMotion)
                 {
                     redLight.intensity = baseIntensity;
                 }
