@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc2d0b9e545459b48af5b2bf1def271b, type: 3}
   m_Name: ShopConfig
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.ShopEngine.ShopConfigSO
-  shrineName: "\u0E28\u0E32\u0E25\u0E1E\u0E23\u0E30\u0E20\u0E39\u0E21\u0E34"
+  shrineName: "\u0E28\u0E32\u0E25\u0E15\u0E32\u0E22\u0E32\u0E22"
   guardianName: "\u0E40\u0E08\u0E49\u0E32\u0E17\u0E35\u0E48"
   shrineImage: {fileID: 21300000, guid: f9108675019c3504c828b58314f0fee2, type: 3}
   greetingLines:

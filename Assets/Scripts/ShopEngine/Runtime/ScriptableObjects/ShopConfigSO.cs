@@ -17,14 +17,14 @@ namespace TawanOS.ShopEngine
     }
 
     /// <summary>
-    /// Tuning for the spirit-house shop (ศาลพระภูมิ): what is for sale, prices in incense (ธูป)
+    /// Tuning for the spirit-house shop (ศาลตายาย): what is for sale, prices in incense (ธูป)
     /// and what the guardian spirit says.
     /// </summary>
     [CreateAssetMenu(fileName = "ShopConfig", menuName = "TawanOS/ShopEngine/Shop Config")]
     public class ShopConfigSO : ScriptableObject
     {
         [Header("Spirit House")]
-        public string shrineName = "ศาลพระภูมิ";
+        public string shrineName = "ศาลตายาย";
         public string guardianName = "เจ้าที่";
         public Sprite shrineImage;
         [TextArea(1, 3)] public List<string> greetingLines = new List<string>();

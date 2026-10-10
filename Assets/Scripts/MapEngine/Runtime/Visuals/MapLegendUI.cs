@@ -33,7 +33,7 @@ namespace TawanOS.MapEngine
                 case NodeType.EliteEnemy: return "ศัตรูระดับสูง";
                 case NodeType.RestSite:   return "เมรุ";
                 case NodeType.Treasure:   return "กองของเซ่น";
-                case NodeType.Store:      return "ศาลเจ้า";
+                case NodeType.Store:      return "ศาลตายาย";
                 case NodeType.Boss:       return "ใจกลางป่าช้า";
                 case NodeType.Event:      return "หมอกดำ";
                 default:                  return "เส้นทางลึกลับ";

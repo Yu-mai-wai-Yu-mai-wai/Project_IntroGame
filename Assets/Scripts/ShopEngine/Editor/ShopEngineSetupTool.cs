@@ -10,7 +10,7 @@ using UnityEngine.UI;
 namespace TawanOS.ShopEngine
 {
     /// <summary>
-    /// Builds the spirit-house shop scene (ศาลพระภูมิ) and its ShopConfig asset.
+    /// Builds the spirit-house shop scene (ศาลตายาย) and its ShopConfig asset.
     /// Prices are in incense (ธูป), the run currency.
     /// </summary>
     public static class ShopEngineSetupTool

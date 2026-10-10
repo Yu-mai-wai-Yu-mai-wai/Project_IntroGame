@@ -16,7 +16,7 @@ namespace TawanOS.ShopEngine
     }
 
     /// <summary>
-    /// Spirit-house shop (ศาลพระภูมิ): rolls the stock for this visit and handles purchases with
+    /// Spirit-house shop (ศาลตายาย): rolls the stock for this visit and handles purchases with
     /// incense (ธูป) from the <see cref="RunState"/>. Raises <see cref="OnShopClosed"/> when the
     /// player bows out (กราบลา).
     /// </summary>
