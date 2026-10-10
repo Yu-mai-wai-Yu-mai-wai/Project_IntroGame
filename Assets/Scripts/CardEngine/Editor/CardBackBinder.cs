@@ -5,28 +5,24 @@ using UnityEngine;
 namespace TawanOS.CardEngine
 {
     /// <summary>
-    /// Binds the finished full-card pictures in Assets/Art/Cards/FramedCard to the cards: s_xxxx.png goes to
-    /// the cardImage of the card whose cardId is s_xxxx (frame, name and text are already in the picture; Unity
-    /// only draws attack and khwan on top). back.png becomes the card back everywhere: the card prefab (hands,
-    /// face-down cards), the reward / shop face-down cards (RewardFx) and the deck pile material on the combat
-    /// table. Makes sure each picture imports as a Sprite. Other image slots are left alone. Safe to run again
-    /// after a picture is replaced or added.
+    /// Makes Assets/Art/Cards/FramedCard/back.png the card back everywhere: the card prefab (hands, face-down cards),
+    /// the reward / shop face-down cards (RewardFx) and the deck pile material on the combat table. The card faces
+    /// are bound by <see cref="CardArtBinder"/>. Safe to run again after the picture is replaced.
     /// </summary>
-    public static class FramedCardBinder
+    public static class CardBackBinder
     {
-        private const string Folder = "Assets/Art/Cards/FramedCard";
-        private const string BackPath = Folder + "/back.png";
+        private const string BackPath = "Assets/Art/Cards/FramedCard/back.png";
         private const string CardPrefabPath = "Assets/CardEngineData/Prefabs/CardCube3DPrefab.prefab";
         private const string RewardFxPath = "Assets/Resources/RewardFx.asset";
         private const string PileMaterialPath = "Assets/ProjectAsset/CombatDemo/BackCardMat.mat";
 
-        [MenuItem("Tools/TawanOS/Card Engine/Bind Framed Card Pictures")]
+        [MenuItem("Tools/TawanOS/Card Engine/Bind Card Back")]
         private static void BindMenu()
         {
             Bind();
         }
 
-        /// <summary>-executeMethod TawanOS.CardEngine.FramedCardBinder.BindBatch</summary>
+        /// <summary>-executeMethod TawanOS.CardEngine.CardBackBinder.BindBatch</summary>
         public static void BindBatch()
         {
             EditorApplication.Exit(Bind() ? 0 : 1);
@@ -34,37 +30,9 @@ namespace TawanOS.CardEngine
 
         public static bool Bind()
         {
-            if (!AssetDatabase.IsValidFolder(Folder))
-            {
-                Debug.LogError($"[FramedCardBinder] {Folder} not found.");
-                return false;
-            }
-
-            int bound = 0, unchanged = 0;
-            var missing = new System.Collections.Generic.List<string>();
-            foreach (var guid in AssetDatabase.FindAssets("t:CardDataSO"))
-            {
-                var card = AssetDatabase.LoadAssetAtPath<CardDataSO>(AssetDatabase.GUIDToAssetPath(guid));
-                if (card == null || string.IsNullOrEmpty(card.cardId)) continue;
-
-                string path = $"{Folder}/{card.cardId}.png";
-                if (!File.Exists(path)) { missing.Add(card.cardId); continue; }
-
-                var sprite = EnsureSprite(path);
-                if (sprite == null) { missing.Add(card.cardId); continue; }
-                if (card.cardImage == sprite) { unchanged++; continue; }
-
-                Undo.RecordObject(card, "Bind framed card picture");
-                card.cardImage = sprite;
-                EditorUtility.SetDirty(card);
-                bound++;
-            }
-            bool backOk = BindBack();
+            bool ok = BindBack();
             AssetDatabase.SaveAssets();
-
-            Debug.Log($"[FramedCardBinder] Bound {bound}, already bound {unchanged}." +
-                      (missing.Count > 0 ? $" No picture for: {string.Join(", ", missing)}" : ""));
-            return missing.Count == 0 && backOk;
+            return ok;
         }
 
         private static bool BindBack()
@@ -72,7 +40,7 @@ namespace TawanOS.CardEngine
             var back = File.Exists(BackPath) ? EnsureSprite(BackPath) : null;
             if (back == null)
             {
-                Debug.LogError($"[FramedCardBinder] {BackPath} not found; card back left as it was.");
+                Debug.LogError($"[CardBackBinder] {BackPath} not found; card back left as it was.");
                 return false;
             }
 
@@ -104,7 +72,7 @@ namespace TawanOS.CardEngine
                 EditorUtility.SetDirty(pile);
             }
 
-            Debug.Log($"[FramedCardBinder] Card back: prefab={(view != null)} rewardFx={(fx != null)} pileMaterial={(pile != null)}");
+            Debug.Log($"[CardBackBinder] Card back: prefab={(view != null)} rewardFx={(fx != null)} pileMaterial={(pile != null)}");
             return view != null && fx != null && pile != null;
         }
 
