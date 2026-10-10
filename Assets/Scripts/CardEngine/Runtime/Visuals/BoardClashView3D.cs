@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using TawanOS.VFX;
 
 namespace TawanOS.CardEngine
 {
@@ -21,39 +22,26 @@ namespace TawanOS.CardEngine
     // damage through the callback at the moment of impact; this view only moves the physical cards:
     //  - HeadOn: the two familiars in a column charge each other and collide in the middle
     //  - Strike: one familiar charges its target (a familiar in some column, or the player's side)
-    // Cards return to their slots afterwards; familiars that died are shrunk away. Bootstraps itself
-    // in scenes that have both player and enemy board slots.
+    // DOTween carries each card along its path; the poses come from the CardClash animator (CardClashRig),
+    // one state per step (WindUp, Charge, Impact, Return, Hit, Die...), and each clip's length is that
+    // step's duration. The damage lands on the OnImpact Animation Event. Cards return to their slots
+    // afterwards; familiars that died play Die. Bootstraps itself in scenes that have both player and
+    // enemy board slots.
     public class BoardClashView3D : MonoBehaviour
     {
         public static BoardClashView3D Instance { get; private set; }
 
-        [Header("Motion")]
+        [Header("Path (the poses and timing are the CardClash animator clips)")]
         [Tooltip("How high the cards lift while charging.")]
         public float liftHeight = 0.8f;
         [Tooltip("Distance kept between the attacker and what it hits, along the charge direction.")]
         public float collisionGap = 0.7f;
-        public float chargeDuration = 0.25f;
-        public float impactPause = 0.2f;
-        public float returnDuration = 0.3f;
-        public float impactPunch = 0.2f;
-        public float deathDuration = 0.3f;
-
-        [Header("Critical Hit Wind-up")]
-        [Tooltip("How far a critical striker pulls back (away from its target) before charging.")]
-        public float critPullBack = 1.1f;
-        [Tooltip("Extra lift while pulling back for a critical hit.")]
-        public float critLift = 0.3f;
-        public float critPullBackDuration = 0.3f;
-        [Tooltip("How long the card holds at the back, charging, before it strikes.")]
-        public float critChargeHold = 0.25f;
-        [Tooltip("Charge time multiplier for a critical strike (lower = faster lunge).")]
-        public float critChargeSpeed = 0.7f;
-        public float critImpactPunch = 0.4f;
 
         private readonly Dictionary<int, BoardSlotView> playerSlots = new Dictionary<int, BoardSlotView>();
         private readonly Dictionary<int, BoardSlotView> enemySlots = new Dictionary<int, BoardSlotView>();
         private readonly List<CardInstance> died = new List<CardInstance>();
         private EffectResolver resolver;
+        private float impactWaited;
 
         // AfterSceneLoad fires only for the first scene played; the combat scene is usually loaded later from the map.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -179,32 +167,38 @@ namespace TawanOS.CardEngine
             Vector3 dir = Direction(pPos, ePos);
             Vector3 mid = (pPos + ePos) * 0.5f + Vector3.up * liftHeight;
 
-            var seq = DOTween.Sequence();
-            bool anyCrit = playerStrike.isCrit || enemyStrike.isCrit;
-            if (anyCrit)
-            {
-                // Critical strikers pull back and charge up first; the other card waits in its slot
-                if (playerStrike.isCrit) AppendWindUp(seq, playerView, pPos, -dir, join: false);
-                if (enemyStrike.isCrit) AppendWindUp(seq, enemyView, ePos, dir, join: playerStrike.isCrit);
-                seq.AppendInterval(critChargeHold);
-            }
-            float charge = anyCrit ? chargeDuration * critChargeSpeed : chargeDuration;
-            seq.Append(playerView.transform.DOMove(mid - dir * collisionGap, charge).SetEase(Ease.InQuad));
-            seq.Join(enemyView.transform.DOMove(mid + dir * collisionGap, charge).SetEase(Ease.InQuad));
-            seq.AppendCallback(() =>
-            {
-                apply(playerStrike);
-                apply(enemyStrike);
-                Punch(playerView, anyCrit);
-                Punch(enemyView, anyCrit);
-            });
-            seq.AppendInterval(impactPause);
-            seq.Append(playerView.transform.DOLocalMove(Vector3.zero, returnDuration).SetEase(Ease.OutQuad));
-            seq.Join(enemyView.transform.DOLocalMove(Vector3.zero, returnDuration).SetEase(Ease.OutQuad));
+            playerView.transform.DOKill();
+            enemyView.transform.DOKill();
+            var pRig = new CardClashRig(playerView.transform, pSlot.transform, dir);
+            var eRig = new CardClashRig(enemyView.transform, eSlot.transform, -dir);
 
+            // Critical strikers pull back and charge up first; the other card waits in its slot
+            float windUp = 0f;
+            if (playerStrike.isCrit) windUp = Mathf.Max(windUp, pRig.Play(CardClashRig.WindUp));
+            if (enemyStrike.isCrit) windUp = Mathf.Max(windUp, eRig.Play(CardClashRig.WindUp));
+            if (windUp > 0f) yield return new WaitForSeconds(windUp);
+
+            float charge = Mathf.Max(pRig.Play(ChargeState(playerStrike)), eRig.Play(ChargeState(enemyStrike)));
+            var seq = DOTween.Sequence();
+            seq.Append(pRig.Mover.DOMove(mid - dir * collisionGap, charge).SetEase(Ease.InQuad));
+            seq.Join(eRig.Mover.DOMove(mid + dir * collisionGap, charge).SetEase(Ease.InQuad));
             yield return seq.WaitForCompletion();
-            playerView.transform.localPosition = Vector3.zero;
-            enemyView.transform.localPosition = Vector3.zero;
+
+            // Both cards play their impact; the damage lands on the first OnImpact event
+            float impact = Mathf.Max(pRig.Play(ImpactState(playerStrike)), eRig.Play(ImpactState(enemyStrike)));
+            yield return WaitForImpact(impact, pRig, eRig);
+            apply(playerStrike);
+            apply(enemyStrike);
+            if (impact > impactWaited) yield return new WaitForSeconds(impact - impactWaited);
+
+            float back = Mathf.Max(pRig.Play(CardClashRig.Return), eRig.Play(CardClashRig.Return));
+            seq = DOTween.Sequence();
+            seq.Append(pRig.Mover.DOLocalMove(pRig.Home, back).SetEase(Ease.OutQuad));
+            seq.Join(eRig.Mover.DOLocalMove(eRig.Home, back).SetEase(Ease.OutQuad));
+            yield return seq.WaitForCompletion();
+
+            pRig.Release();
+            eRig.Release();
             yield return ProcessDeaths();
         }
 
@@ -233,28 +227,64 @@ namespace TawanOS.CardEngine
             Vector3 dir = Direction(aPos, tPos);
             Vector3 chargeTo = tPos + Vector3.up * liftHeight - dir * collisionGap;
 
-            var seq = DOTween.Sequence();
-            float charge = chargeDuration * 1.5f;
-            if (strike.isCrit)
+            attackerView.transform.DOKill();
+            var aRig = new CardClashRig(attackerView.transform, aSlot.transform, dir);
+            CardClashRig tRig = null;
+            if (targetView != null)
             {
-                // Pull back away from the target, hold to charge up, then lunge in faster
-                AppendWindUp(seq, attackerView, aPos, -dir, join: false);
-                seq.AppendInterval(critChargeHold);
-                charge *= critChargeSpeed;
+                targetView.transform.DOKill();
+                tRig = new CardClashRig(targetView.transform, tSlot.transform, -dir); // +Z toward the attacker
             }
-            seq.Append(attackerView.transform.DOMove(chargeTo, charge).SetEase(Ease.InQuad));
-            seq.AppendCallback(() =>
-            {
-                apply(strike);
-                Punch(attackerView, strike.isCrit);
-                if (targetView != null) Punch(targetView, strike.isCrit);
-            });
-            seq.AppendInterval(impactPause);
-            seq.Append(attackerView.transform.DOLocalMove(Vector3.zero, returnDuration).SetEase(Ease.OutQuad));
 
-            yield return seq.WaitForCompletion();
-            attackerView.transform.localPosition = Vector3.zero;
+            // Critical strikers pull back and charge up before the lunge
+            if (strike.isCrit) yield return new WaitForSeconds(aRig.Play(CardClashRig.WindUp));
+
+            float charge = aRig.Play(ChargeState(strike));
+            yield return aRig.Mover.DOMove(chargeTo, charge).SetEase(Ease.InQuad).WaitForCompletion();
+
+            float impact = aRig.Play(ImpactState(strike));
+            yield return WaitForImpact(impact, aRig);
+            apply(strike);
+            float hit = tRig != null ? tRig.Play(strike.isCrit ? CardClashRig.HitCrit : CardClashRig.Hit) : 0f;
+            float rest = Mathf.Max(impact - impactWaited, hit);
+            if (rest > 0f) yield return new WaitForSeconds(rest);
+
+            float back = aRig.Play(CardClashRig.Return);
+            yield return aRig.Mover.DOLocalMove(aRig.Home, back).SetEase(Ease.OutQuad).WaitForCompletion();
+
+            aRig.Release();
+            tRig?.Release();
             yield return ProcessDeaths();
+        }
+
+        private static string ChargeState(ClashStrike strike)
+        {
+            return strike.isCrit ? CardClashRig.ChargeCrit : CardClashRig.Charge;
+        }
+
+        private static string ImpactState(ClashStrike strike)
+        {
+            return strike.isCrit ? CardClashRig.ImpactCrit : CardClashRig.Impact;
+        }
+
+        // Waits (at most `limit` seconds) for the first OnImpact event among the rigs; impactWaited is how
+        // long it took. A clip without the event hits at once.
+        private IEnumerator WaitForImpact(float limit, params CardClashRig[] rigs)
+        {
+            impactWaited = 0f;
+            bool expected = false;
+            foreach (var rig in rigs) expected |= rig.ExpectsImpact;
+            if (!expected) yield break;
+
+            while (impactWaited < limit)
+            {
+                foreach (var rig in rigs)
+                {
+                    if (rig.ExpectsImpact && !rig.WaitingForImpact) yield break;
+                }
+                yield return null;
+                impactWaited += Time.deltaTime;
+            }
         }
 
         private static Vector3 Direction(Vector3 from, Vector3 to)
@@ -264,36 +294,34 @@ namespace TawanOS.CardEngine
             return d.sqrMagnitude > 0.0001f ? d.normalized : Vector3.forward;
         }
 
-        // Critical wind-up: the card backs off from its slot (away from the target) and rises
-        private void AppendWindUp(Sequence seq, CardView3D view, Vector3 slotPos, Vector3 awayDir, bool join)
+        // The way a card in this slot faces: toward the slot across from it
+        private Vector3 FacingOf(BoardSlotView slot)
         {
-            Vector3 back = slotPos + awayDir * critPullBack + Vector3.up * (liftHeight + critLift);
-            var move = view.transform.DOMove(back, critPullBackDuration).SetEase(Ease.OutQuad);
-            if (join) seq.Join(move);
-            else seq.Append(move);
+            if (slot == null) return Vector3.forward;
+            var across = slot.side == BoardSlotView.SlotSide.Player ? enemySlots : playerSlots;
+            return across.TryGetValue(slot.slotIndex, out var other) ? Direction(slot.transform.position, other.transform.position) : Vector3.forward;
         }
 
-        private void Punch(CardView3D view, bool crit = false)
-        {
-            if (view != null) view.transform.DOPunchScale(Vector3.one * (crit ? critImpactPunch : impactPunch), impactPause, 8);
-        }
-
-        // Familiars whose Khwan hit 0 shrink away once the cards are back on their slots
+        // Familiars whose Khwan hit 0 play Die once the cards are back on their slots, then are removed
         private IEnumerator ProcessDeaths()
         {
             if (died.Count == 0) yield break;
 
+            float longest = 0f;
             foreach (var card in died)
             {
                 var view = FindView(card);
                 if (view == null) continue;
 
+                var slot = view.GetComponentInParent<BoardSlotView>();
                 view.transform.DOKill();
-                view.transform.DOScale(Vector3.zero, deathDuration).SetEase(Ease.InBack)
-                    .OnComplete(() => { if (view != null) Destroy(view.gameObject); });
+                var rig = new CardClashRig(view.transform, slot != null ? slot.transform : view.transform.parent, FacingOf(slot));
+                float length = rig.Play(CardClashRig.Die);
+                rig.DestroyWithCard(length);
+                longest = Mathf.Max(longest, length);
             }
             died.Clear();
-            yield return new WaitForSeconds(deathDuration);
+            if (longest > 0f) yield return new WaitForSeconds(longest);
         }
     }
 }

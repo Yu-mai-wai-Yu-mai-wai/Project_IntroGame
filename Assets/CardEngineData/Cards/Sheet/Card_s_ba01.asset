@@ -15,7 +15,7 @@ MonoBehaviour:
   cardId: s_ba01
   cardNameThai: "\u0E15\u0E38\u0E4A\u0E01\u0E15\u0E32\u0E04\u0E38\u0E13\u0E44\u0E2A\u0E22"
   cardNameEng: Voodoo Doll
-  descriptionFormat: 
+  descriptionFormat: "\u0E21\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1C\u0E35\u0E1A\u0E31\u0E07\u0E15\u0E32\u0E43\u0E2B\u0E49\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23\u0E1D\u0E31\u0E48\u0E07\u0E15\u0E23\u0E07\u0E02\u0E49\u0E32\u0E21"
   magicSchool: 1
   cardType: 1
   targetType: 0
@@ -25,7 +25,7 @@ MonoBehaviour:
   corruptionGain: 1
   baseValue: 0
   durability: 0
-  familiarHealth: 0
+  familiarHealth: 1
   familiarDamage: 0
   fontSizeAll: 1
   nameFontSize: 1
@@ -33,7 +33,15 @@ MonoBehaviour:
   costFontSize: 1
   statFontSize: 1
   descriptionFontSize: 1
-  abilities: []
+  abilities:
+  - trigger: 6
+    effect: 6
+    target: 6
+    status: 4
+    value: 1
+    duration: 0
+    ignoreArmor: 0
+    relatedCard: {fileID: 0}
   upgradedCard: {fileID: 0}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
