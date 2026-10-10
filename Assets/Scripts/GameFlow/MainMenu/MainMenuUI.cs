@@ -113,6 +113,18 @@ namespace TawanOS.GameFlow
 
         private void OnContinue()
         {
+            // Show where the saved run stands before resuming it; an unreadable save falls through to ContinueGame, which handles it
+            var summary = RunState.ReadSaveSummary();
+            if (summary.HasValue)
+            {
+                ContinuePopup.Show(summary.Value, StartContinue);
+                return;
+            }
+            StartContinue();
+        }
+
+        private void StartContinue()
+        {
             SetInteractable(false);
             GameFlowManager.Instance.ContinueGame();
         }
