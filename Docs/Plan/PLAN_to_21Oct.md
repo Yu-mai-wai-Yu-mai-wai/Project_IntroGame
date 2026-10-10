@@ -27,7 +27,7 @@
 | ศัตรูใน build | **พัง** (คืนค่า null นอก Editor) |
 | Sound, PlayerPrefs (volume), Particle, Animator, Pause, Settings, Loading screen | **ยังไม่มี** |
 | Asset จาก `D:\Tawanagent\GameProject_Asset` (เสียง 27, ภาพการ์ด 29, Story 13 รูป + 2 วิดีโอ, Character 2 รูป) | **ยังไม่อยู่ในโปรเจกต์** (ไม่มี `Assets/Audio`, `Assets/Art`) → B0 |
-| ภาพการ์ด | มีภาพ 29 จาก 42 ใบ ขาด 13 ใบ → ใช้ placeholder (B7) |
+| ภาพการ์ด | ~~มีภาพ 29 จาก 42 ใบ ขาด 13 ใบ → ใช้ placeholder (B7)~~ ครบ 42 ใบ (ภาพการ์ดเต็มใบ FramedCard) ผูกแล้ว (B7, 10 ต.ค.) |
 | Intro เนื้อเรื่อง | **ยังไม่มี** → B8 |
 | รายงาน 7 ส่วน, สไลด์, ไฟล์ส่งงาน | มีแค่ส่วน 7.4 ใน C3 → เพิ่ม Phase D |
 
@@ -230,7 +230,7 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - ทางเลือกเพิ่ม: Animator ปุ่ม Main Menu (Normal/Highlighted/Pressed)
 - **Done when:** controller มีอย่างน้อย 4 state + transition ด้วย parameter และทำงานตอนต่อสู้
 
-### [ ] B7 ผูกภาพการ์ดจาก Drive + placeholder 13 ใบ
+### [x] B7 ผูกภาพการ์ดจาก Drive + placeholder 13 ใบ — เสร็จพร้อม H8 (10 ต.ค.): ศิลปินส่งภาพครบ 42 ใบ ไม่ต้องใช้ placeholder แล้ว `CardArtBinder` ผูก `Art/Cards/FramedCard/<cardId>.png` (ภาพการ์ดเต็มใบ) เป็น `artwork` ครบ 42 ใบ, หลังการ์ดผูกด้วย `CardBackBinder`
 - ภาพอยู่ที่ `Assets/Art/Cards/` ชื่อ `s_<cardId>_<ชื่อไทย>.png` (ทำ B0 ก่อน)
 - `Assets/Scripts/CardEngine/Editor/CardArtBinder.cs`: ตั้ง importer เป็น Sprite, ตัด `s_xxxx` จากชื่อไฟล์, ใส่ `artwork` ของ `CardDataSO` ที่ `cardId` ตรงกัน **ไม่แตะ `cardImage`** ของ 5 ใบที่ตั้งไว้แล้ว
 - Placeholder: การ์ดที่ไม่มีทั้ง `artwork` และ `cardImage` หลังผูกเสร็จ ให้ใส่ภาพ placeholder ตามสำนัก (มนต์ขาว/มนต์ดำ) 2 ไฟล์ที่ tool สร้างเองที่ `Assets/Art/Cards/_placeholder_white.png`, `_placeholder_black.png` (สีพื้นต่างกัน + ข้อความ "รอภาพ") ชื่อขึ้นต้น `_` เพื่อไม่ถูกจับเป็นภาพการ์ดจริง
