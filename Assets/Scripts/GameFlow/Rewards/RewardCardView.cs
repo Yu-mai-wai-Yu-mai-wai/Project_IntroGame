@@ -101,8 +101,9 @@ namespace TawanOS.GameFlow
             if (frame != null)
             {
                 frame.sprite = face;
-                frame.color = face != null ? Color.white : SchoolColor(card.magicSchool);
-                frame.enabled = face != null || card.artwork == null; // the framed artwork needs nothing over it
+                // The framed artwork needs nothing over it: the frame turns see-through but stays on, because it is
+                // the card's click area (the button's target graphic)
+                frame.color = face != null ? Color.white : card.artwork != null ? Color.clear : SchoolColor(card.magicSchool);
             }
             if (artwork != null)
             {
@@ -111,6 +112,9 @@ namespace TawanOS.GameFlow
                 artwork.preserveAspect = false;
                 PlaceOnFace(artwork.rectTransform, CardFaceLayout.Artwork); // scenes built earlier still hold the old picture window
                 artwork.transform.SetAsFirstSibling(); // behind the see-through frame
+                // ...but the gold glow of a picked card stays behind the artwork
+                if (pickedHighlight != null && pickedHighlight.transform.parent == artwork.transform.parent)
+                    pickedHighlight.transform.SetAsFirstSibling();
             }
 
             bool familiar = card.cardType == CardType.Familiar;
