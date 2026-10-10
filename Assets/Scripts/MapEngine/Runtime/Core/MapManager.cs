@@ -292,6 +292,32 @@ namespace TawanOS.MapEngine
             { new Vector2Int(1, 4),  "Node.018" },
         };
 
+        // X of each node column on the paper board, start node first. The board has 9 columns (start + 7 floors + boss);
+        // a map with fewer floors uses only the first columns, so the 4-floor mode is a short map instead of
+        // stretching four floors across the whole board.
+        private static readonly float[] TableColumnXs = { 18.61f, 13.55f, 9.65f, 5.80f, 2.15f, -2.93f, -7.62f, -11.54f, -15.47f };
+
+        /// <summary>World X of floor <paramref name="floorIndex"/> (-1 = start node, totalFloors = boss) on the board.</summary>
+        public static float TableFloorX(int floorIndex, int totalFloors)
+        {
+            int column = Mathf.Clamp(floorIndex + 1, 0, Mathf.Min(totalFloors + 1, TableColumnXs.Length - 1));
+            return TableColumnXs[column];
+        }
+
+        private bool bakedNodeIconsHidden;
+
+        // The FBX carries a printed icon disc on every pedestal. The procedural node sprites replace them, so all of
+        // them go (a map with fewer floors leaves some pedestals unused, and those kept showing the old icons).
+        private void HideBakedNodeIcons()
+        {
+            if (bakedNodeIconsHidden || environmentTransform == null) return;
+            bakedNodeIconsHidden = true;
+            foreach (var r in environmentTransform.GetComponentsInChildren<Renderer>(true))
+            {
+                if (r.name == "Node" || r.name.StartsWith("Node.")) r.enabled = false;
+            }
+        }
+
         public static bool TryGetTableNodeFbxName(Vector2Int gridPos, int totalFloors, out string nodeName)
         {
             if (totalFloors <= 4)
@@ -325,6 +351,14 @@ namespace TawanOS.MapEngine
             { "Node.018", new Vector3(-15.466f, 0.025f, 0.029f) },
         };
 
+        // The short map keeps each node's row (Z) from its pedestal but takes the column (X) from the compact layout
+        private static float TableNodeX(float pedestalX, Vector2Int gridPos, MapConfigSO configData)
+        {
+            return configData != null && configData.totalFloors <= 4
+                ? TableFloorX(gridPos.y, configData.totalFloors)
+                : pedestalX;
+        }
+
         private Transform environmentTransform;
         private Dictionary<string, Transform> pedestalCache;
 
@@ -346,6 +380,7 @@ namespace TawanOS.MapEngine
 
                     if (environmentTransform != null)
                     {
+                        HideBakedNodeIcons();
                         if (pedestalCache == null) pedestalCache = new Dictionary<string, Transform>();
                         if (!pedestalCache.TryGetValue(nodeName, out Transform pedestal) || pedestal == null)
                         {
@@ -364,12 +399,13 @@ namespace TawanOS.MapEngine
                         {
                             // Hide the baked FBX icon disc; the procedural MapNodeView sprite is the only node visual.
                             if (pedestal.TryGetComponent<Renderer>(out var pedestalRenderer)) pedestalRenderer.enabled = false;
-                            return new Vector3(pedestal.position.x, pedestal.position.y + 0.025f, pedestal.position.z);
+                            return new Vector3(TableNodeX(pedestal.position.x, gridPos, configData), pedestal.position.y + 0.025f, pedestal.position.z);
                         }
                     }
 
                     if (TablePedestalWorldPositions.TryGetValue(nodeName, out Vector3 fallbackPos))
                     {
+                        fallbackPos.x = TableNodeX(fallbackPos.x, gridPos, configData);
                         return fallbackPos;
                     }
                 }
@@ -652,18 +688,7 @@ namespace TawanOS.MapEngine
                     if (config.orientation == MapOrientation.LeftToRight)
                     {
                         float targetX;
-                        if (floorIndex < 0) targetX = 18.6f;
-                        else if (config.totalFloors <= 4)
-                        {
-                            float[] floorXs4 = { 13.55f, 9.65f, 5.80f, -11.54f, -15.47f };
-                            targetX = floorXs4[Mathf.Clamp(floorIndex, 0, floorXs4.Length - 1)];
-                        }
-                        else if (floorIndex >= 7) targetX = -15.5f;
-                        else
-                        {
-                            float[] floorXs = { 13.55f, 9.65f, 5.80f, 2.15f, -2.93f, -7.62f, -11.54f, -15.47f };
-                            targetX = floorXs[Mathf.Clamp(floorIndex, 0, floorXs.Length - 1)];
-                        }
+                        targetX = TableFloorX(floorIndex, config.totalFloors);
                         targetCamPos = new Vector3(targetX, config.cameraHeightY, config.cameraZDistance);
                     }
                     else
@@ -671,7 +696,7 @@ namespace TawanOS.MapEngine
                         float targetZ = floorIndex * config.floorSpacingY;
                         targetCamPos = new Vector3(0f, config.cameraHeightY, targetZ - config.cameraZDistance);
                     }
-                    Camera.main.transform.DOMove(targetCamPos, 0.6f).SetEase(Ease.OutCubic);
+                    Camera.main.transform.DOMove(targetCamPos, 0.6f).SetEase(Ease.OutCubic).SetLink(Camera.main.gameObject);
                     return;
                 }
 
@@ -695,8 +720,13 @@ namespace TawanOS.MapEngine
                         break;
                 }
 
-                Camera.main.transform.DOMove(targetPos, 0.6f).SetEase(Ease.OutCubic);
+                Camera.main.transform.DOMove(targetPos, 0.6f).SetEase(Ease.OutCubic).SetLink(Camera.main.gameObject);
             }
+        }
+
+        private void OnDestroy()
+        {
+            if (Camera.main != null) Camera.main.transform.DOKill();
         }
     }
 }

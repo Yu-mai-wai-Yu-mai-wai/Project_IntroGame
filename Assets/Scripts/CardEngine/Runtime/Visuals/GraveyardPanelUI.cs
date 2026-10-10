@@ -184,10 +184,16 @@ namespace TawanOS.CardEngine
                     art.transform.SetAsFirstSibling(); // behind the see-through frame
                 }
 
-                var cost = FaceText("Cost", face, CardFaceLayout.Cost, 26);
+                var cost = FaceText("Cost", face, CardFaceLayout.Cost, 22);
                 cost.text = card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost.ToString() : card.corruptionGain.ToString();
-                var nameText = FaceText("Name", face, CardFaceLayout.Name, 22);
+                var nameText = FaceText("Name", face, CardFaceLayout.Name, 18);
                 nameText.text = card.cardNameThai;
+
+                var ability = FaceText("Description", face, CardFaceLayout.Description, 11);
+                ability.textWrappingMode = TextWrappingModes.Normal;
+                ability.fontSizeMin = 5f;
+                string format = card.descriptionFormat ?? "";
+                try { ability.text = string.Format(format, card.baseValue); } catch { ability.text = format; }
             }
 
             // Whose card it was
@@ -208,6 +214,7 @@ namespace TawanOS.CardEngine
             t.fontSizeMin = 6f;
             t.fontSizeMax = maxSize;
             t.textWrappingMode = TextWrappingModes.NoWrap;
+            CardFaceLayout.MakeReadable(t);
             return t;
         }
 

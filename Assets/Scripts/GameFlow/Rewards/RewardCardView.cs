@@ -121,7 +121,11 @@ namespace TawanOS.GameFlow
             SetText(typeText, printed ? "" : card.GetFormattedTypeText().Replace(" • ", "  "), CardFaceLayout.Type, card, CardFaceLayout.Text.Type);
             SetText(attackText, familiar ? card.familiarDamage.ToString() : "", CardFaceLayout.Attack, card, CardFaceLayout.Text.Stat);
             SetText(khwanText, hasKhwan ? card.familiarHealth.ToString() : "", CardFaceLayout.Khwan, card, CardFaceLayout.Text.Stat);
-            if (descriptionText != null) descriptionText.text = printed ? "" : FormatDescription(card);
+            if (descriptionText != null)
+            {
+                descriptionText.text = printed ? "" : FormatDescription(card);
+                CardFaceLayout.MakeReadable(descriptionText);
+            }
 
             if (pickedHighlight != null) pickedHighlight.SetActive(false);
             if (button != null) button.interactable = true;
@@ -132,6 +136,7 @@ namespace TawanOS.GameFlow
         {
             if (text == null) return;
             text.text = value;
+            CardFaceLayout.MakeReadable(text);
             PlaceOnFace(text.rectTransform, box.Scaled(CardFaceLayout.FontScale(card, part)));
         }
 

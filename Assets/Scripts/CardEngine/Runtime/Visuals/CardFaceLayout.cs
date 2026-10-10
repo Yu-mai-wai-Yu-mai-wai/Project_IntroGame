@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 namespace TawanOS.CardEngine
@@ -51,6 +52,14 @@ namespace TawanOS.CardEngine
         public static readonly Box Khwan = new Box(0.105f, -0.114f, 0.1f, 0.055f);         // right badge (blood drop)
         public static readonly Box Description = new Box(0f, -0.29f, 0.78f, 0.22f);        // bottom box
         public static readonly Box Artwork = new Box(0f, 0f, 1f, 1f);                      // the picture fills the whole face; the frame is see-through and drawn over it
+
+        // Text now sits on the full-face artwork, so every face label gets a dark outline to stay readable on bright art
+        public static void MakeReadable(TMP_Text text)
+        {
+            if (text == null) return;
+            text.outlineWidth = 0.22f;
+            text.outlineColor = new Color32(0, 0, 0, 255);
+        }
 
         // The frame used for a card with no Card Background of its own
         public static Sprite DefaultFrame(Sprite whiteFrame, Sprite blackFrame, MagicSchool school)

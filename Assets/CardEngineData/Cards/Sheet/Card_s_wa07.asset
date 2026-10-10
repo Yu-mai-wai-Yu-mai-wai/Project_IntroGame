@@ -32,7 +32,7 @@ MonoBehaviour:
   nameFontSize: 1
   typeFontSize: 1
   costFontSize: 1
-  statFontSize: 2
+  statFontSize: 1
   descriptionFontSize: 1
   abilities:
   - trigger: 5

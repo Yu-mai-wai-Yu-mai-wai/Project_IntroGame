@@ -311,6 +311,7 @@ namespace TawanOS.CardEngine
             faceTextColor = main;
             foreach (var label in new[] { nameLabel, costLabel, attackLabel, khwanLabel, descriptionLabel }) label.color = main;
             typeLabel.color = onArt ? typeTextOnArt : main;
+            foreach (var label in new[] { nameLabel, costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel }) CardFaceLayout.MakeReadable(label);
         }
 
         // Reuses a label built earlier (e.g. by the edit-mode preview), else copies the name label
