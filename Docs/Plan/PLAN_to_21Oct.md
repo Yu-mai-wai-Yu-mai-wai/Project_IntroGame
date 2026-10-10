@@ -555,6 +555,8 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 - [x] **H11 Main Menu: ปุ่มโหมดและเอฟเฟกต์** (S8) **DoD:** ปุ่มโหมดสองปุ่มใช้สไตล์ควัน กดด้วยเมาส์และ Tab/Enter ได้, เลือกโหมดแล้ว "เล่นต่อ" กลับมาโหมดเดิม (A10 ยังผ่าน), `MainMenuLayoutTests` PASS (ปรับ test ถ้าเลย์เอาต์เปลี่ยนตาม GotDev) **ผล 10 ต.ค.:** ปุ่มโหมดใช้ `UiSmokeButton`, เพิ่มแสงตอนโฟกัสคีย์บอร์ด; `MainMenuLayoutTests` PASS
 - [x] **H12 ตรวจรวมและเอกสาร** รัน test ชุดเต็ม + 3 smoke test, build Windows ตรวจสีชมพู, อัปเดต `Docs/Report/asset_usage.md` (F12) **DoD:** C1 gate ผ่าน และไม่มีไฟล์ Final ที่ไม่มีคำอธิบายการใช้งาน **ผล 10 ต.ค.:** เขียน `Docs/Report/asset_usage.md` แล้ว; test 11 ชุด + `AutomatedRunFlowTest` 59 ข้อผ่าน 100%; แก้ปัญหา DOTween scene transition และ Map/Card visual polish ครบถ้วน (commit `f51ea49`)
 
+**ตรวจซ้ำ H3–H8 (11 ต.ค., GotDev):** H3 ไอคอน Final 7/7 ในเกมจริง และลบรูป Demo `event-question.png` 2 ชิ้นที่ค้างใน `EventProfile` (grep เหลือ 0); H4 ดูข้างบน; H5 แก้วไม่มี Emission ลอยเหนือกระดาษ 2.8 มม. ครบ 19 โหนด; H6 ไม่มี shader เสีย/missing script ต้นไม้ครบ; H7 `AutomatedCombatFlowTest` PASS exit 0, กด C สองครั้งกล้องกลับตำแหน่งเดิม (posDiff 0.0000); H8 `CardArtBinder` bound=42 missing=0 changed=0 รันซ้ำไม่เปลี่ยน, รูปสัดส่วน 0.716 ตรงช่องการ์ด ข้อสังเกต: ไอคอนบอสยังเป็นรูป "ทางเปลี่ยว" ตาม D15 (รอ Game Designer)
+
 **ผลต่อ ticket เดิม:** B7 ถูกแทนที่ด้วย H8, D13 (ไอคอนโหนดจากศิลปิน) ปิดด้วย H2-H3, A5/G2 ใช้ไอคอนและภาพ Final, F12 รวมเข้า H12 ภาพการ์ดที่เคยเป็น placeholder 13 ใบใน `known_limitations` (D3) ตัดออกได้เมื่อ H8 ผ่าน
 
 **ความเสี่ยงสูงสุด:** `.unitypackage` ทับ scene (S1) และชื่อวัตถุที่โค้ดค้นหาเปลี่ยนตอนแทนฉากต่อสู้ (S2) สองข้อนี้ย้อนกลับด้วย checkpoint ใน H0
