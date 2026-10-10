@@ -32,7 +32,9 @@ namespace TawanOS.GameFlow
         public const string VictorySceneName = "VictoryScene";
         private const string StorySceneName = "StoryScene";
         private const float VictoryPanelDelaySeconds = 2f;
+        // Only the tutorial fight uses this; a real defeat shows the Game Over page, which waits for the player
         private const float DefeatPanelDelaySeconds = 3f;
+        private const float GameOverDelaySeconds = 1.5f;
 
         private NodeType currentCombatNodeType = NodeType.MinorEnemy;
         private EnemyProfileSO pendingEnemyProfile;
@@ -424,10 +426,21 @@ namespace TawanOS.GameFlow
 
             if (!isVictory)
             {
-                // Defeat ends the run: the save goes, the Defeat panel shows, then back to the menu
+                // Defeat ends the run: the summary is read first (EndRun does not clear it, but the save goes),
+                // then the Game Over page waits for the player to choose Restart or Main Menu (plan B3)
+                var run = RunState.Current;
+                var summary = new GameOverSummary
+                {
+                    enemyName = CombatManager.Instance != null && CombatManager.Instance.currentEnemyProfile != null
+                        ? CombatManager.Instance.currentEnemyProfile.enemyName : null,
+                    incense = run.Incense,
+                    deckSize = run.Deck.Count,
+                    totalFloors = run.TotalFloors,
+                    maxHp = run.MaxHp
+                };
                 RunState.EndRun();
                 new MapSaveManager().ClearSavedMap();
-                if (Application.isPlaying) StartCoroutine(GoToMainMenuAfterDelay());
+                if (Application.isPlaying) StartCoroutine(ShowGameOverAfterDelay(summary));
                 return;
             }
 
@@ -493,13 +506,15 @@ namespace TawanOS.GameFlow
             cardManager.defaultDeckConfig = runDeck;
         }
 
-        private System.Collections.IEnumerator GoToMainMenuAfterDelay()
+        private System.Collections.IEnumerator ShowGameOverAfterDelay(GameOverSummary summary)
         {
-            yield return new WaitForSeconds(DefeatPanelDelaySeconds);
-            if (Application.CanStreamedLevelBeLoaded(MainMenuSceneName))
-            {
-                SceneManager.LoadScene(MainMenuSceneName, LoadSceneMode.Single);
-            }
+            // A beat to see how the fight ended, then the page stays until the player picks a button.
+            // This coroutine outlives scenes (the manager is DontDestroyOnLoad), so it only shows the page if
+            // the scene where the fight was lost is still the active one.
+            var lostIn = SceneManager.GetActiveScene();
+            yield return new WaitForSeconds(GameOverDelaySeconds);
+            if (!GameOverScreen.ShouldShow(lostIn, SceneManager.GetActiveScene())) yield break;
+            GameOverScreen.Show(summary);
         }
 
         private System.Collections.IEnumerator GoToRewardAfterDelay()

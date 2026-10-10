@@ -45,6 +45,7 @@ namespace TawanOS.ShopEngine
         private readonly Dictionary<RectTransform, List<ShopItemView>> shelfItems = new Dictionary<RectTransform, List<ShopItemView>>();
         private readonly Dictionary<RectTransform, int> shelfUsed = new Dictionary<RectTransform, int>();
         private readonly List<GameObject> removalEntries = new List<GameObject>();
+        private ShopCardShelf cardShelf; // real card faces, when the config has a card template
 
         private void Awake()
         {
@@ -80,6 +81,15 @@ namespace TawanOS.ShopEngine
             }
             HideRemovalPicker();
             if (resultText != null) resultText.text = string.Empty;
+
+            if (config.cardFaceTemplate != null && cardRow != null)
+            {
+                if (cardShelf == null) cardShelf = cardRow.gameObject.AddComponent<ShopCardShelf>();
+                cardShelf.Init(manager, config.cardFaceTemplate, transform);
+                // The deck pile sits under the removal picker, which must still cover the whole screen
+                if (cardShelf.DeckPile != null && removalPanel != null)
+                    cardShelf.DeckPile.SetSiblingIndex(removalPanel.transform.GetSiblingIndex());
+            }
             Refresh();
         }
 
@@ -110,7 +120,8 @@ namespace TawanOS.ShopEngine
 
             var run = RunState.Current;
 
-            foreach (var offer in shop.CardOffers)
+            if (cardShelf != null) cardShelf.Refresh();
+            else foreach (var offer in shop.CardOffers)
             {
                 var card = offer.card;
                 var o = offer;

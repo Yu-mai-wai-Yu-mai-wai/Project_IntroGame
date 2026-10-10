@@ -135,12 +135,12 @@ namespace TawanOS.CardEngine
 
             // Text sizes from the Card Data (Face Text Sizes)
             var src = card.source;
-            SizeFaceText(faceName, CardFaceLayout.Name, 64, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Name), false);
-            SizeFaceText(faceType, CardFaceLayout.Type, 28, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Type), false);
-            SizeFaceText(faceCost, CardFaceLayout.Cost, 80, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Cost), false);
-            SizeFaceText(faceAttack, CardFaceLayout.Attack, 44, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Stat), false);
-            SizeFaceText(faceKhwan, CardFaceLayout.Khwan, 44, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Stat), false);
-            SizeFaceText(faceDescription, CardFaceLayout.Description, 30, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Description), true);
+            SizeFaceText(faceName, CardFaceLayout.Name, 40, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Name), false);
+            SizeFaceText(faceType, CardFaceLayout.Type, 20, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Type), false);
+            SizeFaceText(faceCost, CardFaceLayout.Cost, 52, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Cost), false);
+            SizeFaceText(faceAttack, CardFaceLayout.Attack, 30, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Stat), false);
+            SizeFaceText(faceKhwan, CardFaceLayout.Khwan, 30, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Stat), false);
+            SizeFaceText(faceDescription, CardFaceLayout.Description, 22, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Description), true);
         }
 
         private static void SizeFaceText(TextMeshProUGUI t, CardFaceLayout.Box box, float baseMax, float mul, bool fixedBox)
@@ -299,11 +299,12 @@ namespace TawanOS.CardEngine
             cardRoot.sizeDelta = new Vector2(CardHeight * CardAspect, CardHeight);
             cardRoot.anchoredPosition = new Vector2(-360f, 0f);
 
+            // Artwork first: it is the full-face background and the frame (see-through inside) is drawn over it
+            artImage = NewImage("Artwork", cardRoot, Color.white);
+            artImage.preserveAspect = false;
+            PlaceOnFace(artImage.rectTransform, CardFaceLayout.Artwork);
             frameImage = NewImage("Frame", cardRoot, Color.white);
             Stretch(frameImage.rectTransform);
-            artImage = NewImage("Artwork", cardRoot, Color.white);
-            artImage.preserveAspect = true;
-            PlaceOnFace(artImage.rectTransform, CardFaceLayout.Artwork);
 
             faceCost = FaceText("Cost", font, CardFaceLayout.Cost, 80, FontStyles.Normal);
             faceName = FaceText("Name", font, CardFaceLayout.Name, 64, FontStyles.Normal);
@@ -350,6 +351,7 @@ namespace TawanOS.CardEngine
             t.fontSizeMax = maxSize;
             t.fontStyle = style;
             t.textWrappingMode = TextWrappingModes.NoWrap;
+            CardFaceLayout.MakeReadable(t);
             return t;
         }
 

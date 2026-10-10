@@ -89,7 +89,9 @@ namespace TawanOS.GameFlow
 
         private IEnumerator FinishAfterDelay()
         {
-            yield return new WaitForSeconds(finishDelay);
+            // The cards not taken burn away first (RewardFxConfigSO), so wait for whichever is longer
+            float wait = Mathf.Max(finishDelay, view != null ? view.PickSequenceSeconds : 0f);
+            yield return new WaitForSeconds(wait);
             Finish();
         }
 

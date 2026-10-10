@@ -28,6 +28,11 @@ namespace TawanOS.GameFlow
             "แต่คืนนี้ ไฟจะรับของจากเจ้าได้เพียงอย่างเดียว\"";
 
         [MenuItem("Tools/TawanOS/Meru/Setup Meru Scene")]
+        private static void SetupMeruScene_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Meru Scene")) SetupMeruScene();
+        }
+
         public static void SetupMeruScene()
         {
             if (Application.isPlaying)
@@ -70,8 +75,11 @@ namespace TawanOS.GameFlow
 
         private static MeruViewUI BuildCanvas()
         {
-            var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
-            var sarabun = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
+            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var sarabun = bodyFont;
             var panelSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
 
             var canvasGo = new GameObject("MeruCanvas");

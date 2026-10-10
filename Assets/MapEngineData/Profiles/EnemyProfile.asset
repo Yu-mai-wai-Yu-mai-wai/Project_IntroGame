@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: EnemyProfile
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.NodeProfileSO
   type: 0
-  icon: {fileID: 21300000, guid: 09b616daafc1ec243bc3a3859883d603, type: 3}
+  icon: {fileID: 21300000, guid: e1abd51f83fe21d49b90f1b16466a25b, type: 3}
   baseColor: {r: 0.3529, g: 0.0941, b: 0.0627, a: 1}
   hoverColor: {r: 0.52935, g: 0.14115, b: 0.094050005, a: 1}
   visitedColor: {r: 0.17645, g: 0.04705, b: 0.03135, a: 1}

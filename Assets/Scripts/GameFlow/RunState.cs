@@ -120,6 +120,57 @@ namespace TawanOS.GameFlow
             }
         }
 
+        /// <summary>What the Continue popup shows: where the saved run stands and its status.</summary>
+        public struct SaveSummary
+        {
+            public int currentHp, maxHp, incense, deckCards, totalFloors;
+            public bool shortMode;
+            /// <summary>-1 = still at the start of the map; 0-based floor index otherwise.</summary>
+            public int floor;
+            public bool atBoss;
+            public bool mapKnown;
+            public ResumeKind resume;
+            public NodeType resumeNodeType;
+            /// <summary>Node the player stands on (map save), valid when <see cref="mapKnown"/>.</summary>
+            public NodeType nodeType;
+        }
+
+        /// <summary>Reads the run save and the map save for the Continue popup; null when there is no readable save.</summary>
+        public static SaveSummary? ReadSaveSummary()
+        {
+            if (!HasSave) return null;
+            try
+            {
+                var data = JsonConvert.DeserializeObject<RunSaveData>(File.ReadAllText(SavePath));
+                if (data == null) return null;
+                int floors = data.totalFloors > 0 ? data.totalFloors : DefaultTotalFloors;
+                var summary = new SaveSummary
+                {
+                    currentHp = data.currentHp, maxHp = data.maxHp, incense = data.incense,
+                    deckCards = data.deckCardIds != null ? data.deckCardIds.Count : 0,
+                    totalFloors = floors, shortMode = floors <= 4, floor = -1,
+                    resume = data.resume, resumeNodeType = data.resumeNodeType,
+                };
+                var map = new MapSaveManager().LoadMap();
+                if (map != null)
+                {
+                    var node = map.GetNode(map.currentPlayerPosition);
+                    if (node != null)
+                    {
+                        summary.mapKnown = true;
+                        summary.floor = map.currentPlayerPosition.y;
+                        summary.nodeType = node.type;
+                        summary.atBoss = node.type == NodeType.Boss;
+                    }
+                }
+                return summary;
+            }
+            catch (System.Exception)
+            {
+                return null;
+            }
+        }
+
         /// <summary>Run over (defeat): the save is removed so Continue disappears.</summary>
         public static void EndRun()
         {

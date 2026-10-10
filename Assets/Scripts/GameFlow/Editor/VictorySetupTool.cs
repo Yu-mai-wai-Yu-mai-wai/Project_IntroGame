@@ -25,6 +25,11 @@ namespace TawanOS.GameFlow
         private static readonly Color DarkBg = new Color(0.05f, 0.035f, 0.04f);
 
         [MenuItem("Tools/TawanOS/Game Flow/Setup Victory Scene")]
+        private static void SetupVictoryScene_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Victory Scene")) SetupVictoryScene();
+        }
+
         public static void SetupVictoryScene()
         {
             if (Application.isPlaying)
@@ -69,8 +74,11 @@ namespace TawanOS.GameFlow
 
         private static VictoryViewUI BuildCanvas()
         {
-            var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
-            var sarabun = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
+            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var sarabun = bodyFont;
 
             var canvasGo = new GameObject("VictoryCanvas");
             var canvas = canvasGo.AddComponent<Canvas>();

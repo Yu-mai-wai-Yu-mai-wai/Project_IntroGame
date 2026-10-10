@@ -19,12 +19,27 @@ namespace TawanOS.MapEngine
         public float maxScrollX = 15.5f;
         [Tooltip("Camera sits this far ahead (toward -X, screen right) of the current floor so the glass lands on the left third.")]
         public float lookAheadX = 3f;
+        [Tooltip("The first and last node may sit at most this far from the screen centre (1 = the screen edge). Keeps the camera from scrolling onto empty paper past either end of the map.")]
+        [Range(0.3f, 1f)] public float edgeNodeScreenFraction = 0.75f;
+        [Tooltip("Height of the paper surface the camera looks at.")]
+        public float paperSurfaceY = 0.03f;
 
         [Header("3D Table Atmosphere (matches the Blender concept render)")]
         public Color fogColor = new Color(0.11f, 0.075f, 0.055f, 1f);
         public float fogDensity = 0.03f;
         public float sunIntensity = 0.5f;
         [Range(0f, 1f)] public float vignetteIntensity = 0.45f;
+
+        // MapManager works on a copy of the config when the run has a different floor count (short mode), so the
+        // run's count is the one that counts here
+        private int TotalFloors
+        {
+            get
+            {
+                var run = TawanOS.GameFlow.RunState.Current;
+                return run != null && run.TotalFloors > 0 ? run.TotalFloors : (config != null ? config.totalFloors : 7);
+            }
+        }
 
         private Vector3 lastMousePosition;
         private bool isDragging = false;
@@ -144,21 +159,9 @@ namespace TawanOS.MapEngine
                 Vector3 targetCamPos;
                 if (config.orientation == MapOrientation.LeftToRight)
                 {
-                    float targetX;
-                    if (floorIndex < 0)
-                    {
-                        targetX = maxScrollX;
-                    }
-                    else if (floorIndex >= 7)
-                    {
-                        targetX = minScrollX;
-                    }
-                    else
-                    {
-                        float[] floorXs = { 13.55f, 9.65f, 5.80f, 2.15f, -2.93f, -7.62f, -11.54f, -15.47f };
-                        targetX = floorXs[Mathf.Clamp(floorIndex, 0, floorXs.Length - 1)];
-                    }
-                    targetX = Mathf.Clamp(targetX - lookAheadX, minScrollX, maxScrollX);
+                    float targetX = MapManager.TableFloorX(floorIndex, TotalFloors);
+                    GetCameraXRange(out float rangeMin, out float rangeMax);
+                    targetX = Mathf.Clamp(targetX - lookAheadX, rangeMin, rangeMax);
                     targetCamPos = new Vector3(targetX, config.cameraHeightY, config.cameraZDistance);
                 }
                 else
@@ -168,7 +171,7 @@ namespace TawanOS.MapEngine
                 }
                 velocity = Vector3.zero;
                 targetTransform.DOKill();
-                targetTransform.DOMove(targetCamPos, 0.6f).SetEase(Ease.OutCubic);
+                targetTransform.DOMove(targetCamPos, 0.6f).SetEase(Ease.OutCubic).SetLink(targetTransform.gameObject);
                 return;
             }
 
@@ -194,7 +197,32 @@ namespace TawanOS.MapEngine
 
             velocity = Vector3.zero;
             targetTransform.DOKill();
-            targetTransform.DOMove(targetPos, 0.6f).SetEase(Ease.OutCubic);
+            targetTransform.DOMove(targetPos, 0.6f).SetEase(Ease.OutCubic).SetLink(targetTransform.gameObject);
+        }
+
+        // The fixed min/max assume the end nodes can sit anywhere on screen, which leaves a screen of empty paper past the
+        // boss (and before the first floor). Pull the range in so the end nodes stop at edgeNodeScreenFraction of the half width.
+        private void GetCameraXRange(out float min, out float max)
+        {
+            min = minScrollX;
+            max = maxScrollX;
+            var cam = targetTransform != null ? targetTransform.GetComponent<Camera>() : null;
+            if (cam == null || config == null) return;
+
+            // Same rotation Start applies; used directly so the range is right even before Start has run.
+            Vector3 forward = Quaternion.Euler(config.cameraAnglePitch, 180f, 0f) * Vector3.forward;
+            if (forward.y > -0.05f) return;
+            float depth = (config.cameraHeightY - paperSurfaceY) / -forward.y; // distance along the centre ray to the paper
+            float halfWidth = depth * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * cam.aspect;
+
+            // The map ends at the start node and at the boss column; a 4-floor map ends much sooner than the 7-floor one
+            float firstNodeX = MapManager.TableFloorX(-1, TotalFloors);
+            float lastNodeX = MapManager.TableFloorX(TotalFloors, TotalFloors);
+            float lo = lastNodeX + edgeNodeScreenFraction * halfWidth; // screen right is -X
+            float hi = firstNodeX - edgeNodeScreenFraction * halfWidth;
+            if (lo > hi) lo = hi = (lo + hi) * 0.5f; // very wide screen: hold the middle of the map
+            min = Mathf.Max(minScrollX, lo);
+            max = Mathf.Min(maxScrollX, hi);
         }
 
         private void ClampPosition()
@@ -206,7 +234,8 @@ namespace TawanOS.MapEngine
                 Vector3 cPos = targetTransform.position;
                 if (config.orientation == MapOrientation.LeftToRight)
                 {
-                    cPos.x = Mathf.Clamp(cPos.x, minScrollX, maxScrollX);
+                    GetCameraXRange(out float rangeMin, out float rangeMax);
+                    cPos.x = Mathf.Clamp(cPos.x, rangeMin, rangeMax);
                     cPos.y = config.cameraHeightY;
                     cPos.z = config.cameraZDistance;
                 }
@@ -242,6 +271,11 @@ namespace TawanOS.MapEngine
             }
 
             targetTransform.position = currentPos;
+        }
+
+        private void OnDestroy()
+        {
+            if (targetTransform != null) targetTransform.DOKill();
         }
     }
 }
