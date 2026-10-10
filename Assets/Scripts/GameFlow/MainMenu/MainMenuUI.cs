@@ -59,7 +59,7 @@ namespace TawanOS.GameFlow
             if (cam != null && cam.GetComponent<MouseParallaxCamera>() == null) cam.gameObject.AddComponent<MouseParallaxCamera>();
 
             // The main buttons sit on drifting smoke instead of flat panels (tune it by adding the component to a button)
-            foreach (var b in new[] { newGameButton, continueButton, settingsButton, quitButton, fullModeButton, shortModeButton })
+            foreach (var b in new[] { newGameButton, continueButton, collectionButton, settingsButton, quitButton, fullModeButton, shortModeButton })
                 if (b != null && b.GetComponent<UiSmokeButton>() == null) b.gameObject.AddComponent<UiSmokeButton>();
         }
 
