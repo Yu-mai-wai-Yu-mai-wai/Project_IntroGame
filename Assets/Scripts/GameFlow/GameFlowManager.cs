@@ -296,14 +296,14 @@ namespace TawanOS.GameFlow
                 NodeType.EliteEnemy => RewardTier.Elite,
                 _ => RewardTier.Minor,
             };
-            if (Application.isPlaying) LoadNode(CombatSceneName, nodeType);
+            if (Application.isPlaying) SceneTransition.Load(CombatSceneName);
         }
 
         private void HandleEventNodeEntered(int floor)
         {
             RunState.Current.SetResume(ResumeKind.Event, NodeType.Event, floor);
             pendingEventFloor = floor;
-            if (Application.isPlaying) LoadNode(EventSceneName, NodeType.Event);
+            if (Application.isPlaying) SceneTransition.Load(EventSceneName);
         }
 
         // กองของเซ่น: a short story in EventScene, then the card reward screen
@@ -311,14 +311,7 @@ namespace TawanOS.GameFlow
         {
             RunState.Current.SetResume(ResumeKind.Event, NodeType.Treasure, floor);
             pendingOffering = true;
-            if (Application.isPlaying) LoadNode(EventSceneName, NodeType.Treasure);
-        }
-
-        // Entering a map node: fade to black, load its scene, fade in, then the area title (AreaTitlesSO)
-        private static void LoadNode(string sceneName, NodeType nodeType)
-        {
-            var area = AreaTitlesSO.Get(nodeType);
-            SceneTransition.Load(sceneName, area.title, area.subtitle);
+            if (Application.isPlaying) SceneTransition.Load(EventSceneName);
         }
 
         private void HandleEventCardReward()
@@ -350,7 +343,7 @@ namespace TawanOS.GameFlow
         private void HandleStoreNodeEntered()
         {
             RunState.Current.SetResume(ResumeKind.Shop, NodeType.Store);
-            if (Application.isPlaying) LoadNode(ShopSceneName, NodeType.Store);
+            if (Application.isPlaying) SceneTransition.Load(ShopSceneName);
         }
 
         // เมรุ: burn a card or upgrade one, then back to the map
@@ -363,7 +356,7 @@ namespace TawanOS.GameFlow
                 return;
             }
             RunState.Current.SetResume(ResumeKind.Meru, NodeType.RestSite);
-            if (Application.isPlaying) LoadNode(MeruSceneName, NodeType.RestSite);
+            if (Application.isPlaying) SceneTransition.Load(MeruSceneName);
         }
 
         private void HandleMeruFinished()
