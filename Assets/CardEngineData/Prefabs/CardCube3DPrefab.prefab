@@ -126,31 +126,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6afbf7894fd6ec468ddd36942f241d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardView3D
-  CardData:
-    instanceId: 06984ce4-d65b-47a0-9a59-2776f815c028
-    cardId: 
-    cardNameThai: 
-    cardNameEng: 
-    magicSchool: 0
-    cardType: 0
-    meritCost: 0
-    corruptionGain: 0
-    baseValue: 0
-    currentDurability: 0
-    familiarHealth: 0
-    familiarDamage: 0
-    targetType: 0
-    artwork: {fileID: 0}
-    frameBorder: {fileID: 0}
-    descriptionFormat: 
+  cardDataAsset: {fileID: 0}
   cardRenderer: {fileID: 816440305327445995}
   nameLabel: {fileID: 1724299435821492216}
+  defaultWhiteFrame: {fileID: 21300000, guid: d1c318fa676659d479a51d3597e3a90b, type: 3}
+  defaultBlackFrame: {fileID: 21300000, guid: 67a651f898aacce42b10f279b1ea66f1, type: 3}
+  cardBack: {fileID: 21300000, guid: 685227900d324b3499ede9c7caea7800, type: 3}
+  textOnArt: {r: 1, g: 1, b: 1, a: 1}
+  typeTextOnArt: {r: 0.95, g: 0.72, b: 0.72, a: 1}
+  textOnPlainWhite: {r: 0.12, g: 0.08, b: 0.05, a: 1}
+  textOnPlainBlack: {r: 0.95, g: 0.9, b: 0.85, a: 1}
+  khwanDamagedColor: {r: 0.9, g: 0.1, b: 0.1, a: 1}
   hoverLift: 1
   hoverPullToCamera: 0.6
   hoverScale: 1.15
-  defaultWhiteFrame: {fileID: 21300000, guid: d1c318fa676659d479a51d3597e3a90b, type: 3}
-  defaultBlackFrame: {fileID: 21300000, guid: 67a651f898aacce42b10f279b1ea66f1, type: 3}
-  cardBack: {fileID: 21300000, guid: 59b62c0aa2edf714c8af5dbea750eecd, type: 3}
 --- !u!1 &9004239742615636460
 GameObject:
   m_ObjectHideFlags: 0
