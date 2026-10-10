@@ -9,6 +9,11 @@ namespace TawanOS.CardEngine
     public static class Card3DSetupTool
     {
         [MenuItem("Tools/TawanOS/Card Engine/Convert Hand To 3D Cube Cards")]
+        private static void ConvertHandTo3D_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Convert Hand To 3D Cube Cards")) ConvertHandTo3D();
+        }
+
         public static void ConvertHandTo3D()
         {
             if (Application.isPlaying)
@@ -93,8 +98,10 @@ namespace TawanOS.CardEngine
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.fontSize = 3f;
             tmp.color = Color.black;
-            TMP_FontAsset charmFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
-            if (charmFont != null) tmp.font = charmFont;
+            TMP_FontAsset titleFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
+            if (titleFont != null) tmp.font = titleFont;
 
             var view = cardGo.AddComponent<CardView3D>();
             view.cardRenderer = renderer;

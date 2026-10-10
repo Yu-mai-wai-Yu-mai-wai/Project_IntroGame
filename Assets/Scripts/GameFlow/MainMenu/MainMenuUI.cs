@@ -1,5 +1,6 @@
 using DG.Tweening;
 using TawanOS.UI;
+using TawanOS.VFX;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -49,6 +50,14 @@ namespace TawanOS.GameFlow
             if (fullModeButton != null) fullModeButton.onClick.AddListener(() => StartGameWithMode(7));
             if (shortModeButton != null) shortModeButton.onClick.AddListener(() => StartGameWithMode(4));
             if (modeCancelButton != null) modeCancelButton.onClick.AddListener(() => { if (modePanel != null) modePanel.SetActive(false); });
+
+            // The stage behind the menu turns gently with the cursor (tune it by adding the component to the camera)
+            var cam = Camera.main;
+            if (cam != null && cam.GetComponent<MouseParallaxCamera>() == null) cam.gameObject.AddComponent<MouseParallaxCamera>();
+
+            // The main buttons sit on drifting smoke instead of flat panels (tune it by adding the component to a button)
+            foreach (var b in new[] { newGameButton, continueButton, settingsButton, quitButton, fullModeButton, shortModeButton })
+                if (b != null && b.GetComponent<UiSmokeButton>() == null) b.gameObject.AddComponent<UiSmokeButton>();
         }
 
         private void Start()
@@ -103,6 +112,18 @@ namespace TawanOS.GameFlow
         }
 
         private void OnContinue()
+        {
+            // Show where the saved run stands before resuming it; an unreadable save falls through to ContinueGame, which handles it
+            var summary = RunState.ReadSaveSummary();
+            if (summary.HasValue)
+            {
+                ContinuePopup.Show(summary.Value, StartContinue);
+                return;
+            }
+            StartContinue();
+        }
+
+        private void StartContinue()
         {
             SetInteractable(false);
             GameFlowManager.Instance.ContinueGame();

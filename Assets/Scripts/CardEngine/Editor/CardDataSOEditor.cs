@@ -216,6 +216,8 @@ namespace TawanOS.CardEngine
             Sprite frame = printed ? card.cardImage
                 : card.cardBackground != null ? card.cardBackground
                 : CardFaceLayout.DefaultFrame(whiteFrame, blackFrame, card.magicSchool);
+            // The artwork is the full-face background, so it goes under the see-through frame
+            if (!printed && card.artwork != null) DrawSprite(r, card.artwork, ScaleMode.StretchToFill);
             if (frame != null) DrawSprite(r, frame, ScaleMode.StretchToFill);
             else EditorGUI.DrawRect(r, card.magicSchool == MagicSchool.WhiteMagic ? new Color(0.85f, 0.8f, 0.55f) : new Color(0.35f, 0.1f, 0.15f));
 
@@ -226,8 +228,6 @@ namespace TawanOS.CardEngine
             // A finished card PNG has everything but attack / Khwan printed on it
             if (!printed)
             {
-                if (card.artwork != null) DrawSprite(BoxRect(r, CardFaceLayout.Artwork), card.artwork, ScaleMode.ScaleToFit);
-
                 string cost = card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost.ToString() : card.corruptionGain.ToString();
                 DrawText(r, CardFaceLayout.Cost.Scaled(Fs(CardFaceLayout.Text.Cost)), cost, text, FontStyle.Bold);
                 DrawText(r, CardFaceLayout.Name.Scaled(Fs(CardFaceLayout.Text.Name)), string.IsNullOrEmpty(card.cardNameThai) ? "ชื่อการ์ด" : card.cardNameThai, text, FontStyle.Bold);

@@ -56,21 +56,35 @@ namespace TawanOS.CardEngine
         }
 
         [MenuItem("Tools/TawanOS/Card Engine/Setup Thai Fonts & Fallbacks")]
+        private static void SetupThaiFonts_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Thai Fonts & Fallbacks")) SetupThaiFonts();
+        }
+
         public static void SetupThaiFonts()
         {
+            Font ekkamaiFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/EkkamaiVibe-Regular.ttf");
+            Font rueangLaoFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/MN Rueang Lao.otf");
             Font charmFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Charm-Bold.ttf");
             Font sarabunFont = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/Sarabun-Regular.ttf");
 
-            if (charmFont == null || sarabunFont == null)
+            if (ekkamaiFont == null && sarabunFont == null)
             {
-                Debug.LogError("[CardEngineSetupTool] TTF Fonts not found in Assets/Fonts!");
+                Debug.LogError("[CardEngineSetupTool] Thai Fonts not found in Assets/Fonts!");
                 return;
             }
 
-            TMP_FontAsset charmSdf = GetOrCreateTMPFontAsset(charmFont, "Assets/Fonts/Charm-Bold SDF.asset");
-            TMP_FontAsset sarabunSdf = GetOrCreateTMPFontAsset(sarabunFont, "Assets/Fonts/Sarabun-Regular SDF.asset");
+            TMP_FontAsset ekkamaiSdf = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
+                ?? (ekkamaiFont != null ? GetOrCreateTMPFontAsset(ekkamaiFont, "Assets/Fonts/EkkamaiVibe SDF.asset") : null);
+            TMP_FontAsset rueangLaoSdf = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset")
+                ?? (rueangLaoFont != null ? GetOrCreateTMPFontAsset(rueangLaoFont, "Assets/Fonts/MN-RueangLao SDF.asset") : null);
+            TMP_FontAsset charmSdf = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
+            TMP_FontAsset sarabunSdf = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
 
-            if (charmSdf == null || sarabunSdf == null)
+            TMP_FontAsset bodySdf = ekkamaiSdf ?? sarabunSdf;
+            TMP_FontAsset titleSdf = rueangLaoSdf ?? charmSdf ?? bodySdf;
+
+            if (bodySdf == null)
             {
                 Debug.LogError("[CardEngineSetupTool] Failed to create TMP Font Assets!");
                 return;
@@ -84,8 +98,10 @@ namespace TawanOS.CardEngine
                 SerializedProperty fallbacks = so.FindProperty("m_fallbackFontAssets");
                 if (fallbacks != null)
                 {
-                    AddFallbackIfMissing(fallbacks, sarabunSdf);
-                    AddFallbackIfMissing(fallbacks, charmSdf);
+                    if (bodySdf != null) AddFallbackIfMissing(fallbacks, bodySdf);
+                    if (titleSdf != null) AddFallbackIfMissing(fallbacks, titleSdf);
+                    if (sarabunSdf != null) AddFallbackIfMissing(fallbacks, sarabunSdf);
+                    if (charmSdf != null) AddFallbackIfMissing(fallbacks, charmSdf);
                     so.ApplyModifiedProperties();
                     EditorUtility.SetDirty(settings);
                 }
@@ -96,8 +112,10 @@ namespace TawanOS.CardEngine
             if (defaultFont != null)
             {
                 if (defaultFont.fallbackFontAssetTable == null) defaultFont.fallbackFontAssetTable = new List<TMP_FontAsset>();
-                if (!defaultFont.fallbackFontAssetTable.Contains(sarabunSdf)) defaultFont.fallbackFontAssetTable.Add(sarabunSdf);
-                if (!defaultFont.fallbackFontAssetTable.Contains(charmSdf)) defaultFont.fallbackFontAssetTable.Add(charmSdf);
+                if (bodySdf != null && !defaultFont.fallbackFontAssetTable.Contains(bodySdf)) defaultFont.fallbackFontAssetTable.Add(bodySdf);
+                if (titleSdf != null && !defaultFont.fallbackFontAssetTable.Contains(titleSdf)) defaultFont.fallbackFontAssetTable.Add(titleSdf);
+                if (sarabunSdf != null && !defaultFont.fallbackFontAssetTable.Contains(sarabunSdf)) defaultFont.fallbackFontAssetTable.Add(sarabunSdf);
+                if (charmSdf != null && !defaultFont.fallbackFontAssetTable.Contains(charmSdf)) defaultFont.fallbackFontAssetTable.Add(charmSdf);
                 EditorUtility.SetDirty(defaultFont);
             }
 
@@ -111,12 +129,12 @@ namespace TawanOS.CardEngine
                 {
                     if (view.nameThaiText != null)
                     {
-                        view.nameThaiText.font = charmSdf;
+                        view.nameThaiText.font = titleSdf;
                         view.nameThaiText.fontSize = 15;
                     }
                     if (view.descText != null)
                     {
-                        view.descText.font = sarabunSdf;
+                        view.descText.font = bodySdf;
                         view.descText.fontSize = 11.5f;
                     }
                     EditorUtility.SetDirty(prefabGo);
@@ -125,7 +143,7 @@ namespace TawanOS.CardEngine
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log("<color=green>[CardEngineSetupTool] Thai Fonts (Charm & Sarabun) successfully created and assigned!</color>");
+            Debug.Log("<color=green>[CardEngineSetupTool] Thai Fonts (EkkamaiVibe & MN-RueangLao) successfully created and assigned!</color>");
         }
 
         private static void AddFallbackIfMissing(SerializedProperty listProp, TMP_FontAsset fontAsset)
@@ -170,6 +188,11 @@ namespace TawanOS.CardEngine
 
         [MenuItem("Tools/TawanOS/Card Engine/Setup Test Scene & Cards")]
         [MenuItem("Window/TawanOS Card Engine Setup")]
+        private static void MenuSetup_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Test Scene & Cards")) MenuSetup();
+        }
+
         public static void MenuSetup()
         {
             SetupTestSceneAndCards(true);
@@ -274,7 +297,10 @@ namespace TawanOS.CardEngine
             GameObject canvasGo = new GameObject("CombatCanvas");
             var canvas = canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasGo.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            var combatScaler = canvasGo.AddComponent<CanvasScaler>();
+            combatScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            combatScaler.referenceResolution = new Vector2(1920f, 1080f); // default 800x600 scaled every UI element by 2.4x at 1080p
+            combatScaler.matchWidthOrHeight = 0.5f;
             canvasGo.AddComponent<GraphicRaycaster>();
 
             GameObject esGo = new GameObject("EventSystem");
@@ -347,6 +373,11 @@ namespace TawanOS.CardEngine
         }
 
         [MenuItem("Tools/TawanOS/Card Engine/Rebuild Card Prefab (Art Full Layout)")]
+        private static void MenuRebuildCardPrefab_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Rebuild Card Prefab (Art Full Layout)")) MenuRebuildCardPrefab();
+        }
+
         public static void MenuRebuildCardPrefab()
         {
             string prefabPath = "Assets/CardEngineData/Prefabs/CardViewPrefab.prefab";
@@ -377,14 +408,16 @@ namespace TawanOS.CardEngine
             view.cardBackgroundImage = bgImg;
             view.frameBorderImage = bgImg;
 
-            var charmFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
-            var sarabunFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var titleFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
+            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
 
             // 2. ชื่อการ์ด (Top-Left)
             GameObject titleGo = new GameObject("NameThaiText");
             titleGo.transform.SetParent(cardGo.transform, false);
             var titleText = titleGo.AddComponent<TextMeshProUGUI>();
-            if (charmFont != null) titleText.font = charmFont;
+            if (titleFont != null) titleText.font = titleFont;
             titleText.fontSize = 16;
             titleText.fontStyle = FontStyles.Bold;
             titleText.alignment = TextAlignmentOptions.MidlineLeft;
@@ -428,7 +461,7 @@ namespace TawanOS.CardEngine
             GameObject typeGo = new GameObject("TypeText");
             typeGo.transform.SetParent(cardGo.transform, false);
             var typeText = typeGo.AddComponent<TextMeshProUGUI>();
-            if (sarabunFont != null) typeText.font = sarabunFont;
+            if (bodyFont != null) typeText.font = bodyFont;
             typeText.fontSize = 11f;
             typeText.fontStyle = FontStyles.Bold;
             typeText.alignment = TextAlignmentOptions.Center;
@@ -445,7 +478,7 @@ namespace TawanOS.CardEngine
             GameObject descGo = new GameObject("DescText");
             descGo.transform.SetParent(cardGo.transform, false);
             var descText = descGo.AddComponent<TextMeshProUGUI>();
-            if (sarabunFont != null) descText.font = sarabunFont;
+            if (bodyFont != null) descText.font = bodyFont;
             descText.fontSize = 11.5f;
             descText.alignment = TextAlignmentOptions.Center;
             descText.enableWordWrapping = true;
@@ -464,6 +497,9 @@ namespace TawanOS.CardEngine
 
         private static CombatHUD BuildCombatHUD(Transform canvasParent)
         {
+            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+
             GameObject hudGo = new GameObject("CombatHUD");
             hudGo.transform.SetParent(canvasParent, false);
             var hud = hudGo.AddComponent<CombatHUD>();
@@ -481,6 +517,7 @@ namespace TawanOS.CardEngine
             GameObject khwanGo = new GameObject("PlayerKhwanText");
             khwanGo.transform.SetParent(topPanel.transform, false);
             var khwanTxt = khwanGo.AddComponent<TextMeshProUGUI>();
+            if (bodyFont != null) khwanTxt.font = bodyFont;
             khwanTxt.fontSize = 20;
             khwanTxt.text = "ขวัญ: 50 / 50";
             khwanTxt.color = new Color(0.3f, 0.9f, 0.4f);
@@ -492,6 +529,7 @@ namespace TawanOS.CardEngine
             GameObject meritGo = new GameObject("MeritText");
             meritGo.transform.SetParent(topPanel.transform, false);
             var meritTxt = meritGo.AddComponent<TextMeshProUGUI>();
+            if (bodyFont != null) meritTxt.font = bodyFont;
             meritTxt.fontSize = 20;
             meritTxt.text = "กุศล: 1 / 6";
             meritTxt.color = new Color(1f, 0.85f, 0.2f);
@@ -503,6 +541,7 @@ namespace TawanOS.CardEngine
             GameObject corrGo = new GameObject("CorruptionText");
             corrGo.transform.SetParent(topPanel.transform, false);
             var corrTxt = corrGo.AddComponent<TextMeshProUGUI>();
+            if (bodyFont != null) corrTxt.font = bodyFont;
             corrTxt.fontSize = 20;
             corrTxt.text = "มลทิน: 0 / 9";
             corrTxt.color = new Color(0.9f, 0.25f, 0.25f);
@@ -525,6 +564,7 @@ namespace TawanOS.CardEngine
             GameObject btnTxtGo = new GameObject("Label");
             btnTxtGo.transform.SetParent(btnGo.transform, false);
             var btnTxt = btnTxtGo.AddComponent<TextMeshProUGUI>();
+            if (bodyFont != null) btnTxt.font = bodyFont;
             btnTxt.text = "สิ้นสุดเทิร์น";
             btnTxt.alignment = TextAlignmentOptions.Center;
             btnTxt.fontSize = 18;
@@ -534,6 +574,7 @@ namespace TawanOS.CardEngine
             GameObject drawPileGo = new GameObject("DrawCountText");
             drawPileGo.transform.SetParent(hudGo.transform, false);
             var drawTxt = drawPileGo.AddComponent<TextMeshProUGUI>();
+            if (bodyFont != null) drawTxt.font = bodyFont;
             drawTxt.text = "สำรับ: 10";
             var drawRt = drawPileGo.GetComponent<RectTransform>();
             drawRt.anchorMin = new Vector2(0, 0);

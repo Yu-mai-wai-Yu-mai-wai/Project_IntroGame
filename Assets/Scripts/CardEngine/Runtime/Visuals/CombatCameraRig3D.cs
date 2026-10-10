@@ -6,7 +6,8 @@ namespace TawanOS.CardEngine
     // Combat camera: the normal angled view, or a top-down view zoomed so the board cards are big and clear.
     //  - C key or the button at the top-right toggles the board-only top view: UI and both hands are hidden
     //    and the camera zooms until the two board rows fill the screen
-    //  - Holding a card (CardPlayController3D) switches to the top view until the card is played / put back
+    //  - Holding a card (CardPlayController3D) switches to the top view until the card is played / put back;
+    //    C and the button are ignored (and the button hidden) while the card is held
     //  - The board clash locks the top view (SetLocked): C and the button do nothing until it is over
     //  - Right-click a card to open its detail screen (CardDetailPanelUI)
     // The zoom narrows the field of view instead of moving the camera down, and the hands (which follow
@@ -123,7 +124,9 @@ namespace TawanOS.CardEngine
 
         public void ToggleTopView()
         {
-            if (locked) return;
+            // While a card is held the view is already top-down; a toggle now would only take effect on
+            // release and drop the player into the board-only zoom right after playing the card
+            if (locked || topRequests > 0) return;
             userTop = !userTop;
             Apply();
         }
@@ -367,7 +370,7 @@ namespace TawanOS.CardEngine
 
         private void OnGUI()
         {
-            if (!showToggleButton || locked || CardDetailPanelUI.IsOpen || GraveyardPanelUI.IsOpen || DeckViewerPanelUI.IsOpen || IsBoardOnlyView) return;
+            if (!showToggleButton || locked || topRequests > 0 || CardDetailPanelUI.IsOpen || GraveyardPanelUI.IsOpen || DeckViewerPanelUI.IsOpen || IsBoardOnlyView) return;
             string label = IsTopView ? $"มุมปกติ ({toggleKey})" : $"มุมบน ({toggleKey})";
             if (GUI.Button(new Rect(Screen.width - 150, 10, 140, 30), label)) ToggleTopView();
         }

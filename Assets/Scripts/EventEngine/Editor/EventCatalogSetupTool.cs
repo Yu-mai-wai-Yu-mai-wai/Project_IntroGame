@@ -30,6 +30,11 @@ namespace TawanOS.EventEngine
         public const string OfferingEventPath = "Assets/EventEngineData/Events/Event_OfferingPile.asset";
 
         [MenuItem("Tools/TawanOS/Event Engine/Setup 5 Dark Fog Events")]
+        private static void SetupDarkFogEvents_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup 5 Dark Fog Events")) SetupDarkFogEvents();
+        }
+
         public static void SetupDarkFogEvents()
         {
             var catalog = AssetDatabase.LoadAssetAtPath<EventCatalogSO>(CatalogPath);

@@ -31,6 +31,11 @@ namespace TawanOS.EventEngine
         private static readonly Color Teal = new Color(0.55f, 0.9f, 0.85f);
 
         [MenuItem("Tools/TawanOS/Event Engine/Setup Event Scene & Sample Events")]
+        private static void SetupEventScene_Menu()
+        {
+            if (TawanOS.EditorTools.SetupGuard.Confirm("Setup Event Scene & Sample Events")) SetupEventScene();
+        }
+
         public static void SetupEventScene()
         {
             if (Application.isPlaying)
@@ -290,8 +295,11 @@ namespace TawanOS.EventEngine
 
         private static EventViewUI BuildEventCanvas()
         {
-            var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
-            var sarabun = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
+            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
+                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var sarabun = bodyFont;
             var panelSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
             var knobSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
 

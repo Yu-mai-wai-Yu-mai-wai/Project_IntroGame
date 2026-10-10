@@ -12,8 +12,9 @@ namespace TawanOS.UI
     public static class UIThemeSetupTool
     {
         private const string AssetPath = "Assets/Resources/" + UIThemeSO.ResourceName + ".asset";
-        private const string BodyFontPath = "Assets/Fonts/Sarabun-Regular SDF.asset";
-        private const string TitleFontPath = "Assets/Fonts/Charm-Bold SDF.asset";
+        private const string BodyFontPath = "Assets/Fonts/EkkamaiVibe SDF.asset";
+        private const string FallbackBodyFontPath = "Assets/Fonts/Sarabun-Regular SDF.asset";
+        private const string TitleFontPath = "Assets/Fonts/MN-RueangLao SDF.asset";
 
         [MenuItem("Tools/TawanOS/UI/Create UI Theme")]
         public static void CreateThemeFromMenu()
@@ -30,10 +31,11 @@ namespace TawanOS.UI
         private static bool TryCreate()
         {
             var body = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BodyFontPath);
+            if (body == null) body = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FallbackBodyFontPath);
             var title = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(TitleFontPath);
             if (body == null)
             {
-                Debug.LogError($"[UIThemeSetupTool] Body font not found at {BodyFontPath}");
+                Debug.LogError($"[UIThemeSetupTool] Body font not found at {BodyFontPath} or fallback");
                 return false;
             }
 
@@ -47,8 +49,8 @@ namespace TawanOS.UI
                 AssetDatabase.CreateAsset(theme, AssetPath);
             }
 
-            if (theme.bodyFont == null) theme.bodyFont = body;
-            if (theme.titleFont == null) theme.titleFont = title != null ? title : body;
+            theme.bodyFont = body;
+            theme.titleFont = title != null ? title : body;
 
             EditorUtility.SetDirty(theme);
             AssetDatabase.SaveAssets();

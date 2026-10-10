@@ -194,21 +194,29 @@ namespace TawanOS.CardEngine
                 {
                     var art = NewImage("Artwork", root, Color.white);
                     art.sprite = card.artwork;
-                    art.preserveAspect = true;
+                    art.preserveAspect = false;
                     PlaceOnFace(art.rectTransform, CardFaceLayout.Artwork);
+                    art.transform.SetAsFirstSibling(); // behind the see-through frame
                 }
 
-                var cost = FaceText("Cost", root, CardFaceLayout.Cost, 28);
+                var cost = FaceText("Cost", root, CardFaceLayout.Cost, 22);
                 cost.text = Cost(card).ToString();
-                var nameText = FaceText("Name", root, CardFaceLayout.Name, 24);
+                var nameText = FaceText("Name", root, CardFaceLayout.Name, 18);
                 nameText.text = card.cardNameThai;
+
+                // The ability, small, in the description box (the detail panel shows it at reading size)
+                var ability = FaceText("Description", root, CardFaceLayout.Description, 11);
+                ability.textWrappingMode = TextWrappingModes.Normal;
+                ability.fontSizeMin = 5f;
+                string format = card.descriptionFormat ?? "";
+                try { ability.text = string.Format(format, card.baseValue); } catch { ability.text = format; }
             }
 
             // Attack / Khwan are never printed on the finished PNG
             if (card.cardType == CardType.Familiar)
             {
-                FaceText("Attack", root, CardFaceLayout.Attack, 24).text = card.familiarDamage.ToString();
-                FaceText("Khwan", root, CardFaceLayout.Khwan, 24).text = card.familiarHealth.ToString();
+                FaceText("Attack", root, CardFaceLayout.Attack, 18).text = card.familiarDamage.ToString();
+                FaceText("Khwan", root, CardFaceLayout.Khwan, 18).text = card.familiarHealth.ToString();
             }
 
             return root.gameObject;
@@ -223,6 +231,7 @@ namespace TawanOS.CardEngine
             t.fontSizeMax = maxSize;
             t.textWrappingMode = TextWrappingModes.NoWrap;
             t.color = Color.white; // on the card art, as on the 3D card
+            CardFaceLayout.MakeReadable(t);
             return t;
         }
 

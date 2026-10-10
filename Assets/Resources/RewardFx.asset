@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26a97846e28c74a418fb21bd0f8eb1a2, type: 3}
+  m_Name: RewardFx
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.GameFlow.RewardFxConfigSO
+  cardBack: {fileID: 21300000, guid: 59b62c0aa2edf714c8af5dbea750eecd, type: 3}
+  smokeTexture: {fileID: 2800000, guid: e61b3a604d2e03148a5907edb6e63632, type: 3}
+  burnMaterial: {fileID: 2100000, guid: 724a6fd2bd56f0a488570097bf8296b1, type: 2}
+  dealStartDelay: 0.35
+  dealFlyDuration: 0.45
+  dealFromBelow: 700
+  dealStartTilt: -12
+  pauseBeforeFlip: 0.12
+  flipDuration: 0.4
+  pauseBetweenCards: 0.15
+  floatHeight: 10
+  floatPeriod: 2.6
+  floatSway: 0.8
+  smokeCount: 7
+  smokeAlpha: {x: 0.02, y: 0.06}
+  smokeSize: {x: 700, y: 1300}
+  smokeSpeed: {x: 18, y: 45}
+  smokeTint: {r: 0.7, g: 0.64, b: 0.62, a: 1}
+  burnDelay: 0.25
+  burnDuration: 1.3
+  embersPerSecond: 28
+  glowColor: {r: 1.6, g: 0.55, b: 0.12, a: 1}
+  charColor: {r: 0.12, g: 0.05, b: 0.03, a: 1}
+  holdAfterBurn: 0.5

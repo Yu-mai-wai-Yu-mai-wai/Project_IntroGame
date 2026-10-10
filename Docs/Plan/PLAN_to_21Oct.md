@@ -1,5 +1,6 @@
 # แผนงานถึงวันนำเสนอ 21 ต.ค. 2569
 
+อัปเดต 10 ต.ค. 2569: ชุดที่ 1 (Phase H) เสร็จสมบูรณ์แล้ว, ปรับโครงสร้างแผนงานเป็น 6 ชุดตามข้อสรุปทีม, และปรับกำหนดการ Gate วันที่ 14 ต.ค.
 อัปเดต 6 ต.ค. 2569 หลัง merge `dcb2b57` (Main Menu, Event, Shop, Reward, Meru, RunState, Graveyard)
 แก้ไขรอบ 2 (6 ต.ค.): PM ตัดสินให้ใส่ Story + Character Design ในเกม (B8), ภาพการ์ดที่ขาด 13 ใบใช้ placeholder (B7),
 เพิ่ม B0 นำ Asset เข้าโปรเจกต์ และ Phase D (รายงานตามโครงสร้าง 7 ส่วนและการส่งงาน) ที่เดิมไม่มีใน PLAN
@@ -145,7 +146,8 @@
 
 B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตามลำดับ (Settings ใช้ AudioManager) ส่วน B4, B5, B6, B7 ทำคู่ขนานได้
 
-### [ ] B0 นำ Asset เข้าโปรเจกต์
+### [x] B0 นำ Asset เข้าโปรเจกต์
+- **เสร็จ 6 ต.ค.** commit `2722b0c`: เสียง 27 / การ์ด 29 / เนื้อเรื่อง 13 / วิดีโอ 2 / ตัวละคร 2 คัดลอกจาก `D:\Tawanagent\GameProject_Asset` (ต้นทางคงไว้) `.meta` ครบ ไฟล์ใหญ่สุด 17.6 MB Console 0 error ไฟล์ mp4 ถูก Git LFS รับ ยังไม่ได้เปิด Play mode ดูว่า import setting ของ mp3/wav เหมาะกับ build (B1 จะตั้ง)
 - ต้นทาง `D:\Tawanagent\GameProject_Asset` ปลายทางในโปรเจกต์ (คัดลอก ไม่ย้าย ต้นทางคงไว้):
   | ต้นทาง | ปลายทาง | จำนวน |
   |---|---|---|
@@ -159,7 +161,9 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - **Done when:** นับไฟล์ได้ตามตาราง, Console ไม่มี Error ตอน import, ไม่มีไฟล์เดี่ยวเกิน 100 MB (ข้อจำกัด GitHub; ไฟล์ใหญ่สุดคือ `amb_event.wav` 17.6 MB), `git status` ไม่มี `.meta` ที่ขาด
 - หมายเหตุ: ถ้า `amb_event.wav` ทำให้ build ใหญ่เกินไป ให้แปลงเป็น mp3 ชื่อเดิมก่อน (ไม่เปลี่ยน key)
 
-### [ ] B1 AudioManager (ข้อ Sound)
+### [~] B1 AudioManager (ข้อ Sound) — โค้ดเสร็จ 6 ต.ค. ค้าง: Mixer, hover SFX, ฟังจริง
+- **เสร็จ:** `AudioLibrarySO`, `AudioManager`, `AudioDirector`, tool `Build Audio Library` (23 key), `AudioLibraryTests` PASS (Red→Green) ผูกเพลงตามฉากและ SFX จาก event เดิมโดยไม่แก้ logic
+- **ค้าง/ต่างจากสเปก:** (1) ไม่มี `MainMixer.mixer` ใช้ volume ต่อ AudioSource แทน (Unity ไม่มี API สร้าง mixer + exposed parameter) (2) `sfx_card_hover` ยังไม่ผูก ต้องเพิ่ม event ใน `CardPlayController3D` (3) ยังไม่ได้ฟังจริงใน Play mode
 - ไฟล์เสียงต้องอยู่ที่ `Assets/Audio/BGM/`, `Assets/Audio/Ambience/`, `Assets/Audio/SFX/` (ทำ B0 ก่อน ถ้ายังไม่มีให้หยุดแล้วแจ้ง PM)
 - `Assets/Scripts/Audio/` namespace `TawanOS.Audio`:
   - `AudioLibrarySO`: `{ key, AudioClip[] variants }` key = ชื่อไฟล์ตัด `_01`/`_02` ออก
@@ -188,13 +192,17 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
   | ศัตรูตาย, ชนะ | `sfx_scream` |
 - **Done when:** EditMode test `AudioLibraryTests` ยืนยันว่า key ทุกตัวในสองตารางนี้หาเจอ
 
-### [ ] B2 Settings + PlayerPrefs (ข้อ Player Preferences)
+### [~] B2 Settings + PlayerPrefs (ข้อ Player Preferences) — โค้ดเสร็จ 6 ต.ค. ค้าง: ฟังและดูใน Play mode, ต่อกับ Pause (B3)
+- **เสร็จ:** `SettingsPanelUI` (สร้างด้วยโค้ด ใช้ซ้ำใน Pause ได้ด้วย `SettingsPanelUI.Create(parent)`), `GameSettings` (fullscreen), ปุ่ม "ตั้งค่า" ใน MainMenu, `SettingsPanelTests` PASS (Red→Green: slider บันทึก PlayerPrefs, เปิดใหม่ค่ายังอยู่, toggle เต็มจอบันทึก, ปุ่ม >= 44 px)
+- **ต่างจากสเปก:** ใช้ volume ต่อ AudioSource ไม่ใช่ `SetFloat` บน mixer (MainMixer มีแค่กลุ่ม Master ยังไม่มี exposed parameter)
 - `AudioManager.SetVolume(channel, 0..1)` แปลง dB (`v <= 0.0001 ? -80 : Mathf.Log10(v) * 20`) บันทึก PlayerPrefs key `vol_master`, `vol_bgm`, `vol_sfx` และโหลดตอนเริ่ม
 - Settings panel (prefab ใช้ร่วมกันใน Main Menu และ Pause): slider 3 ตัว + toggle fullscreen (`Screen.fullScreen` เก็บใน PlayerPrefs `fullscreen`)
 - เพิ่มปุ่ม "ตั้งค่า" ใน `MainMenuUI`
 - **Done when:** EditMode test ตั้ง volume → อ่านจาก PlayerPrefs ได้ค่าเดิม; ปิดเปิดเกมแล้วค่า slider ยังอยู่
 
-### [ ] B3 Pause, Game Over, Victory (ข้อ UI/UX)
+### [~] B3 Pause, Game Over, Victory (ข้อ UI/UX) — โค้ดเสร็จ 7 ต.ค. ค้าง: ตะวันกดเล่นจริงใน Play mode
+- **เสร็จ:** `PauseMenu` (Esc หยุดเกมทุกฉากยกเว้น MainMenu/Victory/IntroStory; ไม่ชนกับ Esc ของการลากการ์ด/เล็ง/แผงการ์ด/สุสาน/Settings; ปุ่ม เล่นต่อ, ตั้งค่า, กลับเมนูหลัก), `GameOverScreen` (ข้อความ + สรุป run + ปุ่ม เริ่มใหม่/เมนูหลัก ไม่ปิดเอง) แทน `GoToMainMenuAfterDelay`, `PauseMenuTests` PASS (Red→Green) ปุ่มสูง >= 44 px ที่ 1080p
+- **ยังไม่ได้ทำใน B3:** ภาพตัวละครบนหน้า Game Over (B9), หน้า Victory ใช้ของ A3 เดิม
 - Pause: prefab overlay สร้างโดย `PauseMenu` ที่ auto-create แบบ `GameFlowManager` ทำงานทุกฉากยกเว้น MainMenu กด `Esc` (Input System) → `Time.timeScale = 0` ปุ่ม: เล่นต่อ, ตั้งค่า, กลับเมนูหลัก (save ไว้ก่อนออก)
 - Game Over: แทน panel 3 วินาทีเดิม เป็นหน้าที่มีข้อความ, สรุป run และปุ่ม "เริ่มใหม่" / "เมนูหลัก" ไม่เด้งกลับเอง
 - Victory: หน้าจาก A3
@@ -464,17 +472,168 @@ UI แสดง Stat ผู้เล่น, คำอธิบายการเ
 
 ---
 
-## ลำดับเวลา
+## Phase H · เปลี่ยน Asset Demo เป็น Final (เพิ่ม 10 ต.ค. 2569 สถานะ: **รอตะวันตอบ "Proceed"**)
 
-| วัน | งาน |
+ที่มา: ทีมศิลป์ส่ง Asset ชุด Final มาแทน Demo ต้นทางคือ `D:\Tawanagent\GameProject_Asset` (คัดลอกเข้าโปรเจกต์ ต้นทางคงไว้ เหมือน B0)
+Phase นี้แตะมากกว่า 3 ไฟล์และแตะ scene จึงต้องรอ "Proceed" ก่อนลงมือ ทำก่อน F8-F12 และก่อนงานภาพของ G2 เพราะ G2 ใช้ไอคอนโหนดและกระดาษแผนที่ชุดเดียวกัน
+
+### ข้อเท็จจริงที่ตรวจแล้ว 10 ต.ค.
+
+| ต้นทาง | พบ | ผลต่อแผน |
+|---|---|---|
+| `3D\Final_New_Patch\` | 3 ไฟล์ `.unitypackage`: `CombatFinal`, `NavigateFinal`, `Scarecrow` (มี `MapNavigateDemo.unitypackage` เก่าอยู่ระดับบน) | **ยังไม่ได้ดูรายการไฟล์ข้างใน** (คำสั่งแตกไฟล์ถูกปฏิเสธ) H2 ต้องดูรายการจากหน้า Import ก่อนกด |
+| `Art\Iconโหนด\Final_Icon_node_in_Map\` | PNG 7 ไฟล์: ของเซ่น, ควันดำ, ทางเปลี่ยว, ป่า, วัด, ศาล, เมรุ | ชื่อไฟล์ไม่ตรงกับ 7 ชนิดโหนดใน G2 ทั้งหมด (ดู D15) |
+| `Art\Event_Node_img\` | PNG 1 ไฟล์: `ทางเปลี่ยว.PNG` | มีอีเวนต์ 5 เรื่องแต่ได้ภาพ 1 ใบ (ดู D16) |
+| `Art\MapPaper\` | PNG 4 ไฟล์: `หัว`, `เริ่มวนรอบแรก`, `ต่อไปเรื่อยๆ`, `ท้าย` | กระดาษแผนที่แบบต่อเป็นช่วง ต้องดูว่า `MapManager` ต่อช่วงได้หรือไม่ |
+| `Art\Card Design\` | PNG 42 ไฟล์ครบ 4 โฟลเดอร์ (มนต์ขาว/ดำ × บริวาร/อาคม/เครื่องราง) | แทนที่แผน B7 (ที่ขาด 13 ใบ) ชื่อไฟล์ผิดรูป 2 ไฟล์: `s_ wa02_ผ้ายันต์.png` (มีช่องว่าง) และ `s_bi05_คาถาสะกด_.png` (ขีดล่างท้าย) และ `s_wf02_...` กับบางไฟล์สกุลเป็น `.PNG` ตัวใหญ่ |
+| โปรเจกต์ตอนนี้ | `CardDataSO` 42 ตัว, `Assets/Art/Cards` มีภาพเดิม 29 ใบ, ปุ่มโหมด `fullModeButton`/`shortModeButton` มีใน `MainMenuUI` แล้ว (A10), `Mat_Glass.mat` + `PlayerMarker.cs` เป็นตัวหมากแก้ว, `MapTestScene` ใช้ CanvasScaler โหมด 0 (Constant Pixel Size) ส่วนฉากอื่น โหมด 1 (Scale With Screen Size) | ฉากต่อสู้ไม่มี CanvasScaler ใน scene (สร้างด้วยโค้ดใน HUD) |
+
+### รอทีมตัดสิน (ใช้ default ถ้ายังไม่ได้คำตอบ)
+
+| # | เรื่อง | default |
+|---|---|---|
+| D15 | ไอคอนโหนด 7 ไฟล์จับคู่กับโหนด 7 ชนิดอย่างไร (ป่า, วัด, ทางเปลี่ยว ไม่ใช่ชื่อโหนดเดิม) | ของเซ่น = กองของเซ่น, ควันดำ = หมอกดำ, ศาล = ศาล, เมรุ = เมรุ, ป่า = ศัตรูทั่วไป, วัด = Elite, ทางเปลี่ยว = Boss **เดาจากชื่อไฟล์** ต้องให้ตะวันหรือศิลปินยืนยันก่อน H3 |
+| D16 | ภาพอีเวนต์ 1 ใบ (`ทางเปลี่ยว`) ใช้กับอีเวนต์ไหน และอีก 4 เรื่องใช้อะไร | ผูกกับ 1 เรื่องที่ตะวันเลือก อีก 4 เรื่องคงภาพ/พื้นเดิมของ EventScene |
+| D17 | ข้อมูลการ์ด (ชื่อ, ค่าพลัง, ข้อความ) ที่ "อัพเดต" ส่งมาอยู่ไหน ในโฟลเดอร์ Asset มีแต่ภาพ | อัปเดตเฉพาะภาพ ไม่แตะตัวเลขการ์ด จนกว่าทีม Game Design ส่งตาราง |
+| D18 | `CombatFinal` ทับฉากต่อสู้ปัจจุบันได้เลยไหม (ฉากมีงานของ Hundredz และ MatchaDesu เช่น กล้อง, ปุ่ม C, tutorial) | **ไม่ทับ** นำเข้าใน branch แยก เทียบก่อน แล้วย้ายเฉพาะ mesh/material/texture |
+
+### สเปก (ต่อหนึ่งงาน)
+
+**S1 นำเข้า Asset Final โดยไม่ทับงานคนอื่น**
+- ขอบเขต: `.unitypackage` เป็นการนำเข้าแบบเขียนทับตาม GUID ถ้ามี scene หรือ prefab ข้างในที่ GUID ตรงกับของเดิม จะทับงานของทีมทันที
+- กติกา: นำเข้าที่ branch `feature/final-assets` แตกจาก `TestMergeV4` เท่านั้น ติ๊กเอาเฉพาะ mesh, material, texture, prefab ที่ไม่ใช่ scene ถ้ามี scene ให้ไม่ติ๊ก แล้วย้ายของเข้าฉากเดิมผ่าน editor script
+- edge case: package ต้องการ shader/pipeline ที่ไม่ตรง URP 17.3 (ทำให้สีชมพู) ตรวจใน build
+
+**S2 ฉากต่อสู้ (CombatFinal)**
+- แทน mesh/material/texture ของโต๊ะและฉากต่อสู้ ไม่เปลี่ยนตำแหน่ง anchor ที่โค้ดอ้าง (กล้อง `CombatCameraRig3D`, ช่องลงการ์ด, ตำแหน่งเทียน) ถ้าชื่อวัตถุที่โค้ดค้นหาเปลี่ยน ต้องแก้ที่โค้ดจุดเดียว
+- ผ่านเมื่อ `AutomatedCombatFlowTest` ผ่านและกด C สองครั้งกล้องกลับตำแหน่งเดิม
+
+**S3 ฉากแผนที่ (NavigateFinal) + มือ + แก้ว + ต้นไม้**
+- แทนมือ (Material, Texture), แก้ว (Material), เพิ่มต้นไม้ท้ายแผนที่, กระดาษ (Material, Texture, UV, ขนาด)
+- ตามภาพที่ตะวันส่ง: แก้วต้องไม่จมกระดาษและไม่เรืองแสง ปรับที่ `Mat_Glass.mat` (ปิด Emission, ตรวจ render queue/ZWrite กับกระดาษ) และตำแหน่งแกน Y ของ `PlayerMarker` ไม่ใช้ค่าชดเชยฮาร์ดโค้ดที่ขัดกับขนาดกระดาษใหม่
+- กระดาษ 4 ชิ้น (`หัว`, `เริ่มวนรอบแรก`, `ต่อไปเรื่อยๆ`, `ท้าย`) ต่อกันตามความยาวแผนที่ ผ่านเมื่อโหมดสั้น 4 ชั้นกับเต็ม 7 ชั้นไม่เห็นรอยต่อและไม่เห็นขอบพื้นหลังนอกกระดาษ
+
+**S4 ไอคอนโหนดและ Scarecrow**
+- ไอคอน 7 ไฟล์แทน Demo โดยใช้ชื่อไฟล์เป็น key ตาม D15 ผ่าน editor script (ห้ามแก้ YAML ด้วยมือ) ไอคอนเดียวกันใช้ใน legend ของ G2
+- Scarecrow เป็น 3D model แยก: แทนที่หุ่นไล่กาที่ฉากเมนูเดิมใช้ (ฉากเมนูตอนนี้เป็นป่าวาดมือของ MatchaDesu และไม่ใช้หุ่นไล่กา) จึงต้องตัดสินก่อนว่า Scarecrow ไปอยู่ฉากไหน (ถามตะวัน ถ้าไม่ตอบ: นำเข้าไว้ใน `Assets/Art/Models/` ไม่วางในฉากใด)
+
+**S5 การ์ด 42 ใบ**
+- `CardArtBinder` (จาก B7) ผูก `artwork` ครบ 42 ใบ ไม่มี placeholder เหลือ ต้องทนชื่อไฟล์ผิดรูปที่พบ (ช่องว่าง, ขีดล่างท้าย, `.PNG`) โดย match ที่ `cardId` ส่วนหน้า (`wa02`, `bi05`) ไม่ใช่ชื่อเต็ม
+- ระบบ CardSystem ที่ต้อง "อัปเดต": ตรวจ view ที่แสดงภาพการ์ด (`CardView`, `CardDetailPanelUI`, `DeckViewerPanelUI`, `RewardCardView`, `ShopCardShelf`) ว่าใช้สัดส่วนภาพ Final ได้ไม่ยืด ตัวเลขและข้อความการ์ดไม่แก้ (D17)
+
+**S6 ภาพอีเวนต์**
+- `EventDataSO` ผูกภาพ `ทางเปลี่ยว` ตาม D16 ที่เหลือคงเดิม ไม่ลบภาพ Demo จนกว่าจะมีภาพ Final ครบ
+
+**S7 UI ทุก Canvas**
+- ทุก Canvas ใช้ `Scale With Screen Size` 1920×1080 Match 0.5 ตาม G1 จุดที่ผิดตอนนี้: `MapTestScene` (Constant Pixel Size) และ HUD ฉากต่อสู้ที่ตั้งด้วยโค้ดต้องตรวจทีละตัว
+- ไม่มีข้อความเล็กกว่า 20 px ที่ 1080p
+
+**S8 Main Menu: เอฟเฟกต์ปุ่มและเลือกโหมด**
+- ปุ่มวงควันของ MatchaDesu (`UiSmokeButton`) ถูก merge มาแล้ว งานนี้คือทำให้ปุ่ม "เล่นเต็ม 7 ชั้น"/"เล่นสั้น 4 ชั้น" ที่มีอยู่แล้วใช้สไตล์เดียวกันและกดด้วยคีย์บอร์ดได้ ไม่เพิ่มโค้ดเลือกโหมดใหม่
+- เคารพตัวเลือก "ลดแสงกะพริบ" (`GameSettings.ReduceMotion`) กับเอฟเฟกต์ควัน (ฉากเมนูใหม่ยังไม่ผูก)
+
+### Ticket
+
+หนึ่ง ticket หนึ่ง commit ติ๊กเมื่อผ่าน DoD เท่านั้น ลำดับ H0 → H1 ต้องทำก่อน ที่เหลือคู่ขนานได้ตามการพึ่งพา
+
+- [x] **H0 Checkpoint:** `git status` สะอาด, commit/discard `EntitiesClientSettings.asset`, tag หรือ branch `checkpoint/before-final-assets`, สร้าง branch `feature/final-assets` จาก `TestMergeV4` **DoD:** `git status` ไม่มีไฟล์ค้าง และ checkpoint ย้อนกลับได้ด้วยคำสั่งเดียว **ผล 10 ต.ค.:** branch `checkpoint/before-final-assets` + `feature/final-assets` (commit `bddcce0`)
+- [x] **H1 ตัดสิน D15, D16, D18** กับตะวัน (ใช้ default ถ้าไม่ตอบแล้วระบุใน commit) **DoD:** ตารางจับคู่ไอคอน ↔ โหนดถูกเขียนลงไฟล์นี้ **ผล 10 ต.ค.:** ใช้ default ตามตาราง D15, D16 ผูกกับ Event_WanderingShaman, D17 ค่าการ์ดตรงชีต 42/42 ไม่ต้องแก้, D18 ไม่ทับ (นำเข้า branch แยก)
+- [x] **H2 คัดลอกและนำเข้า Asset Final** (ต้องปิด Unity หรือทำผ่าน Editor) คัดลอก PNG ทุกชุดเข้า `Assets/Art/...` ตามโครงเดิม, นำเข้า 3 package ตาม S1 **DoD:** จำนวนไฟล์ตรงต้นทาง (ไอคอน 7, MapPaper 4, การ์ด 42, อีเวนต์ 1), Console 0 error, `.meta` ครบ, ไม่มี scene ถูกแก้โดยไม่ตั้งใจ (`git diff --stat Assets/Scenes` แสดงเฉพาะไฟล์ที่ตั้งใจ) **ผล 10 ต.ค.:** การ์ด 42, ไอคอน 7, MapPaper 4, อีเวนต์ 1, package 3 ไม่มี scene/script ในแพ็กเกจ (commit `e5a02f3`, `70920e8`)
+- [x] **H3 ไอคอนโหนด Final** (S4) แทน Demo ในโปรไฟล์โหนดและ legend **DoD:** โหนด 7 ชนิดแต่ละชนิดแสดงไอคอนจากชุด Final, ไม่เหลือการอ้างไอคอน Demo (`grep` ใน `MapEngineData`), ภาพ screenshot แผนที่แสดงไอคอนครบ **ผล 10 ต.ค.:** ผูกครบ 7 โปรไฟล์ (commit `4cfa662`) ยังไม่ได้ดูภาพแผนที่จริง
+- [~] **H4 กระดาษแผนที่ 4 ชิ้น** (S3) **DoD:** โหมดสั้นและเต็มไม่เห็นรอยต่อ/ขอบ, `MapUITests` ยัง PASS **ผล 10 ต.ค.:** กระดาษใน NavigateFinal ใช้แล้ว (PaperFloor) ภาพ MapPaper 4 ชิ้นยังไม่ผูก รอ D20: ต้องต่อเป็นช่วงตามจำนวนชั้นหรือไม่
+- [x] **H5 แก้ว: ไม่จมกระดาษ ไม่เรืองแสง** (S3) **DoD:** `Mat_Glass.mat` ไม่มี Emission, วัดระยะ Y ของแก้วเหนือพื้นกระดาษ > 0 ที่ทุกชั้นและทุกโหนด (test), ตะวันดู screenshot แล้วรับรอง **ผล 10 ต.ค.:** ปิด GlassPointLight สีฟ้า, Material.008 โปร่งใสไม่มี Emission, ยกแก้วให้ฐานอยู่เหนือกระดาษ (`PlayerMarker.LiftGlassAboveSurface`) (commit `d66e2ab`) รอตะวันดูภาพ
+- [x] **H6 มือ ต้นไม้ท้ายแผนที่ และ Material/Texture/UV กระดาษ** (S3) **DoD:** ไม่มีวัตถุสีชมพู, ต้นไม้ปรากฏท้ายแผนที่ทั้งสองโหมด **ผล 10 ต.ค.:** สลับโมเดลแผนที่เป็น NavigateFinal (มือ, แก้ว, ต้นไม้, กระดาษ) ใน `MapTestScene` (commit `0fd6aaf`)
+- [x] **H7 ฉากต่อสู้ Final** (S2, D18) **DoD:** `AutomatedCombatFlowTest` PASS, ไม่มี missing script/shader ใน log, กด C สองครั้งกล้องกลับตำแหน่งเดิม **ผล 10 ต.ค.:** `CombatSceneDressingTool` ใช้ Combat.fbx, render ตรวจแล้ว (commit `cf87dfc`) `AutomatedRunFlowTest` 59 ข้อผ่าน
+- [x] **H8 การ์ด 42 ใบ** (S5) **DoD:** log `bound=42 placeholder=0 orphan=0`, รันซ้ำผลเท่าเดิม, `CardDataSO` ทั้ง 42 มีภาพไม่ null, ภาพไม่ยืดในมุมมองการ์ดทั้ง 5 แบบ แทนที่ B7 **ผล 10 ต.ค.:** `CardArtBinder` bound=42 missing=0 รันซ้ำไม่เปลี่ยน (commit `47cfcc7`)
+- [x] **H9 ภาพอีเวนต์** (S6, D16) **DoD:** เล่นอีเวนต์ที่ผูกแล้วเห็นภาพ Final, `EventCatalogTests` ยัง PASS 46/46 **ผล 10 ต.ค.:** `Event_WanderingShaman.illustration`; `EventCatalogTests` 46/46
+- [x] **H10 Canvas ทุกฉาก** (S7) **DoD:** ทุก Canvas เป็น Scale With Screen Size 1920×1080 (ตรวจด้วย editor script ที่พิมพ์ผลทุกฉาก), screenshot ที่ 16:9 และ 16:10 ไม่มีองค์ประกอบล้นจอ **ผล 10 ต.ค.:** `MapTestScene` เปลี่ยนเป็น Scale With Screen Size 1920x1080 ฉากอื่นถูกอยู่แล้ว, `CardEngineSetupTool` ตั้ง reference resolution
+- [x] **H11 Main Menu: ปุ่มโหมดและเอฟเฟกต์** (S8) **DoD:** ปุ่มโหมดสองปุ่มใช้สไตล์ควัน กดด้วยเมาส์และ Tab/Enter ได้, เลือกโหมดแล้ว "เล่นต่อ" กลับมาโหมดเดิม (A10 ยังผ่าน), `MainMenuLayoutTests` PASS (ปรับ test ถ้าเลย์เอาต์เปลี่ยนตาม GotDev) **ผล 10 ต.ค.:** ปุ่มโหมดใช้ `UiSmokeButton`, เพิ่มแสงตอนโฟกัสคีย์บอร์ด; `MainMenuLayoutTests` PASS
+- [x] **H12 ตรวจรวมและเอกสาร** รัน test ชุดเต็ม + 3 smoke test, build Windows ตรวจสีชมพู, อัปเดต `Docs/Report/asset_usage.md` (F12) **DoD:** C1 gate ผ่าน และไม่มีไฟล์ Final ที่ไม่มีคำอธิบายการใช้งาน **ผล 10 ต.ค.:** เขียน `Docs/Report/asset_usage.md` แล้ว; test 11 ชุด + `AutomatedRunFlowTest` 59 ข้อผ่าน 100%; แก้ปัญหา DOTween scene transition และ Map/Card visual polish ครบถ้วน (commit `f51ea49`)
+
+**ผลต่อ ticket เดิม:** B7 ถูกแทนที่ด้วย H8, D13 (ไอคอนโหนดจากศิลปิน) ปิดด้วย H2-H3, A5/G2 ใช้ไอคอนและภาพ Final, F12 รวมเข้า H12 ภาพการ์ดที่เคยเป็น placeholder 13 ใบใน `known_limitations` (D3) ตัดออกได้เมื่อ H8 ผ่าน
+
+**ความเสี่ยงสูงสุด:** `.unitypackage` ทับ scene (S1) และชื่อวัตถุที่โค้ดค้นหาเปลี่ยนตอนแทนฉากต่อสู้ (S2) สองข้อนี้ย้อนกลับด้วย checkpoint ใน H0
+
+---
+
+## แผนงานปรับปรุง 6 ชุด (อัปเดต 10 ต.ค. 2569)
+
+### ชุดที่ 1: Asset Final และปรับแต่งภาพ (Phase H) [เสร็จสมบูรณ์ 100%]
+- [x] H0 Checkpoint (commit `bddcce0`)
+- [x] H1 ตัดสินคู่เทียบ D15, D16, D18
+- [x] H2 นำเข้า Asset Final (CombatFinal, NavigateFinal, Scarecrow, การ์ด 42 ใบ, ไอคอน 7 ชนิด, MapPaper 4 ชิ้น, อีเวนต์ 1 ภาพ)
+- [x] H3 ไอคอนโหนด Final ผูกครบ 7 โปรไฟล์
+- [x] H4 กระดาษแผนที่ NavigateFinal ใน MapTestScene
+- [x] H5 แก้วไม่จม ไม่เรืองแสง (ยกแก้วเหนือกระดาษ)
+- [x] H6 มือ ต้นไม้ท้ายแผนที่ Material/Texture/UV
+- [x] H7 ฉากต่อสู้ Final (CombatSceneDressingTool ใช้ Combat.fbx)
+- [x] H8 การ์ด 42 ใบ (bound=42 placeholder=0)
+- [x] H9 ภาพอีเวนต์ (ทางเปลี่ยว ผูก WanderingShaman)
+- [x] H10 Canvas ทุกฉากเป็น Scale With Screen Size 1920×1080
+- [x] H11 ปุ่มโหมดเต็ม/สั้นใช้สไตล์ควัน และเพิ่มแสงโฟกัสคีย์บอร์ด
+- [x] H12 ตรวจรวม + asset_usage.md + Map Polish (โหมดสั้น 4 ชั้นกระชับ, สายตาเรืองแสง MapForestEyes, MakeReadable ขอบดำตัวหนังสือการ์ด, DOTween SetLink cleanup)
+
+### ชุดที่ 2: ระบบเกมตามแผนเดิม (ไม่เปลี่ยน)
+- [ ] **A4 เมรุ:** สร้าง MeruScene ใส่ Build Settings เผาการ์ดได้ (เอฟเฟกต์เผาของ GotDev มีแล้ว)
+- [ ] **A5 อีเวนต์หมอกดำครบ 5:** ใส่ 5 อีเวนต์, แก้ชื่อ Event_Wods, ชื่อโหนด "หมอกดำ"
+- [ ] **A7 Elite:** PraiGhostEliteProfile ขวัญ 45
+- [ ] **A9 ศัตรูทั่วไป 3 แบบ:** แก้ enemyId ซ้ำ roster minor 3 / elite 1 / boss 1
+  *หมายเหตุ:* ก่อน A7/A9 ต้องคืนค่า maxKhwan (ปัจจุบันเป็น 1 จาก commit 88b21ba) เป็น 30/45/60 เพื่อให้ EncounterTableTests ผ่านครบ
+
+### ชุดที่ 3: เสียง, Settings, Pause (ตามที่ตะวันกำหนด)
+- [ ] **B1/B2/B3:** ยึด Pause/Settings ของ Hundredz (อยู่ใน TestMergeV4 แล้ว) แต่เพิ่ม AudioMixer จริง ครอบทุกช่อง: MainMixer มี group Master/BGM/SFX/Ambience และ exposed parameter MasterVol, BgmVol, SfxVol, AmbVol ให้ slider ของ Hundredz สั่งผ่านมิกเซอร์แทนการตั้ง volume ต่อ AudioSource (ตอนนี้ยังไม่มี mixer ตามแผน B1) ค่าเริ่มต้นเพลง 0.5 ที่ตัดสินไว้ต้องคงอยู่
+  *DoD:* test ตั้ง slider → SetFloat บน mixer → อ่านจาก PlayerPrefs ได้ค่าเดิม, ทุกเสียงทั้ง BGM, Ambience, SFX ผ่าน mixer, AudioLibraryTests และ SettingsTests ยัง PASS
+  *ค้างจากเดิม:* hover SFX ใน CardPlayController3D
+- [ ] **B9 Game Over / Victory (ตามที่ตะวันอธิบาย):**
+  - Game Over: ภาพตัวละคร fade เป็นมืด แล้วข้อความ Game Over ขึ้น ตามด้วยสรุป run และปุ่ม "เริ่มใหม่"/"เมนูหลัก"
+  - Victory: ภาพ "พ่อขวัญ" ลืมตาตื่น แล้วขึ้น Victory ตาม D19
+  *DoD:* ทั้งสองหน้าเล่นลำดับ fade ได้, ไม่ยืดสัดส่วนภาพ, ข้ามด้วยคลิกได้, ไม่มี warning เรื่อง texture
+- [ ] **B4 Loading:** ตามเดิม SceneLoader fade + progress แทน SceneManager.LoadScene ทุกจุด
+- [ ] **B5 Particle:** ทำเสริมจาก GotDev (เผาการ์ดที่ทำแล้ว) ที่เหลือ: ควันธูป, เปลวเทียน, ลงการ์ด (ทอง/แดง), มลทินแตก
+- [ ] **B6 Animator:** ตามเดิม EnemyPresence.controller 4 state (รวมกับ F10)
+
+### ชุดที่ 4: Phase F (ปรับตามแผนใหม่)
+- [ ] **F2** UI/UX mockup + screenshot ทุกฉาก (นราธรเซ็นรับ)
+- [ ] **F3** เสียงครบ 27 ไฟล์ (รวมเช็ค mixer)
+- [ ] **F4** PlayerPrefs ย้าย save แผนที่ออก
+- [ ] **F5** Serialization atomic
+- [ ] **F6** Loading หมอกดำ (ขยาย B4)
+- [ ] **F7** ตัวจัดการ Esc กลาง (ทำก่อนเพิ่ม UI อื่น)
+- [ ] **F8** VFX Graph (ตัดสินหลัง B5)
+- [ ] **F9** ตัวเลขดาเมจ/combo
+- [ ] **F10** Animator เพิ่ม (รวมกับ B6)
+- [ ] **F11** Cutscene (ทำเมื่อ F1-F10 ผ่าน)
+*หมายเหตุ:* F12 รวมเข้า H12 เรียบร้อยแล้ว, เส้นตัดเดิม: F1-F7 ก่อน 14 ต.ค.
+
+### ชุดที่ 5: Phase G (ตามเดิม + เพิ่มรูปในคำอธิบายโหนด)
+- [ ] **G1** Theme กลาง UITheme.asset สี CI
+- [ ] **G2** แผนที่: ภาพรวม (Tab), ไอคอน 7 ชนิด (ใช้ชุด Final จาก H3), legend ไทย (ทำส่วนแรกแล้ว), ปุ่ม Pause, แถบสถานะ, เอา Reset Map ออก
+  *เพิ่ม:* tooltip/คำอธิบายโหนดแสดง รูปไอคอนโหนดประกอบ ข้างชื่อและคำอธิบาย (รูปจาก H3) ทั้งใน legend และ tooltip ตอนชี้โหนด ขนาดรูป ≥ 48 px ที่ 1080p ไม่ใช้สีอย่างเดียวแยกประเภท
+  *DoD เพิ่ม:* ทุกแถว legend และ tooltip มีรูปไอคอนจริง ไม่ใช่รูปทรงชั่วคราว
+- [ ] **G3** ฉากต่อสู้: ลบ debug IMGUI, HUD ไทย, แถบสอนเล่น, แบนเนอร์มุมบน
+
+### ชุดที่ 6: ทดสอบและรายงาน (ตามเดิม)
+- [ ] **C1 gate 14 ต.ค.:** compile, smoke test 3 ตัว, EditMode ทั้งหมด, build .exe ชนะ Boss 1 รอบ
+- [ ] **C2** Playtest 2 รอบ (15 และ 19 ต.ค.)
+- [ ] **C3** เอกสารเทคนิค
+- [ ] **D1-D6** รายงาน, สัดส่วนงาน, สไลด์/วิดีโอ, แพ็กไฟล์ส่ง
+
+---
+
+## ลำดับเวลาที่ปรับปรุง (ส. 10 ต.ค. – Gate อ. 14 ต.ค.)
+
+| วัน | เป้าหมายการดำเนินงาน |
 |---|---|
-| อ. 6 – พฤ. 8 | A0 – A10, B0 (D1 เป็นงานของทีม Game Design) |
-| ศ. 9 – จ. 12 | B1, B2, B3, B7, B8, B9 |
-| อ. 13 – อ. 14 | B4, B5, B6, C1 |
-| พ. 15 | Playtest รอบ 1 |
-| พฤ. 16 – อา. 18 | แก้จาก playtest, C3, D1, D2, D4 |
-| จ. 19 | Playtest รอบ 2, D3, สไลด์ D5 |
-| อ. 20 | build สุดท้ายขึ้น Drive (D6), ซ้อมนำเสนอ |
+| ส. 10 ต.ค. | ชุดที่ 1 (Phase H) เสร็จสมบูรณ์ (Checkpoint, นำเข้าโมเดล/ภาพ, ปรับ Map/Card), คืนค่า maxKhwan |
+| อา. 11 ต.ค. | ตรวจสอบ H3-H8 ซ้ำ, ทำ A9 (ศัตรู 3 แบบ), A7 (Elite PraiGhost) |
+| จ. 12 ต.ค. | ทำ A4 (เมรุ), A5 (หมอกดำ 5 อีเวนต์), B1/B2/B3 (AudioMixer), B9 (Game Over / Victory) |
+| อ. 13 ต.ค. | ทำ B4 (Loading), B5 (Particle), B6/F10 (Animator), F7 (จัดการ Esc), G2/G3 ส่วนที่ทัน |
+| อ. 14 ต.ค. (เย็น) | H12 + C1 Gate (ถ้างานไม่ทัน ให้ตัดตามเส้น F8-F11 ก่อน โดยไม่ตัด Gate) |
+| พ. 15 ต.ค. | Playtest รอบที่ 1 |
+| พฤ. 16 – อา. 18 ต.ค. | แก้ไขข้อบกพร่องจาก Playtest, C3, D1, D2, D4 |
+| จ. 19 ต.ค. | Playtest รอบที่ 2, D3, เตรียมสไลด์ D5 |
+| อ. 20 ต.ค. | Build สุดท้ายขึ้น Drive (D6), ซ้อมนำเสนอ |
+| พ. 21 ต.ค. | นำเสนอผลงาน |
 
 ## ไม่อยู่ใน scope (ใส่รายงานส่วน Future Work)
 - อัปเกรดการ์ดที่เมรุ (ยังไม่มีการ์ดเวอร์ชันอัปเกรด)

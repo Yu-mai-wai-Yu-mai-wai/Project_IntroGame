@@ -37,6 +37,11 @@ MonoBehaviour:
   cardBasePrice: 20
   cardPricePerMerit: 8
   priceVariance: 0.15
+  cardFaceTemplate: {fileID: 1901376002212059369, guid: d95839d994a10bd41a3bc1653dcced8c, type: 3}
+  deckPileSprite: {fileID: 0}
+  buyLiftDuration: 0.18
+  buyFlyDuration: 0.5
+  buyEndScale: 0.3
   amulets:
   - relicId: takrut_tone
     displayName: "\u0E15\u0E30\u0E01\u0E23\u0E38\u0E14\u0E42\u0E17\u0E19"
