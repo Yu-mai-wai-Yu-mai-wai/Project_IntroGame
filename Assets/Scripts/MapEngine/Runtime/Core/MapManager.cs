@@ -292,16 +292,20 @@ namespace TawanOS.MapEngine
             { new Vector2Int(1, 4),  "Node.018" },
         };
 
-        // X of each node column on the paper board, start node first. The board has 9 columns (start + 7 floors + boss);
-        // a map with fewer floors uses only the first columns, so the 4-floor mode is a short map instead of
-        // stretching four floors across the whole board.
+        // X of each node column on the paper board, start node first. The board has 9 columns (start + 7 floors + boss).
+        // The boss (ใจกลางป่าช้า) always stands on the last column at the far end of the board, so a map with fewer
+        // floors spreads its floors evenly between the start and the boss instead of stopping halfway along the board.
         private static readonly float[] TableColumnXs = { 18.61f, 13.55f, 9.65f, 5.80f, 2.15f, -2.93f, -7.62f, -11.54f, -15.47f };
 
         /// <summary>World X of floor <paramref name="floorIndex"/> (-1 = start node, totalFloors = boss) on the board.</summary>
         public static float TableFloorX(int floorIndex, int totalFloors)
         {
-            int column = Mathf.Clamp(floorIndex + 1, 0, Mathf.Min(totalFloors + 1, TableColumnXs.Length - 1));
-            return TableColumnXs[column];
+            int last = TableColumnXs.Length - 1;
+            float t = Mathf.Clamp01((floorIndex + 1) / (float)Mathf.Max(1, totalFloors + 1));
+            float column = t * last;
+            int below = Mathf.FloorToInt(column);
+            if (below >= last) return TableColumnXs[last];
+            return Mathf.Lerp(TableColumnXs[below], TableColumnXs[below + 1], column - below);
         }
 
         private bool bakedNodeIconsHidden;

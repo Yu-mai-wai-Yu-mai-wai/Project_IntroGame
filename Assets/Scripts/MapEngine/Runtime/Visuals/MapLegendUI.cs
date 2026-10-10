@@ -34,7 +34,7 @@ namespace TawanOS.MapEngine
                 case NodeType.RestSite:   return "เมรุ";
                 case NodeType.Treasure:   return "กองของเซ่น";
                 case NodeType.Store:      return "ศาลเจ้า";
-                case NodeType.Boss:       return "บอสใหญ่";
+                case NodeType.Boss:       return "ใจกลางป่าช้า";
                 case NodeType.Event:      return "หมอกดำ";
                 default:                  return "เส้นทางลึกลับ";
             }
@@ -49,7 +49,7 @@ namespace TawanOS.MapEngine
                 case NodeType.RestSite:   return "จุดพักศักดิ์สิทธิ์ เผาทำลายการ์ดออกจากสำรับ หรือสวดชุบขวัญ";
                 case NodeType.Treasure:   return "เครื่องเซ่นไหว้โบราณ บันทึกเรื่องเล่าและเลือกรับการ์ดใหม่";
                 case NodeType.Store:      return "ศาลบูชาเร้นลับ แลกเปลี่ยนธูปเพื่อซื้อการ์ดและเครื่องราง";
-                case NodeType.Boss:       return "เจ้าแห่งวิญญาณประจำชั้น ปราบให้สิ้นซากเพื่อผ่านด่าน";
+                case NodeType.Boss:       return "โหนดสุดท้ายของแผนที่ ที่สถิตของผีตายโหง ไม่พบระหว่างทาง ปราบให้สิ้นเพื่อเรียกขวัญกลับคืน";
                 case NodeType.Event:      return "เหตุการณ์ลึกลับในสายหมอก การตัดสินใจจะเปลี่ยนชะตากรรม";
                 default:                  return "จุดหมายที่ยังไม่มีข้อมูล";
             }
