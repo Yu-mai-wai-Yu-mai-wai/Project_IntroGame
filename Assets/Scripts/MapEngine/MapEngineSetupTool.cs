@@ -311,7 +311,7 @@ namespace TawanOS.MapEngine
             pointLightGo.transform.position = new Vector3(14.0f, 4.5f, 1.5f);
 
             // Setup 3D Environment (MapNavigate.fbx - PaperFloor + Sacred Forest Trees)
-            string mapNavigatePath = "Assets/ProjectAsset/MapNavigate/MapNavigate.fbx";
+            string mapNavigatePath = "Assets/ProjectAsset/NavigateFinal/MapNavigate.fbx";
             GameObject mapNavigateAsset = AssetDatabase.LoadAssetAtPath<GameObject>(mapNavigatePath);
             if (mapNavigateAsset != null)
             {
