@@ -85,12 +85,12 @@
 - แก้ใน `GameFlowManager.HandleCombatEnded`: ถ้า node ที่เข้ามาคือ `NodeType.Boss` → `RunState.EndRun()` + ลบ map save → เปิดหน้าจบเกม (Victory) ที่มีสรุป run (ชั้นที่ไป, ขวัญที่เหลือ, จำนวนการ์ด, ธูป) และปุ่ม "เมนูหลัก" (ใช้ร่วมกับ C3)
 - **Done when:** batch test `AutomatedRunFlowTest` (สร้างใหม่ ใน `Assets/Scripts/Editor/`): จำลองเข้า Boss แล้ว `CombatManager.EndCombat(true)` → active scene เป็นหน้า Victory และ `RunState.HasSave == false`; จำลองแพ้ → ได้หน้า Game Over
 
-### [ ] A4 เมรุใช้งานได้
+### [~] A4 เมรุใช้งานได้ — ตรวจ 10 ต.ค.: `MeruScene` อยู่ใน Build Settings แล้ว ค้าง: เล่นจริงว่าเผาการ์ดได้
 - รัน `TawanOS.GameFlow.MeruSetupTool.SetupMeruScene` สร้าง `MeruScene` แล้วใส่ Build Settings ต่อท้าย
 - ไม่มีการ์ดใบไหนตั้ง `upgradedCard` เลย (0/42) ปุ่ม "อัพเกรด" จึงถูกปิดพร้อมข้อความ "ไม่มีการ์ดที่อัพเกรดได้" อยู่แล้ว (`MeruViewUI.ShowChoice`) ไม่ต้องแก้โค้ด แค่บันทึกใน Future Work จนกว่าทีม Design จะทำการ์ดอัปเกรด
 - **Done when:** เข้าโหนดเมรุแล้วเปิดฉาก เผาการ์ดได้ จำนวนการ์ดในเด็คลด กลับแผนที่ได้
 
-### [ ] A5 อีเวนต์หมอกดำครบ
+### [~] A5 อีเวนต์หมอกดำครบ — ตรวจ 10 ต.ค.: `Events/EventCatalog.asset` (ตัวที่ EventScene ใช้) มี 5 อีเวนต์ + `offeringEvent`, ชื่อไฟล์ `Event_Wods` และ title "วอดส์" ถูกแล้ว, ไม่มี `Event_New`, โหนดชื่อ "หมอกดำ" แล้ว ค้าง: เล่นโหนดหมอกดำ 5 ครั้งไม่ซ้ำ, ลบ `EventEngineData/EventCatalog.asset` ที่ไม่มีอะไรอ้าง (ถามตะวันก่อน)
 - `EventCatalog.asset` อ้างแค่ `what` (วอดส์) ให้ใส่ `Event_GhostGamble`, `Event_SpiritHouse`, `Event_WanderingShaman`, `Event_WellVoice` และ `what` ผ่าน editor script (ห้ามรัน `SetupEventScene` ซ้ำ เพราะจะสร้างฉากใหม่ทับ)
 - แก้ชื่อ `what.asset` เป็น `Event_Wods.asset` และ title "วอดส์่" เป็น "วอดส์" (มีวรรณยุกต์เกิน)
 - ลบ `Event_New.asset` (placeholder) ถ้าไม่มีอะไรอ้างถึง
@@ -104,7 +104,7 @@
 - ทางเลือก ข (ถ้าทีมเลือกทำ): `RelicEffects` ใน `TawanOS.GameFlow` อ่าน `RunState.RelicIds` ตอนเริ่ม combat แล้วใช้ effect ที่มีอยู่แล้ว (`AddShield`, `AddMerit`, `RaiseCorruptionThreshold`, `ApplyStatus`) map จาก relicId ทีละตัว
 - **Done when:** ไม่มีทางซื้อหรือได้ของที่ไม่มีผลในเกม
 
-### [ ] A7 ศัตรู Elite
+### [~] A7 ศัตรู Elite — ตรวจ 10 ต.ค.: `PraiGhostEliteProfile` แยกจาก minor และอยู่ใน `EncounterTable.elite` แล้ว ค้าง: `maxKhwan` ยังเป็น 1 (รอคืนค่า 45)
 - ใน `EncounterTable` (A1) ใส่ศัตรู Elite ที่ต่างจาก minor: duplicate `PraiGhostProfile` เป็น `PraiGhostEliteProfile` ตั้ง `maxKhwan: 45` (1.5 เท่าของศัตรูทั่วไป) แล้วแจ้งทีม Game Design ให้ปรับ
 - ที่มาของตัวเลข (PM มอบให้ Claude กำหนด 6 ต.ค.): ศัตรูทั่วไป 30 (คืนค่าเดิม), Elite 45, Boss 60 ตั้งตามสัดส่วนเวลาต่อสู้ใน Doc (ทั่วไป 5–10 นาที, Boss 10–15 นาที) เป็นค่าเริ่มต้นที่ต้องปรับหลัง playtest รอบ 1 ไม่ใช่ค่าที่ balance แล้ว ค่า 1 เดิมมาจากคอมมิต `3b97241` และน่าจะเป็นค่าทดสอบ
 - **Done when:** Elite กับ minor ใช้ profile คนละตัว, `maxKhwan` ของ Elite = 45
@@ -127,7 +127,7 @@
 - แก้ตัวทดสอบ commit `31eb65e`: `AutomatedCombatFlowTest` เริ่มจาก run ใหม่ (ล้าง save), คลิกเฉพาะโหนดต่อสู้, ใช้งบเวลาจริง 240 วินาทีแทนงบเฟรม
 - **Done when:** compile ผ่าน, smoke test PASS, `git status` หลังรันไม่มีไฟล์แผนที่/scene เปลี่ยน (ตรวจแล้ว: เหลือเฉพาะไฟล์ font ที่ Unity แก้เอง รอ F1)
 
-### [ ] A9 ศัตรูทั่วไปตัวที่ 3 + แก้ id ซ้ำ
+### [~] A9 ศัตรูทั่วไปตัวที่ 3 + แก้ id ซ้ำ — ตรวจ 10 ต.ค.: `enemyId` ไม่ซ้ำแล้ว (6 ตัว), `EncounterTable` มี minor 3 (Prai, NewEnemy, GraveGhost) / elite 1 / boss 1 ค้าง: `maxKhwan` ยังเป็น 1 (รอคืนค่า 30/60), เล่นแผนที่ 1 รอบเจอศัตรูทั่วไป ≥ 2 แบบ
 - ปัญหา: roster ตอนนี้มีศัตรูทั่วไปจริงตัวเดียว `NewEnemyProfile` ใช้ `enemyId: enemy_prai` ซ้ำกับ `PraiGhostProfile` และเด็คเริ่มต้นเหมือนกัน
 - ขั้นต่ำที่ต้องมีใน build (PM ตัดสิน): ศัตรูทั่วไป 3 แบบ, Elite 1, Boss 1
 - ทำ: แก้ `NewEnemyProfile` ให้ `enemyId` ไม่ซ้ำ และสร้างศัตรูทั่วไปให้ครบ 3 แบบจากการ์ดที่มีอยู่ (เด็คต่างกัน ชื่อ/ภาพต่างกัน `maxKhwan: 30`) ตัวเลขการ์ดและเด็คเป็นของทีม Game Design ฝั่ง Dev ใส่ค่าเริ่มต้นให้เล่นได้ แล้วส่งให้ทีม Game Design ปรับ
@@ -574,11 +574,11 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 - [x] H12 ตรวจรวม + asset_usage.md + Map Polish (โหมดสั้น 4 ชั้นกระชับ, สายตาเรืองแสง MapForestEyes, MakeReadable ขอบดำตัวหนังสือการ์ด, DOTween SetLink cleanup)
 
 ### ชุดที่ 2: ระบบเกมตามแผนเดิม (ไม่เปลี่ยน)
-- [ ] **A4 เมรุ:** สร้าง MeruScene ใส่ Build Settings เผาการ์ดได้ (เอฟเฟกต์เผาของ GotDev มีแล้ว)
-- [ ] **A5 อีเวนต์หมอกดำครบ 5:** ใส่ 5 อีเวนต์, แก้ชื่อ Event_Wods, ชื่อโหนด "หมอกดำ"
-- [ ] **A7 Elite:** PraiGhostEliteProfile ขวัญ 45
-- [ ] **A9 ศัตรูทั่วไป 3 แบบ:** แก้ enemyId ซ้ำ roster minor 3 / elite 1 / boss 1
-  *หมายเหตุ:* ก่อน A7/A9 ต้องคืนค่า maxKhwan (ปัจจุบันเป็น 1 จาก commit 88b21ba) เป็น 30/45/60 เพื่อให้ EncounterTableTests ผ่านครบ
+- [~] **A4 เมรุ:** สร้าง MeruScene ใส่ Build Settings เผาการ์ดได้ (เอฟเฟกต์เผาของ GotDev มีแล้ว) *(10 ต.ค.: อยู่ใน Build Settings แล้ว เหลือเล่นจริง)*
+- [~] **A5 อีเวนต์หมอกดำครบ 5:** ใส่ 5 อีเวนต์, แก้ชื่อ Event_Wods, ชื่อโหนด "หมอกดำ" *(10 ต.ค.: ข้อมูลครบแล้ว เหลือเล่นจริง 5 ครั้งไม่ซ้ำ)*
+- [~] **A7 Elite:** PraiGhostEliteProfile ขวัญ 45 *(10 ต.ค.: profile แยกแล้ว เหลือ maxKhwan)*
+- [~] **A9 ศัตรูทั่วไป 3 แบบ:** แก้ enemyId ซ้ำ roster minor 3 / elite 1 / boss 1 *(10 ต.ค.: id ไม่ซ้ำ roster ครบแล้ว เหลือ maxKhwan)*
+  *หมายเหตุ:* ก่อน A7/A9 ต้องคืนค่า maxKhwan (ปัจจุบันเป็น 1 จาก commit 88b21ba) เป็น 30/45/60 เพื่อให้ EncounterTableTests ผ่านครบ *(ตรวจ 10 ต.ค.: ยังเป็น 1 อยู่ 5 profile)*
 
 ### ชุดที่ 3: เสียง, Settings, Pause (ตามที่ตะวันกำหนด)
 - [ ] **B1/B2/B3:** ยึด Pause/Settings ของ Hundredz (อยู่ใน TestMergeV4 แล้ว) แต่เพิ่ม AudioMixer จริง ครอบทุกช่อง: MainMixer มี group Master/BGM/SFX/Ambience และ exposed parameter MasterVol, BgmVol, SfxVol, AmbVol ให้ slider ของ Hundredz สั่งผ่านมิกเซอร์แทนการตั้ง volume ต่อ AudioSource (ตอนนี้ยังไม่มี mixer ตามแผน B1) ค่าเริ่มต้นเพลง 0.5 ที่ตัดสินไว้ต้องคงอยู่
