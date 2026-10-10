@@ -33,6 +33,8 @@ MonoBehaviour:
   statFontSize: 2
   descriptionFontSize: 1
   abilities: []
+  upgradedCard: {fileID: 0}
+  cardImage: {fileID: 21300000, guid: a54449492b885ba4791b4f825b8f636c, type: 3}
   cardBackground: {fileID: 0}
   artwork: {fileID: 0}
   frameBorder: {fileID: 0}

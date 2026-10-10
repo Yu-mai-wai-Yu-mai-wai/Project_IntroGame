@@ -13,19 +13,26 @@ MonoBehaviour:
   m_Name: Card_s_wi06
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wi06
-  cardNameThai: "\u0e1e\u0e34\u0e18\u0e35\u0e2a\u0e30\u0e40\u0e14\u0e32\u0e30\u0e40\u0e04\u0e23\u0e32\u0e30\u0e2b\u0e4c"
+  cardNameThai: "\u0E1E\u0E34\u0E18\u0E35\u0E2A\u0E30\u0E40\u0E14\u0E32\u0E30\u0E40\u0E04\u0E23\u0E32\u0E30\u0E2B\u0E4C"
   cardNameEng: Misfortune-Clearing Rite
-  descriptionFormat: "\u0e44\u0e14\u0e49\u0e23\u0e31\u0e1a\u0e0a\u0e33\u0e23\u0e30\u0e25\u0e49\u0e32\u0e07 1 \u0e04\u0e23\u0e31\u0e49\u0e07"
+  descriptionFormat: "\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A\u0E0A\u0E33\u0E23\u0E30\u0E25\u0E49\u0E32\u0E07
+    1 \u0E04\u0E23\u0E31\u0E49\u0E07"
   magicSchool: 0
   cardType: 0
   targetType: 0
-  customTypeText: "\u0e2d\u0e32\u0e04\u0e21 \u2022 \u0e21\u0e19\u0e15\u0e4c\u0e02\u0e32\u0e27"
+  customTypeText: "\u0E2D\u0E32\u0E04\u0E21 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E02\u0E32\u0E27"
   meritCost: 3
   corruptionGain: 0
   baseValue: 0
   durability: 0
   familiarHealth: 0
   familiarDamage: 0
+  fontSizeAll: 1
+  nameFontSize: 1
+  typeFontSize: 1
+  costFontSize: 1
+  statFontSize: 1
+  descriptionFontSize: 1
   abilities:
   - trigger: 0
     effect: 10
@@ -35,6 +42,8 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}
+  upgradedCard: {fileID: 0}
+  cardImage: {fileID: 21300000, guid: 20fabd1462049624cac7341d6f59183c, type: 3}
   cardBackground: {fileID: 0}
   artwork: {fileID: 0}
   frameBorder: {fileID: 0}

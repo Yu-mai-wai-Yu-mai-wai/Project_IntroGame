@@ -13,19 +13,27 @@ MonoBehaviour:
   m_Name: Card_s_bf03
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bf03
-  cardNameThai: "\u0e1c\u0e35\u0e2b\u0e31\u0e27\u0e02\u0e32\u0e14"
+  cardNameThai: "\u0E1C\u0E35\u0E2B\u0E31\u0E27\u0E02\u0E32\u0E14"
   cardNameEng: Headless Ghost
-  descriptionFormat: "\u0e44\u0e14\u0e49\u0e23\u0e31\u0e1a\u0e01\u0e32\u0e23\u0e4c\u0e14 \"\u0e2b\u0e31\u0e27\u0e01\u0e30\u0e42\u0e2b\u0e25\u0e01\u0e2d\u0e32\u0e16\u0e23\u0e23\u0e1e\u0e4c\" 1 \u0e43\u0e1a"
+  descriptionFormat: "\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A\u0E01\u0E32\u0E23\u0E4C\u0E14
+    \"\u0E2B\u0E31\u0E27\u0E01\u0E30\u0E42\u0E2B\u0E25\u0E01\u0E2D\u0E32\u0E16\u0E23\u0E23\u0E1E\u0E4C\"
+    1 \u0E43\u0E1A"
   magicSchool: 1
   cardType: 2
   targetType: 0
-  customTypeText: "\u0e1a\u0e23\u0e34\u0e27\u0e32\u0e23 \u2022 \u0e21\u0e19\u0e15\u0e4c\u0e14\u0e33"
+  customTypeText: "\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E14\u0E33"
   meritCost: 0
   corruptionGain: 3
   baseValue: 0
   durability: 0
   familiarHealth: 3
   familiarDamage: 3
+  fontSizeAll: 1
+  nameFontSize: 1
+  typeFontSize: 1
+  costFontSize: 1
+  statFontSize: 1
+  descriptionFontSize: 1
   abilities:
   - trigger: 0
     effect: 15
@@ -35,6 +43,8 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 11400000, guid: b7eef879b3f0472183ea9abf12c3ab5b, type: 2}
+  upgradedCard: {fileID: 0}
+  cardImage: {fileID: 21300000, guid: 83b377e854d92074db622ce7689f74ee, type: 3}
   cardBackground: {fileID: 0}
   artwork: {fileID: 0}
   frameBorder: {fileID: 0}

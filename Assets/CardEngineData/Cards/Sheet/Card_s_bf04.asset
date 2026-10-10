@@ -13,20 +13,28 @@ MonoBehaviour:
   m_Name: Card_s_bf04
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bf04
-  cardNameThai: "\u0e1c\u0e35\u0e15\u0e32\u0e22\u0e17\u0e31\u0e49\u0e07\u0e01\u0e25\u0e21"
+  cardNameThai: "\u0E1C\u0E35\u0E15\u0E32\u0E22\u0E17\u0E31\u0E49\u0E07\u0E01\u0E25\u0E21"
   cardNameEng: Tai Thang Klom Ghost
-  descriptionFormat: ""
+  descriptionFormat: 
   magicSchool: 1
   cardType: 2
   targetType: 0
-  customTypeText: "\u0e1a\u0e23\u0e34\u0e27\u0e32\u0e23 \u2022 \u0e21\u0e19\u0e15\u0e4c\u0e14\u0e33"
+  customTypeText: "\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E14\u0E33"
   meritCost: 0
   corruptionGain: 2
   baseValue: 0
   durability: 0
   familiarHealth: 2
   familiarDamage: 3
+  fontSizeAll: 1
+  nameFontSize: 1
+  typeFontSize: 1
+  costFontSize: 1
+  statFontSize: 1
+  descriptionFontSize: 1
   abilities: []
+  upgradedCard: {fileID: 0}
+  cardImage: {fileID: 21300000, guid: 6e7c1c8aec0d5f84ba54f54795dc29b3, type: 3}
   cardBackground: {fileID: 0}
   artwork: {fileID: 0}
   frameBorder: {fileID: 0}

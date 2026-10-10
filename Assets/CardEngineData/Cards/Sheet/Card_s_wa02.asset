@@ -44,7 +44,8 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}
-  cardImage: {fileID: 21300000, guid: d724f05f2dd557546a4ab65ed2add0ae, type: 3}
+  upgradedCard: {fileID: 0}
+  cardImage: {fileID: 21300000, guid: f447017ca16228f4cbeef233e8b1916c, type: 3}
   cardBackground: {fileID: 21300000, guid: 42460370549e0ba48978a7730e7db9a5, type: 3}
   artwork: {fileID: 0}
   frameBorder: {fileID: 0}
