@@ -107,11 +107,14 @@ namespace TawanOS.UI
             UiFactory.Stretch(dim.rectTransform, 0f);
             dim.raycastTarget = true; // blocks clicks on the scene behind
 
+            // Same look as the map HUD boxes: a crimson border around a panel fill
+            var border = UiFactory.CreateImage("Border", transform, theme.crimson);
+            border.raycastTarget = true;
+            Place(border.rectTransform, Vector2.zero, new Vector2(1108f, 808f));
             var window = UiFactory.CreateImage("Window", transform, theme.panel);
             window.raycastTarget = true;
             var w = window.rectTransform;
             Place(w, Vector2.zero, new Vector2(1100f, 800f));
-            window.gameObject.AddComponent<Outline>().effectColor = theme.crimson;
 
             var title = UiFactory.CreateText(w, "Title", "ตั้งค่า", theme.titleSize * 1.2f, theme.accent, TextAlignmentOptions.Center, theme.titleFont);
             Place(title.rectTransform, new Vector2(0f, 340f), new Vector2(1000f, 80f));
@@ -211,8 +214,9 @@ namespace TawanOS.UI
                 pages[i].SetActive(i == tab);
                 var button = tabImages[i].GetComponent<Button>();
                 var colors = button.colors;
-                colors.normalColor = i == tab ? Color.Lerp(theme.crimson, theme.accent, 0.35f) : theme.black;
+                colors.normalColor = i == tab ? theme.accent : theme.crimson; // the border carries the selection
                 button.colors = colors;
+                tabImages[i].transform.Find("Inner").GetComponent<Image>().color = i == tab ? theme.crimson : theme.panel;
                 // Re-enabling makes the Selectable redraw its tint now instead of on the next hover
                 button.enabled = false;
                 button.enabled = true;
@@ -274,10 +278,12 @@ namespace TawanOS.UI
             UiFactory.Stretch(dim.rectTransform, 0f);
             confirmDialog = dim.gameObject;
 
+            var boxBorder = UiFactory.CreateImage("BoxBorder", dim.rectTransform, theme.crimson);
+            boxBorder.raycastTarget = true;
+            Place(boxBorder.rectTransform, Vector2.zero, new Vector2(648f, 308f));
             var box = UiFactory.CreateImage("Box", dim.rectTransform, theme.panel);
             box.raycastTarget = true;
             Place(box.rectTransform, Vector2.zero, new Vector2(640f, 300f));
-            box.gameObject.AddComponent<Outline>().effectColor = theme.accent;
 
             confirmText = UiFactory.CreateText(box.rectTransform, "Question", string.Empty, theme.bodySize * 1.25f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
             Place(confirmText.rectTransform, new Vector2(0f, 50f), new Vector2(600f, 140f));
@@ -385,6 +391,8 @@ namespace TawanOS.UI
                 previous.interactable = on;
                 next.interactable = on;
                 value.alpha = on ? 1f : 0.4f;
+                previous.GetComponentInChildren<TMP_Text>().alpha = on ? 1f : 0.4f;
+                next.GetComponentInChildren<TMP_Text>().alpha = on ? 1f : 0.4f;
             }
         }
 
@@ -403,7 +411,10 @@ namespace TawanOS.UI
             button.colors = colors;
             button.onClick.AddListener(() => onClick());
 
-            var text = UiFactory.CreateText(image.rectTransform, "Label", label, theme.bodySize * 1.15f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
+            // Border (the button's graphic) around a panel-coloured inner with an accent label, like the map HUD buttons
+            var inner = UiFactory.CreateImage("Inner", image.rectTransform, theme.panel);
+            UiFactory.Stretch(inner.rectTransform, 2f);
+            var text = UiFactory.CreateText(inner.rectTransform, "Label", label, theme.bodySize * 1.15f, theme.accent, TextAlignmentOptions.Center, theme.bodyFont);
             UiFactory.Stretch(text.rectTransform, 0f);
             return button;
         }

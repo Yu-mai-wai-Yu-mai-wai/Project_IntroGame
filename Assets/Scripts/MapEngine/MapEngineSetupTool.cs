@@ -230,15 +230,9 @@ namespace TawanOS.MapEngine
                     }
                 }
 
-                // Add a Glass Point Light to illuminate the spirit glass and hand
-                GameObject markerLightGo = new GameObject("GlassPointLight");
-                markerLightGo.transform.SetParent(markerGo.transform, false);
-                markerLightGo.transform.localPosition = new Vector3(0f, 1.2f, 0f);
-                Light markerLight = markerLightGo.AddComponent<Light>();
-                markerLight.type = LightType.Point;
-                markerLight.range = 8f;
-                markerLight.intensity = 3.5f;
-                markerLight.color = new Color(0.4f, 0.9f, 1.0f); // Mystical Cyan Glow
+                // The cyan GlassPointLight was removed in the final-asset pass: the glass must not glow.
+                // ponytail: this tool still builds the marker from the demo hands.fbx; the shipped prefab was rebuilt from
+                // NavigateFinal/MapNavigate.fbx (Hand + GlassCup). Re-running this tool regresses the marker to the demo model.
 
                 if (markerComponent != null)
                 {
@@ -311,7 +305,7 @@ namespace TawanOS.MapEngine
             pointLightGo.transform.position = new Vector3(14.0f, 4.5f, 1.5f);
 
             // Setup 3D Environment (MapNavigate.fbx - PaperFloor + Sacred Forest Trees)
-            string mapNavigatePath = "Assets/ProjectAsset/MapNavigate/MapNavigate.fbx";
+            string mapNavigatePath = "Assets/ProjectAsset/NavigateFinal/MapNavigate.fbx";
             GameObject mapNavigateAsset = AssetDatabase.LoadAssetAtPath<GameObject>(mapNavigatePath);
             if (mapNavigateAsset != null)
             {

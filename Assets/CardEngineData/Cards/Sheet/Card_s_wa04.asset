@@ -33,7 +33,7 @@ MonoBehaviour:
   nameFontSize: 1
   typeFontSize: 1
   costFontSize: 1
-  statFontSize: 2
+  statFontSize: 1
   descriptionFontSize: 1
   abilities:
   - trigger: 1
@@ -45,9 +45,9 @@ MonoBehaviour:
     ignoreArmor: 0
     relatedCard: {fileID: 0}
   upgradedCard: {fileID: 0}
-  cardImage: {fileID: 21300000, guid: c10aa115e06b42d4e9c5580369889d97, type: 3}
+  cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
-  artwork: {fileID: 0}
+  artwork: {fileID: 21300000, guid: 3b1d472fbad1ab04b88fe2789afee4bb, type: 3}
   frameBorder: {fileID: 0}
   sfxPlay: {fileID: 0}
   vfxPrefab: {fileID: 0}

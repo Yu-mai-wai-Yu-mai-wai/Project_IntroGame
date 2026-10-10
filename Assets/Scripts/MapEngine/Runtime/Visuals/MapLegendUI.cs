@@ -144,7 +144,7 @@ namespace TawanOS.MapEngine
             panelRect.anchorMax = new Vector2(1f, 1f);
             panelRect.pivot = new Vector2(1f, 1f);
             panelRect.anchoredPosition = new Vector2(-24f, -78f);
-            panelRect.sizeDelta = new Vector2(520f, 530f);
+            panelRect.sizeDelta = new Vector2(660f, 716f); // wider and taller so rows are not packed together
 
             // Border & Background
             var border = UiFactory.CreateImage("Border", panelRoot.transform, theme.crimson);
@@ -159,19 +159,19 @@ namespace TawanOS.MapEngine
             titleText.rectTransform.anchorMin = new Vector2(0f, 1f);
             titleText.rectTransform.anchorMax = new Vector2(1f, 1f);
             titleText.rectTransform.pivot = new Vector2(0f, 1f);
-            titleText.rectTransform.anchoredPosition = new Vector2(18f, -14f);
-            titleText.rectTransform.sizeDelta = new Vector2(-36f, 36f);
+            titleText.rectTransform.anchoredPosition = new Vector2(26f, -16f);
+            titleText.rectTransform.sizeDelta = new Vector2(-52f, 40f);
 
             // Divider Line
             var divider = UiFactory.CreateImage("Divider", panelRoot.transform, theme.crimson);
             divider.rectTransform.anchorMin = new Vector2(0f, 1f);
             divider.rectTransform.anchorMax = new Vector2(1f, 1f);
             divider.rectTransform.pivot = new Vector2(0f, 1f);
-            divider.rectTransform.anchoredPosition = new Vector2(16f, -54f);
-            divider.rectTransform.sizeDelta = new Vector2(-32f, 2f);
+            divider.rectTransform.anchoredPosition = new Vector2(22f, -62f);
+            divider.rectTransform.sizeDelta = new Vector2(-44f, 2f);
 
             // 7 Node Entries
-            float yPos = -64f;
+            float yPos = -76f;
             foreach (var nodeType in AllNodeTypes)
             {
                 var entryGo = new GameObject($"Entry_{nodeType}", typeof(RectTransform));
@@ -181,8 +181,8 @@ namespace TawanOS.MapEngine
                 entryRect.anchorMin = new Vector2(0f, 1f);
                 entryRect.anchorMax = new Vector2(1f, 1f);
                 entryRect.pivot = new Vector2(0f, 1f);
-                entryRect.anchoredPosition = new Vector2(18f, yPos);
-                entryRect.sizeDelta = new Vector2(-36f, 60f);
+                entryRect.anchoredPosition = new Vector2(26f, yPos);
+                entryRect.sizeDelta = new Vector2(-52f, 84f);
 
                 // Title (Accent peach color, font size >= 20)
                 var nameText = UiFactory.CreateText(entryGo.transform, "Name", GetNodeTitle(nodeType),
@@ -192,7 +192,7 @@ namespace TawanOS.MapEngine
                 nameText.rectTransform.anchorMax = new Vector2(1f, 1f);
                 nameText.rectTransform.pivot = new Vector2(0f, 1f);
                 nameText.rectTransform.anchoredPosition = new Vector2(0f, 0f);
-                nameText.rectTransform.sizeDelta = new Vector2(0f, 28f);
+                nameText.rectTransform.sizeDelta = new Vector2(0f, 32f);
 
                 // Description (Text gray color, font size >= 20)
                 var descText = UiFactory.CreateText(entryGo.transform, "Desc", GetNodeDescription(nodeType),
@@ -200,10 +200,11 @@ namespace TawanOS.MapEngine
                 descText.rectTransform.anchorMin = new Vector2(0f, 1f);
                 descText.rectTransform.anchorMax = new Vector2(1f, 1f);
                 descText.rectTransform.pivot = new Vector2(0f, 1f);
-                descText.rectTransform.anchoredPosition = new Vector2(0f, -26f);
-                descText.rectTransform.sizeDelta = new Vector2(0f, 32f);
+                descText.lineSpacing = 8f;
+                descText.rectTransform.anchoredPosition = new Vector2(0f, -36f);
+                descText.rectTransform.sizeDelta = new Vector2(0f, 52f);
 
-                yPos -= 64f;
+                yPos -= 90f;
             }
         }
     }

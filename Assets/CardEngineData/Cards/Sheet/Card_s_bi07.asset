@@ -43,9 +43,9 @@ MonoBehaviour:
     ignoreArmor: 0
     relatedCard: {fileID: 0}
   upgradedCard: {fileID: 0}
-  cardImage: {fileID: 21300000, guid: 7fa5745929f4d4a46afe6885f02d0057, type: 3}
+  cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
-  artwork: {fileID: 0}
+  artwork: {fileID: 21300000, guid: 842b9f3202c66bd45884f5795bd94112, type: 3}
   frameBorder: {fileID: 0}
   sfxPlay: {fileID: 0}
   vfxPrefab: {fileID: 0}

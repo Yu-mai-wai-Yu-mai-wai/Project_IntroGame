@@ -12,7 +12,7 @@ namespace TawanOS.VFX
     /// changes colour with it (white at rest, red on hover).
     /// </summary>
     [RequireComponent(typeof(Button))]
-    public class UiSmokeButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class UiSmokeButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ISelectHandler, IDeselectHandler
     {
         [Tooltip("Smoke colour at rest.")]
         public Color normalColor = new Color(0.82f, 0.74f, 0.86f, 0.7f);
@@ -37,6 +37,7 @@ namespace TawanOS.VFX
         private TMP_Text label;
         private Material material;
         private bool hovered;
+        private bool focused;
         private Vector2 lastSize;
 
         private static readonly int InnerId = Shader.PropertyToID("_Inner");
@@ -84,13 +85,13 @@ namespace TawanOS.VFX
         private Color Target()
         {
             if (button != null && !button.interactable) return disabledColor;
-            return hovered ? hoverColor : normalColor;
+            return hovered || focused ? hoverColor : normalColor;
         }
 
         private Color LabelTarget()
         {
             if (button != null && !button.interactable) return labelDisabledColor;
-            return hovered ? labelHoverColor : labelNormalColor;
+            return hovered || focused ? labelHoverColor : labelNormalColor;
         }
 
         private void Update()
@@ -109,5 +110,9 @@ namespace TawanOS.VFX
 
         public void OnPointerEnter(PointerEventData eventData) => hovered = true;
         public void OnPointerExit(PointerEventData eventData) => hovered = false;
+        // Keyboard / gamepad focus gets the same red glow as the cursor: the button transition is None, so without
+        // this a Tab-focused button would show no focus at all.
+        public void OnSelect(BaseEventData eventData) => focused = true;
+        public void OnDeselect(BaseEventData eventData) => focused = false;
     }
 }

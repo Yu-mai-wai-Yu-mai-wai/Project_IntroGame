@@ -297,7 +297,10 @@ namespace TawanOS.CardEngine
             GameObject canvasGo = new GameObject("CombatCanvas");
             var canvas = canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasGo.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            var combatScaler = canvasGo.AddComponent<CanvasScaler>();
+            combatScaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            combatScaler.referenceResolution = new Vector2(1920f, 1080f); // default 800x600 scaled every UI element by 2.4x at 1080p
+            combatScaler.matchWidthOrHeight = 0.5f;
             canvasGo.AddComponent<GraphicRaycaster>();
 
             GameObject esGo = new GameObject("EventSystem");
