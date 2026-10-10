@@ -181,11 +181,11 @@ namespace TawanOS.CardEngine
 
             // A finished card PNG already shows the name and cost
             bool printed = card.cardImage != null;
-            Sprite frame = printed ? card.cardImage
-                : card.cardBackground != null ? card.cardBackground
-                : CardFaceLayout.DefaultFrame(defaultWhiteFrame, defaultBlackFrame, card.magicSchool);
+            Sprite frame = CardFaceLayout.FaceFrame(card.cardImage, card.cardBackground, card.artwork,
+                defaultWhiteFrame, defaultBlackFrame, card.magicSchool);
             var frameImage = NewImage("Frame", root, frame != null ? Color.white : UIThemeSO.Current.crimson);
             frameImage.sprite = frame;
+            frameImage.enabled = frame != null || card.artwork == null; // the framed artwork needs nothing over it
             Stretch(frameImage.rectTransform);
 
             if (!printed)
@@ -201,8 +201,8 @@ namespace TawanOS.CardEngine
 
                 var cost = FaceText("Cost", root, CardFaceLayout.Cost, 22);
                 cost.text = Cost(card).ToString();
-                var nameText = FaceText("Name", root, CardFaceLayout.Name, 18);
-                nameText.text = card.cardNameThai;
+                if (!CardFaceLayout.ArtCarriesFrame(card.artwork)) // the framed artwork has the name printed on it
+                    FaceText("Name", root, CardFaceLayout.Name, 18).text = card.cardNameThai;
 
                 // The ability, small, in the description box (the detail panel shows it at reading size)
                 var ability = FaceText("Description", root, CardFaceLayout.Description, 11);

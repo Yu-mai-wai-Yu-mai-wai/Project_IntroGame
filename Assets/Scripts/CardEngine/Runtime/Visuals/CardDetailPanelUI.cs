@@ -110,14 +110,15 @@ namespace TawanOS.CardEngine
 
         private void FillCardFace(CardInstance card, Sprite defaultWhiteFrame, Sprite defaultBlackFrame)
         {
-            // A finished card PNG has everything but attack / Khwan printed on it
+            // A finished card PNG has everything but attack / Khwan printed on it; a framed artwork has the name and type line
             bool printed = card.cardImage != null;
-            Sprite frame = printed ? card.cardImage
-                : card.cardBackground != null ? card.cardBackground
-                : CardFaceLayout.DefaultFrame(defaultWhiteFrame, defaultBlackFrame, card.magicSchool);
+            bool nameOnArt = printed || CardFaceLayout.ArtCarriesFrame(card.artwork);
+            Sprite frame = CardFaceLayout.FaceFrame(card.cardImage, card.cardBackground, card.artwork,
+                defaultWhiteFrame, defaultBlackFrame, card.magicSchool);
 
             frameImage.sprite = frame;
             frameImage.color = frame != null ? Color.white : SchoolColor(card.magicSchool);
+            frameImage.enabled = frame != null || card.artwork == null; // the framed artwork needs nothing over it
             artImage.sprite = card.artwork;
             artImage.enabled = !printed && card.artwork != null;
 
@@ -125,8 +126,8 @@ namespace TawanOS.CardEngine
             bool hasKhwan = familiar || card.maxKhwan > 0;
 
             faceCost.text = printed ? "" : card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost.ToString() : card.corruptionGain.ToString();
-            faceName.text = printed ? "" : card.cardNameThai;
-            faceType.text = printed ? "" : TypeLine(card);
+            faceName.text = nameOnArt ? "" : card.cardNameThai;
+            faceType.text = nameOnArt ? "" : TypeLine(card);
             faceAttack.text = familiar ? AttackOf(card).ToString() : "";
             faceKhwan.text = hasKhwan ? card.familiarHealth.ToString() : "";
             faceDescription.text = printed ? "" : Description(card);

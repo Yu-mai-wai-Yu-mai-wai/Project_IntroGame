@@ -211,17 +211,18 @@ namespace TawanOS.CardEngine
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
 
-            // Frame: the finished card PNG, else the card's own background, else the default frame of its school
+            // Frame: the finished card PNG, else none when the artwork has its own frame, else the card's own
+            // background, else the default frame of its school
             bool printed = card.cardImage != null;
-            Sprite frame = printed ? card.cardImage
-                : card.cardBackground != null ? card.cardBackground
-                : CardFaceLayout.DefaultFrame(whiteFrame, blackFrame, card.magicSchool);
-            // The artwork is the full-face background, so it goes under the see-through frame
+            bool framedArt = !printed && CardFaceLayout.ArtCarriesFrame(card.artwork);
+            Sprite frame = CardFaceLayout.FaceFrame(card.cardImage, card.cardBackground, card.artwork,
+                whiteFrame, blackFrame, card.magicSchool);
+            // The artwork is the full-face background, so it goes under any see-through frame
             if (!printed && card.artwork != null) DrawSprite(r, card.artwork, ScaleMode.StretchToFill);
             if (frame != null) DrawSprite(r, frame, ScaleMode.StretchToFill);
-            else EditorGUI.DrawRect(r, card.magicSchool == MagicSchool.WhiteMagic ? new Color(0.85f, 0.8f, 0.55f) : new Color(0.35f, 0.1f, 0.15f));
+            else if (!framedArt) EditorGUI.DrawRect(r, card.magicSchool == MagicSchool.WhiteMagic ? new Color(0.85f, 0.8f, 0.55f) : new Color(0.35f, 0.1f, 0.15f));
 
-            Color text = frame != null ? Color.white : (card.magicSchool == MagicSchool.WhiteMagic ? new Color(0.12f, 0.08f, 0.05f) : new Color(0.95f, 0.9f, 0.85f));
+            Color text = frame != null || framedArt ? Color.white : (card.magicSchool == MagicSchool.WhiteMagic ? new Color(0.12f, 0.08f, 0.05f) : new Color(0.95f, 0.9f, 0.85f));
             Color typeColor = frame != null ? new Color(0.95f, 0.72f, 0.72f) : text;
             float Fs(CardFaceLayout.Text part) => CardFaceLayout.FontScale(card, part);
 
@@ -230,8 +231,11 @@ namespace TawanOS.CardEngine
             {
                 string cost = card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost.ToString() : card.corruptionGain.ToString();
                 DrawText(r, CardFaceLayout.Cost.Scaled(Fs(CardFaceLayout.Text.Cost)), cost, text, FontStyle.Bold);
-                DrawText(r, CardFaceLayout.Name.Scaled(Fs(CardFaceLayout.Text.Name)), string.IsNullOrEmpty(card.cardNameThai) ? "ชื่อการ์ด" : card.cardNameThai, text, FontStyle.Bold);
-                DrawText(r, CardFaceLayout.Type.Scaled(Fs(CardFaceLayout.Text.Type)), card.GetFormattedTypeText().Replace(" • ", "  "), typeColor, FontStyle.Normal);
+                if (!framedArt) // the framed artwork has the name and type line printed on it
+                {
+                    DrawText(r, CardFaceLayout.Name.Scaled(Fs(CardFaceLayout.Text.Name)), string.IsNullOrEmpty(card.cardNameThai) ? "ชื่อการ์ด" : card.cardNameThai, text, FontStyle.Bold);
+                    DrawText(r, CardFaceLayout.Type.Scaled(Fs(CardFaceLayout.Text.Type)), card.GetFormattedTypeText().Replace(" • ", "  "), typeColor, FontStyle.Normal);
+                }
             }
 
             if (card.cardType == CardType.Familiar) DrawText(r, CardFaceLayout.Attack.Scaled(Fs(CardFaceLayout.Text.Stat)), card.familiarDamage.ToString(), text, FontStyle.Bold);

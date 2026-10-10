@@ -66,5 +66,22 @@ namespace TawanOS.CardEngine
         {
             return school == MagicSchool.WhiteMagic ? whiteFrame : blackFrame;
         }
+
+        // The bound artwork (Art/Cards/FramedCard, see CardArtBinder) is a finished face with its own frame, name and
+        // type line printed on it: no frame is drawn over it, and only cost, attack, khwan and the ability text are
+        // written on it.
+        public static bool ArtCarriesFrame(Sprite artwork)
+        {
+            return artwork != null;
+        }
+
+        // What goes behind / over the artwork: the printed card PNG, else nothing when the artwork has its own frame,
+        // else the card's background or the default frame of its school
+        public static Sprite FaceFrame(Sprite cardImage, Sprite cardBackground, Sprite artwork, Sprite whiteFrame, Sprite blackFrame, MagicSchool school)
+        {
+            if (cardImage != null) return cardImage;
+            if (ArtCarriesFrame(artwork)) return null;
+            return cardBackground != null ? cardBackground : DefaultFrame(whiteFrame, blackFrame, school);
+        }
     }
 }

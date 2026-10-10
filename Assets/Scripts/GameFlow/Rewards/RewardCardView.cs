@@ -92,16 +92,17 @@ namespace TawanOS.GameFlow
             shownCard = card;
             transform.localScale = Vector3.one;
 
-            // A finished card PNG has everything but attack / Khwan printed on it
+            // A finished card PNG has everything but attack / Khwan printed on it; a framed artwork has the name and type line
             bool printed = card.cardImage != null;
-            Sprite face = printed ? card.cardImage
-                : card.cardBackground != null ? card.cardBackground
-                : CardFaceLayout.DefaultFrame(defaultWhiteFrame, defaultBlackFrame, card.magicSchool);
+            bool nameOnArt = printed || CardFaceLayout.ArtCarriesFrame(card.artwork);
+            Sprite face = CardFaceLayout.FaceFrame(card.cardImage, card.cardBackground, card.artwork,
+                defaultWhiteFrame, defaultBlackFrame, card.magicSchool);
 
             if (frame != null)
             {
                 frame.sprite = face;
                 frame.color = face != null ? Color.white : SchoolColor(card.magicSchool);
+                frame.enabled = face != null || card.artwork == null; // the framed artwork needs nothing over it
             }
             if (artwork != null)
             {
@@ -117,8 +118,8 @@ namespace TawanOS.GameFlow
 
             SetText(costText, printed ? "" : card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost.ToString() : card.corruptionGain.ToString(),
                 CardFaceLayout.Cost, card, CardFaceLayout.Text.Cost);
-            SetText(nameText, printed ? "" : card.cardNameThai, CardFaceLayout.Name, card, CardFaceLayout.Text.Name);
-            SetText(typeText, printed ? "" : card.GetFormattedTypeText().Replace(" • ", "  "), CardFaceLayout.Type, card, CardFaceLayout.Text.Type);
+            SetText(nameText, nameOnArt ? "" : card.cardNameThai, CardFaceLayout.Name, card, CardFaceLayout.Text.Name);
+            SetText(typeText, nameOnArt ? "" : card.GetFormattedTypeText().Replace(" • ", "  "), CardFaceLayout.Type, card, CardFaceLayout.Text.Type);
             SetText(attackText, familiar ? card.familiarDamage.ToString() : "", CardFaceLayout.Attack, card, CardFaceLayout.Text.Stat);
             SetText(khwanText, hasKhwan ? card.familiarHealth.ToString() : "", CardFaceLayout.Khwan, card, CardFaceLayout.Text.Stat);
             if (descriptionText != null)

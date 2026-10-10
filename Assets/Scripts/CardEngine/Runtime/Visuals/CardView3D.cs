@@ -158,13 +158,16 @@ namespace TawanOS.CardEngine
             ApplyFaceVisibility();
         }
 
-        // The finished card PNG, else the card's own background, else the default frame of its magic school
+        // The finished card PNG, else nothing when the artwork has its own frame, else the card's own background,
+        // else the default frame of its magic school
         private Sprite FaceBackground()
         {
-            if (CardData.cardImage != null) return CardData.cardImage;
-            if (CardData.cardBackground != null) return CardData.cardBackground;
-            return CardFaceLayout.DefaultFrame(defaultWhiteFrame, defaultBlackFrame, CardData.magicSchool);
+            return CardFaceLayout.FaceFrame(CardData.cardImage, CardData.cardBackground, CardData.artwork,
+                defaultWhiteFrame, defaultBlackFrame, CardData.magicSchool);
         }
+
+        // The artwork is a finished face with the name and type line printed on it
+        private bool ArtCarriesFrame => CardData != null && !HasCardImage && CardFaceLayout.ArtCarriesFrame(CardData.artwork);
 
         // area / offsetY are fractions of the card face (the cube's local -0.5..0.5 square)
         private SpriteRenderer SetFacePicture(SpriteRenderer sr, string name, Sprite sprite, Vector2 area, float offsetY, float z, bool keepAspect)
@@ -227,13 +230,19 @@ namespace TawanOS.CardEngine
             // A face-up card with a frame shows only the picture: the 3D block behind it is hidden
             // (its collider stays, so the card can still be clicked). Face-down cards keep the block as their back.
             bool hasFrame = backgroundFace != null && backgroundFace.gameObject.activeSelf && backgroundFace.sprite != null;
-            if (cardRenderer != null) cardRenderer.enabled = !(faceVisible && hasFrame);
+            bool hasArt = artworkFace != null && artworkFace.gameObject.activeSelf && artworkFace.sprite != null;
+            if (cardRenderer != null) cardRenderer.enabled = !(faceVisible && (hasFrame || hasArt));
 
-            // A finished card PNG has these printed on it
+            // A finished card PNG has these printed on it; a framed artwork has the name and type line
             bool printed = HasCardImage;
-            foreach (var label in new[] { nameLabel, costLabel, typeLabel, descriptionLabel })
+            bool nameOnArt = printed || ArtCarriesFrame;
+            foreach (var label in new[] { costLabel, descriptionLabel })
             {
                 if (label != null) label.gameObject.SetActive(faceVisible && !printed);
+            }
+            foreach (var label in new[] { nameLabel, typeLabel })
+            {
+                if (label != null) label.gameObject.SetActive(faceVisible && !nameOnArt);
             }
             RefreshLabel(); // attack / Khwan follow the face too
         }
@@ -306,7 +315,7 @@ namespace TawanOS.CardEngine
             PlaceLabel(descriptionLabel, CardFaceLayout.Description, 0.4f, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Description), fixedBox: true);
             descriptionLabel.textWrappingMode = TextWrappingModes.Normal;
 
-            bool onArt = FaceBackground() != null;
+            bool onArt = FaceBackground() != null || ArtCarriesFrame;
             Color main = onArt ? textOnArt : (CardData.magicSchool == MagicSchool.WhiteMagic ? textOnPlainWhite : textOnPlainBlack);
             faceTextColor = main;
             foreach (var label in new[] { nameLabel, costLabel, attackLabel, khwanLabel, descriptionLabel }) label.color = main;
