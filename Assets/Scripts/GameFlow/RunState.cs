@@ -110,9 +110,7 @@ namespace TawanOS.GameFlow
                 var data = JsonConvert.DeserializeObject<RunSaveData>(File.ReadAllText(SavePath));
                 if (data == null) return null;
                 int cards = data.deckCardIds != null ? data.deckCardIds.Count : 0;
-                int floors = data.totalFloors > 0 ? data.totalFloors : DefaultTotalFloors;
-                string modeStr = floors <= 4 ? "โหมดสั้น 4 ชั้น" : "โหมดเต็ม 7 ชั้น";
-                return $"HP {data.currentHp}/{data.maxHp}   •   ธูป {data.incense}   •   สำรับ {cards} ใบ   •   {modeStr}";
+                return $"HP {data.currentHp}/{data.maxHp}   •   ธูป {data.incense}   •   สำรับ {cards} ใบ";
             }
             catch (System.Exception)
             {

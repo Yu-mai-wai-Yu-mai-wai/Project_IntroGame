@@ -176,19 +176,15 @@ namespace TawanOS.EditorTools
                 failures += Expect("TableMode 4 floors: Node.018 mapping exists", MapManager.TryGetTableNodeFbxName(new Vector2Int(1, 4), 4, out string fbx) && fbx == "Node.018");
             }
 
-            RunState.StartNewRun(4);
-            failures += Expect("RunState.Current.TotalFloors is 4", RunState.Current.TotalFloors == 4);
+            // One mode only: every new run is the full 7-floor map
+            RunState.StartNewRun(RunState.DefaultTotalFloors);
+            failures += Expect("RunState.Current.TotalFloors is 7", RunState.Current.TotalFloors == 7);
             failures += Expect("RunState save file exists", RunState.HasSave);
-            string desc4 = RunState.DescribeSave();
-            failures += Expect("RunState describe save shows 4 floors", desc4 != null && desc4.Contains("โหมดสั้น 4 ชั้น"));
+            string desc7 = RunState.DescribeSave();
+            failures += Expect("RunState describe save names no mode", desc7 != null && !desc7.Contains("โหมด"));
 
             RunState.LoadSavedRun();
-            failures += Expect("Reloaded RunState.Current.TotalFloors is 4", RunState.Current.TotalFloors == 4);
-
-            RunState.StartNewRun(7);
-            failures += Expect("RunState.Current.TotalFloors is 7", RunState.Current.TotalFloors == 7);
-            string desc7 = RunState.DescribeSave();
-            failures += Expect("RunState describe save shows 7 floors", desc7 != null && desc7.Contains("โหมดเต็ม 7 ชั้น"));
+            failures += Expect("Reloaded RunState.Current.TotalFloors is 7", RunState.Current.TotalFloors == 7);
 
             RunState.EndRun();
 
@@ -199,10 +195,8 @@ namespace TawanOS.EditorTools
             {
                 var menu = canvas.GetComponent<MainMenuUI>();
                 failures += Expect("MainMenuUI attached", menu != null);
-                failures += Expect("modePanel assigned", menu != null && menu.modePanel != null);
-                failures += Expect("fullModeButton assigned", menu != null && menu.fullModeButton != null);
-                failures += Expect("shortModeButton assigned", menu != null && menu.shortModeButton != null);
-                failures += Expect("modeCancelButton assigned", menu != null && menu.modeCancelButton != null);
+                failures += Expect("New Game confirm panel assigned", menu != null && menu.confirmPanel != null && menu.confirmYesButton != null && menu.confirmNoButton != null);
+                failures += Expect("No mode selection panel", System.Array.TrueForAll(canvas.GetComponentsInChildren<Transform>(true), t => t.name != "ModePanel"));
             }
 
             Object.DestroyImmediate(config4);

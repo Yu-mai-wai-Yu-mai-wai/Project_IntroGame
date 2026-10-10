@@ -32,12 +32,6 @@ namespace TawanOS.GameFlow
         public Button confirmYesButton;
         public Button confirmNoButton;
 
-        [Header("Mode Selection")]
-        public GameObject modePanel;
-        public Button fullModeButton;
-        public Button shortModeButton;
-        public Button modeCancelButton;
-
         [Header("Intro")]
         public CanvasGroup menuGroup;
 
@@ -50,16 +44,13 @@ namespace TawanOS.GameFlow
             if (quitButton != null) quitButton.onClick.AddListener(OnQuit);
             if (confirmYesButton != null) confirmYesButton.onClick.AddListener(OnConfirmYes);
             if (confirmNoButton != null) confirmNoButton.onClick.AddListener(() => confirmPanel.SetActive(false));
-            if (fullModeButton != null) fullModeButton.onClick.AddListener(() => StartGameWithMode(7));
-            if (shortModeButton != null) shortModeButton.onClick.AddListener(() => StartGameWithMode(4));
-            if (modeCancelButton != null) modeCancelButton.onClick.AddListener(() => { if (modePanel != null) modePanel.SetActive(false); });
 
             // The stage behind the menu turns gently with the cursor (tune it by adding the component to the camera)
             var cam = Camera.main;
             if (cam != null && cam.GetComponent<MouseParallaxCamera>() == null) cam.gameObject.AddComponent<MouseParallaxCamera>();
 
             // The main buttons sit on drifting smoke instead of flat panels (tune it by adding the component to a button)
-            foreach (var b in new[] { newGameButton, continueButton, collectionButton, settingsButton, quitButton, fullModeButton, shortModeButton })
+            foreach (var b in new[] { newGameButton, continueButton, collectionButton, settingsButton, quitButton })
                 if (b != null && b.GetComponent<UiSmokeButton>() == null) b.gameObject.AddComponent<UiSmokeButton>();
         }
 
@@ -67,7 +58,6 @@ namespace TawanOS.GameFlow
         {
             if (titleText != null) titleText.text = string.IsNullOrEmpty(gameTitle) ? Application.productName : gameTitle;
             if (confirmPanel != null) confirmPanel.SetActive(false);
-            if (modePanel != null) modePanel.SetActive(false);
 
             string save = RunState.DescribeSave();
             if (continueButton != null) continueButton.interactable = save != null;
@@ -87,31 +77,20 @@ namespace TawanOS.GameFlow
                 confirmPanel.SetActive(true);
                 return;
             }
-            OpenModePanelOrStart();
+            StartNewGame();
         }
 
         private void OnConfirmYes()
         {
             if (confirmPanel != null) confirmPanel.SetActive(false);
-            OpenModePanelOrStart();
+            StartNewGame();
         }
 
-        private void OpenModePanelOrStart()
-        {
-            if (modePanel != null)
-            {
-                modePanel.SetActive(true);
-            }
-            else
-            {
-                StartGameWithMode(RunState.DefaultTotalFloors);
-            }
-        }
-
-        public void StartGameWithMode(int totalFloors)
+        // There is one mode only: the full map (RunState.DefaultTotalFloors)
+        private void StartNewGame()
         {
             SetInteractable(false);
-            GameFlowManager.Instance.StartNewGame(totalFloors);
+            GameFlowManager.Instance.StartNewGame(RunState.DefaultTotalFloors);
         }
 
         private void OnContinue()
@@ -156,7 +135,6 @@ namespace TawanOS.GameFlow
         {
             if (menuGroup != null) menuGroup.interactable = value;
             if (confirmPanel != null) confirmPanel.SetActive(false);
-            if (modePanel != null) modePanel.SetActive(false);
         }
     }
 }

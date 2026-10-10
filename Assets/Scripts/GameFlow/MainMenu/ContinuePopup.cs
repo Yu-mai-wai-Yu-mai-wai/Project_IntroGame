@@ -128,7 +128,6 @@ namespace TawanOS.GameFlow
             Row(w, theme, 80f, "ขวัญ", $"{s.currentHp}/{s.maxHp}");
             Row(w, theme, 10f, "ธูป", s.incense.ToString());
             Row(w, theme, -60f, "สำรับ", $"{s.deckCards} ใบ");
-            Row(w, theme, -130f, "โหมด", s.shortMode ? "เล่นสั้น 4 ชั้น" : "เล่นเต็ม 7 ชั้น");
 
             var next = UiFactory.CreateText(w, "Next", "เมื่อเริ่ม: " + DescribeResume(s), theme.labelSize, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
             Place(next.rectTransform, new Vector2(0f, -195f), new Vector2(740f, 36f));

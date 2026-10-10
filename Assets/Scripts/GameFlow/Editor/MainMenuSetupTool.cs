@@ -14,6 +14,11 @@ namespace TawanOS.GameFlow
     public static class MainMenuSetupTool
     {
         private const string ScenePath = "Assets/Scenes/MainMenu.unity";
+
+        // New Game asks this before it wipes the saved run. There is no mode choice: every run is the full 7-floor map,
+        // because the 4-floor map was too short and too easy, passing too few places to make a run fun.
+        private const string ConfirmQuestion = "เริ่มเกมใหม่จริงหรือ?\n<size=75%><color=#a89c8a>ถ้าเริ่มใหม่ เซฟล่าสุดจะหายไป</color></size>";
+        private const string ConfirmYesLabel = "ยืนยัน";
         private const string TablePath = "Assets/ProjectAsset/CombatDemo/Table.fbx";
         private const string VolumeProfilePath = "Assets/ProjectAsset/CombatDemo/CombatDressingVolume.asset";
         private const string LogoPath = "Assets/Art/Logo/KhwanLogo.png";
@@ -142,20 +147,64 @@ namespace TawanOS.GameFlow
             var box = Img("Window", dim.transform, new Vector2(0.32f, 0.36f), new Vector2(0.68f, 0.64f), new Color(0.13f, 0.075f, 0.06f), panelSprite);
             box.gameObject.AddComponent<Outline>().effectColor = new Color(Gold.r, Gold.g, Gold.b, 0.5f);
             var question = Text("Question", box.transform, new Vector2(0.06f, 0.42f), new Vector2(0.94f, 0.92f), bodyFont, 30, Parchment, TextAlignmentOptions.Center);
-            question.text = "เริ่มเกมใหม่?\n<size=75%><color=#a89c8a>เกมที่เล่นค้างไว้จะถูกลบ</color></size>";
-            menu.confirmYesButton = DialogButton("YesButton", box.transform, new Vector2(0.08f, 0.1f), new Vector2(0.46f, 0.34f), "เริ่มใหม่", new Color(0.55f, 0.15f, 0.1f), bodyFont, panelSprite);
+            question.text = ConfirmQuestion;
+            menu.confirmYesButton = DialogButton("YesButton", box.transform, new Vector2(0.08f, 0.1f), new Vector2(0.46f, 0.34f), ConfirmYesLabel, new Color(0.55f, 0.15f, 0.1f), bodyFont, panelSprite);
             menu.confirmNoButton = DialogButton("NoButton", box.transform, new Vector2(0.54f, 0.1f), new Vector2(0.92f, 0.34f), "ยกเลิก", new Color(0.3f, 0.25f, 0.22f), bodyFont, panelSprite);
+        }
 
-            // Mode selection panel (Phase A10)
-            var modeDim = Img("ModePanel", root, Vector2.zero, Vector2.one, new Color(0, 0, 0, 0.7f), null);
-            menu.modePanel = modeDim.gameObject;
-            var modeBox = Img("Window", modeDim.transform, new Vector2(0.30f, 0.30f), new Vector2(0.70f, 0.70f), new Color(0.13f, 0.075f, 0.06f), panelSprite);
-            modeBox.gameObject.AddComponent<Outline>().effectColor = new Color(Gold.r, Gold.g, Gold.b, 0.5f);
-            var modeTitle = Text("Title", modeBox.transform, new Vector2(0.06f, 0.68f), new Vector2(0.94f, 0.94f), titleFont ?? bodyFont, 34, Parchment, TextAlignmentOptions.Center);
-            modeTitle.text = "เลือกโหมดการเล่น\n<size=70%><color=#a89c8a>กำหนดระยะเวลาเส้นทางหมอธรรม</color></size>";
-            menu.fullModeButton = DialogButton("FullModeButton", modeBox.transform, new Vector2(0.08f, 0.38f), new Vector2(0.46f, 0.62f), "เล่นเต็ม (7 ชั้น)", new Color(0.55f, 0.15f, 0.1f), bodyFont, panelSprite);
-            menu.shortModeButton = DialogButton("ShortModeButton", modeBox.transform, new Vector2(0.54f, 0.38f), new Vector2(0.92f, 0.62f), "เล่นสั้น (4 ชั้น)", new Color(0.2f, 0.35f, 0.25f), bodyFont, panelSprite);
-            menu.modeCancelButton = DialogButton("CancelButton", modeBox.transform, new Vector2(0.31f, 0.10f), new Vector2(0.69f, 0.30f), "ยกเลิก", new Color(0.3f, 0.25f, 0.22f), bodyFont, panelSprite);
+        /// <summary>
+        /// Takes the mode choice (full / short map) out of the MainMenu scene that is already built, without rebuilding
+        /// the rest of it: removes the ModePanel and words the New Game confirmation as "start again? the last save is
+        /// lost" with ยืนยัน / ยกเลิก. Safe to run again.
+        /// </summary>
+        [MenuItem("Tools/TawanOS/Main Menu/Remove Mode Selection")]
+        private static void RemoveModeSelectionMenu()
+        {
+            if (Application.isPlaying)
+            {
+                EditorUtility.DisplayDialog("Cannot Setup in Play Mode", "Please exit Play Mode before running the Setup Tool.", "OK");
+                return;
+            }
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            RemoveModeSelection();
+        }
+
+        /// <summary>-executeMethod TawanOS.GameFlow.MainMenuSetupTool.RemoveModeSelectionBatch</summary>
+        public static void RemoveModeSelectionBatch()
+        {
+            EditorApplication.Exit(RemoveModeSelection() ? 0 : 1);
+        }
+
+        public static bool RemoveModeSelection()
+        {
+            Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            var menu = Object.FindFirstObjectByType<MainMenuUI>();
+            if (menu == null || menu.confirmPanel == null || menu.confirmYesButton == null)
+            {
+                Debug.LogError($"[MainMenuSetupTool] {ScenePath} has no MainMenuUI with a confirm panel - run Setup Main Menu Scene first.");
+                return false;
+            }
+
+            int removed = 0;
+            foreach (var t in menu.GetComponentsInChildren<Transform>(true))
+            {
+                if (t != null && t.name == "ModePanel")
+                {
+                    Object.DestroyImmediate(t.gameObject);
+                    removed++;
+                }
+            }
+
+            var question = menu.confirmPanel.transform.Find("Window/Question");
+            if (question != null && question.TryGetComponent<TextMeshProUGUI>(out var questionText)) questionText.text = ConfirmQuestion;
+            var yesLabel = menu.confirmYesButton.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (yesLabel != null) yesLabel.text = ConfirmYesLabel;
+
+            EditorUtility.SetDirty(menu);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log($"<color=green>[MainMenuSetupTool] Mode selection removed from {ScenePath} (ModePanel x{removed}); New Game asks ยืนยัน / ยกเลิก.</color>");
+            return true;
         }
 
         /// <summary>

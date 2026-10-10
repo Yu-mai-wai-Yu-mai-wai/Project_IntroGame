@@ -18,9 +18,8 @@ namespace TawanOS.GameFlow
 
         public string ToText()
         {
-            string mode = totalFloors <= 4 ? "โหมดสั้น 4 ชั้น" : $"โหมดเต็ม {totalFloors} ชั้น";
             string by = string.IsNullOrEmpty(enemyName) ? "ศัตรู" : enemyName;
-            return $"พ่ายแพ้ต่อ {by}\n\nธูปที่สะสม {incense}   •   สำรับ {deckSize} ใบ\nขวัญสูงสุด {maxHp}   •   {mode}";
+            return $"พ่ายแพ้ต่อ {by}\n\nธูปที่สะสม {incense}   •   สำรับ {deckSize} ใบ\nขวัญสูงสุด {maxHp}";
         }
     }
 
