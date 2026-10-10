@@ -33,7 +33,8 @@ namespace TawanOS.GameFlow
         [Min(1)] public int offeringChoices = 3;
 
         [Header("Skip")]
-        public bool allowSkip = true;
+        [Tooltip("Off (Game Designer 10 Oct): the player must take one of the cards.")]
+        public bool allowSkip = false;
         [Tooltip("Bonus incense for taking no card (keeps the deck lean).")]
         [Min(0)] public int skipIncense = 10;
 

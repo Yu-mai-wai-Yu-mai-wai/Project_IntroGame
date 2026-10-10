@@ -79,11 +79,13 @@ namespace TawanOS.GameFlow
             StartCoroutine(FinishAfterDelay());
         }
 
+        // With allowSkip off a card must be taken; "ไปต่อ" still works when there was no card to offer
         public void Skip()
         {
-            if (resolved || !config.allowSkip) return;
+            bool nothingOffered = choices.Count == 0;
+            if (resolved || (!config.allowSkip && !nothingOffered)) return;
             resolved = true;
-            if (config.skipIncense > 0) RunState.Current.AddIncense(config.skipIncense);
+            if (config.allowSkip && !nothingOffered && config.skipIncense > 0) RunState.Current.AddIncense(config.skipIncense);
             Finish();
         }
 

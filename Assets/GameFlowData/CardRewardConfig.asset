@@ -17,5 +17,6 @@ MonoBehaviour:
   minorChoices: 3
   eliteChoices: 3
   bossChoices: 4
-  allowSkip: 1
+  offeringChoices: 3
+  allowSkip: 0
   skipIncense: 10

@@ -84,7 +84,11 @@ namespace TawanOS.GameFlow
             bool canUpgrade = meru != null && meru.AnyUpgradable();
             if (upgradeButton != null) upgradeButton.interactable = canUpgrade;
             if (upgradeHintText != null) upgradeHintText.text = canUpgrade ? "เปลี่ยนการ์ด 1 ใบเป็นร่างที่แกร่งขึ้น" : "ไม่มีการ์ดที่อัพเกรดได้";
-            if (burnButton != null) burnButton.interactable = meru != null && meru.Deck.Count > 1;
+            bool canBurn = meru != null && meru.Deck.Count > 1;
+            if (burnButton != null) burnButton.interactable = canBurn;
+            // The player must burn or upgrade a card (Game Designer 10 Oct). Leaving without one is only offered
+            // when neither is possible (one card left and nothing to upgrade), so the node never traps the player.
+            if (leaveButton != null) leaveButton.gameObject.SetActive(!canBurn && !canUpgrade);
         }
 
         private void OpenPicker(MeruAction pickAction)
