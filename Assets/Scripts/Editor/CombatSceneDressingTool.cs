@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace TawanOS.SceneDressing
 {
-    // Dresses CombatTestScene with the Blender set in ProjectAsset/CombatDemo/Table.fbx (table, scarecrow, candles,
+    // Dresses CombatTestScene with the final Blender set in ProjectAsset/CombatFinal/Combat.fbx (table, scarecrow, candles,
     // red strings, trees) and matches the concept render's camera and candle lighting.
     // Visual only: it never adds, removes or edits combat components. The only system objects it touches are
     // renderers (hides the grey CombatTable cube and the slot Quads; their colliders stay) and the Main Camera
@@ -15,20 +15,20 @@ namespace TawanOS.SceneDressing
     // Safe to run again: the previous dressing and volume are replaced.
     public static class CombatSceneDressingTool
     {
-        private const string TablePath = "Assets/ProjectAsset/CombatDemo/Table.fbx";
+        private const string TablePath = "Assets/ProjectAsset/CombatFinal/Combat.fbx";
         private const string VolumeProfilePath = "Assets/ProjectAsset/CombatDemo/CombatDressingVolume.asset";
         private const string DressingName = "CombatDressing";
         private const string VolumeName = "CombatDressingVolume";
 
-        private const string BackCardMatPath = "Assets/ProjectAsset/CombatDemo/BackCardMat.mat";
+        private const string BackCardMatPath = "Assets/ProjectAsset/CombatFinal/Material/BackCardMat.mat";
 
-        // FBX mock cards and decks (the system spawns the real ones). Matched by material, not name:
-        // two of the board mock cards are named Tree.018 / Tree.019 in the Blender file.
-        private static readonly string[] MockMaterials = { "CardMat", "BackCardMat" };
+        // FBX mock cards and decks (the system spawns the real ones). In Combat.fbx they are named Card.NNN,
+        // Card_Deck.NNN and Card_Deck_Opp.NNN; the slot outlines are CardSlot.NNN / CardSlot_Opp.NNN and must stay.
+        private static bool IsMockCard(string name) => name.StartsWith("Card.") || name.StartsWith("Card_Deck");
 
         // Uniform set scale measured on the first run: FBX slot rows as wide as the original system rows.
         // Kept constant because the slots are snapped onto the FBX outlines afterwards (re-measuring would drift).
-        private const float SetScale = 1.574f;
+        private const float SetScale = 1.568f; // 11.0 (system row width) / 7.014 (Combat.fbx slot row at scale 1)
         private const int SlotsPerRow = 5;
 
         [MenuItem("Tools/TawanOS/Combat Scene/Apply Blender Dressing")]
@@ -63,7 +63,7 @@ namespace TawanOS.SceneDressing
 
             foreach (var r in dressing.GetComponentsInChildren<Renderer>(true))
             {
-                if (r.sharedMaterials.Any(m => m != null && MockMaterials.Contains(m.name))) r.gameObject.SetActive(false);
+                if (IsMockCard(r.name)) r.gameObject.SetActive(false);
             }
 
             var playerDeck = FindSlots("Player_DeckSlot");
@@ -92,7 +92,7 @@ namespace TawanOS.SceneDressing
         {
             dressing.transform.localScale = Vector3.one * SetScale;
 
-            Bounds zones = RendererBounds(dressing, "PlayerZone", "EnemyZone");
+            Bounds zones = RendererBounds(dressing, "CardSlot.", "CardSlot_Opp");
             Vector3 slotCenter = playerSlots.Concat(enemySlots).Aggregate(Vector3.zero, (sum, s) => sum + s.position) / (playerSlots.Length + enemySlots.Length);
             float slotY = playerSlots[0].position.y;
             dressing.transform.position += new Vector3(slotCenter.x - zones.center.x, slotY - 0.005f - zones.max.y, slotCenter.z - zones.center.z);
@@ -102,10 +102,10 @@ namespace TawanOS.SceneDressing
         // move onto the printed outlines. Each row mesh holds SlotsPerRow outlines at an even pitch.
         private static void SnapSlotsToOutlines(GameObject dressing, Transform[] playerSlots, Transform[] enemySlots, Transform[] playerDeck, Transform[] enemyDeck)
         {
-            SnapRow(RendererBounds(dressing, "PlayerZone"), playerSlots);
-            SnapRow(RendererBounds(dressing, "EnemyZone"), enemySlots);
-            SnapTo(RendererBounds(dressing, "PlayerDeckZone"), playerDeck);
-            SnapTo(RendererBounds(dressing, "EnemyDeckZone"), enemyDeck);
+            SnapRow(RendererBounds(dressing, "CardSlot."), playerSlots);
+            SnapRow(RendererBounds(dressing, "CardSlot_Opp"), enemySlots);
+            SnapTo(ExactBounds(dressing, "DeckSlot"), playerDeck);
+            SnapTo(ExactBounds(dressing, "DeckSlot_Opp"), enemyDeck);
         }
 
         private static void SnapRow(Bounds row, Transform[] slots)
@@ -143,6 +143,12 @@ namespace TawanOS.SceneDressing
                 Undo.RecordObject(pile, "Deck card back");
                 pile.pileMaterial = backMat;
             }
+        }
+
+        private static Bounds ExactBounds(GameObject root, string name)
+        {
+            var r = root.GetComponentsInChildren<Renderer>(true).FirstOrDefault(x => x.name == name);
+            return r != null ? r.bounds : new Bounds(root.transform.position, Vector3.one);
         }
 
         private static Bounds RendererBounds(GameObject root, params string[] names)
