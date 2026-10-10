@@ -410,6 +410,7 @@ namespace TawanOS.CardEngine
                         continue;
                     case AbilityTrigger.OnDeath:
                     case AbilityTrigger.OnKill:
+                    case AbilityTrigger.OnHit:
                         utility += 1.5f; // a rider that only matters later
                         continue;
                     case AbilityTrigger.OnTurnStart:
@@ -446,7 +447,10 @@ namespace TawanOS.CardEngine
                         break;
 
                     case AbilityEffect.DamageCard:
-                        offense += ScoreDamage(a, foeCards, foeFamiliars, allTargets);
+                        offense += ScoreDamage(a, foeCards, foeFamiliars, allTargets || a.target == AbilityTarget.AllOnBoard);
+                        // คาถาคุณไสย hits both sides: what it costs our own familiars counts against it
+                        if (a.target == AbilityTarget.AllOnBoard)
+                            offense -= ScoreDamage(a, ownCards, ownCards.FindAll(c => EffectResolver.IsAliveFamiliar(c)), true);
                         break;
 
                     case AbilityEffect.DestroyBelowKhwan:
@@ -489,6 +493,10 @@ namespace TawanOS.CardEngine
 
                     case AbilityEffect.GainMerit:
                         utility += 3f * a.value;
+                        break;
+
+                    case AbilityEffect.SummonToBoard:
+                        utility += 7f; // a free familiar on the board
                         break;
 
                     case AbilityEffect.SummonRandomFamiliar:

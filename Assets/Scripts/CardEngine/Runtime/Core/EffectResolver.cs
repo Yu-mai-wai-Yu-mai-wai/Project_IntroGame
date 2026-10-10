@@ -17,6 +17,9 @@ namespace TawanOS.CardEngine
         public event Action<int> OnEnemySlotCleared;
         public event Action<CardInstance, int> OnFamiliarDamaged; // familiar, damage
         public event Action<CardInstance> OnFamiliarDied;
+        // A card put on the board by an ability rather than played from the hand (คาถาเรียกผี); the player's
+        // board has no view for it yet. card, onPlayerSide
+        public event Action<CardInstance, bool> OnCardSummoned;
 
         public const int MaxBoardSlots = 5;
         private const int StatusDebuffDefaultDuration = 2;
@@ -315,6 +318,8 @@ namespace TawanOS.CardEngine
                 {
                     Debug.Log($"[Clash] {attacker.cardNameThai} hits {t.cardNameThai} for {attack}");
                     DamageCard(t, attack, ignoreArmor: false, attacker, fromPlayer);
+                    // ผีตายโหง: riders on the card it just hit
+                    if (!t.IsDead) TriggerAbilities(attacker, AbilityTrigger.OnHit, fromPlayer, t);
                 }
             }
 

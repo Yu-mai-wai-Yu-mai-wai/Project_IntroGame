@@ -8,7 +8,8 @@ namespace TawanOS.CardEngine
     // ผ้ายันต์กลับด้าน's flip happens once when played and is turned back when it leaves the board.
     // RefreshAuras recomputes what every board card should get from the auras in play and applies only
     // the difference from what it already has (CardInstance.auraKhwan / auraAttack), so when the amulet
-    // breaks or leaves, its bonus is taken back.
+    // breaks or leaves, its bonus is taken back. Statuses from an aura (ตุ๊กตาคุณไสย's ผีบังตา) are marked
+    // CardStatus.fromAura and are added or removed the same way.
     public partial class EffectResolver
     {
         private bool refreshingAuras;
@@ -54,6 +55,7 @@ namespace TawanOS.CardEngine
 
             var khwan = new Dictionary<CardInstance, int>();
             var attack = new Dictionary<CardInstance, int>();
+            var statuses = new Dictionary<CardInstance, Dictionary<CardStatusType, int>>();
             int playerCap = 0, enemyCap = 0;
 
             for (int side = 0; side < 2; side++)
@@ -80,6 +82,15 @@ namespace TawanOS.CardEngine
                                 foreach (var t in ResolveTargets(a, source, isPlayer, null, null))
                                 {
                                     if (t.cardType == CardType.Familiar) Add(attack, t, a.value);
+                                }
+                                break;
+
+                            case AbilityEffect.ApplyStatus:
+                                foreach (var t in ResolveTargets(a, source, isPlayer, null, null))
+                                {
+                                    if (!statuses.TryGetValue(t, out var onCard)) statuses[t] = onCard = new Dictionary<CardStatusType, int>();
+                                    onCard.TryGetValue(a.status, out int n);
+                                    onCard[a.status] = n + Mathf.Max(1, a.value);
                                 }
                                 break;
 
@@ -122,6 +133,8 @@ namespace TawanOS.CardEngine
                     if (card == null || card.IsDead) continue;
                     khwan.TryGetValue(card, out int k);
                     attack.TryGetValue(card, out int atk);
+                    statuses.TryGetValue(card, out var auraStatuses);
+                    ApplyAuraStatuses(card, auraStatuses);
                     ApplyAura(card, k, atk, isPlayer);
                 }
             }
@@ -163,6 +176,36 @@ namespace TawanOS.CardEngine
             NotifyChanged(card);
 
             if (card.IsDead) HandleDeath(card, null, !ownerIsPlayer);
+        }
+
+        // Brings the card's aura statuses in line with what the auras in play give it right now
+        private void ApplyAuraStatuses(CardInstance card, Dictionary<CardStatusType, int> wanted)
+        {
+            bool changed = false;
+            for (int i = card.statuses.Count - 1; i >= 0; i--)
+            {
+                var s = card.statuses[i];
+                if (!s.fromAura) continue;
+                int stacks = 0;
+                if (wanted != null) wanted.TryGetValue(s.type, out stacks);
+                if (stacks == s.stacks) continue;
+
+                if (stacks <= 0) card.statuses.RemoveAt(i);
+                else s.stacks = stacks;
+                changed = true;
+            }
+
+            if (wanted != null)
+            {
+                foreach (var pair in wanted)
+                {
+                    if (card.statuses.Exists(s => s.fromAura && s.type == pair.Key)) continue;
+                    card.statuses.Add(new CardStatus(pair.Key, pair.Value, 99) { fromAura = true });
+                    changed = true;
+                }
+            }
+
+            if (changed) NotifyChanged(card);
         }
 
         private void SetAuraCorruptionCap(int total, bool forPlayer)

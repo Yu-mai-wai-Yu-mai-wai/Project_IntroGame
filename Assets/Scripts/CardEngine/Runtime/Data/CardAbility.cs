@@ -12,7 +12,8 @@ namespace TawanOS.CardEngine
         [InspectorName("เมื่อถูกทำลาย")] OnDeath,        // เมื่อการ์ดใบนี้ถูกทำลาย
         [InspectorName("เมื่อสังหารศัตรูได้")] OnKill,         // เมื่อการ์ดใบนี้สังหารการ์ดฝ่ายตรงข้ามได้
         [InspectorName("คำสำคัญติดตัว (Passive)")] Passive,        // คำสำคัญที่มีผลตลอดเวลา
-        [InspectorName("ขณะอยู่บนสนาม (ออร่า)")] Aura            // มีผลเฉพาะตอนการ์ดอยู่บนสนาม การ์ดพัง/ออกจากสนามแล้วผลหายไป (เช่น +1 ขวัญ -> -1 ขวัญคืน)
+        [InspectorName("ขณะอยู่บนสนาม (ออร่า)")] Aura,           // มีผลเฉพาะตอนการ์ดอยู่บนสนาม การ์ดพัง/ออกจากสนามแล้วผลหายไป (เช่น +1 ขวัญ -> -1 ขวัญคืน)
+        [InspectorName("เมื่อตีโดนการ์ด")] OnHit           // เมื่อบริวารใบนี้ตีโดนการ์ด (เป้าหมาย "การ์ดที่ถูกตี")
     }
 
     public enum AbilityTarget
@@ -26,7 +27,9 @@ namespace TawanOS.CardEngine
         [InspectorName("บริวารฝั่งตรงข้ามทั้งหมด")] AllEnemyFamiliars,
         [InspectorName("การ์ดซ้าย-ขวาของใบนี้")] Adjacent,               // การ์ดซ้าย-ขวาของใบนี้
         [InspectorName("การ์ดช่องตรงข้าม")] Opposite,               // การ์ดฝั่งตรงข้ามในช่องเดียวกัน
-        [InspectorName("ผู้ที่สังหารใบนี้")] Killer                  // การ์ดที่สังหารใบนี้ (ใช้กับ OnDeath)
+        [InspectorName("ผู้ที่สังหารใบนี้")] Killer,                 // การ์ดที่สังหารใบนี้ (ใช้กับ OnDeath)
+        [InspectorName("การ์ดทุกใบบนสนาม (ทั้งสองฝั่ง)")] AllOnBoard,
+        [InspectorName("การ์ดที่ถูกตี")] StruckCard              // การ์ดที่ใบนี้เพิ่งตีโดน (ใช้กับ OnHit)
     }
 
     public enum AbilityEffect
@@ -63,7 +66,8 @@ namespace TawanOS.CardEngine
         // --- Added later: kept at the end so saved card assets keep their effect numbers ---
         [InspectorName("เพิ่มมลทินสูงสุด")] RaiseCorruptionCap,     // เพิ่มมลทินสูงสุดของเจ้าของ +value (ตลอดการต่อสู้)
         [InspectorName("สะท้อนดาเมจ")] ReflectDamage,          // Passive: สะท้อนดาเมจที่ตีเข้ามาใส่ผู้โจมตีเท่ากัน
-        [InspectorName("เพิ่มอัตราคริ (ค่า x 0.1%)")] CritChanceBonus         // Passive: บริวารฝั่งเราได้อัตราคริเพิ่ม value หน่วยละ 0.1% (25 = 2.5%)
+        [InspectorName("เพิ่มอัตราคริ (ค่า x 0.1%)")] CritChanceBonus,        // Passive: บริวารฝั่งเราได้อัตราคริเพิ่ม value หน่วยละ 0.1% (25 = 2.5%)
+        [InspectorName("สุ่มบริวารมนต์ดำลงสนาม")] SummonToBoard           // สร้างบริวารมนต์ดำแบบสุ่มบนช่องว่างของฝั่งเรา (ตีไม่ได้ในรอบนี้)
     }
 
     [Serializable]
