@@ -13,5 +13,9 @@ MonoBehaviour:
   m_Name: EventCatalog
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.EventEngine.EventCatalogSO
   events:
+  - {fileID: 11400000, guid: 31698f1fa9301214a8405054d4842a39, type: 2}
+  - {fileID: 11400000, guid: 518705f32ae5e384094c8814f323b88f, type: 2}
+  - {fileID: 11400000, guid: f3e95ced5909a8c44a2b8d569d19e3f1, type: 2}
+  - {fileID: 11400000, guid: 0eeab4ea80482e4439d6a9ca968f6d01, type: 2}
   - {fileID: 11400000, guid: 1e7d61cfd0e347a48a16aa975b7108ad, type: 2}
   offeringEvent: {fileID: 11400000, guid: 39f95bcbeff0426db4440c5c7a60692c, type: 2}
