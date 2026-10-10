@@ -213,7 +213,7 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - **Done when:** กด Esc ในทุกฉากเกมแล้วเกมหยุดและเล่นต่อได้; แพ้แล้วเห็นปุ่มทั้งสอง
 
 ### [~] B4 Loading / transition (ข้อ Scene Management) — โค้ดเสร็จ 10 ต.ค. (GotDev) ค้าง: กดเล่นจริงใน Play mode
-- **ทำแล้ว 10 ต.ค. ตามแบบของ Game Designer (ไม่มีแถบ progress):** `Assets/Scripts/UI/SceneTransition.cs` จอค่อยๆ มืด → `LoadSceneAsync` ตอนจอมืด → พร้อมแล้วจอค่อยๆ สว่าง → ถ้าเป็นการเข้าโหนด ขึ้นชื่อพื้นที่ตัวใหญ่ + สิ่งที่ต้องทำ ขยายออกจากกลางจอไปด้านข้าง (ease out) แล้วค่อยๆ หายไป ข้อความต่อชนิดโหนดแก้ได้ที่ `Resources/AreaTitles.asset` (`Tools/TawanOS/Game Flow/Create Area Titles`) ใช้ซ้ำได้ด้วย `SceneTransition.ShowTitle` ทุกจุดใน `GameFlowManager`, Game Over, Victory ใช้ `SceneTransition.Load` แล้ว (grep ใน Done when ผ่าน)
+- **ทำแล้ว 10 ต.ค. ตามแบบของ Game Designer (ไม่มีแถบ progress):** `Assets/Scripts/UI/SceneTransition.cs` จอค่อยๆ มืด → `LoadSceneAsync` ตอนจอมืด → พร้อมแล้วจอค่อยๆ สว่าง (ชื่อพื้นที่ตอนเข้าโหนดลองทำแล้ว Game Designer ตัดสินเอาออก เหลือแค่ fade) ทุกจุดใน `GameFlowManager`, Game Over, Victory ใช้ `SceneTransition.Load` แล้ว (grep ใน Done when ผ่าน)
 - `Assets/Scripts/GameFlow/SceneLoader.cs`: overlay fade (CanvasGroup) → `SceneManager.LoadSceneAsync` แสดง progress → fade in
 - แทน `SceneManager.LoadScene(` ทุกจุดใน `GameFlowManager`, `MainMenuUI`, Event/Shop/Reward/Meru ด้วย `SceneLoader.Load(name)`
 - **Done when:** `grep -rn "SceneManager.LoadScene(" Assets/Scripts --include=*.cs` เหลือแค่ใน SceneLoader และ Editor scripts
@@ -593,7 +593,7 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
   - Game Over: ภาพตัวละคร fade เป็นมืด แล้วข้อความ Game Over ขึ้น ตามด้วยสรุป run และปุ่ม "เริ่มใหม่"/"เมนูหลัก"
   - Victory: ภาพ "พ่อขวัญ" ลืมตาตื่น แล้วขึ้น Victory ตาม D19
   *DoD:* ทั้งสองหน้าเล่นลำดับ fade ได้, ไม่ยืดสัดส่วนภาพ, ข้ามด้วยคลิกได้, ไม่มี warning เรื่อง texture
-- [~] **B4 Loading:** ตามเดิม SceneLoader fade + progress แทน SceneManager.LoadScene ทุกจุด *(10 ต.ค.: ทำเป็น `SceneTransition` fade + ชื่อพื้นที่ตอนเข้าโหนด ไม่มีแถบ progress เหลือเล่นจริง)*
+- [~] **B4 Loading:** ตามเดิม SceneLoader fade + progress แทน SceneManager.LoadScene ทุกจุด *(10 ต.ค.: ทำเป็น `SceneTransition` fade มืด-สว่างระหว่างฉาก ไม่มีแถบ progress ไม่มีข้อความ เหลือเล่นจริง)*
 - [ ] **B5 Particle:** ทำเสริมจาก GotDev (เผาการ์ดที่ทำแล้ว) ที่เหลือ: ควันธูป, เปลวเทียน, ลงการ์ด (ทอง/แดง), มลทินแตก
 - [ ] **B6 Animator:** ตามเดิม EnemyPresence.controller 4 state (รวมกับ F10)
 
