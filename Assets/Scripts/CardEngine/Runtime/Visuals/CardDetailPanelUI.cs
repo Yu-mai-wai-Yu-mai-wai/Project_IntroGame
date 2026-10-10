@@ -7,17 +7,19 @@ using UnityEngine.UI;
 
 namespace TawanOS.CardEngine
 {
-    // Card detail screen (Vanguard Dear Days style): right-click a card to dim the table and show the
-    // card large on the left, with its full information on the right: name, type, cost, live stats,
-    // ability text, ability breakdown and the statuses currently on it. Any click or Esc closes it.
+    // Card detail screen: right-click a card to see it large with its full information (name, type, cost,
+    // live stats, ability text, ability breakdown and the statuses on it). Show() now opens the ตำราไสยเวท book
+    // (CardBookPanel) at the card, which writes the same text (InfoHeader / InfoBody); the old dimmed screen
+    // below is kept only as the fallback when the book's art is missing.
     // Built in code on first use (its own overlay canvas), so no scene setup is needed.
     public class CardDetailPanelUI : MonoBehaviour
     {
         public static CardDetailPanelUI Instance { get; private set; }
 
-        // Open (or closed this frame): clicks should not also pick up or play cards
-        public static bool BlocksInput => Instance != null && (Instance.isOpen || Time.frameCount <= Instance.closedFrame);
-        public static bool IsOpen => Instance != null && Instance.isOpen;
+        // Open (or closed this frame): clicks should not also pick up or play cards.
+        // The ตำราไสยเวท book (CardBookPanel) now shows a card's details, so it counts as this screen.
+        public static bool BlocksInput => CardBookPanel.BlocksInput || (Instance != null && (Instance.isOpen || Time.frameCount <= Instance.closedFrame));
+        public static bool IsOpen => CardBookPanel.IsOpen || (Instance != null && Instance.isOpen);
 
         private const float CardHeight = 820f;
         private const float CardAspect = 939f / 1312f;
@@ -70,6 +72,13 @@ namespace TawanOS.CardEngine
         public void Show(CardInstance card, Sprite defaultWhiteFrame, Sprite defaultBlackFrame, TMP_FontAsset font)
         {
             if (card == null) return;
+
+            // The book slides up open at this card; this screen stays only for when the book's art is missing
+            if (CardBookPanel.Available)
+            {
+                CardBookPanel.Ensure().OpenAt(card);
+                return;
+            }
             Build(font);
 
             FillCardFace(card, defaultWhiteFrame, defaultBlackFrame);
@@ -154,16 +163,29 @@ namespace TawanOS.CardEngine
         {
             Color accent = AccentColor(card.magicSchool);
             panelOutline.effectColor = accent;
+            headerText.text = InfoHeader(card, accent, "9A9090");
+            bodyText.text = InfoBody(card, accent, "9A9090", "C8C0C0", "80D090", "E07070");
+        }
+
+        // A line break inside rich text
+        private const char NL = (char)10;
+
+        /// <summary>Name, English name and type line, as rich text (also written in the ตำราไสยเวท book).</summary>
+        public static string InfoHeader(CardInstance card, Color accent, string mutedHex, float scale = 1f)
+        {
             string accentHex = ColorUtility.ToHtmlStringRGB(accent);
-
-            // Header: name, English name, type
             var h = new StringBuilder();
-            h.Append($"<size=64>{card.cardNameThai}</size>\n");
-            if (!string.IsNullOrEmpty(card.cardNameEng)) h.Append($"<size=26><color=#9A9090>{card.cardNameEng}</color></size>\n");
-            h.Append($"<size=30><color=#{accentHex}>{TypeLine(card)}</color></size>");
-            headerText.text = h.ToString();
+            h.Append($"<size={64 * scale:0}>{card.cardNameThai}</size>").Append(NL);
+            if (!string.IsNullOrEmpty(card.cardNameEng)) h.Append($"<size={26 * scale:0}><color=#{mutedHex}>{card.cardNameEng}</color></size>").Append(NL);
+            h.Append($"<size={30 * scale:0}><color=#{accentHex}>{TypeLine(card)}</color></size>");
+            return h.ToString();
+        }
 
-            // Body: cost and stats, ability text, ability breakdown, statuses
+        /// <summary>Cost and live stats, ability text, ability breakdown and statuses, as rich text.</summary>
+        public static string InfoBody(CardInstance card, Color accent, string mutedHex, string detailHex, string blessingHex, string debuffHex, float scale = 1f)
+        {
+            string accentHex = ColorUtility.ToHtmlStringRGB(accent);
+            int small = Mathf.RoundToInt(24 * scale), label = Mathf.RoundToInt(26 * scale);
             var b = new StringBuilder();
             b.Append(card.magicSchool == MagicSchool.WhiteMagic
                 ? $"<color=#{accentHex}>กุศล</color>  {card.meritCost}"
@@ -172,7 +194,7 @@ namespace TawanOS.CardEngine
             if (card.cardType == CardType.Familiar)
             {
                 int atk = AttackOf(card);
-                string atkText = atk != card.familiarDamage ? $"{atk} <size=22><color=#9A9090>(ฐาน {card.familiarDamage})</color></size>" : atk.ToString();
+                string atkText = atk != card.familiarDamage ? $"{atk} <size={Mathf.RoundToInt(22 * scale)}><color=#{mutedHex}>(ฐาน {card.familiarDamage})</color></size>" : atk.ToString();
                 b.Append($"      <color=#{accentHex}>สะเทือนขวัญ</color>  {atkText}");
             }
             if (card.cardType == CardType.Familiar || card.maxKhwan > 0)
@@ -181,32 +203,31 @@ namespace TawanOS.CardEngine
             }
             if (card.armor > 0) b.Append($"      <color=#{accentHex}>เกราะ</color>  {card.armor}");
             if (card.cardType == CardType.Amulet && card.currentDurability > 0) b.Append($"      <color=#{accentHex}>อายุขลัง</color>  {card.currentDurability}");
-            b.Append("\n\n");
+            b.Append(NL).Append(NL);
 
-            b.Append($"<size=26><color=#{accentHex}>ความสามารถ</color></size>\n");
+            b.Append($"<size={label}><color=#{accentHex}>ความสามารถ</color></size>").Append(NL);
             string description = Description(card);
-            b.Append(string.IsNullOrEmpty(description) ? "<color=#9A9090>ไม่มีความสามารถ</color>" : description);
-            b.Append("\n");
+            b.Append(string.IsNullOrEmpty(description) ? $"<color=#{mutedHex}>ไม่มีความสามารถ</color>" : description);
+            b.Append(NL);
 
             if (card.abilities != null && card.abilities.Count > 0)
             {
-                b.Append($"\n<size=24><color=#{accentHex}>รายละเอียด</color></size>\n<size=24><color=#C8C0C0>");
-                foreach (var a in card.abilities) b.Append("• ").Append(AbilityLine(a)).Append('\n');
+                b.Append(NL).Append($"<size={small}><color=#{accentHex}>รายละเอียด</color></size>").Append(NL).Append($"<size={small}><color=#{detailHex}>");
+                foreach (var a in card.abilities) b.Append("• ").Append(AbilityLine(a)).Append(NL);
                 b.Append("</color></size>");
             }
 
             if (card.statuses != null && card.statuses.Count > 0)
             {
-                b.Append($"\n<size=24><color=#{accentHex}>สถานะบนการ์ด</color></size>\n<size=24>");
+                b.Append(NL).Append($"<size={small}><color=#{accentHex}>สถานะบนการ์ด</color></size>").Append(NL).Append($"<size={small}>");
                 foreach (var s in card.statuses)
                 {
-                    string color = CardStatus.IsDebuff(s.type) ? "E07070" : CardStatus.IsBlessing(s.type) ? "80D090" : "C8C0C0";
-                    b.Append($"<color=#{color}>• {NameOf(s.type)} x{s.stacks}  ({s.duration} เทิร์น)</color>\n");
+                    string color = CardStatus.IsDebuff(s.type) ? debuffHex : CardStatus.IsBlessing(s.type) ? blessingHex : detailHex;
+                    b.Append($"<color=#{color}>• {NameOf(s.type)} x{s.stacks}  ({s.duration} เทิร์น)</color>").Append(NL);
                 }
                 b.Append("</size>");
             }
-
-            bodyText.text = b.ToString();
+            return b.ToString();
         }
 
         // Effects where the value carries no meaning for the player
