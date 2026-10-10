@@ -10,7 +10,7 @@ namespace TawanOS.GameFlow
 {
     /// <summary>
     /// Title screen: New Game (asks before overwriting a saved run), Continue (only when a save
-    /// exists, with a one-line summary of it), the card collection (สมุดการ์ด), Settings and Quit.
+    /// exists, with a one-line summary of it), the card collection (ตำราไสยเวท), Settings and Quit.
     /// </summary>
     public class MainMenuUI : MonoBehaviour
     {
@@ -132,13 +132,15 @@ namespace TawanOS.GameFlow
             GameFlowManager.Instance.ContinueGame();
         }
 
-        // สมุดการ์ด: every card in the game, the ones never seen in any run face down
+        // ตำราไสยเวท: every card in the game, the ones never seen in any run face down
         private void OpenCollection()
         {
             var catalog = CardCatalogSO.Load();
             if (catalog == null) return;
             var collection = CardCollection.Current;
-            DeckViewerPanelUI.Ensure().ShowCollection("สมุดการ์ด", catalog.cards, collection.Has, "ยังไม่มีการ์ดในเกม");
+            // The ตำราไสยเวท book, turned page by page; the plain list if the book's art (Resources/CardBook) is missing
+            if (CardBookPanel.Available) CardBookPanel.Ensure().Open();
+            else DeckViewerPanelUI.Ensure().ShowCollection(CardBookPanel.Title, catalog.cards, collection.Has, "ยังไม่มีการ์ดในเกม");
         }
 
         private void OnQuit()

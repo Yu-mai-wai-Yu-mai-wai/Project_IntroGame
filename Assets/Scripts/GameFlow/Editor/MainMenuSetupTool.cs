@@ -241,7 +241,7 @@ namespace TawanOS.GameFlow
         private static void AddCollectionButton(MainMenuUI menu, TMP_FontAsset font, Sprite sprite)
         {
             var settings = (RectTransform)menu.settingsButton.transform;
-            var button = MenuButton("CollectionButton", settings.parent, 0f, "สมุดการ์ด", font, sprite);
+            var button = MenuButton("CollectionButton", settings.parent, 0f, "ตำราไสยเวท", font, sprite);
             button.transform.SetSiblingIndex(settings.GetSiblingIndex());
             menu.collectionButton = button;
 
