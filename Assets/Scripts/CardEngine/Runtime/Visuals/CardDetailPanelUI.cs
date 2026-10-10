@@ -215,6 +215,7 @@ namespace TawanOS.CardEngine
             AbilityEffect.Taunt, AbilityEffect.Overhead, AbilityEffect.OverheadMagnet, AbilityEffect.FlipOmens,
             AbilityEffect.CleanseAll, AbilityEffect.SummonRandomFamiliar, AbilityEffect.ReturnFromGraveyard,
             AbilityEffect.GiveCardToHand, AbilityEffect.DetonateWithOpposite, AbilityEffect.ReflectDamage,
+            AbilityEffect.SummonToBoard,
         };
 
         // e.g. "เมื่อลงการ์ด: มอบสถานะ ผีบังตา 1 (2 เทิร์น) → การ์ดฝั่งตรงข้าม 1 ใบ (ผู้เล่นเลือก)"

@@ -12,6 +12,8 @@ namespace TawanOS.CardEngine
     // and name (so the draw pile's order is not given away). Opened by the deck button on the map (the run's
     // deck) and by clicking the draw pile in combat (DeckPileView3D). Click a card for its detail screen
     // (CardDetailPanelUI). Esc, right-click, the close button or the dimmed edge closes it.
+    // ShowCollection is the สมุดการ์ด from the main menu: every card, the unseen ones face down as "???", in a fixed
+    // card-id order, with a found / total count and white / black magic filter tabs.
     // Built in code on first use (its own overlay canvas), so no scene setup is needed.
     public class DeckViewerPanelUI : MonoBehaviour
     {
@@ -83,6 +85,13 @@ namespace TawanOS.CardEngine
         // A pile that can change while the screen is up (e.g. the draw pile in combat): re-read every frame
         public void Show(string screenTitle, Func<IReadOnlyList<CardInstance>> cards, string emptyMessage)
         {
+            hidden = null;
+            filter = Filter.All;
+            Open(screenTitle, cards, emptyMessage);
+        }
+
+        private void Open(string screenTitle, Func<IReadOnlyList<CardInstance>> cards, string emptyMessage)
+        {
             title = screenTitle;
             source = cards;
             FindCardLook();
@@ -143,14 +152,110 @@ namespace TawanOS.CardEngine
             foreach (var e in entries) Destroy(e);
             entries.Clear();
 
-            var cards = new List<CardInstance>(Cards());
-            shownCount = cards.Count;
-            cards.Sort(CompareCards);
+            var all = Cards();
+            shownCount = all.Count;
+            var cards = new List<CardInstance>();
+            foreach (var card in all) if (PassesFilter(card)) cards.Add(card);
+
+            // The collection keeps a fixed order (by card id), so where a card sits gives nothing away
+            if (hidden != null) cards.Sort((a, b) => string.CompareOrdinal(a.cardId, b.cardId));
+            else cards.Sort(CompareCards);
             foreach (var card in cards) entries.Add(MakeEntry(card));
 
-            var theme = UIThemeSO.Current;
-            titleText.text = $"{title}  <size=32><color=#{ColorUtility.ToHtmlStringRGB(theme.accent)}>{cards.Count} ใบ</color></size>";
+            var accent = ColorUtility.ToHtmlStringRGB(UIThemeSO.Current.accent);
+            string count = hidden != null ? $"เจอแล้ว {all.Count - hidden.Count} / {all.Count} ใบ" : $"{cards.Count} ใบ";
+            titleText.text = $"{title}  <size=32><color=#{accent}>{count}</color></size>";
             emptyText.gameObject.SetActive(entries.Count == 0);
+            RefreshTabs();
+        }
+
+        // ---------------------------------------------------------------- collection mode
+
+        // Cards not found yet: shown face down as "???" and cannot be opened. null = not the collection.
+        private HashSet<CardInstance> hidden;
+
+        private enum Filter { All, White, Black }
+        private Filter filter = Filter.All;
+        private RectTransform tabsRow;
+        private readonly List<(Filter filter, Image image)> tabs = new List<(Filter, Image)>();
+
+        /// <summary>
+        /// สมุดการ์ด: every card in <paramref name="allCards"/>, the ones <paramref name="isKnown"/> rejects face down
+        /// as "???", with a found / total count and white / black magic filter tabs.
+        /// </summary>
+        public void ShowCollection(string screenTitle, IEnumerable<CardDataSO> allCards, Func<CardDataSO, bool> isKnown, string emptyMessage)
+        {
+            var list = new List<CardInstance>();
+            var unknown = new HashSet<CardInstance>();
+            if (allCards != null)
+                foreach (var card in allCards)
+                {
+                    if (card == null) continue;
+                    var instance = new CardInstance(card);
+                    list.Add(instance);
+                    if (isKnown == null || !isKnown(card)) unknown.Add(instance);
+                }
+
+            hidden = unknown;
+            filter = Filter.All;
+            Open(screenTitle, () => list, emptyMessage);
+        }
+
+        private bool PassesFilter(CardInstance card)
+        {
+            switch (filter)
+            {
+                case Filter.White: return card.magicSchool == MagicSchool.WhiteMagic;
+                case Filter.Black: return card.magicSchool == MagicSchool.BlackMagic;
+                default: return true;
+            }
+        }
+
+        private void SetFilter(Filter value)
+        {
+            if (!ClickAllowed || filter == value) return;
+            filter = value;
+            Refresh();
+            scroll.verticalNormalizedPosition = 1f;
+        }
+
+        private void RefreshTabs()
+        {
+            if (tabsRow == null) return;
+            tabsRow.gameObject.SetActive(hidden != null);
+            var theme = UIThemeSO.Current;
+            foreach (var (tabFilter, image) in tabs) image.color = tabFilter == filter ? theme.crimson : theme.black;
+        }
+
+        private void AddTab(Filter tabFilter, string label)
+        {
+            var image = NewImage(label, tabsRow, UIThemeSO.Current.black);
+            image.raycastTarget = true;
+            var outline = image.gameObject.AddComponent<Outline>();
+            outline.effectColor = UIThemeSO.Current.crimson;
+            outline.effectDistance = new Vector2(2f, -2f);
+            image.gameObject.AddComponent<Button>().onClick.AddListener(() => SetFilter(tabFilter));
+            var text = NewText("Text", image.transform, 24, TextAlignmentOptions.Center);
+            Stretch(text.rectTransform);
+            text.text = label;
+            tabs.Add((tabFilter, image));
+        }
+
+        private GameObject MakeHiddenEntry(CardInstance card)
+        {
+            var theme = UIThemeSO.Current;
+            var root = NewRect("Unknown", content);
+            var back = NewImage("Back", root, theme.black);
+            Stretch(back.rectTransform);
+            var outline = back.gameObject.AddComponent<Outline>();
+            outline.effectColor = theme.crimson;
+            outline.effectDistance = new Vector2(3f, -3f);
+
+            var mark = NewText("Mark", root, 64, TextAlignmentOptions.Center);
+            Stretch(mark.rectTransform);
+            mark.color = new Color(theme.text.r, theme.text.g, theme.text.b, 0.45f);
+            mark.text = "???";
+            return root.gameObject;
         }
 
         private static int CompareCards(CardInstance a, CardInstance b)
@@ -169,6 +274,8 @@ namespace TawanOS.CardEngine
 
         private GameObject MakeEntry(CardInstance card)
         {
+            if (hidden != null && hidden.Contains(card)) return MakeHiddenEntry(card);
+
             var root = NewRect(card.cardNameThai, content);
             var button = root.gameObject.AddComponent<Button>();
             var hitArea = root.gameObject.AddComponent<Image>();
@@ -306,6 +413,18 @@ namespace TawanOS.CardEngine
             var closeText = NewText("Text", close.transform, 26, TextAlignmentOptions.Center);
             Stretch(closeText.rectTransform);
             closeText.text = "ปิด (Esc)";
+
+            // Collection filter tabs, left of the close button (hidden outside the collection)
+            tabsRow = NewRect("Tabs", panelRt);
+            SetRect(tabsRow, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-690f, -80f), new Vector2(-190f, -30f));
+            var tabLayout = tabsRow.gameObject.AddComponent<HorizontalLayoutGroup>();
+            tabLayout.spacing = 10f;
+            tabLayout.childControlWidth = tabLayout.childControlHeight = true;
+            tabLayout.childForceExpandWidth = tabLayout.childForceExpandHeight = true;
+            AddTab(Filter.All, "ทั้งหมด");
+            AddTab(Filter.White, "มนต์ขาว");
+            AddTab(Filter.Black, "มนต์ดำ");
+            tabsRow.gameObject.SetActive(false);
 
             var line = NewImage("Divider", panelRt, theme.crimson);
             SetRect(line.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(40f, -102f), new Vector2(-40f, -100f));

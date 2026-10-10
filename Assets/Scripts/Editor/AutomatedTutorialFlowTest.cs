@@ -130,6 +130,20 @@ namespace TawanOS.EditorTools
 
         private static string ActiveScene => SceneManager.GetActiveScene().name;
 
+        private static string MissingFromCollection(RunState run)
+        {
+            var story = AssetDatabase.LoadAssetAtPath<StoryDataSO>("Assets/StoryEngineData/Story_Intro.asset");
+            var page = story.pages.Find(p => p.tutorialFightEnemy != null);
+            var expected = new System.Collections.Generic.List<CardDataSO>(run.Deck);
+            expected.AddRange(page.tutorialOpeningHand);
+            if (page.tutorialFightEnemy.deck.Count > 0) expected.Add(page.tutorialFightEnemy.deck[0]);
+
+            var missing = new System.Collections.Generic.List<string>();
+            foreach (var card in expected)
+                if (card != null && !CardCollection.Current.Has(card) && !missing.Contains(card.cardId)) missing.Add(card.cardId);
+            return missing.Count > 0 ? string.Join(", ", missing) : null;
+        }
+
         // Turn 1, player's board phase: the hand is the story page's fixed opening hand, every card in it can be
         // played this turn on the turn's Merit, and the scripted bot has put down exactly its turn-1 card
         private static string CheckTurnOne(TurnPhaseController turns)
@@ -316,6 +330,11 @@ namespace TawanOS.EditorTools
                         if (run.CurrentHp != SessionState.GetInt(KeyHp, -1)) { Fail($"Khwan changed: {SessionState.GetInt(KeyHp, -1)} -> {run.CurrentHp}"); break; }
                         if (run.Incense != SessionState.GetInt(KeyIncense, -1)) { Fail($"Incense changed: {SessionState.GetInt(KeyIncense, -1)} -> {run.Incense}"); break; }
                         Debug.Log($"{Tag} ok   back in the story on page {expectedPage + 1}, Khwan {run.CurrentHp}, incense {run.Incense}, save kept");
+
+                        // สมุดการ์ด: the run deck, the cards drawn in the fight and the bot's turn-1 card are now collected
+                        string missing = MissingFromCollection(run);
+                        if (missing != null) { Fail($"Not in the card collection after the tutorial fight: {missing}"); break; }
+                        Debug.Log($"{Tag} ok   card collection has the deck, the opening hand and the bot's card ({CardCollection.Current.Count} cards)");
                         // Skipping after the fight: no fight left ahead, so no question - the rest of the story goes
                         StoryPlayer.Instance.Skip();
                         if (StoryPlayer.Instance.IsAskingSkip) { Fail("Skipping after the fight asked about the tutorial again"); break; }

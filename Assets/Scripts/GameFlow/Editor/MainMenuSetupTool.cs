@@ -134,6 +134,7 @@ namespace TawanOS.GameFlow
             menu.continueInfoText = Text("ContinueInfo", g, new Vector2(0.05f, 0.28f), new Vector2(0.35f, 0.33f), bodyFont, 22, Muted, TextAlignmentOptions.TopLeft);
             menu.settingsButton = MenuButton("SettingsButton", g, 0.19f, "ตั้งค่า", bodyFont, panelSprite);
             menu.quitButton = MenuButton("QuitButton", g, 0.09f, "ออกจากเกม", bodyFont, panelSprite);
+            AddCollectionButton(menu, bodyFont, panelSprite);
 
             // Overwrite confirmation
             var dim = Img("ConfirmPanel", root, Vector2.zero, Vector2.one, new Color(0, 0, 0, 0.7f), null);
@@ -193,6 +194,78 @@ namespace TawanOS.GameFlow
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log($"<color=green>[MainMenuSetupTool] Added the Settings button to {ScenePath}.</color>");
+        }
+
+        /// <summary>
+        /// Adds the สมุดการ์ด (card collection) button to the MainMenu scene that is already built, without
+        /// rebuilding the rest of it. Does nothing when the button is already there.
+        /// </summary>
+        [MenuItem("Tools/TawanOS/Main Menu/Add Card Collection Button")]
+        public static void AddCollectionButtonToScene()
+        {
+            if (Application.isPlaying)
+            {
+                EditorUtility.DisplayDialog("Cannot Setup in Play Mode", "Please exit Play Mode before running the Setup Tool.", "OK");
+                return;
+            }
+            if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+
+            Scene scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            var menu = Object.FindFirstObjectByType<MainMenuUI>();
+            if (menu == null || menu.settingsButton == null || menu.quitButton == null)
+            {
+                Debug.LogError($"[MainMenuSetupTool] {ScenePath} has no MainMenuUI with Settings and Quit buttons - run Setup Main Menu Scene first.");
+                if (Application.isBatchMode) EditorApplication.Exit(1);
+                return;
+            }
+            if (menu.collectionButton != null)
+            {
+                Debug.Log("[MainMenuSetupTool] Card collection button already exists.");
+                return;
+            }
+
+            // Same font and sprite as the buttons already there
+            var settingsLabel = menu.settingsButton.GetComponentInChildren<TextMeshProUGUI>(true);
+            var font = settingsLabel != null ? settingsLabel.font : AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var panelSprite = menu.settingsButton.GetComponent<Image>().sprite;
+            AddCollectionButton(menu, font, panelSprite);
+
+            EditorUtility.SetDirty(menu);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log($"<color=green>[MainMenuSetupTool] Added the card collection button to {ScenePath}.</color>");
+        }
+
+        // Five rows: the column is laid out again, 0.09 apart (the save line under Continue gets a little more),
+        // with the collection between Continue and Settings
+        private static void AddCollectionButton(MainMenuUI menu, TMP_FontAsset font, Sprite sprite)
+        {
+            var settings = (RectTransform)menu.settingsButton.transform;
+            var button = MenuButton("CollectionButton", settings.parent, 0f, "สมุดการ์ด", font, sprite);
+            button.transform.SetSiblingIndex(settings.GetSiblingIndex());
+            menu.collectionButton = button;
+
+            SetRow(menu.newGameButton, 0.48f);
+            SetRow(menu.continueButton, 0.38f);
+            if (menu.continueInfoText != null)
+            {
+                var info = menu.continueInfoText.rectTransform;
+                info.anchorMin = new Vector2(info.anchorMin.x, 0.325f);
+                info.anchorMax = new Vector2(info.anchorMax.x, 0.375f);
+            }
+            SetRow(menu.collectionButton, 0.24f);
+            SetRow(menu.settingsButton, 0.15f);
+            SetRow(menu.quitButton, 0.06f);
+        }
+
+        // Moves a button to row y and keeps its height
+        private static void SetRow(Button button, float y)
+        {
+            if (button == null) return;
+            var rt = (RectTransform)button.transform;
+            float h = rt.anchorMax.y - rt.anchorMin.y;
+            rt.anchorMin = new Vector2(rt.anchorMin.x, y);
+            rt.anchorMax = new Vector2(rt.anchorMax.x, y + h);
         }
 
         // Takes the quit button's slot and moves Quit one row down

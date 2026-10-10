@@ -83,7 +83,7 @@ namespace TawanOS.CardEngine
         private static int CountDebuffs(CardInstance card)
         {
             int n = 0;
-            foreach (var s in card.statuses) if (CardStatus.IsDebuff(s.type)) n++;
+            foreach (var s in card.statuses) if (CardStatus.IsDebuff(s.type) && !s.fromAura) n++;
             return n;
         }
 
@@ -100,7 +100,7 @@ namespace TawanOS.CardEngine
             stacks = Mathf.Max(1, stacks);
             duration = duration > 0 ? duration : DefaultStatusDuration;
 
-            var existing = card.statuses.Find(s => s.type == type);
+            var existing = card.statuses.Find(s => s.type == type && !s.fromAura);
             if (existing != null)
             {
                 existing.stacks += stacks;
@@ -142,7 +142,7 @@ namespace TawanOS.CardEngine
         // A card may strike this round (dead attackers are allowed: head-on trades hit at the same moment)
         private bool CanStrike(CardInstance card)
         {
-            return card != null && EffectiveAttack(card) > 0 && !HasCardStatus(card, CardStatusType.PhiAm);
+            return card != null && !card.summonedThisRound && EffectiveAttack(card) > 0 && !HasCardStatus(card, CardStatusType.PhiAm);
         }
 
         // Base crit plus every CritChanceBonus (ผ้ายันต์มหาอุด) on the attacker's side of the board
@@ -201,6 +201,12 @@ namespace TawanOS.CardEngine
             TickBoardStatuses(true);
             TickBoardStatuses(false);
 
+            // Familiars summoned this round may strike from the next one
+            foreach (bool side in new[] { true, false })
+            {
+                foreach (var card in BoardOf(side)) card.summonedThisRound = false;
+            }
+
             foreach (bool isPlayer in new[] { true, false })
             {
                 foreach (var card in new List<CardInstance>(BoardOf(isPlayer)))
@@ -221,6 +227,7 @@ namespace TawanOS.CardEngine
                 {
                     if (i >= card.statuses.Count) continue;
                     var s = card.statuses[i];
+                    if (s.fromAura) continue; // lasts while its aura's card is on the board
 
                     if (s.type == CardStatusType.DoneKhong)
                     {
@@ -266,6 +273,10 @@ namespace TawanOS.CardEngine
                 if (a.effect == AbilityEffect.ReturnFromGraveyard)
                 {
                     if (!HasGraveyardCards(casterIsPlayer)) return false;
+                }
+                else if (a.effect == AbilityEffect.SummonToBoard)
+                {
+                    if (IsBoardFull(casterIsPlayer) || SummonPool().Count == 0) return false;
                 }
                 else if (a.effect == AbilityEffect.FlipOmens)
                 {
@@ -373,6 +384,8 @@ namespace TawanOS.CardEngine
 
                 case AbilityEffect.ApplyStatus:
                     if (!hasKhwan) return false;
+                    // ผวา and ผีบังตา only act on a card that strikes
+                    if ((a.status == CardStatusType.Phawa || a.status == CardStatusType.Blinded) && c.cardType != CardType.Familiar) return false;
                     if (HasCardStatus(c, a.status)) score -= 50f;
                     score += CardStatus.IsDebuff(a.status)
                         ? c.familiarDamage * 2f + c.familiarHealth * 0.1f   // hinder the most dangerous card
@@ -427,7 +440,13 @@ namespace TawanOS.CardEngine
                     break;
 
                 case AbilityTarget.Killer:
+                case AbilityTarget.StruckCard:
                     if (other != null) result.Add(other);
+                    break;
+
+                case AbilityTarget.AllOnBoard:
+                    result.AddRange(own);
+                    result.AddRange(foe);
                     break;
 
                 case AbilityTarget.FriendlyCard:
@@ -484,6 +503,10 @@ namespace TawanOS.CardEngine
 
                 case AbilityEffect.SummonRandomFamiliar:
                     GiveToHand(ownerIsPlayer, PickRandomCommonFamiliar());
+                    return;
+
+                case AbilityEffect.SummonToBoard:
+                    SummonToBoard(ownerIsPlayer);
                     return;
 
                 case AbilityEffect.ReturnFromGraveyard:
@@ -547,14 +570,15 @@ namespace TawanOS.CardEngine
                     return;
 
                 case AbilityEffect.ApplyStatus:
-                    // โดนของ: value = starting stacks, and it wears off by itself
-                    AddCardStatus(target, a.status, a.value, a.status == CardStatusType.DoneKhong ? 99 : a.duration);
+                    // โดนของ: value = starting stacks, and it wears off by itself. เกราะคุ้มภัย lasts until it blocks a hit.
+                    bool untilUsed = a.status == CardStatusType.DoneKhong || a.status == CardStatusType.Protect;
+                    AddCardStatus(target, a.status, a.value, untilUsed ? 99 : a.duration);
                     return;
 
                 case AbilityEffect.CleanseLatest:
                     for (int i = target.statuses.Count - 1; i >= 0; i--)
                     {
-                        if (!CardStatus.IsDebuff(target.statuses[i].type)) continue;
+                        if (!CardStatus.IsDebuff(target.statuses[i].type) || target.statuses[i].fromAura) continue;
                         target.statuses[i].stacks--;
                         if (target.statuses[i].stacks <= 0) target.statuses.RemoveAt(i);
                         break;
@@ -562,7 +586,7 @@ namespace TawanOS.CardEngine
                     break;
 
                 case AbilityEffect.CleanseAll:
-                    target.statuses.RemoveAll(s => CardStatus.IsDebuff(s.type));
+                    target.statuses.RemoveAll(s => CardStatus.IsDebuff(s.type) && !s.fromAura);
                     break;
             }
             NotifyChanged(target);
@@ -570,7 +594,8 @@ namespace TawanOS.CardEngine
 
         // ---------------------------------------------------------------- damage / death
 
-        // Damage to a card on the board: Protect and armor soak it first (unless ignored), Khwan takes the rest.
+        // Damage to a card on the board: เกราะคุ้มภัย blocks the whole hit (one stack per hit), then armor soaks it
+        // (both skipped when armor is ignored), Khwan takes the rest.
         // Dead cards stay on the board until RemoveDeadFamiliars so slots do not shift mid-clash.
         public int DamageCard(CardInstance target, int amount, bool ignoreArmor, CardInstance source, bool sourceIsPlayer)
         {
@@ -578,11 +603,15 @@ namespace TawanOS.CardEngine
 
             if (!ignoreArmor)
             {
-                foreach (var s in target.statuses)
+                var protect = target.statuses.Find(s => s.type == CardStatusType.Protect && s.stacks > 0);
+                if (protect != null)
                 {
-                    if (s.type == CardStatusType.Protect) amount -= s.stacks;
+                    protect.stacks--;
+                    if (protect.stacks <= 0) target.statuses.Remove(protect);
+                    Debug.Log($"[Ability] {target.cardNameThai}'s เกราะคุ้มภัย blocks {amount} damage");
+                    NotifyChanged(target);
+                    return 0;
                 }
-                amount = Mathf.Max(0, amount);
 
                 if (target.armor > 0)
                 {
@@ -714,6 +743,33 @@ namespace TawanOS.CardEngine
             return pool[Random.Range(0, pool.Count)];
         }
 
+        // คาถาเรียกผี draws from the black-magic familiars (upgraded versions excluded)
+        private List<CardDataSO> SummonPool()
+        {
+            var pool = new List<CardDataSO>();
+            if (catalog == null) return pool;
+            foreach (var c in catalog.BaseCards())
+            {
+                if (c.cardType == CardType.Familiar && c.magicSchool == MagicSchool.BlackMagic) pool.Add(c);
+            }
+            return pool;
+        }
+
+        // คาถาเรียกผี: a random black-magic familiar appears in a free column of the caster's side.
+        // It cannot strike this round. Its own on-play abilities do not fire (it was not played).
+        private void SummonToBoard(bool isPlayer)
+        {
+            var pool = SummonPool();
+            if (pool.Count == 0) return;
+
+            var card = new CardInstance(pool[Random.Range(0, pool.Count)]) { summonedThisRound = true };
+            bool placed = isPlayer ? PlaceBoardCard(card) : PlaceEnemyBoardCard(card);
+            if (!placed) return;
+
+            Debug.Log($"[Ability] {card.cardNameThai} is summoned onto the {(isPlayer ? "player" : "enemy")} board (slot {card.boardSlot})");
+            OnCardSummoned?.Invoke(card, isPlayer);
+        }
+
         private bool HasGraveyardCards(bool isPlayer)
         {
             if (isPlayer) return CardManager.Instance != null && CardManager.Instance.DiscardPile.Count > 0;
@@ -762,7 +818,8 @@ namespace TawanOS.CardEngine
             HandleDeath(source, victim, !ownerIsPlayer);
         }
 
-        // ผ้ายันต์กลับด้าน: our card with debuffs -> they become blessings; otherwise an enemy card's blessings -> debuffs
+        // ผ้ายันต์กลับด้าน: our card with อัปมงคล -> each becomes a random สิริมงคล; otherwise an enemy card's
+        // สิริมงคล -> each becomes a random อัปมงคล
         private CardInstance PickFlipTarget(bool ownerIsPlayer, out bool toBlessing)
         {
             CardInstance ally = null;
@@ -806,8 +863,9 @@ namespace TawanOS.CardEngine
             foreach (var s in target.statuses)
             {
                 var original = s.type;
-                if (toBlessing && CardStatus.IsDebuff(s.type)) s.type = CardStatus.ToBlessing(s.type);
-                else if (!toBlessing && CardStatus.IsBlessing(s.type)) s.type = CardStatus.ToDebuff(s.type);
+                if (s.fromAura) continue;
+                if (toBlessing && CardStatus.IsDebuff(s.type)) s.type = CardStatus.RandomBlessing();
+                else if (!toBlessing && CardStatus.IsBlessing(s.type)) s.type = CardStatus.RandomDebuff();
                 else continue;
 
                 if (source != null) activeFlips.Add(new StatusFlip { source = source, target = target, status = s, original = original });

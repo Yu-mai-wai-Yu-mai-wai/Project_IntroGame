@@ -58,7 +58,7 @@ namespace TawanOS.GameFlow
 
             float centre = (logo.anchorMin.x + logo.anchorMax.x) * 0.5f;
             var list = new System.Collections.Generic.List<Button>();
-            foreach (var b in new[] { menu.newGameButton, menu.continueButton, menu.settingsButton, menu.quitButton })
+            foreach (var b in new[] { menu.newGameButton, menu.continueButton, menu.collectionButton, menu.settingsButton, menu.quitButton })
                 if (b != null) list.Add(b);
             SpaceEvenly(list);
             foreach (var button in list)

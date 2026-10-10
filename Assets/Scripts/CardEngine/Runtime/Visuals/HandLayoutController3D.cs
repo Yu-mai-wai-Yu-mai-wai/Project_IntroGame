@@ -45,6 +45,7 @@ namespace TawanOS.CardEngine
                 CardManager.Instance.OnCardPlayed += HandleCardPlayed;
                 CardManager.Instance.OnCardDiscarded += HandleCardDiscarded;
             }
+            if (EffectResolver.Instance != null) EffectResolver.Instance.OnCardSummoned += HandleCardSummoned;
         }
 
         private void OnDestroy()
@@ -55,6 +56,18 @@ namespace TawanOS.CardEngine
                 CardManager.Instance.OnCardPlayed -= HandleCardPlayed;
                 CardManager.Instance.OnCardDiscarded -= HandleCardDiscarded;
             }
+            if (EffectResolver.Instance != null) EffectResolver.Instance.OnCardSummoned -= HandleCardSummoned;
+        }
+
+        // คาถาเรียกผี put a familiar straight onto the player's board: give it a 3D card that flies into its slot
+        private void HandleCardSummoned(CardInstance card, bool onPlayerSide)
+        {
+            if (!onPlayerSide || cardPrefab == null) return;
+
+            CardView3D view = Instantiate(cardPrefab, handContainer);
+            view.Bind(card);
+            view.transform.SetParent(null, worldPositionStays: true);
+            view.PlaceOnBoard();
         }
 
         private void HandleCardDrawn(CardInstance card)

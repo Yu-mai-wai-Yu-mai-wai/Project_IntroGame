@@ -1,4 +1,5 @@
 using DG.Tweening;
+using TawanOS.CardEngine;
 using TawanOS.UI;
 using TawanOS.VFX;
 using TMPro;
@@ -9,7 +10,7 @@ namespace TawanOS.GameFlow
 {
     /// <summary>
     /// Title screen: New Game (asks before overwriting a saved run), Continue (only when a save
-    /// exists, with a one-line summary of it), Settings and Quit.
+    /// exists, with a one-line summary of it), the card collection (สมุดการ์ด), Settings and Quit.
     /// </summary>
     public class MainMenuUI : MonoBehaviour
     {
@@ -22,6 +23,7 @@ namespace TawanOS.GameFlow
         public Button newGameButton;
         public Button continueButton;
         public TextMeshProUGUI continueInfoText;
+        public Button collectionButton;
         public Button settingsButton;
         public Button quitButton;
 
@@ -43,6 +45,7 @@ namespace TawanOS.GameFlow
         {
             if (newGameButton != null) newGameButton.onClick.AddListener(OnNewGame);
             if (continueButton != null) continueButton.onClick.AddListener(OnContinue);
+            if (collectionButton != null) collectionButton.onClick.AddListener(OpenCollection);
             if (settingsButton != null) settingsButton.onClick.AddListener(() => SettingsPanel.Open());
             if (quitButton != null) quitButton.onClick.AddListener(OnQuit);
             if (confirmYesButton != null) confirmYesButton.onClick.AddListener(OnConfirmYes);
@@ -127,6 +130,15 @@ namespace TawanOS.GameFlow
         {
             SetInteractable(false);
             GameFlowManager.Instance.ContinueGame();
+        }
+
+        // สมุดการ์ด: every card in the game, the ones never seen in any run face down
+        private void OpenCollection()
+        {
+            var catalog = CardCatalogSO.Load();
+            if (catalog == null) return;
+            var collection = CardCollection.Current;
+            DeckViewerPanelUI.Ensure().ShowCollection("สมุดการ์ด", catalog.cards, collection.Has, "ยังไม่มีการ์ดในเกม");
         }
 
         private void OnQuit()

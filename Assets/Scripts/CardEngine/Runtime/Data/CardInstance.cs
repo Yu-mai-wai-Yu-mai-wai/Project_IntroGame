@@ -38,6 +38,8 @@ namespace TawanOS.CardEngine
         [NonSerialized] public bool deathHandled;
         [NonSerialized] public bool pendingRemoval;
         [NonSerialized] public bool formationBuffed;
+        // Summoned onto the board by คาถาเรียกผี: it cannot strike until the round ends
+        [NonSerialized] public bool summonedThisRound;
 
         // The board column (0..4) this card sits in; -1 when it is not on the board. Columns are fixed:
         // a card keeps its column when others die. Set before playing to ask for a specific column.
