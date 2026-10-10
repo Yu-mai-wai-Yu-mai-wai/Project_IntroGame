@@ -1,5 +1,6 @@
 using DG.Tweening;
 using TawanOS.UI;
+using TawanOS.VFX;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -53,6 +54,10 @@ namespace TawanOS.GameFlow
             // The stage behind the menu turns gently with the cursor (tune it by adding the component to the camera)
             var cam = Camera.main;
             if (cam != null && cam.GetComponent<MouseParallaxCamera>() == null) cam.gameObject.AddComponent<MouseParallaxCamera>();
+
+            // The main buttons sit on drifting smoke instead of flat panels (tune it by adding the component to a button)
+            foreach (var b in new[] { newGameButton, continueButton, settingsButton, quitButton })
+                if (b != null && b.GetComponent<UiSmokeButton>() == null) b.gameObject.AddComponent<UiSmokeButton>();
         }
 
         private void Start()
