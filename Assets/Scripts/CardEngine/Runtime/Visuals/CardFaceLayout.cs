@@ -50,7 +50,7 @@ namespace TawanOS.CardEngine
         public static readonly Box Attack = new Box(-0.106f, -0.114f, 0.1f, 0.055f);       // left badge (skull)
         public static readonly Box Khwan = new Box(0.105f, -0.114f, 0.1f, 0.055f);         // right badge (blood drop)
         public static readonly Box Description = new Box(0f, -0.29f, 0.78f, 0.22f);        // bottom box
-        public static readonly Box Artwork = new Box(0f, 0.16f, 0.84f, 0.54f);             // picture window
+        public static readonly Box Artwork = new Box(0f, 0f, 1f, 1f);                      // the picture fills the whole face; the frame is see-through and drawn over it
 
         // The frame used for a card with no Card Background of its own
         public static Sprite DefaultFrame(Sprite whiteFrame, Sprite blackFrame, MagicSchool school)

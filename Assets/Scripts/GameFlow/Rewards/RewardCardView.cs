@@ -107,7 +107,9 @@ namespace TawanOS.GameFlow
             {
                 artwork.sprite = card.artwork;
                 artwork.enabled = !printed && card.artwork != null;
-                artwork.preserveAspect = true;
+                artwork.preserveAspect = false;
+                PlaceOnFace(artwork.rectTransform, CardFaceLayout.Artwork); // scenes built earlier still hold the old picture window
+                artwork.transform.SetAsFirstSibling(); // behind the see-through frame
             }
 
             bool familiar = card.cardType == CardType.Familiar;

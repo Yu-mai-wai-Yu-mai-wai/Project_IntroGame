@@ -194,8 +194,9 @@ namespace TawanOS.CardEngine
                 {
                     var art = NewImage("Artwork", root, Color.white);
                     art.sprite = card.artwork;
-                    art.preserveAspect = true;
+                    art.preserveAspect = false;
                     PlaceOnFace(art.rectTransform, CardFaceLayout.Artwork);
+                    art.transform.SetAsFirstSibling(); // behind the see-through frame
                 }
 
                 var cost = FaceText("Cost", root, CardFaceLayout.Cost, 28);

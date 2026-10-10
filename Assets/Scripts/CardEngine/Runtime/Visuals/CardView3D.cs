@@ -125,7 +125,8 @@ namespace TawanOS.CardEngine
         // The frame, artwork and text are all transparent and sit a hair apart, so Unity's distance sort
         // could draw the frame over the text while the card moves. A Sorting Group keeps each card's parts
         // together (cards still sort against each other by distance) and fixes the order inside the card.
-        private const int FrameOrder = 0, ArtworkOrder = 1, TextOrder = 2;
+        // The artwork is the full-face background; the frame (see-through inside) is drawn over it, then the text.
+        private const int ArtworkOrder = 0, FrameOrder = 1, TextOrder = 2;
 
         private void ApplyDrawOrder()
         {
@@ -151,7 +152,7 @@ namespace TawanOS.CardEngine
             Sprite artwork = HasCardImage ? null : CardData.artwork;
 
             backgroundFace = SetFacePicture(backgroundFace, "FaceBackground", background, Vector2.one, 0f, FaceZ, keepAspect: false);
-            artworkFace = SetFacePicture(artworkFace, "FaceArtwork", artwork, CardFaceLayout.Artwork.size, CardFaceLayout.Artwork.center.y, FaceZ - 0.005f, keepAspect: true);
+            artworkFace = SetFacePicture(artworkFace, "FaceArtwork", artwork, CardFaceLayout.Artwork.size, CardFaceLayout.Artwork.center.y, FaceZ + 0.005f, keepAspect: false);
             backFace = SetFacePicture(backFace, "FaceBack", cardBack, Vector2.one, 0f, FaceZ, keepAspect: false);
 
             ApplyFaceVisibility();

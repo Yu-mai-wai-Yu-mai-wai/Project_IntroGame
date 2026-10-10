@@ -299,11 +299,12 @@ namespace TawanOS.CardEngine
             cardRoot.sizeDelta = new Vector2(CardHeight * CardAspect, CardHeight);
             cardRoot.anchoredPosition = new Vector2(-360f, 0f);
 
+            // Artwork first: it is the full-face background and the frame (see-through inside) is drawn over it
+            artImage = NewImage("Artwork", cardRoot, Color.white);
+            artImage.preserveAspect = false;
+            PlaceOnFace(artImage.rectTransform, CardFaceLayout.Artwork);
             frameImage = NewImage("Frame", cardRoot, Color.white);
             Stretch(frameImage.rectTransform);
-            artImage = NewImage("Artwork", cardRoot, Color.white);
-            artImage.preserveAspect = true;
-            PlaceOnFace(artImage.rectTransform, CardFaceLayout.Artwork);
 
             faceCost = FaceText("Cost", font, CardFaceLayout.Cost, 80, FontStyles.Normal);
             faceName = FaceText("Name", font, CardFaceLayout.Name, 64, FontStyles.Normal);
