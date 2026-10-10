@@ -93,7 +93,7 @@ namespace TawanOS.GameFlow
 
             if (Application.CanStreamedLevelBeLoaded(GameFlowManager.MainMenuSceneName))
             {
-                SceneManager.LoadScene(GameFlowManager.MainMenuSceneName, LoadSceneMode.Single);
+                SceneTransition.Load(GameFlowManager.MainMenuSceneName);
             }
             else
             {

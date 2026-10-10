@@ -122,7 +122,7 @@ namespace TawanOS.GameFlow
             Time.timeScale = 1f;
             Destroy(gameObject);
             if (Application.CanStreamedLevelBeLoaded(GameFlowManager.MainMenuSceneName))
-                SceneManager.LoadScene(GameFlowManager.MainMenuSceneName, LoadSceneMode.Single);
+                SceneTransition.Load(GameFlowManager.MainMenuSceneName);
         }
     }
 }
