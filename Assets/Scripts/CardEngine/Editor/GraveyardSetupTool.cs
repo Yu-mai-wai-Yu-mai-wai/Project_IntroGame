@@ -6,11 +6,13 @@ using UnityEngine;
 namespace TawanOS.CardEngine
 {
     // Shortcut for the manual setup: makes sure the open combat scene has a GraveyardView3D and points its
-    // Graveyard Object at the table set's GraveyardZone. Doing it by hand works the same way: add
+    // Graveyard Object at the table set's graveyard (GraveyardZone in the demo table, GraveCardSlot in the final
+    // Combat.fbx). Doing it by hand works the same way: add
     // GraveyardView3D to any object and drag the graveyard model into Graveyard Object.
     public static class GraveyardSetupTool
     {
-        private const string GraveyardModelName = "GraveyardZone";
+        // Names the graveyard has in the table models, newest first
+        private static readonly string[] GraveyardModelNames = { "GraveCardSlot", "GraveyardZone" };
 
         [MenuItem("Tools/TawanOS/Card Engine/Hook Up Graveyard (GraveyardZone)")]
         private static void HookUpGraveyard_Menu()
@@ -36,7 +38,8 @@ namespace TawanOS.CardEngine
 
             if (graveyard.graveyardObject == null)
             {
-                var model = FindInScene(GraveyardModelName);
+                GameObject model = null;
+                foreach (var name in GraveyardModelNames) if (model == null) model = FindInScene(name);
                 if (model != null)
                 {
                     Undo.RecordObject(graveyard, "Assign graveyard object");
@@ -44,7 +47,7 @@ namespace TawanOS.CardEngine
                 }
                 else
                 {
-                    Debug.LogWarning($"[GraveyardSetupTool] No '{GraveyardModelName}' in the open scene - drag your graveyard object into Graveyard Object by hand.");
+                    Debug.LogWarning($"[GraveyardSetupTool] No '{string.Join("' / '", GraveyardModelNames)}' in the open scene - drag your graveyard object into Graveyard Object by hand.");
                 }
             }
 

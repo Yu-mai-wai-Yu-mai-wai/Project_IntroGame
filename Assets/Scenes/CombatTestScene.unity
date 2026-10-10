@@ -1415,6 +1415,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 45de815a193a30b47b0b6d742814be16, type: 3}
+--- !u!1 &507071808 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4353415579707775405, guid: 45de815a193a30b47b0b6d742814be16, type: 3}
+  m_PrefabInstance: {fileID: 507071807}
+  m_PrefabAsset: {fileID: 0}
 --- !u!21 &595147866
 Material:
   serializedVersion: 8
@@ -3071,7 +3076,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bac5f8ef07eec0b469b0e9de8ea43618, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.GraveyardView3D
-  graveyardObject: {fileID: 0}
+  graveyardObject: {fileID: 507071808}
   tintOnHover: 1
   hoverColor: {r: 0.75, g: 0.7, b: 0.85, a: 1}
   slabSize: {x: 1, y: 0.12, z: 1.35}
