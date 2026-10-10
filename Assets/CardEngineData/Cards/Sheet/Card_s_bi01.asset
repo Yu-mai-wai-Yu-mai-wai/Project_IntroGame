@@ -15,7 +15,8 @@ MonoBehaviour:
   cardId: s_bi01
   cardNameThai: "\u0E04\u0E32\u0E16\u0E32\u0E2A\u0E32\u0E1B\u0E41\u0E0A\u0E48\u0E07"
   cardNameEng: Curse Chant
-  descriptionFormat: 
+  descriptionFormat: "\u0E21\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1C\u0E27\u0E32\u0E43\u0E2B\u0E49\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23
+    1 \u0E43\u0E1A"
   magicSchool: 1
   cardType: 0
   targetType: 1
@@ -32,7 +33,15 @@ MonoBehaviour:
   costFontSize: 1
   statFontSize: 1
   descriptionFontSize: 1
-  abilities: []
+  abilities:
+  - trigger: 0
+    effect: 6
+    target: 4
+    status: 0
+    value: 1
+    duration: 2
+    ignoreArmor: 0
+    relatedCard: {fileID: 0}
   upgradedCard: {fileID: 0}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
