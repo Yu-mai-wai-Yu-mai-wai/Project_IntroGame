@@ -46,7 +46,7 @@ MonoBehaviour:
   upgradedCard: {fileID: 0}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
-  artwork: {fileID: 21300000, guid: 39f5d7d7841426141b16a1e900e2116b, type: 3}
+  artwork: {fileID: 21300000, guid: 36a144c6a82e1d54ea3ff8048a2b08d8, type: 3}
   frameBorder: {fileID: 0}
   sfxPlay: {fileID: 0}
   vfxPrefab: {fileID: 0}
