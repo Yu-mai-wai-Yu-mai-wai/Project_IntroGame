@@ -59,6 +59,7 @@ namespace TawanOS.MapEngine
                         // Rotate glass position vector by modelLocalRotation to get true local offset
                         Vector3 glassLocalPos = Quaternion.Euler(modelLocalRotation) * glassChild.localPosition;
                         child.localPosition = new Vector3(-glassLocalPos.x, -glassLocalPos.y, -glassLocalPos.z) + modelLocalOffset;
+                        LiftGlassAboveSurface(child, glassChild);
                     }
                     else
                     {
@@ -72,12 +73,24 @@ namespace TawanOS.MapEngine
         {
             foreach (Transform t in parent.GetComponentsInChildren<Transform>(true))
             {
-                if (t != parent && t.name.ToLower().Contains("circle"))
-                {
-                    return t;
-                }
+                if (t == parent) continue;
+                string n = t.name.ToLower();
+                if (n.Contains("circle") || n.Contains("glasscup")) return t;
             }
             return null;
+        }
+
+        // The glass pivot sits inside the cup, so aligning the pivot with the node put half the cup under the paper.
+        // Lift the model until the lowest point of the glass rests on the marker's surface plane.
+        private void LiftGlassAboveSurface(Transform model, Transform glass)
+        {
+            var glassRenderer = glass.GetComponent<Renderer>();
+            if (glassRenderer == null) return;
+            // Bounds are only valid once the transform changes above are applied.
+            Physics.SyncTransforms();
+            float lowest = glassRenderer.bounds.min.y;
+            float surface = transform.position.y - offset.y + 0.005f;
+            model.position += Vector3.up * (surface - lowest);
         }
 
         private void OnDrawGizmosSelected()
