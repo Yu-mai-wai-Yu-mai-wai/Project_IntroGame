@@ -19,6 +19,10 @@ namespace TawanOS.MapEngine
         public float maxScrollX = 15.5f;
         [Tooltip("Camera sits this far ahead (toward -X, screen right) of the current floor so the glass lands on the left third.")]
         public float lookAheadX = 3f;
+        [Tooltip("The first and last node may sit at most this far from the screen centre (1 = the screen edge). Keeps the camera from scrolling onto empty paper past either end of the map.")]
+        [Range(0.3f, 1f)] public float edgeNodeScreenFraction = 0.75f;
+        [Tooltip("Height of the paper surface the camera looks at.")]
+        public float paperSurfaceY = 0.03f;
 
         [Header("3D Table Atmosphere (matches the Blender concept render)")]
         public Color fogColor = new Color(0.11f, 0.075f, 0.055f, 1f);
@@ -158,7 +162,8 @@ namespace TawanOS.MapEngine
                         float[] floorXs = { 13.55f, 9.65f, 5.80f, 2.15f, -2.93f, -7.62f, -11.54f, -15.47f };
                         targetX = floorXs[Mathf.Clamp(floorIndex, 0, floorXs.Length - 1)];
                     }
-                    targetX = Mathf.Clamp(targetX - lookAheadX, minScrollX, maxScrollX);
+                    GetCameraXRange(out float rangeMin, out float rangeMax);
+                    targetX = Mathf.Clamp(targetX - lookAheadX, rangeMin, rangeMax);
                     targetCamPos = new Vector3(targetX, config.cameraHeightY, config.cameraZDistance);
                 }
                 else
@@ -197,6 +202,30 @@ namespace TawanOS.MapEngine
             targetTransform.DOMove(targetPos, 0.6f).SetEase(Ease.OutCubic);
         }
 
+        // The fixed min/max assume the end nodes can sit anywhere on screen, which leaves a screen of empty paper past the
+        // boss (and before the first floor). Pull the range in so the end nodes stop at edgeNodeScreenFraction of the half width.
+        private void GetCameraXRange(out float min, out float max)
+        {
+            min = minScrollX;
+            max = maxScrollX;
+            var cam = targetTransform != null ? targetTransform.GetComponent<Camera>() : null;
+            if (cam == null || config == null) return;
+
+            // Same rotation Start applies; used directly so the range is right even before Start has run.
+            Vector3 forward = Quaternion.Euler(config.cameraAnglePitch, 180f, 0f) * Vector3.forward;
+            if (forward.y > -0.05f) return;
+            float depth = (config.cameraHeightY - paperSurfaceY) / -forward.y; // distance along the centre ray to the paper
+            float halfWidth = depth * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * cam.aspect;
+
+            float firstNodeX = maxScrollX + lookAheadX;
+            float lastNodeX = minScrollX + lookAheadX;
+            float lo = lastNodeX + edgeNodeScreenFraction * halfWidth; // screen right is -X
+            float hi = firstNodeX - edgeNodeScreenFraction * halfWidth;
+            if (lo > hi) lo = hi = (lo + hi) * 0.5f; // very wide screen: hold the middle of the map
+            min = Mathf.Max(minScrollX, lo);
+            max = Mathf.Min(maxScrollX, hi);
+        }
+
         private void ClampPosition()
         {
             if (config == null || targetTransform == null) return;
@@ -206,7 +235,8 @@ namespace TawanOS.MapEngine
                 Vector3 cPos = targetTransform.position;
                 if (config.orientation == MapOrientation.LeftToRight)
                 {
-                    cPos.x = Mathf.Clamp(cPos.x, minScrollX, maxScrollX);
+                    GetCameraXRange(out float rangeMin, out float rangeMax);
+                    cPos.x = Mathf.Clamp(cPos.x, rangeMin, rangeMax);
                     cPos.y = config.cameraHeightY;
                     cPos.z = config.cameraZDistance;
                 }

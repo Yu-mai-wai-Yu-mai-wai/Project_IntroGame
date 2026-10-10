@@ -24,8 +24,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 781852386422766554}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
-  m_LocalPosition: {x: 18.623905, y: -0.049906433, z: 0.06760216}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: -0.06760407, y: -0.049906433, z: 18.623903}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -171,7 +171,7 @@ MonoBehaviour:
   moveSpeed: 4
   offset: {x: 0, y: 0.02, z: 0}
   modelLocalOffset: {x: 0, y: 0, z: 0}
-  modelLocalRotation: {x: 0, y: 180, z: 0}
+  modelLocalRotation: {x: 0, y: 90, z: 0}
   defaultFacingDirection: {x: -1, y: 0, z: 0}
   hoverArcOffset: {x: 0, y: 0, z: 0}
   tiltAmount: 0
