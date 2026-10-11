@@ -30,6 +30,7 @@ namespace TawanOS.GameFlow
         private const string RewardSceneName = "RewardScene";
         private const string MeruSceneName = "MeruScene";
         private const string TempleSceneName = "TempleScene";
+        private const string OfferingSceneName = "OfferingScene";
         public const string VictorySceneName = "VictoryScene";
         private const string StorySceneName = "StoryScene";
         private const float VictoryPanelDelaySeconds = 2f;
@@ -40,7 +41,6 @@ namespace TawanOS.GameFlow
         private NodeType currentCombatNodeType = NodeType.MinorEnemy;
         private EnemyProfileSO pendingEnemyProfile;
         private int? pendingEventFloor;
-        private bool pendingOffering; // กองของเซ่น: EventScene plays the offering story instead of a random event
         private int pendingVictoryIncense;
         private RewardTier pendingRewardTier = RewardTier.Minor;
 
@@ -155,7 +155,6 @@ namespace TawanOS.GameFlow
             currentCombatNodeType = NodeType.MinorEnemy;
             pendingEnemyProfile = null;
             pendingEventFloor = null;
-            pendingOffering = false;
             pendingVictoryIncense = 0;
             pendingRewardTier = RewardTier.Minor;
             hasPendingReward = false;
@@ -223,6 +222,12 @@ namespace TawanOS.GameFlow
                 }
             }
 
+            if (OfferingManager.Instance != null)
+            {
+                OfferingManager.Instance.OnOfferingTaken -= HandleOfferingTaken;
+                OfferingManager.Instance.OnOfferingTaken += HandleOfferingTaken;
+            }
+
             if (ShopManager.Instance != null)
             {
                 ShopManager.Instance.OnShopClosed -= HandleShopClosed;
@@ -238,12 +243,7 @@ namespace TawanOS.GameFlow
                 EventManager.Instance.OnCardRewardRequested -= HandleEventCardReward;
                 EventManager.Instance.OnCardRewardRequested += HandleEventCardReward;
 
-                if (pendingOffering)
-                {
-                    pendingOffering = false;
-                    EventManager.Instance.BeginOfferingEvent();
-                }
-                else if (pendingEventFloor.HasValue)
+                if (pendingEventFloor.HasValue)
                 {
                     int floor = pendingEventFloor.Value;
                     pendingEventFloor = null;
@@ -316,20 +316,30 @@ namespace TawanOS.GameFlow
             if (Application.isPlaying) SceneTransition.Load(EventSceneName);
         }
 
-        // กองของเซ่น: a short story in EventScene, then the card reward screen
+        // กองของเซ่น: its own 3D scene (a forest clearing with a pile of face-down cards); clicking the pile takes the
+        // top card to the reward screen (Game Designer, 12 Oct)
         private void HandleTreasureNodeEntered(int floor)
         {
             RunState.Current.SetResume(ResumeKind.Event, NodeType.Treasure, floor);
-            pendingOffering = true;
-            if (Application.isPlaying) SceneTransition.Load(EventSceneName);
+            if (Application.isPlaying) SceneTransition.Load(OfferingSceneName);
+        }
+
+        private void HandleOfferingTaken()
+        {
+            BeginCardReward(RewardTier.Offering);
         }
 
         private void HandleEventCardReward()
         {
+            BeginCardReward(RewardTier.EventCard);
+        }
+
+        private void BeginCardReward(RewardTier tier)
+        {
             RunState.Current.ClearResume();
             hasPendingReward = true;
             rewardIncense = 0;
-            rewardTier = RewardTier.Offering;
+            rewardTier = tier;
             LoadRewardScene();
         }
 

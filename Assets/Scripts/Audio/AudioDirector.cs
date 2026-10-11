@@ -35,7 +35,9 @@ namespace TawanOS.Audio
                 case "MapTestScene":
                 case "ShopScene":
                 case "RewardScene":
-                case "MeruScene": audio.PlayBgm("bgm_map"); audio.PlayAmbience("amb_map"); break;
+                case "MeruScene":
+                case "TempleScene":
+                case "OfferingScene": audio.PlayBgm("bgm_map"); audio.PlayAmbience("amb_map"); break;
                 case "EventScene": audio.PlayBgm("bgm_event"); audio.PlayAmbience("amb_event"); break;
                 case "VictoryScene": audio.PlayBgm("bgm_title"); audio.PlayAmbience(null); break;
                 case CombatScene: StartCoroutine(RouteCombat(audio)); break;

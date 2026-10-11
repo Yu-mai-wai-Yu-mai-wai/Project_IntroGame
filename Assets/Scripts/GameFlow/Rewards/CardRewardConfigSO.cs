@@ -9,7 +9,8 @@ namespace TawanOS.GameFlow
         Minor,
         Elite,
         Boss,
-        Offering // กองของเซ่น on the map: no fight, just the cards
+        Offering, // กองของเซ่น on the map: no fight, the one card taken from the pile
+        EventCard // a หมอกดำ event that hands out a card (appended: saves store the enum as a number)
     }
 
     /// <summary>
@@ -29,8 +30,10 @@ namespace TawanOS.GameFlow
         [Min(1)] public int minorChoices = 3;
         [Min(1)] public int eliteChoices = 3;
         [Min(1)] public int bossChoices = 4;
-        [Tooltip("กองของเซ่น (the map's offering-pile node)")]
-        [Min(1)] public int offeringChoices = 3;
+        [Tooltip("กองของเซ่น (the map's offering-pile node): the one card taken from the pile (Game Designer, 12 Oct)")]
+        [Min(1)] public int offeringChoices = 1;
+        [Tooltip("A หมอกดำ event's card reward")]
+        [Min(1)] public int eventChoices = 3;
 
         [Header("Skip")]
         [Tooltip("Off (Game Designer 10 Oct): the player must take one of the cards.")]
@@ -45,6 +48,7 @@ namespace TawanOS.GameFlow
                 RewardTier.Boss => bossChoices,
                 RewardTier.Elite => eliteChoices,
                 RewardTier.Offering => offeringChoices,
+                RewardTier.EventCard => eventChoices,
                 _ => minorChoices,
             };
         }
