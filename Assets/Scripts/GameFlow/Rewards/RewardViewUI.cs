@@ -88,8 +88,8 @@ namespace TawanOS.GameFlow
                 {
                     RewardTier.Boss => "ชัยชนะครั้งยิ่งใหญ่!",
                     RewardTier.Elite => "ชัยชนะเหนือผีร้าย!",
-                    // Event cards kept the title they had while they shared the offering tier
-                    RewardTier.Offering or RewardTier.EventCard => "ของจากกองเซ่น",
+                    RewardTier.Offering => "ของจากกองเซ่น",
+                    RewardTier.EventCard => "ของจากหมอกดำ",
                     _ => "ชัยชนะ",
                 };
             }
