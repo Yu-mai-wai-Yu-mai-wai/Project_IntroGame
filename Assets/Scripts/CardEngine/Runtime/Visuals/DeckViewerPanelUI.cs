@@ -97,6 +97,11 @@ namespace TawanOS.CardEngine
             FindCardLook();
             Build();
             EnsureEventSystem();
+            // Active (still see-through) before the cards are built: TextMeshPro sets up its material when it wakes,
+            // and the dark outline on the card text (CardFaceLayout.MakeReadable) failed on texts made while the
+            // canvas was off, so the deck screen never opened
+            group.alpha = 0f;
+            canvas.gameObject.SetActive(true);
             emptyText.text = emptyMessage;
             Refresh();
             scroll.verticalNormalizedPosition = 1f;
@@ -104,8 +109,6 @@ namespace TawanOS.CardEngine
             isOpen = true;
             openedFrame = Time.frameCount;
             targetAlpha = 1f;
-            canvas.gameObject.SetActive(true);
-            group.alpha = 0f;
             group.blocksRaycasts = true;
         }
 
