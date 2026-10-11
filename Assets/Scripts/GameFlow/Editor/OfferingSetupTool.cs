@@ -38,8 +38,8 @@ namespace TawanOS.GameFlow
         // Where things stand, framed in Play mode (12 Oct): the pile sits in the clearing this far in front of where
         // the shrine stood, and the camera looks at it from a crouch so the forest and the big tree fill the back
         private const float PileForward = -6f;                                   // along Z from the shrine's base
-        private static readonly Vector3 CameraFromPile = new Vector3(0f, 1.5f, -4f);
-        private const float CameraPitch = 11.5f;
+        private static readonly Vector3 CameraFromPile = new Vector3(0f, 2.4f, -5.2f); // higher and farther back (Game Designer, 12 Oct)
+        private const float CameraPitch = 17f;
         private const float CameraFov = 45f;
         private static readonly Vector3 LightFromPile = new Vector3(0f, 1.4f, -1.2f);
 
