@@ -37,7 +37,7 @@ namespace TawanOS.MapEngine
             get
             {
                 var run = TawanOS.GameFlow.RunState.Current;
-                return run != null && run.TotalFloors > 0 ? run.TotalFloors : (config != null ? config.totalFloors : 7);
+                return run != null && run.TotalFloors > 0 ? run.TotalFloors : (config != null ? config.totalFloors : TawanOS.GameFlow.RunState.DefaultTotalFloors);
             }
         }
 

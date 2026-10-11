@@ -95,7 +95,7 @@ namespace TawanOS.MapEngine
             {
                 config = ScriptableObject.CreateInstance<MapConfigSO>();
                 config.seed = 737445;
-                config.totalFloors = 7;
+                config.totalFloors = 8;
                 config.mapWidth = 3;
                 config.startingNodesCount = 3;
                 config.pathCount = 3;

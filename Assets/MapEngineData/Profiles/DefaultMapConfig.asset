@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.MapConfigSO
   seed: 909152
   useRandomSeed: 1
-  totalFloors: 7
+  totalFloors: 8
   mapWidth: 3
   startingNodesCount: 3
   preBossNodesCount: 2

@@ -176,15 +176,15 @@ namespace TawanOS.EditorTools
                 failures += Expect("TableMode 4 floors: Node.018 mapping exists", MapManager.TryGetTableNodeFbxName(new Vector2Int(1, 4), 4, out string fbx) && fbx == "Node.018");
             }
 
-            // One mode only: every new run is the full 7-floor map
+            // One mode only: every new run is the full 8-floor map
             RunState.StartNewRun(RunState.DefaultTotalFloors);
-            failures += Expect("RunState.Current.TotalFloors is 7", RunState.Current.TotalFloors == 7);
+            failures += Expect("RunState.Current.TotalFloors is 8", RunState.Current.TotalFloors == 8);
             failures += Expect("RunState save file exists", RunState.HasSave);
             string desc7 = RunState.DescribeSave();
             failures += Expect("RunState describe save names no mode", desc7 != null && !desc7.Contains("โหมด"));
 
             RunState.LoadSavedRun();
-            failures += Expect("Reloaded RunState.Current.TotalFloors is 7", RunState.Current.TotalFloors == 7);
+            failures += Expect("Reloaded RunState.Current.TotalFloors is 8", RunState.Current.TotalFloors == 8);
 
             RunState.EndRun();
 

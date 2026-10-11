@@ -406,8 +406,12 @@ namespace TawanOS.MapEngine
             {
                 return GenerateShortTableMap(config, actualSeed, random);
             }
+            if (config != null && config.totalFloors >= 8)
+            {
+                return GenerateEightFloorTableMap(config, actualSeed, random);
+            }
 
-            // Total 8 floors (0 to 7) matching the 19 pedestals on the paper board
+            // The 7-floor map (saves made before 11 Oct): 8 rows (0 to 7) matching the 19 pedestals on the paper board
             int totalFloors = 7;
             int mapWidth = 3;
             MapGraphData graph = new MapGraphData(actualSeed, totalFloors, mapWidth);
@@ -564,6 +568,95 @@ namespace TawanOS.MapEngine
             InitializeVisibilityAndStatus(graph);
 
             return graph;
+        }
+
+        // Node count of each floor on the 8-floor map, floor 0 first (the boss comes after, on floor 8)
+        public static readonly int[] EightFloorWidths = { 3, 2, 3, 1, 3, 3, 2, 2 };
+
+        // Floors where every node is a fight: floors 1, 4 and 7 counted from 1 (Game Designer, 11 Oct)
+        public static readonly int[] EightFloorCombatFloors = { 0, 3, 6 };
+
+        // Which nodes of the floor above each node leads to, by column (same paths as the pedestal map, plus floor 7 -> 8)
+        private static readonly int[][][] EightFloorLinks =
+        {
+            new[] { new[] { 0 }, new[] { 0, 1 }, new[] { 1 } },          // floor 0 (3) -> floor 1 (2)
+            new[] { new[] { 0, 1 }, new[] { 1, 2 } },                    // floor 1 (2) -> floor 2 (3)
+            new[] { new[] { 0 }, new[] { 0 }, new[] { 0 } },             // floor 2 (3) -> floor 3 (1)
+            new[] { new[] { 0, 1, 2 } },                                 // floor 3 (1) -> floor 4 (3)
+            new[] { new[] { 0, 1 }, new[] { 1 }, new[] { 1, 2 } },       // floor 4 (3) -> floor 5 (3)
+            new[] { new[] { 0 }, new[] { 0, 1 }, new[] { 1 } },          // floor 5 (3) -> floor 6 (2)
+            new[] { new[] { 0, 1 }, new[] { 1 } },                       // floor 6 (2) -> floor 7 (2)
+        };
+
+        /// <summary>
+        /// The 8-floor map (Game Designer, 11 Oct): start, 8 floors of 3,2,3,1,3,3,2,2 nodes, then the boss.
+        /// Floors 1, 4 and 7 (counted from 1) are all fights; every other floor rolls หมอกดำ, กองของเซ่น, ศาลตายาย,
+        /// เมรุ and วัด with the same chance, with no fixed nodes. The board has pedestals for 7 floors only, so
+        /// MapManager places these nodes by floor (TableFloorX) instead of on pedestals.
+        /// </summary>
+        private MapGraphData GenerateEightFloorTableMap(MapConfigSO config, int actualSeed, System.Random random)
+        {
+            int floorsBeforeBoss = EightFloorWidths.Length;
+            MapGraphData graph = new MapGraphData(actualSeed, floorsBeforeBoss, 3);
+
+            var start = new NodeBlueprint(new Vector2Int(1, -1), NodeType.RestSite);
+            start.status = NodeStatus.Visited;
+            start.visibility = NodeVisibility.Visited;
+            graph.startNode = start;
+            graph.currentPlayerPosition = start.gridPosition;
+
+            for (int y = 0; y < floorsBeforeBoss; y++)
+                for (int x = 0; x < EightFloorWidths[y]; x++)
+                    graph.floors[y].Add(new NodeBlueprint(new Vector2Int(x, y), NodeType.MinorEnemy));
+            var boss = new NodeBlueprint(new Vector2Int(1, floorsBeforeBoss), NodeType.Boss);
+            graph.floors[floorsBeforeBoss].Add(boss);
+
+            foreach (var node in graph.floors[0]) Connect(start, node);
+            for (int y = 0; y < EightFloorLinks.Length; y++)
+                for (int x = 0; x < EightFloorLinks[y].Length; x++)
+                    foreach (int next in EightFloorLinks[y][x])
+                        Connect(graph.floors[y][x], graph.floors[y + 1][next]);
+            foreach (var node in graph.floors[floorsBeforeBoss - 1]) Connect(node, boss);
+
+            // Floor by floor, so a node can look at the types of the floor before it
+            for (int y = 0; y < floorsBeforeBoss; y++)
+            {
+                if (Array.IndexOf(EightFloorCombatFloors, y) >= 0) continue;
+                foreach (var node in graph.floors[y]) node.type = RollNonCombatType(node, graph, config, random);
+            }
+
+            foreach (var node in graph.GetAllNodes()) node.positionOffset = Vector2.zero;
+            start.positionOffset = Vector2.zero;
+            InitializeVisibilityAndStatus(graph);
+            return graph;
+        }
+
+        private static void Connect(NodeBlueprint from, NodeBlueprint to)
+        {
+            from.AddOutgoingConnection(to.gridPosition);
+            to.AddIncomingConnection(from.gridPosition);
+        }
+
+        private static readonly NodeType[] NonCombatTypes =
+            { NodeType.Event, NodeType.Treasure, NodeType.Store, NodeType.RestSite, NodeType.Temple };
+
+        // Every non-fight node type with the same chance; เมรุ, ศาลตายาย and วัด never follow a node of their own type
+        private NodeType RollNonCombatType(NodeBlueprint node, MapGraphData graph, MapConfigSO config, System.Random random)
+        {
+            bool checkRest = config == null || config.preventConsecutiveRestSites;
+            bool checkShop = config == null || config.preventConsecutiveShops;
+            var blocked = new HashSet<NodeType>();
+            foreach (var pos in node.incomingConnections)
+            {
+                var parent = graph.GetNode(pos);
+                if (parent == null) continue;
+                if (checkRest && (parent.type == NodeType.RestSite || parent.type == NodeType.Temple)) blocked.Add(parent.type);
+                if (checkShop && parent.type == NodeType.Store) blocked.Add(parent.type);
+            }
+
+            var choices = new List<NodeType>();
+            foreach (var type in NonCombatTypes) if (!blocked.Contains(type)) choices.Add(type);
+            return choices[random.Next(choices.Count)];
         }
 
         private MapGraphData GenerateShortTableMap(MapConfigSO config, int actualSeed, System.Random random)

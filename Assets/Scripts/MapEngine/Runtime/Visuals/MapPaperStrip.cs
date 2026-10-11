@@ -40,7 +40,7 @@ namespace TawanOS.MapEngine
         [Tooltip("Each piece reaches this far under the next one, so no gap shows at the joins.")]
         public float overlap = 0.05f;
         [Tooltip("Map length used in the editor before a map is generated.")]
-        public int editorFloors = 7;
+        public int editorFloors = 8;
 
         private void Start()
         {

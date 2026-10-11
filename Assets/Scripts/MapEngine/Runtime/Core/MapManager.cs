@@ -293,7 +293,25 @@ namespace TawanOS.MapEngine
             { new Vector2Int(1, 4),  "Node.018" },
         };
 
-        // X of each node column on the paper board, start node first. The board has 9 columns (start + 7 floors + boss).
+        // The 8-floor map (Game Designer, 11 Oct) has more floors than the board has pedestals. Each node borrows the
+        // row (Z) of a pedestal with the same place in a floor of the same width, and its column (X) comes from
+        // TableFloorX: floors 0-6 match the 7-floor pedestals, floor 7 (2 nodes) uses the pre-boss pair, boss last.
+        public static readonly Dictionary<Vector2Int, string> TableNodeFbxNamesEight = BuildEightFloorNames();
+
+        private static Dictionary<Vector2Int, string> BuildEightFloorNames()
+        {
+            var names = new Dictionary<Vector2Int, string>();
+            foreach (var kvp in TableNodeFbxNames)
+                if (kvp.Key.y < 7) names[kvp.Key] = kvp.Value;
+            names[new Vector2Int(0, 7)] = "Node.016";
+            names[new Vector2Int(1, 7)] = "Node.017";
+            names[new Vector2Int(0, 8)] = "Node.018";
+            names[new Vector2Int(1, 8)] = "Node.018";
+            return names;
+        }
+
+        // X of each node column on the paper board, start node first. The board has 9 columns (start + 7 floors + boss);
+        // other floor counts are spread over the same length.
         // The boss (ใจกลางป่าช้า) always stands on the last column at the far end of the board, so a map with fewer
         // floors spreads its floors evenly between the start and the boss instead of stopping halfway along the board.
         private static readonly float[] TableColumnXs = { 18.61f, 13.55f, 9.65f, 5.80f, 2.15f, -2.93f, -7.62f, -11.54f, -15.47f };
@@ -329,6 +347,7 @@ namespace TawanOS.MapEngine
             {
                 if (TableNodeFbxNamesShort.TryGetValue(gridPos, out nodeName)) return true;
             }
+            if (totalFloors >= 8) return TableNodeFbxNamesEight.TryGetValue(gridPos, out nodeName);
             return TableNodeFbxNames.TryGetValue(gridPos, out nodeName);
         }
 
@@ -356,10 +375,11 @@ namespace TawanOS.MapEngine
             { "Node.018", new Vector3(-15.466f, 0.025f, 0.029f) },
         };
 
-        // The short map keeps each node's row (Z) from its pedestal but takes the column (X) from the compact layout
+        // Only the 7-floor map stands on the pedestals; the short and the 8-floor maps keep each node's row (Z) from
+        // its pedestal but take the column (X) from their own floor count, spread evenly from start to boss
         private static float TableNodeX(float pedestalX, Vector2Int gridPos, MapConfigSO configData)
         {
-            return configData != null && configData.totalFloors <= 4
+            return configData != null && configData.totalFloors != 7
                 ? TableFloorX(gridPos.y, configData.totalFloors)
                 : pedestalX;
         }
