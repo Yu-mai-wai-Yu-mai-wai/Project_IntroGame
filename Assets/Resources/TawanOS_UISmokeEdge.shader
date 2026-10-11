@@ -157,7 +157,8 @@ Shader "TawanOS/UI/SmokeEdge"
                 float up = 1.0 - abs(fbm(sp + float2(rise * 0.6, -t * 0.3)) * 2.0 - 1.0);
                 float down = 1.0 - abs(fbm(sp * 1.4 + float2(4.1 + sink * 0.6, t * 0.22)) * 2.0 - 1.0);
                 float strands = pow(saturate(up), 6.0) + 0.7 * pow(saturate(down), 6.0);
-                float reach = smoothstep(-0.25, border, x) * (1.0 - body);
+                // Wisps fade out before the quad's own left side, so the smoke never ends in a straight cut line
+                float reach = smoothstep(0.0, border, x) * smoothstep(0.0, 0.2, x) * (1.0 - body);
                 float wisps = saturate(strands * reach * 1.2);
 
                 fixed4 color = IN.color;

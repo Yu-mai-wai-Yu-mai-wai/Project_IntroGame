@@ -13,9 +13,11 @@ using UnityEngine.UI;
 namespace TawanOS.EventEngine
 {
     /// <summary>
-    /// Simulated-Universe style event screen: illustration on the left, narration panel on the right
-    /// with a typewriter body and the choice list below it. Click the text (or press Space) to finish
-    /// typing; number keys pick a choice.
+    /// Simulated-Universe style event screen: the illustration fills the left half of the screen edge to edge (cropped,
+    /// never stretched, no frame), and a black narration panel on the right meets it with a smoky edge down the middle
+    /// (Game Designer, 12 Oct; layout by Tools/TawanOS/Event Engine/Split Layout With Smoke). An event without a
+    /// picture leaves the left half dark. The narration has a typewriter body and the choice list below it. Click the
+    /// text (or press Space) to finish typing; number keys pick a choice.
     /// </summary>
     public class EventViewUI : MonoBehaviour
     {
@@ -29,9 +31,8 @@ namespace TawanOS.EventEngine
         }
 
         [Header("Header")]
+        [Tooltip("Fills its parent (the left half) like a cover: an AspectRatioFitter set to Envelope Parent keeps the picture's shape and the parent's mask crops what spills over.")]
         public Image illustration;
-        [Tooltip("Box behind the illustration. Empty = the illustration's parent. Hidden while a picture is shown so the picture blends into the background.")]
-        public Image illustrationFrame;
         public TextMeshProUGUI titleText;
         public TextMeshProUGUI speakerText;
 
@@ -58,7 +59,7 @@ namespace TawanOS.EventEngine
 
         private void Awake()
         {
-            SetupSoftEdge();
+            SetupIllustration();
             if (choiceTemplate != null) choiceTemplate.gameObject.SetActive(false);
             if (skipTypingButton != null) skipTypingButton.onClick.AddListener(CompleteTyping);
         }
@@ -97,41 +98,37 @@ namespace TawanOS.EventEngine
             if (titleText != null) titleText.text = evt.title;
             if (illustration != null)
             {
-                ShowFrame(evt.illustration == null);
+                // No picture: the left half stays dark (no frame, no "?")
                 illustration.sprite = evt.illustration;
                 illustration.enabled = evt.illustration != null;
-                // Fit comes from the Image's own Preserve Aspect box in EventScene, so Play looks like edit mode
+                if (evt.illustration != null && illustrationFit != null)
+                {
+                    var r = evt.illustration.rect;
+                    illustrationFit.aspectRatio = r.height > 0f ? r.width / r.height : 1f;
+                }
                 illustration.color = new Color(1f, 1f, 1f, 0f);
                 illustration.DOFade(1f, 0.6f);
             }
         }
 
+        // Feather used by Tools/TawanOS/UI/Soften Edge on the old framed layout
         public const float EventIllustrationFeather = 0.3f;
 
-        // The picture's edge fades into the scene background instead of ending at a hard rectangle.
-        // A SoftEdgeImage added in the scene (Tools/TawanOS/UI/Soften Edge) keeps its own sides.
-        private void SetupSoftEdge()
+        private AspectRatioFitter illustrationFit;
+
+        // The picture covers the left half: it keeps its shape (Envelope Parent) and the half's mask crops the spill.
+        // The smoke of the narration panel hides the seam, so the picture no longer fades out at its right edge.
+        private void SetupIllustration()
         {
             if (illustration == null) return;
-            if (illustrationFrame == null && illustration.transform.parent != null)
-            {
-                illustrationFrame = illustration.transform.parent.GetComponent<Image>();
-            }
-            // Only the right edge, which faces the narration panel
-            if (illustration.GetComponent<SoftEdgeImage>() == null) illustration.gameObject.AddComponent<SoftEdgeImage>().SetSides(right: EventIllustrationFeather);
-        }
-
-        // The frame (box, gold outline, "?") is only for an event without a picture
-        private void ShowFrame(bool show)
-        {
-            if (illustrationFrame == null || illustrationFrame == illustration) return;
-            illustrationFrame.enabled = show;
-            var outline = illustrationFrame.GetComponent<Outline>();
-            if (outline != null) outline.enabled = show;
-            foreach (var label in illustrationFrame.GetComponentsInChildren<TextMeshProUGUI>(true))
-            {
-                label.enabled = show;
-            }
+            illustration.preserveAspect = false;
+            var soft = illustration.GetComponent<SoftEdgeImage>();
+            if (soft != null) soft.enabled = false;
+            illustrationFit = illustration.GetComponent<AspectRatioFitter>();
+            if (illustrationFit == null) illustrationFit = illustration.gameObject.AddComponent<AspectRatioFitter>();
+            illustrationFit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            var parent = illustration.transform.parent;
+            if (parent != null && parent.GetComponent<RectMask2D>() == null) parent.gameObject.AddComponent<RectMask2D>();
         }
 
         public void ShowPage(string speaker, string body, string effectSummary, List<ChoiceOption> options)

@@ -64,6 +64,7 @@ namespace TawanOS.EventEngine
             esGo.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
 
             var view = BuildEventCanvas();
+            EventSmokeLayoutTool.Apply(view); // picture on the left half, smoke-edged black panel on the right
 
             var managerGo = new GameObject("EventManager");
             var manager = managerGo.AddComponent<EventManager>();
