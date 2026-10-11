@@ -85,6 +85,7 @@ namespace TawanOS.GameFlow
                 case ResumeKind.Event: return "กลับเข้า" + NodeName(s.resumeNodeType) + "ที่ค้างไว้";
                 case ResumeKind.Shop: return "กลับเข้าศาลที่ค้างไว้";
                 case ResumeKind.Meru: return "กลับเข้าเมรุที่ค้างไว้";
+                case ResumeKind.Temple: return "กลับเข้าวัดที่ค้างไว้";
                 default: return "กลับไปที่แผนที่";
             }
         }
@@ -100,6 +101,7 @@ namespace TawanOS.GameFlow
                 case NodeType.Store: return "ศาล";
                 case NodeType.Boss: return "บอส";
                 case NodeType.Event: return "หมอกดำ";
+                case NodeType.Temple: return "วัด";
                 default: return type.ToString();
             }
         }

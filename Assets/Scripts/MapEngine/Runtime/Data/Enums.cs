@@ -10,7 +10,8 @@ namespace TawanOS.MapEngine
         Treasure,
         Store,
         Boss,
-        Event // Appended last so saved maps (enum stored as int) keep their node types
+        Event, // Appended last so saved maps (enum stored as int) keep their node types
+        Temple // วัด: free full Khwan heal. Appended after Event for the same reason
     }
 
     public enum NodeStatus

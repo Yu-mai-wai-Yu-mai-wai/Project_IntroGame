@@ -18,7 +18,7 @@
 | โปรไฟล์ | NodeType | ไอคอน |
 |---|---|---|
 | EnemyProfile | MinorEnemy | ป่า |
-| EliteProfile | EliteEnemy | วัด |
+| TempleProfile | Temple (วัด) | วัด (11 ต.ค.: ย้ายจาก EliteProfile, ไม่มีโหนด Elite บนแผนที่แล้ว) |
 | BossProfile | Boss | ทางเปลี่ยว |
 | EventProfile | Event | ควันดำ |
 | RestProfile | RestSite (เมรุ) | เมรุ |

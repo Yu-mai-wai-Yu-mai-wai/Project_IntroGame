@@ -6,7 +6,8 @@ using TawanOS.UI;
 namespace TawanOS.MapEngine
 {
     /// <summary>
-    /// Map Legend UI (Plan Task G2): Displays authentic Thai descriptions for all 7 node types on the map,
+    /// Map Legend UI (Plan Task G2): Displays authentic Thai descriptions for the 7 node types on the map
+    /// (Elite is no longer rolled and วัด took its row, Game Designer 11 Oct),
     /// styled cleanly with UIThemeSO (CI colors, Sarabun Thai font, WCAG AA contrast >= 4.5:1, zero emojis).
     /// Can be toggled with key 'L' or the toggle button, persisting state in PlayerPrefs.
     /// </summary>
@@ -17,8 +18,8 @@ namespace TawanOS.MapEngine
         public static readonly NodeType[] AllNodeTypes = new[]
         {
             NodeType.MinorEnemy,
-            NodeType.EliteEnemy,
             NodeType.RestSite,
+            NodeType.Temple,
             NodeType.Treasure,
             NodeType.Store,
             NodeType.Boss,
@@ -32,6 +33,7 @@ namespace TawanOS.MapEngine
                 case NodeType.MinorEnemy: return "ศัตรูทั่วไป";
                 case NodeType.EliteEnemy: return "ศัตรูระดับสูง";
                 case NodeType.RestSite:   return "เมรุ";
+                case NodeType.Temple:     return "วัด";
                 case NodeType.Treasure:   return "กองของเซ่น";
                 case NodeType.Store:      return "ศาลตายาย";
                 case NodeType.Boss:       return "ใจกลางป่าช้า";
@@ -46,7 +48,8 @@ namespace TawanOS.MapEngine
             {
                 case NodeType.MinorEnemy: return "การเผชิญหน้ากับบริวารผีร้าย เอาชนะเพื่อรับการ์ดรางวัล";
                 case NodeType.EliteEnemy: return "มินิบอสสุดอันตราย เอาชนะเพื่อรับเครื่องรางล้ำค่า";
-                case NodeType.RestSite:   return "จุดพักศักดิ์สิทธิ์ เผาทำลายการ์ดออกจากสำรับ หรือสวดชุบขวัญ";
+                case NodeType.RestSite:   return "ไฟเมรุไม่เคยดับ เผาการ์ดออกจากสำรับ หรือสวดชุบขวัญให้การ์ดแกร่งขึ้น (อัปเกรดการ์ด)";
+                case NodeType.Temple:     return "ลานวัดสงบกลางป่า กราบพระเพื่อฟื้นขวัญเต็มหลอด ไม่เสียธูป";
                 case NodeType.Treasure:   return "เครื่องเซ่นไหว้โบราณ บันทึกเรื่องเล่าและเลือกรับการ์ดใหม่";
                 case NodeType.Store:      return "ศาลบูชาเร้นลับ แลกเปลี่ยนธูปเพื่อซื้อการ์ดและเครื่องราง";
                 case NodeType.Boss:       return "โหนดสุดท้ายของแผนที่ ที่สถิตของผีตายโหง ไม่พบระหว่างทาง ปราบให้สิ้นเพื่อเรียกขวัญกลับคืน";

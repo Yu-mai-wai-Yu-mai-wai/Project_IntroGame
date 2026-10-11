@@ -48,4 +48,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5812a3ff709248840b87370bb6513d4f, type: 2}
   - {fileID: 11400000, guid: 3780cdf1235b59144acbd0e16dd92240, type: 2}
   - {fileID: 11400000, guid: 11f313dad44e2de479dcf47cd9968b3b, type: 2}
+  - {fileID: 11400000, guid: e846881245d1e30479a4ae3bf211c235, type: 2}
   floorOverrides: []

@@ -29,6 +29,7 @@ namespace TawanOS.GameFlow
         private const string ShopSceneName = "ShopScene";
         private const string RewardSceneName = "RewardScene";
         private const string MeruSceneName = "MeruScene";
+        private const string TempleSceneName = "TempleScene";
         public const string VictorySceneName = "VictoryScene";
         private const string StorySceneName = "StoryScene";
         private const float VictoryPanelDelaySeconds = 2f;
@@ -143,6 +144,7 @@ namespace TawanOS.GameFlow
                     break;
                 case ResumeKind.Shop: HandleStoreNodeEntered(); break;
                 case ResumeKind.Meru: HandleRestNodeEntered(); break;
+                case ResumeKind.Temple: HandleTempleNodeEntered(); break;
                 default: SceneTransition.Load(MapSceneName); break;
             }
         }
@@ -177,6 +179,8 @@ namespace TawanOS.GameFlow
                 MapManager.Instance.OnTreasureNodeEntered += HandleTreasureNodeEntered;
                 MapManager.Instance.OnRestNodeEntered -= HandleRestNodeEntered;
                 MapManager.Instance.OnRestNodeEntered += HandleRestNodeEntered;
+                MapManager.Instance.OnTempleNodeEntered -= HandleTempleNodeEntered;
+                MapManager.Instance.OnTempleNodeEntered += HandleTempleNodeEntered;
             }
 
             if (RewardManager.Instance != null)
@@ -195,6 +199,12 @@ namespace TawanOS.GameFlow
             {
                 MeruManager.Instance.OnMeruFinished -= HandleMeruFinished;
                 MeruManager.Instance.OnMeruFinished += HandleMeruFinished;
+            }
+
+            if (TempleManager.Instance != null)
+            {
+                TempleManager.Instance.OnTempleFinished -= HandleTempleFinished;
+                TempleManager.Instance.OnTempleFinished += HandleTempleFinished;
             }
 
             if (StoryPlayer.Instance != null)
@@ -360,6 +370,25 @@ namespace TawanOS.GameFlow
         }
 
         private void HandleMeruFinished()
+        {
+            RunState.Current.ClearResume();
+            if (Application.isPlaying) SceneTransition.Load(MapSceneName);
+        }
+
+        // วัด: Khwan back to full for free, then back to the map
+        private void HandleTempleNodeEntered()
+        {
+            if (!Application.CanStreamedLevelBeLoaded(TempleSceneName))
+            {
+                Debug.LogWarning("[GameFlowManager] TempleScene is not in Build Settings (run Tools > TawanOS > Temple > Setup Temple Scene) - the node does nothing.");
+                if (SceneManager.GetActiveScene().name != MapSceneName && Application.isPlaying) SceneTransition.Load(MapSceneName);
+                return;
+            }
+            RunState.Current.SetResume(ResumeKind.Temple, NodeType.Temple);
+            if (Application.isPlaying) SceneTransition.Load(TempleSceneName);
+        }
+
+        private void HandleTempleFinished()
         {
             RunState.Current.ClearResume();
             if (Application.isPlaying) SceneTransition.Load(MapSceneName);

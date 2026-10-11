@@ -345,6 +345,7 @@ namespace TawanOS.MapEngine
         {
             bool hasIncomingRest = false;
             bool hasIncomingShop = false;
+            bool hasIncomingTemple = false;
 
             if (node != null && node.incomingConnections != null && graph != null && config != null && (config.preventConsecutiveRestSites || config.preventConsecutiveShops))
             {
@@ -355,6 +356,7 @@ namespace TawanOS.MapEngine
                     {
                         if (parentNode.type == NodeType.RestSite) hasIncomingRest = true;
                         if (parentNode.type == NodeType.Store) hasIncomingShop = true;
+                        if (parentNode.type == NodeType.Temple) hasIncomingTemple = true;
                     }
                 }
             }
@@ -362,32 +364,35 @@ namespace TawanOS.MapEngine
             NodeType rolledType = NodeType.MinorEnemy;
             bool isValid = false;
             int maxAttempts = 10;
-            int minElite = (config != null) ? config.minEliteFloor : 5;
             bool checkRest = (config != null) && config.preventConsecutiveRestSites;
             bool checkShop = (config != null) && config.preventConsecutiveShops;
 
+            // No Elite nodes on the map (Game Designer, 11 Oct): their share went to minor enemies.
+            // วัด (Temple) rolls as often as เมรุ, and like it never follows itself on the next floor.
             for (int attempt = 0; attempt < maxAttempts && !isValid; attempt++)
             {
                 double roll = random.NextDouble();
                 if (floorIndex < 4)
                 {
-                    if (roll < 0.50) rolledType = NodeType.MinorEnemy;
-                    else if (roll < 0.70) rolledType = NodeType.Event;
-                    else if (roll < 0.85) rolledType = NodeType.Store;
-                    else rolledType = NodeType.RestSite;
+                    if (roll < 0.35) rolledType = NodeType.MinorEnemy;
+                    else if (roll < 0.55) rolledType = NodeType.Event;
+                    else if (roll < 0.70) rolledType = NodeType.Store;
+                    else if (roll < 0.85) rolledType = NodeType.RestSite;
+                    else rolledType = NodeType.Temple;
                 }
                 else
                 {
-                    if (roll < 0.35) rolledType = NodeType.MinorEnemy;
-                    else if (roll < 0.52) rolledType = (floorIndex >= minElite) ? NodeType.EliteEnemy : NodeType.MinorEnemy;
-                    else if (roll < 0.70) rolledType = NodeType.Event;
-                    else if (roll < 0.82) rolledType = NodeType.Treasure;
-                    else if (roll < 0.91) rolledType = NodeType.Store;
-                    else rolledType = NodeType.RestSite;
+                    if (roll < 0.43) rolledType = NodeType.MinorEnemy;
+                    else if (roll < 0.61) rolledType = NodeType.Event;
+                    else if (roll < 0.73) rolledType = NodeType.Treasure;
+                    else if (roll < 0.82) rolledType = NodeType.Store;
+                    else if (roll < 0.91) rolledType = NodeType.RestSite;
+                    else rolledType = NodeType.Temple;
                 }
 
                 isValid = true;
                 if (checkRest && hasIncomingRest && rolledType == NodeType.RestSite) isValid = false;
+                if (checkRest && hasIncomingTemple && rolledType == NodeType.Temple) isValid = false;
                 if (checkShop && hasIncomingShop && rolledType == NodeType.Store) isValid = false;
             }
 

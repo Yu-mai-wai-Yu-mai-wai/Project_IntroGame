@@ -32,6 +32,7 @@ namespace TawanOS.MapEngine
         public event System.Action OnStoreNodeEntered;
         public event System.Action<int> OnTreasureNodeEntered; // กองของเซ่น. Arg: map floor of the node
         public event System.Action OnRestNodeEntered; // เมรุ
+        public event System.Action OnTempleNodeEntered; // วัด
 
         private IMapGenerator generator;
         private IMapSaveSystem saveSystem;
@@ -553,6 +554,10 @@ namespace TawanOS.MapEngine
             else if (nodeData.type == NodeType.RestSite)
             {
                 OnRestNodeEntered?.Invoke();
+            }
+            else if (nodeData.type == NodeType.Temple)
+            {
+                OnTempleNodeEntered?.Invoke();
             }
         }
 

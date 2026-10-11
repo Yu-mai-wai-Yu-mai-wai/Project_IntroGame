@@ -99,6 +99,7 @@ namespace TawanOS.MapEngine
             DrawLegendBadge("🛒 Shop", GetDefaultTypeColor(NodeType.Store));
             DrawLegendBadge("👑 Boss", GetDefaultTypeColor(NodeType.Boss));
             DrawLegendBadge("❔ Event", GetDefaultTypeColor(NodeType.Event));
+            DrawLegendBadge("Temple", GetDefaultTypeColor(NodeType.Temple));
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
 
@@ -246,6 +247,7 @@ namespace TawanOS.MapEngine
                 case NodeType.Store: return "S";
                 case NodeType.Boss: return "B";
                 case NodeType.Event: return "?";
+                case NodeType.Temple: return "W";
                 default: return "?";
             }
         }
@@ -261,6 +263,7 @@ namespace TawanOS.MapEngine
                 case NodeType.Store: return new Color(0.2f, 0.85f, 1.0f);
                 case NodeType.Boss: return new Color(0.7f, 0.3f, 0.95f);
                 case NodeType.Event: return new Color(0.55f, 0.9f, 0.85f);
+                case NodeType.Temple: return new Color(0.95f, 0.8f, 0.45f);
                 default: return Color.gray;
             }
         }

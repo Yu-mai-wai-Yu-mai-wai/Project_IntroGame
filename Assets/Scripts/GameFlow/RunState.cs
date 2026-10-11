@@ -14,7 +14,8 @@ namespace TawanOS.GameFlow
         Combat,
         Event,
         Shop,
-        Meru // appended last: saves store the enum as a number
+        Meru, // appended last: saves store the enum as a number
+        Temple
     }
 
     /// <summary>
