@@ -81,8 +81,6 @@ namespace TawanOS.ShopEngine
             config = ScriptableObject.CreateInstance<ShopConfigSO>();
             config.starterDeck = AssetDatabase.LoadAssetAtPath<DeckConfigSO>(StarterDeckPath);
             config.shrineImage = AssetDatabase.LoadAssetAtPath<Sprite>(IconFolder + "ShrineIcon.png");
-            config.blessingIcon = AssetDatabase.LoadAssetAtPath<Sprite>(IconFolder + "TempleIcon.png");
-            config.removalIcon = AssetDatabase.LoadAssetAtPath<Sprite>(IconFolder + "GraveyardIcon.png");
 
             config.greetingLines = new List<string>
             {
@@ -167,8 +165,7 @@ namespace TawanOS.ShopEngine
             Label("AmuletsLabel", root, new Vector2(0.33f, 0.37f), new Vector2(0.64f, 0.43f), charm, "เครื่องราง");
             view.amuletRow = Row("AmuletRow", root, new Vector2(0.33f, 0.1f), new Vector2(0.64f, 0.37f), 14);
 
-            Label("ServicesLabel", root, new Vector2(0.66f, 0.37f), new Vector2(0.97f, 0.43f), charm, "บริการของเจ้าที่");
-            view.serviceRow = Row("ServiceRow", root, new Vector2(0.66f, 0.1f), new Vector2(0.97f, 0.37f), 14);
+            // No services shelf (heal, card removal): the วัด and the เมรุ do those (Game Designer, 11 Oct)
 
             view.itemTemplate = BuildItemTemplate(view.cardRow, sarabun, panelSprite);
 
@@ -178,8 +175,6 @@ namespace TawanOS.ShopEngine
             var leaveText = Text("Label", leave.transform, Vector2.zero, Vector2.one, sarabun, 32, Parchment, TextAlignmentOptions.Center);
             leaveText.text = "กราบลา";
             leaveText.fontStyle = FontStyles.Bold;
-
-            BuildRemovalPanel(root, view, sarabun, panelSprite);
             return view;
         }
 
@@ -223,55 +218,6 @@ namespace TawanOS.ShopEngine
 
             foreach (var t in bg.GetComponentsInChildren<TextMeshProUGUI>(true)) t.raycastTarget = false;
             return item;
-        }
-
-        private static void BuildRemovalPanel(Transform root, ShopViewUI view, TMP_FontAsset font, Sprite panelSprite)
-        {
-            var dim = Img("RemovalPanel", root, Vector2.zero, Vector2.one, new Color(0, 0, 0, 0.75f), null);
-            view.removalPanel = dim.gameObject;
-
-            var panel = Img("Window", dim.transform, new Vector2(0.18f, 0.1f), new Vector2(0.82f, 0.9f), new Color(0.13f, 0.075f, 0.06f), panelSprite);
-            panel.gameObject.AddComponent<Outline>().effectColor = new Color(Gold.r, Gold.g, Gold.b, 0.5f);
-
-            view.removalTitleText = Text("Title", panel.transform, new Vector2(0.04f, 0.88f), new Vector2(0.96f, 0.97f), font, 32, Gold, TextAlignmentOptions.MidlineLeft);
-            view.removalTitleText.fontStyle = FontStyles.Bold;
-
-            // Scrollable grid of deck cards
-            var scrollRt = Rect("Scroll", panel.transform, new Vector2(0.04f, 0.13f), new Vector2(0.96f, 0.86f), Vector2.zero, Vector2.zero);
-            var scroll = scrollRt.gameObject.AddComponent<ScrollRect>();
-            scroll.horizontal = false;
-            scroll.scrollSensitivity = 30f;
-            var viewport = Rect("Viewport", scrollRt, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            viewport.gameObject.AddComponent<RectMask2D>();
-            var content = Rect("Content", viewport, new Vector2(0, 1), new Vector2(1, 1), Vector2.zero, Vector2.zero);
-            content.pivot = new Vector2(0.5f, 1f);
-            var grid = content.gameObject.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(360, 72);
-            grid.spacing = new Vector2(12, 12);
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 3;
-            grid.childAlignment = TextAnchor.UpperCenter;
-            content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            scroll.viewport = viewport;
-            scroll.content = content;
-            view.removalGrid = content;
-
-            var entry = Img("EntryTemplate", content, Vector2.zero, Vector2.one, Color.white, panelSprite);
-            var entryButton = entry.gameObject.AddComponent<Button>();
-            var colors = entryButton.colors;
-            colors.normalColor = new Color(0.22f, 0.13f, 0.1f, 1f);
-            colors.highlightedColor = new Color(0.5f, 0.18f, 0.12f, 1f);
-            colors.pressedColor = new Color(0.62f, 0.22f, 0.14f, 1f);
-            colors.selectedColor = colors.normalColor;
-            entryButton.colors = colors;
-            var entryText = Text("Label", entry.transform, Vector2.zero, Vector2.one, font, 24, Parchment, TextAlignmentOptions.Center);
-            entryText.raycastTarget = false;
-            view.removalEntryTemplate = entryButton;
-
-            var cancel = Img("CancelButton", panel.transform, new Vector2(0.38f, 0.025f), new Vector2(0.62f, 0.1f), new Color(0.3f, 0.25f, 0.22f), panelSprite);
-            view.removalCancelButton = cancel.gameObject.AddComponent<Button>();
-            var cancelText = Text("Label", cancel.transform, Vector2.zero, Vector2.one, font, 28, Parchment, TextAlignmentOptions.Center);
-            cancelText.text = "ยกเลิก";
         }
 
         // ------------------------------------------------------------------ Helpers

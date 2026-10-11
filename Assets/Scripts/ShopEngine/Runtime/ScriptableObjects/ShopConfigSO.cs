@@ -55,14 +55,8 @@ namespace TawanOS.ShopEngine
         public List<ShopAmulet> amulets = new List<ShopAmulet>();
         [Min(0)] public int amuletsForSale = 3;
 
-        [Header("Services")]
-        public Sprite blessingIcon;
-        [Min(0)] public int blessingPrice = 30;
-        [Range(0f, 1f)] public float blessingHealPercent = 0.3f;
-        public Sprite removalIcon;
-        [Min(0)] public int removalBasePrice = 40;
-        [Tooltip("Removal gets pricier each time it is bought in the run.")]
-        [Min(0)] public int removalPriceStep = 20;
+        // No services (Game Designer, 11 Oct): the shop sells cards only. Khwan is healed at the วัด node,
+        // and cards leave the deck at the เมรุ.
 
         public int RollCardPrice(CardDataSO card)
         {

@@ -31,12 +31,7 @@ namespace TawanOS.ShopEngine
 
         public IReadOnlyList<ShopOffer> CardOffers => cardOffers;
         public IReadOnlyList<ShopOffer> AmuletOffers => amuletOffers;
-        public bool BlessingUsed { get; private set; }
-        public bool RemovalUsed { get; private set; }
 
-        public int BlessingPrice => config.blessingPrice;
-        public int BlessingHealAmount => Mathf.Max(1, Mathf.RoundToInt(RunState.Current.MaxHp * config.blessingHealPercent));
-        public int RemovalPrice => config.removalBasePrice + config.removalPriceStep * RunState.Current.CardRemovalsBought;
 
         private readonly List<ShopOffer> cardOffers = new List<ShopOffer>();
         private readonly List<ShopOffer> amuletOffers = new List<ShopOffer>();
@@ -66,8 +61,6 @@ namespace TawanOS.ShopEngine
         private void OpenShop()
         {
             RollStock();
-            BlessingUsed = false;
-            RemovalUsed = false;
             if (view != null)
             {
                 view.Bind(this);
@@ -122,43 +115,6 @@ namespace TawanOS.ShopEngine
             if (!TryPay(offer)) return;
             RunState.Current.AddRelic(offer.amulet.relicId);
             Thank($"ได้รับ \"{offer.amulet.displayName}\"");
-        }
-
-        public void BuyBlessing()
-        {
-            var run = RunState.Current;
-            if (BlessingUsed || run.CurrentHp >= run.MaxHp) return;
-            if (!run.TrySpendIncense(BlessingPrice))
-            {
-                Refuse();
-                return;
-            }
-            BlessingUsed = true;
-            int heal = BlessingHealAmount;
-            run.Heal(heal);
-            Thank($"ฟื้นฟู {heal} HP");
-        }
-
-        /// <summary>Opens the card picker; the actual removal happens in <see cref="RemoveCard"/>.</summary>
-        public void BeginRemoval()
-        {
-            if (RemovalUsed) return;
-            if (!RunState.Current.CanAfford(RemovalPrice))
-            {
-                Refuse();
-                return;
-            }
-            if (view != null) view.ShowRemovalPicker(RunState.Current.Deck, RemovalPrice);
-        }
-
-        public void RemoveCard(CardDataSO card)
-        {
-            var run = RunState.Current;
-            if (RemovalUsed || !run.TrySpendIncense(RemovalPrice)) return;
-            run.RemoveCard(card, countsAsPurchase: true);
-            RemovalUsed = true;
-            if (view != null) view.HideRemovalPicker();
-            Thank($"ถอน \"{card.cardNameThai}\" ออกจากสำรับแล้ว");
         }
 
         public void Leave()

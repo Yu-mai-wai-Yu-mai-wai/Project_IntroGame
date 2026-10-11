@@ -51,7 +51,6 @@ namespace TawanOS.ShopEngine
         private TextMeshProUGUI hintText;
         private GameObject hintBand;
         private bool hovering;
-        private ShopViewUI view;
 
         private Vector3 shrineCameraPos;
         private Vector3 menuCameraPos;
@@ -65,7 +64,6 @@ namespace TawanOS.ShopEngine
         private void Awake()
         {
             if (viewCamera == null) viewCamera = Camera.main;
-            view = shopCanvas != null ? shopCanvas.GetComponent<ShopViewUI>() : null;
             if (shopCanvas != null)
             {
                 menuGroup = shopCanvas.GetComponent<CanvasGroup>();
@@ -94,9 +92,7 @@ namespace TawanOS.ShopEngine
 
             if (MenuOpen)
             {
-                // The removal picker inside the menu closes first (ShopViewUI handles its own cancel button)
-                bool pickerOpen = view != null && view.removalPanel != null && view.removalPanel.activeSelf;
-                if (!pickerOpen && (EscapeKey.Use() || Input.GetMouseButtonDown(1))) SetMenu(false);
+                if (EscapeKey.Use() || Input.GetMouseButtonDown(1)) SetMenu(false);
                 return;
             }
             if (slideTween != null && slideTween.IsActive()) return; // still sliding out

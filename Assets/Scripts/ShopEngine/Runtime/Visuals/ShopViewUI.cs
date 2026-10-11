@@ -9,8 +9,8 @@ using UnityEngine.UI;
 namespace TawanOS.ShopEngine
 {
     /// <summary>
-    /// Spirit-house shop screen: the shrine and its guardian on the left, shelves of cards, amulets
-    /// and services on the right, and a card picker overlay for removing a card from the deck.
+    /// Spirit-house shop screen: the shrine and its guardian on the left, shelves of cards and amulets on the right.
+    /// No services (heal, card removal) since 11 Oct: those belong to the วัด and the เมรุ.
     /// </summary>
     public class ShopViewUI : MonoBehaviour
     {
@@ -29,30 +29,18 @@ namespace TawanOS.ShopEngine
         [Header("Shelves")]
         public RectTransform cardRow;
         public RectTransform amuletRow;
-        public RectTransform serviceRow;
         public ShopItemView itemTemplate;
         public Button leaveButton;
-
-        [Header("Card Removal")]
-        public GameObject removalPanel;
-        public TextMeshProUGUI removalTitleText;
-        public RectTransform removalGrid;
-        public Button removalEntryTemplate;
-        public Button removalCancelButton;
 
         private ShopManager shop;
         // Item views are reused per shelf so a click handler never destroys its own button
         private readonly Dictionary<RectTransform, List<ShopItemView>> shelfItems = new Dictionary<RectTransform, List<ShopItemView>>();
         private readonly Dictionary<RectTransform, int> shelfUsed = new Dictionary<RectTransform, int>();
-        private readonly List<GameObject> removalEntries = new List<GameObject>();
         private ShopCardShelf cardShelf; // real card faces, when the config has a card template
 
         private void Awake()
         {
             if (itemTemplate != null) itemTemplate.gameObject.SetActive(false);
-            if (removalEntryTemplate != null) removalEntryTemplate.gameObject.SetActive(false);
-            if (removalPanel != null) removalPanel.SetActive(false);
-            if (removalCancelButton != null) removalCancelButton.onClick.AddListener(HideRemovalPicker);
             if (leaveButton != null) leaveButton.onClick.AddListener(() => { if (shop != null) shop.Leave(); });
         }
 
@@ -79,16 +67,12 @@ namespace TawanOS.ShopEngine
                 shrineImage.enabled = config.shrineImage != null;
                 shrineImage.preserveAspect = true;
             }
-            HideRemovalPicker();
             if (resultText != null) resultText.text = string.Empty;
 
             if (config.cardFaceTemplate != null && cardRow != null)
             {
                 if (cardShelf == null) cardShelf = cardRow.gameObject.AddComponent<ShopCardShelf>();
                 cardShelf.Init(manager, config.cardFaceTemplate, transform);
-                // The deck pile sits under the removal picker, which must still cover the whole screen
-                if (cardShelf.DeckPile != null && removalPanel != null)
-                    cardShelf.DeckPile.SetSiblingIndex(removalPanel.transform.GetSiblingIndex());
             }
             Refresh();
         }
@@ -141,43 +125,8 @@ namespace TawanOS.ShopEngine
                     () => shop.BuyAmulet(o));
             }
 
-            var config = shop.config;
-            bool fullHp = run.CurrentHp >= run.MaxHp;
-            Spawn(serviceRow).Setup(config.blessingIcon, "ขอพรเจ้าที่", fullHp && !shop.BlessingUsed ? "HP เต็มอยู่แล้ว" : "ครั้งเดียวต่อการมาเยือน",
-                $"ฟื้นฟู {shop.BlessingHealAmount} HP", PriceLabel(shop.BlessingPrice), run.CanAfford(shop.BlessingPrice),
-                shop.BlessingUsed, fullHp ? null : (System.Action)shop.BuyBlessing);
-            Spawn(serviceRow).Setup(config.removalIcon, "ถอนคำสาป", "ครั้งเดียวต่อการมาเยือน",
-                "เลือกการ์ด 1 ใบออกจากสำรับ", PriceLabel(shop.RemovalPrice), run.CanAfford(shop.RemovalPrice),
-                shop.RemovalUsed, shop.BeginRemoval);
-
             HideUnused(cardRow);
             HideUnused(amuletRow);
-            HideUnused(serviceRow);
-        }
-
-        public void ShowRemovalPicker(IReadOnlyList<CardDataSO> deck, int price)
-        {
-            if (removalPanel == null) return;
-            foreach (var go in removalEntries) Destroy(go);
-            removalEntries.Clear();
-
-            if (removalTitleText != null) removalTitleText.text = $"เลือกการ์ดที่จะถอนออกจากสำรับ  ({PriceLabel(price)})";
-            foreach (var card in deck)
-            {
-                var c = card;
-                var entry = Instantiate(removalEntryTemplate, removalGrid);
-                entry.gameObject.SetActive(true);
-                var label = entry.GetComponentInChildren<TextMeshProUGUI>();
-                if (label != null) label.text = $"{card.cardNameThai}\n<size=70%><color=#b8ab95>{card.GetFormattedTypeText()}  •  บุญ {card.meritCost}</color></size>";
-                entry.onClick.AddListener(() => shop.RemoveCard(c));
-                removalEntries.Add(entry.gameObject);
-            }
-            removalPanel.SetActive(true);
-        }
-
-        public void HideRemovalPicker()
-        {
-            if (removalPanel != null) removalPanel.SetActive(false);
         }
 
         private ShopItemView Spawn(RectTransform row)

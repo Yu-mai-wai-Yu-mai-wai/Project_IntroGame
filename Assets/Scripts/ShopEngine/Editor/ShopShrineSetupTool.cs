@@ -148,11 +148,63 @@ namespace TawanOS.ShopEngine
             shrineView.shrineScreenWidth = 0.2f;
             EditorUtility.SetDirty(shrineView);
 
+            RemoveServiceObjects(view);
+
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log($"[ShopShrineSetupTool] Shrine stage ready in {ScenePath}: camera from model {modelCamera != null}, " +
                       $"pot collider size {box.size}, {shrineView.potLights.Length} lights.");
             return true;
+        }
+
+        // The services shelf (ขอพรเจ้าที่, ถอนคำสาป) and its card picker are gone (Game Designer, 11 Oct):
+        // the shop sells cards only, the วัด heals and the เมรุ burns cards.
+        private static readonly string[] ServiceObjects = { "ServicesLabel", "ServiceRow", "RemovalPanel" };
+
+        [MenuItem("Tools/TawanOS/Shop Engine/Remove Shop Services")]
+        private static void RemoveServicesMenu()
+        {
+            if (Application.isPlaying) return;
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            RemoveServices();
+        }
+
+        /// <summary>-executeMethod TawanOS.ShopEngine.ShopShrineSetupTool.RemoveServicesBatch</summary>
+        public static void RemoveServicesBatch()
+        {
+            EditorApplication.Exit(RemoveServices() ? 0 : 1);
+        }
+
+        public static bool RemoveServices()
+        {
+            Scene scene = SceneManager.GetActiveScene().path == ScenePath
+                ? SceneManager.GetActiveScene()
+                : EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            var view = Object.FindFirstObjectByType<ShopViewUI>(FindObjectsInactive.Include);
+            if (view == null)
+            {
+                Debug.LogError($"[ShopShrineSetupTool] {ScenePath} has no ShopViewUI.");
+                return false;
+            }
+            int removed = RemoveServiceObjects(view);
+            EditorUtility.SetDirty(view);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            Debug.Log($"[ShopShrineSetupTool] Removed {removed} shop service object(s) from {ScenePath}.");
+            return true;
+        }
+
+        private static int RemoveServiceObjects(ShopViewUI view)
+        {
+            int removed = 0;
+            foreach (string name in ServiceObjects)
+            {
+                var child = view.transform.Find(name);
+                if (child == null) continue;
+                Object.DestroyImmediate(child.gameObject);
+                removed++;
+            }
+            return removed;
         }
     }
 }

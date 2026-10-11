@@ -73,9 +73,3 @@ MonoBehaviour:
     icon: {fileID: 21300000, guid: 159329041247410f9cede9510666cdb8, type: 3}
     price: 50
   amuletsForSale: 0
-  blessingIcon: {fileID: 21300000, guid: 62eae6fe3c3cddd4187fb16cb28de182, type: 3}
-  blessingPrice: 30
-  blessingHealPercent: 0.3
-  removalIcon: {fileID: 21300000, guid: 25e498f4754e4239afad4d278e004619, type: 3}
-  removalBasePrice: 40
-  removalPriceStep: 20
