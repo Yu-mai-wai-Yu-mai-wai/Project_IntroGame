@@ -18,14 +18,15 @@
 | ระบบ | สถานะ |
 |---|---|
 | Main Menu (เริ่ม / เล่นต่อ / ออก) | มีแล้ว |
-| แผนที่ → ต่อสู้ / หมอกดำ / กองของเซ่น / ศาล / เมรุ | มีแล้ว ยกเว้นเมรุ (ไม่มีฉาก) |
+| แผนที่ → ต่อสู้ / หมอกดำ / กองของเซ่น / ศาล / เมรุ / วัด | มีแล้วครบ (เมรุ, วัด `TempleScene`, กองของเซ่น `OfferingScene` มีฉากของตัวเอง, อัปเดต 12 ต.ค.) |
 | ชนะ → เลือกการ์ด + ได้ธูป | มีแล้ว |
 | แพ้ → ลบ save → Main Menu | มีแล้ว (panel 3 วินาที ไม่มีปุ่ม) |
 | Save / Continue (`RunState` JSON) | มีแล้ว |
 | ชนะ Boss → จบเกม | **ยังไม่มี** |
 | ขวัญต่อเนื่องข้ามการต่อสู้ | **ยังไม่มี** |
 | ศัตรูใน build | **พัง** (คืนค่า null นอก Editor) |
-| Sound, PlayerPrefs (volume), Particle, Animator, Pause, Settings, Loading screen | **ยังไม่มี** |
+| Sound, PlayerPrefs (volume), Particle, Animator, Pause, Settings | **ยังไม่มี** |
+| Loading screen | มีแล้ว (B4, 12 ต.ค.) |
 | Asset จาก `D:\Tawanagent\GameProject_Asset` (เสียง 27, ภาพการ์ด 29, Story 13 รูป + 2 วิดีโอ, Character 2 รูป) | **ยังไม่อยู่ในโปรเจกต์** (ไม่มี `Assets/Audio`, `Assets/Art`) → B0 |
 | ภาพการ์ด | ~~มีภาพ 29 จาก 42 ใบ ขาด 13 ใบ → ใช้ placeholder (B7)~~ ครบ 42 ใบ (ภาพการ์ดเต็มใบ FramedCard) ผูกแล้ว (B7, 10 ต.ค.) |
 | Intro เนื้อเรื่อง | **ยังไม่มี** → B8 |
@@ -90,7 +91,7 @@
 - ไม่มีการ์ดใบไหนตั้ง `upgradedCard` เลย (0/42) ปุ่ม "อัพเกรด" จึงถูกปิดพร้อมข้อความ "ไม่มีการ์ดที่อัพเกรดได้" อยู่แล้ว (`MeruViewUI.ShowChoice`) ไม่ต้องแก้โค้ด แค่บันทึกใน Future Work จนกว่าทีม Design จะทำการ์ดอัปเกรด
 - **Done when:** เข้าโหนดเมรุแล้วเปิดฉาก เผาการ์ดได้ จำนวนการ์ดในเด็คลด กลับแผนที่ได้
 
-### [~] A5 อีเวนต์หมอกดำครบ — ตรวจ 10 ต.ค.: `Events/EventCatalog.asset` (ตัวที่ EventScene ใช้) มี 5 อีเวนต์ + `offeringEvent`, ชื่อไฟล์ `Event_Wods` และ title "วอดส์" ถูกแล้ว, ไม่มี `Event_New`, โหนดชื่อ "หมอกดำ" แล้ว ค้าง: เล่นโหนดหมอกดำ 5 ครั้งไม่ซ้ำ, ลบ `EventEngineData/EventCatalog.asset` ที่ไม่มีอะไรอ้าง (ถามตะวันก่อน)
+### [~] A5 อีเวนต์หมอกดำครบ — ตรวจ 10 ต.ค.: `Events/EventCatalog.asset` (ตัวที่ EventScene ใช้) มี 5 อีเวนต์ + `offeringEvent`, ชื่อไฟล์ `Event_Wods` และ title "วอดส์" ถูกแล้ว, ไม่มี `Event_New`, โหนดชื่อ "หมอกดำ" แล้ว ค้าง: เล่นโหนดหมอกดำ 5 ครั้งไม่ซ้ำ, ลบ `EventEngineData/EventCatalog.asset` ที่ไม่มีอะไรอ้าง (ถามตะวันก่อน) *(12 ต.ค.: `offeringEvent` ไม่ถูกใช้แล้ว เพราะกองของเซ่นย้ายไปเป็นฉาก 3D ตาม A14 asset ยังเก็บไว้ ไม่ได้ลบ)*
 - `EventCatalog.asset` อ้างแค่ `what` (วอดส์) ให้ใส่ `Event_GhostGamble`, `Event_SpiritHouse`, `Event_WanderingShaman`, `Event_WellVoice` และ `what` ผ่าน editor script (ห้ามรัน `SetupEventScene` ซ้ำ เพราะจะสร้างฉากใหม่ทับ)
 - แก้ชื่อ `what.asset` เป็น `Event_Wods.asset` และ title "วอดส์่" เป็น "วอดส์" (มีวรรณยุกต์เกิน)
 - ลบ `Event_New.asset` (placeholder) ถ้าไม่มีอะไรอ้างถึง
@@ -212,7 +213,8 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - ฟอนต์ Sarabun/Charm (TMP), ปุ่มอย่างน้อย 44×44 px, contrast ข้อความ 4.5:1 (WCAG AA), ทุกปุ่มกดด้วยคีย์บอร์ดได้
 - **Done when:** กด Esc ในทุกฉากเกมแล้วเกมหยุดและเล่นต่อได้; แพ้แล้วเห็นปุ่มทั้งสอง
 
-### [~] B4 Loading / transition (ข้อ Scene Management) — โค้ดเสร็จ 10 ต.ค. (GotDev) ค้าง: กดเล่นจริงใน Play mode
+### [x] B4 Loading / transition (ข้อ Scene Management) — โค้ดเสร็จ 10 ต.ค. (GotDev), เสร็จ 12 ต.ค.
+- **12 ต.ค. (Game Designer):** จอดำค้างจนโหลดฉากเสร็จ (รอ frame นิ่ง สูงสุด 4 วิ) มุมขวาล่างขึ้น "กำลังโหลด" จุดวิ่ง . .. ... ทดสอบใน Play mode แล้ว
 - **ทำแล้ว 10 ต.ค. ตามแบบของ Game Designer (ไม่มีแถบ progress):** `Assets/Scripts/UI/SceneTransition.cs` จอค่อยๆ มืด → `LoadSceneAsync` ตอนจอมืด → พร้อมแล้วจอค่อยๆ สว่าง (ชื่อพื้นที่ตอนเข้าโหนดลองทำแล้ว Game Designer ตัดสินเอาออก เหลือแค่ fade) ทุกจุดใน `GameFlowManager`, Game Over, Victory ใช้ `SceneTransition.Load` แล้ว (grep ใน Done when ผ่าน)
 - `Assets/Scripts/GameFlow/SceneLoader.cs`: overlay fade (CanvasGroup) → `SceneManager.LoadSceneAsync` แสดง progress → fade in
 - แทน `SceneManager.LoadScene(` ทุกจุดใน `GameFlowManager`, `MainMenuUI`, Event/Shop/Reward/Meru ด้วย `SceneLoader.Load(name)`
@@ -500,7 +502,7 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 | D16 | ภาพอีเวนต์ 1 ใบ (`ทางเปลี่ยว`) ใช้กับอีเวนต์ไหน และอีก 4 เรื่องใช้อะไร | ผูกกับ 1 เรื่องที่ตะวันเลือก อีก 4 เรื่องคงภาพ/พื้นเดิมของ EventScene |
 | D17 | ข้อมูลการ์ด (ชื่อ, ค่าพลัง, ข้อความ) ที่ "อัพเดต" ส่งมาอยู่ไหน ในโฟลเดอร์ Asset มีแต่ภาพ | อัปเดตเฉพาะภาพ ไม่แตะตัวเลขการ์ด จนกว่าทีม Game Design ส่งตาราง |
 | D18 | `CombatFinal` ทับฉากต่อสู้ปัจจุบันได้เลยไหม (ฉากมีงานของ Hundredz และ MatchaDesu เช่น กล้อง, ปุ่ม C, tutorial) | **ไม่ทับ** นำเข้าใน branch แยก เทียบก่อน แล้วย้ายเฉพาะ mesh/material/texture |
-| D20 | มีโหมดสั้น 4 ชั้นไหม (A10) | **ตัดสินแล้ว 10 ต.ค. (Game Designer):** ไม่มี มีแค่โหมดเต็ม 7 ชั้น เพราะโหมดสั้นสั้นและง่ายเกินไป เดินผ่านจุดบนแผนที่น้อย ส่งผลต่อความสนุก |
+| D20 | มีโหมดสั้น 4 ชั้นไหม (A10) | **ตัดสินแล้ว 10 ต.ค. (Game Designer):** ไม่มี มีแค่โหมดเต็ม 7 ชั้น เพราะโหมดสั้นสั้นและง่ายเกินไป เดินผ่านจุดบนแผนที่น้อย ส่งผลต่อความสนุก (จำนวนชั้นเปลี่ยนเป็น 8 ตาม D21) |
 | D21 | แผนที่กี่ชั้น และศัตรูอยู่ตรงไหน | **ตัดสินแล้ว 11 ต.ค. (Game Designer):** เดิน 8 ชั้นแล้วเจอบอส (เดิม 7) โหนดต่อชั้น 3,2,3,1,3,3,2,2 ชั้น 1, 4, 7 เป็นศัตรูทุกโหนด ชั้นอื่นไม่มีศัตรู สุ่ม หมอกดำ / กองของเซ่น / ศาลตายาย / เมรุ / วัด โอกาสเท่ากัน ไม่มีโหนดตายตัว (เดิมกองของเซ่นกลางแผนที่และเมรุก่อนบอส) |
 
 ### สเปก (ต่อหนึ่งงาน)
@@ -587,7 +589,7 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 - [x] **A7 Elite:** ~~PraiGhostEliteProfile ขวัญ 45~~ **ยกเลิก 11 ต.ค.:** ไม่มีโหนด Elite บนแผนที่ (D6)
 - [x] **A12 โหนดวัด (เพิ่ม 11 ต.ค., D6):** `NodeType.Temple`, `TempleScene` + `TempleManager`/`TempleViewUI` (กราบพระ = ขวัญเต็ม), `TempleProfile` ไอคอน `วัด.png`, legend แถววัดแทน Elite, คำอธิบายเมรุแก้เป็น "...หรือสวดชุบขวัญให้การ์ดแกร่งขึ้น (อัปเกรดการ์ด)", เอาบริการของเจ้าที่ (ขอพร, ถอนคำสาป) ออกจากศาลตายายทั้งโค้ดและฉาก (`Tools/TawanOS/Shop Engine/Remove Shop Services`) สร้างวัดด้วย `Tools/TawanOS/Temple/*` *DoD:* `TempleTests` PASS (300 แผนที่: Elite 0, มีวัด 77% ของแผนที่, วัดไม่ต่อวัด, ฟื้นเต็มครั้งเดียว), `MapUITests`, `PlayerFeedbackTests`, `AutomatedRunFlowTest` PASS, เล่นจริง: เข้าวัด → กราบพระ 18→50 → เดินทางต่อกลับแผนที่
 - [x] **A13 แผนที่ 8 ชั้น (เพิ่ม 11 ต.ค., D21):** `RunState.DefaultTotalFloors = 8`, `MapGraphGenerator.GenerateEightFloorTableMap` (ชั้นต่อสู้ 1/4/7, ชั้นอื่นสุ่ม 5 ชนิดเท่ากัน เมรุ/ศาล/วัดไม่ต่อชนิดเดียวกัน), แท่นในโมเดลมีพอแค่ 7 ชั้น จึงวางโหนดตามชั้นด้วย `TableFloorX` (แถว Z ยืมจากแท่น) กระดานยาวเท่าเดิม เซฟเก่า 7 ชั้นยังเล่นต่อได้ด้วยแผนที่เดิม *DoD:* `EightFloorMapTests` PASS (300 แผนที่), `TempleTests`, `MapUITests`, `PlayerFeedbackTests`, `AutomatedRunFlowTest` PASS, ภาพมุมบนเห็น 8 ชั้น + บอส ระยะเท่ากัน
-- [x] **A14 ฉากกองของเซ่น (เพิ่ม 12 ต.ค., Game Designer):** `OfferingScene` ฉาก 3D ป่าจากโมเดลศาลตายาย (ซ่อนตัวศาล) มีกองการ์ดคว่ำ 14 ใบซ้อนกัน แถบ "คลิกที่กองการ์ดเพื่อหยิบของเซ่น" ชี้แล้วไฟสว่าง คลิก (หรือ Enter/Space) การ์ดใบบนลอยขึ้น แล้วไปหน้ารับการ์ดที่มี 1 ใบ (`offeringChoices = 1`) เรื่องเล่าและตัวเลือกเดิมเอาออก (ไม่มีจุดธูปฟื้นขวัญ ไม่มีเดินผ่าน) การ์ดจากอีเวนต์หมอกดำแยกเป็น `RewardTier.EventCard` ยังให้เลือก 3 ใบเหมือนเดิม สร้างด้วย `Tools/TawanOS/Offering/Setup Offering Scene` *DoD:* เล่นจริงจาก GameFlowManager: โหนดกองของเซ่น → ฉาก → คลิก → หน้ารับการ์ด 1 ใบ → รับ (สำรับ 8→9) → กลับแผนที่, `AutomatedRunFlowTest` PASS, `EventCatalogTests` 46/46
+- [x] **A14 ฉากกองของเซ่น (เพิ่ม 12 ต.ค., Game Designer):** `OfferingScene` ฉาก 3D ป่าจากโมเดลศาลตายาย (ซ่อนตัวศาล) มีกองการ์ดคว่ำ 14 ใบซ้อนกัน แถบ "คลิกที่กองการ์ดเพื่อหยิบของเซ่น" ชี้แล้วไฟสว่าง คลิก (หรือ Enter/Space) การ์ดใบบนลอยขึ้น แล้วไปหน้ารับการ์ดที่มี 1 ใบ (`offeringChoices = 1`) เรื่องเล่าและตัวเลือกเดิมเอาออก (ไม่มีจุดธูปฟื้นขวัญ ไม่มีเดินผ่าน) การ์ดจากอีเวนต์หมอกดำแยกเป็น `RewardTier.EventCard` ยังให้เลือก 3 ใบเหมือนเดิม สร้างด้วย `Tools/TawanOS/Offering/Setup Offering Scene` *DoD:* เล่นจริงจาก GameFlowManager: โหนดกองของเซ่น → ฉาก → คลิก → หน้ารับการ์ด 1 ใบ → รับ (สำรับ 8→9) → กลับแผนที่, `AutomatedRunFlowTest` PASS, `EventCatalogTests` 46/46 *(12 ต.ค.: กล้องยกสูงขึ้นและถอยห่างจากกอง)*
 - [~] **A9 ศัตรูทั่วไป 3 แบบ:** แก้ enemyId ซ้ำ roster minor 3 / elite 1 / boss 1 *(10 ต.ค.: id ไม่ซ้ำ roster ครบแล้ว เหลือ maxKhwan)*
   *หมายเหตุ:* ก่อน A7/A9 ต้องคืนค่า maxKhwan (ปัจจุบันเป็น 1 จาก commit 88b21ba) เป็น 30/45/60 เพื่อให้ EncounterTableTests ผ่านครบ *(ตรวจ 10 ต.ค.: ยังเป็น 1 อยู่ 5 profile)*
 
@@ -599,7 +601,7 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
   - Game Over: ภาพตัวละคร fade เป็นมืด แล้วข้อความ Game Over ขึ้น ตามด้วยสรุป run และปุ่ม "เริ่มใหม่"/"เมนูหลัก"
   - Victory: ภาพ "พ่อขวัญ" ลืมตาตื่น แล้วขึ้น Victory ตาม D19
   *DoD:* ทั้งสองหน้าเล่นลำดับ fade ได้, ไม่ยืดสัดส่วนภาพ, ข้ามด้วยคลิกได้, ไม่มี warning เรื่อง texture
-- [~] **B4 Loading:** ตามเดิม SceneLoader fade + progress แทน SceneManager.LoadScene ทุกจุด *(10 ต.ค.: ทำเป็น `SceneTransition` fade มืด-สว่างระหว่างฉาก ไม่มีแถบ progress ไม่มีข้อความ เหลือเล่นจริง)*
+- [x] **B4 Loading:** ตามเดิม SceneLoader fade + progress แทน SceneManager.LoadScene ทุกจุด *(10 ต.ค.: ทำเป็น `SceneTransition` fade มืด-สว่างระหว่างฉาก ไม่มีแถบ progress, 12 ต.ค.: จอดำค้างจนโหลดเสร็จ มุมขวาล่างขึ้น "กำลังโหลด" จุดวิ่ง . .. ... ทดสอบใน Play mode แล้ว)*
 - [ ] **B5 Particle:** ทำเสริมจาก GotDev (เผาการ์ดที่ทำแล้ว) ที่เหลือ: ควันธูป, เปลวเทียน, ลงการ์ด (ทอง/แดง), มลทินแตก
 - [ ] **B6 Animator:** ตามเดิม EnemyPresence.controller 4 state (รวมกับ F10)
 
@@ -621,7 +623,10 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 - [ ] **G2** แผนที่: ภาพรวม (Tab), ไอคอน 7 ชนิด (ใช้ชุด Final จาก H3), legend ไทย (ทำส่วนแรกแล้ว), ปุ่ม Pause, แถบสถานะ, เอา Reset Map ออก *(10 ต.ค. GotDev: legend โหนดศาล = "ศาลตายาย", บอส = "ใจกลางป่าช้า" อยู่ท้ายแผนที่เสมอ, ชื่อโหนดไทย 5/7)*
   *เพิ่ม:* tooltip/คำอธิบายโหนดแสดง รูปไอคอนโหนดประกอบ ข้างชื่อและคำอธิบาย (รูปจาก H3) ทั้งใน legend และ tooltip ตอนชี้โหนด ขนาดรูป ≥ 48 px ที่ 1080p ไม่ใช้สีอย่างเดียวแยกประเภท
   *DoD เพิ่ม:* ทุกแถว legend และ tooltip มีรูปไอคอนจริง ไม่ใช่รูปทรงชั่วคราว
+  *(11–12 ต.ค. GotDev: โหนดไม่เด้งแล้ว ชี้โหนดที่ไปได้จะขึ้นวงกลมดำ, แก้ปุ่มดูสำรับบนแผนที่ที่กดไม่ได้, legend มีแถววัด ไม่มี Elite)*
 - [ ] **G3** ฉากต่อสู้: ลบ debug IMGUI, HUD ไทย, แถบสอนเล่น, แบนเนอร์มุมบน
+- [x] **G4 Vignette ทุกฉาก (เพิ่ม 12 ต.ค., Game Designer):** `ScreenVignette` เป็นแผ่นทับทั้งจอรวม UI ความเข้ม 0.3 ใช้ในทุกฉากยกเว้น MainMenu กับฉากต่อสู้ เพราะสองฉากนั้นมี vignette ของตัวเองอยู่แล้ว
+- [x] **G5 หน้าหมอกดำแบ่งครึ่ง (เพิ่ม 12 ต.ค., Game Designer):** ซ้ายเป็นรูปเต็มไม่มีกรอบ ขวาเป็นแผงดำที่ขอบเป็นควัน (`Tools/TawanOS/Event Engine/Split Layout With Smoke`) และหัวข้อหน้ารับการ์ดเป็น "ของจากหมอกดำ"
 
 ### ชุดที่ 6: ทดสอบและรายงาน (ตามเดิม)
 - [ ] **C1 gate 14 ต.ค.:** compile, smoke test 3 ตัว, EditMode ทั้งหมด, build .exe ชนะ Boss 1 รอบ
