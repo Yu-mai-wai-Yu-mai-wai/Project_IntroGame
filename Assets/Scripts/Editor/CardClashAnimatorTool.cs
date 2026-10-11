@@ -9,7 +9,8 @@ namespace TawanOS.EditorTools
     // Builds the card clash animator: one clip per step in Assets/Art/Animations/CardClash, the controller in
     // Resources/CardClash (CardClashRig loads it), and CardClashPreview.prefab to edit the clips on.
     // Clips are authored with +Y = up and +Z = toward the target; each clip's length is how long that step
-    // takes in the game, and the OnImpact event in Impact / ImpactCrit is when the damage lands.
+    // takes in the game, and the OnImpact event in Impact / ImpactCrit / ImpactFace / ImpactFaceCrit is when
+    // the damage lands. The *Face clips are for familiars with the Overhead keyword (ตีข้ามหัว).
     // Safe to run again: clips, states and the preview that already exist are kept as they are, so edits are
     // never overwritten. Delete a clip to get the starter version back.
     // Batch: -executeMethod TawanOS.EditorTools.CardClashAnimatorTool.BuildFromCli
@@ -49,6 +50,7 @@ namespace TawanOS.EditorTools
 
             int row = 0;
             var idle = AddState(machine, CardClashRig.Idle, BuildIdle, ref row);
+            var ready = AddState(machine, CardClashRig.Ready, BuildReady, ref row);
             var windUp = AddState(machine, CardClashRig.WindUp, BuildWindUp, ref row);
             var charge = AddState(machine, CardClashRig.Charge, BuildCharge, ref row);
             var chargeCrit = AddState(machine, CardClashRig.ChargeCrit, BuildChargeCrit, ref row);
@@ -58,21 +60,33 @@ namespace TawanOS.EditorTools
             var hit = AddState(machine, CardClashRig.Hit, c => BuildHit(c, 0.15f, 1.15f, 0f, 0.2f), ref row);
             var hitCrit = AddState(machine, CardClashRig.HitCrit, c => BuildHit(c, 0.35f, 1.3f, 12f, 0.3f), ref row);
             var die = AddState(machine, CardClashRig.Die, BuildDie, ref row);
+            var readyFace = AddState(machine, CardClashRig.ReadyFace, BuildReadyFace, ref row);
+            var windUpFace = AddState(machine, CardClashRig.WindUpFace, BuildWindUpFace, ref row);
+            var chargeFace = AddState(machine, CardClashRig.ChargeFace, BuildChargeFace, ref row);
+            var chargeFaceCrit = AddState(machine, CardClashRig.ChargeFaceCrit, BuildChargeFaceCrit, ref row);
+            var impactFace = AddState(machine, CardClashRig.ImpactFace, c => BuildImpact(c, 1.25f, 0.25f, 35f), ref row);
+            var impactFaceCrit = AddState(machine, CardClashRig.ImpactFaceCrit, c => BuildImpact(c, 1.5f, 0.3f, 35f), ref row);
+            var backFace = AddState(machine, CardClashRig.ReturnFace, BuildReturnFace, ref row);
             machine.defaultState = idle;
 
             // Parameters: one trigger per step; "crit" picks the critical version
             AddParameter(controller, CardClashRig.CritParam, AnimatorControllerParameterType.Bool);
-            foreach (string state in new[] { CardClashRig.WindUp, CardClashRig.Charge, CardClashRig.Impact, CardClashRig.Return, CardClashRig.Hit, CardClashRig.Die })
+            AddParameter(controller, CardClashRig.FaceParam, AnimatorControllerParameterType.Bool);
+            foreach (string state in new[] { CardClashRig.Ready, CardClashRig.WindUp, CardClashRig.Charge, CardClashRig.Impact, CardClashRig.Return, CardClashRig.Hit, CardClashRig.Die })
             {
                 AddParameter(controller, CardClashRig.TriggerFor(state), AnimatorControllerParameterType.Trigger);
             }
 
-            // Attacker:  Idle -> (WindUp ->) Charge / ChargeCrit -> Impact / ImpactCrit -> Return -> Idle
+            // Attacker:  Idle -> (Ready ->) Charge -> Impact -> Return -> Idle
+            //            Idle -> (WindUp ->) ChargeCrit -> ImpactCrit -> Return -> Idle
+            // Over the head ("face" on): the same chain through the *Face states
             // Defender:  Idle -> Hit / HitCrit -> Idle      Dying: Any State -> Die
             // Instant transitions (no exit time, no blend) so the clip lengths stay the step timings
-            Link(idle, windUp, "windUp");
-            Link(idle, charge, "charge", crit: false);
-            Link(idle, chargeCrit, "charge", crit: true);
+            Link(idle, ready, "ready", face: false);
+            Link(ready, charge, "charge");
+            Link(idle, windUp, "windUp", face: false);
+            Link(idle, charge, "charge", crit: false, face: false);
+            Link(idle, chargeCrit, "charge", crit: true, face: false);
             Link(windUp, chargeCrit, "charge");
             Link(charge, impact, "impact");
             Link(chargeCrit, impactCrit, "impact");
@@ -80,6 +94,17 @@ namespace TawanOS.EditorTools
             Link(impactCrit, back, "return");
             Link(idle, hit, "hit", crit: false);
             Link(idle, hitCrit, "hit", crit: true);
+            Link(idle, readyFace, "ready", face: true);
+            Link(readyFace, chargeFace, "charge");
+            Link(idle, windUpFace, "windUp", face: true);
+            Link(idle, chargeFace, "charge", crit: false, face: true);
+            Link(idle, chargeFaceCrit, "charge", crit: true, face: true);
+            Link(windUpFace, chargeFaceCrit, "charge");
+            Link(chargeFace, impactFace, "impact");
+            Link(chargeFaceCrit, impactFaceCrit, "impact");
+            Link(impactFace, backFace, "return");
+            Link(impactFaceCrit, backFace, "return");
+            LinkAtEnd(backFace, idle);
             LinkAtEnd(back, idle);
             LinkAtEnd(hit, idle);
             LinkAtEnd(hitCrit, idle);
@@ -121,15 +146,25 @@ namespace TawanOS.EditorTools
             controller.AddParameter(name, type);
         }
 
-        // A transition on a trigger (and on "crit" when given); skipped if one to that state already exists,
-        // so transitions edited in the Animator window are kept
-        private static void Link(AnimatorState from, AnimatorState to, string trigger, bool? crit = null)
+        // A transition on a trigger (and on "crit" / "face" when given); skipped if one to that state already
+        // exists, so transitions edited in the Animator window are kept. An existing one only gets the "face"
+        // condition added when it lacks it (controllers built before the over-the-head states).
+        private static void Link(AnimatorState from, AnimatorState to, string trigger, bool? crit = null, bool? face = null)
         {
-            if (System.Array.Exists(from.transitions, t => t.destinationState == to)) return;
+            var existing = System.Array.Find(from.transitions, t => t.destinationState == to);
+            if (existing != null)
+            {
+                if (face.HasValue && !System.Array.Exists(existing.conditions, c => c.parameter == CardClashRig.FaceParam))
+                {
+                    existing.AddCondition(face.Value ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, 0f, CardClashRig.FaceParam);
+                }
+                return;
+            }
             var t = from.AddTransition(to);
             Instant(t);
             t.AddCondition(AnimatorConditionMode.If, 0f, trigger);
             if (crit.HasValue) t.AddCondition(crit.Value ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, 0f, CardClashRig.CritParam);
+            if (face.HasValue) t.AddCondition(face.Value ? AnimatorConditionMode.If : AnimatorConditionMode.IfNot, 0f, CardClashRig.FaceParam);
         }
 
         // Back to Idle once the clip has played through
@@ -172,6 +207,14 @@ namespace TawanOS.EditorTools
             Scale(c, (0f, Vector3.one));
         }
 
+        // Normal: a short pull back in the slot that springs back to rest, then Charge lunges from rest
+        private static void BuildReady(AnimationClip c)
+        {
+            Position(c, (0f, Vector3.zero), (0.15f, new Vector3(0f, 0.1f, -0.35f)), (0.25f, Vector3.zero));
+            Rotation(c, (0f, Vector3.zero), (0.15f, new Vector3(-8f, 0f, 0f)), (0.25f, Vector3.zero));
+            Scale(c, (0f, Vector3.one), (0.15f, Vector3.one * 1.04f), (0.25f, Vector3.one));
+        }
+
         // Critical: pull back and rise, then hold there charging up (a small tremble)
         private static void BuildWindUp(AnimationClip c)
         {
@@ -199,10 +242,10 @@ namespace TawanOS.EditorTools
         }
 
         // Contact: the damage lands on OnImpact (frame 0), then the card punches out and settles
-        private static void BuildImpact(AnimationClip c, float punch, float length)
+        private static void BuildImpact(AnimationClip c, float punch, float length, float tilt = 12f)
         {
             Position(c, (0f, Vector3.zero), (length, Vector3.zero));
-            Rotation(c, (0f, new Vector3(12f, 0f, 0f)), (length, Vector3.zero));
+            Rotation(c, (0f, new Vector3(tilt, 0f, 0f)), (length, Vector3.zero));
             Scale(c, (0f, Vector3.one), (length * 0.3f, Vector3.one * punch), (length, Vector3.one));
             AnimationUtility.SetAnimationEvents(c, new[]
             {
@@ -216,6 +259,50 @@ namespace TawanOS.EditorTools
             Position(c, (0f, Vector3.zero), (0.3f, Vector3.zero));
             Rotation(c, (0f, Vector3.zero), (0.3f, Vector3.zero));
             Scale(c, (0f, Vector3.one), (0.3f, Vector3.one));
+        }
+
+        // ---- Overhead keyword (ตีข้ามหัว): the card arcs up over the cards and dives at its target
+
+        // Normal: crouch, then spring back to rest; ChargeFace arcs up from there
+        private static void BuildReadyFace(AnimationClip c)
+        {
+            Position(c, (0f, Vector3.zero), (0.18f, new Vector3(0f, -0.15f, -0.2f)), (0.3f, Vector3.zero));
+            Rotation(c, (0f, Vector3.zero), (0.18f, new Vector3(-12f, 0f, 0f)), (0.3f, Vector3.zero));
+            Scale(c, (0f, Vector3.one), (0.18f, new Vector3(1.05f, 0.9f, 1.05f)), (0.3f, Vector3.one));
+        }
+
+        // Critical: rise high and hold there charging up
+        private static void BuildWindUpFace(AnimationClip c)
+        {
+            var up = new Vector3(0f, 0.6f, -0.6f);
+            Position(c, (0f, Vector3.zero), (0.3f, up), (0.4f, up + new Vector3(0.03f, 0f, 0f)),
+                (0.5f, up + new Vector3(-0.03f, 0f, 0f)), (0.6f, up));
+            Rotation(c, (0f, Vector3.zero), (0.3f, new Vector3(-15f, 0f, 0f)), (0.6f, new Vector3(-15f, 0f, 0f)));
+            Scale(c, (0f, Vector3.one), (0.6f, Vector3.one * 1.1f));
+        }
+
+        // Arc up over the head, then dive nose first
+        private static void BuildChargeFace(AnimationClip c)
+        {
+            Position(c, (0f, Vector3.zero), (0.4f, new Vector3(0f, 0.9f, 0f)), (0.9f, Vector3.zero));
+            Rotation(c, (0f, Vector3.zero), (0.4f, new Vector3(-10f, 0f, 0f)), (0.9f, new Vector3(35f, 0f, 0f)));
+            Scale(c, (0f, Vector3.one), (0.9f, Vector3.one));
+        }
+
+        // Critical dive: starts from WindUpFace's last pose
+        private static void BuildChargeFaceCrit(AnimationClip c)
+        {
+            Position(c, (0f, new Vector3(0f, 0.6f, -0.6f)), (0.12f, new Vector3(0f, 0.9f, -0.2f)), (0.3f, Vector3.zero));
+            Rotation(c, (0f, new Vector3(-15f, 0f, 0f)), (0.3f, new Vector3(35f, 0f, 0f)));
+            Scale(c, (0f, Vector3.one * 1.1f), (0.3f, Vector3.one));
+        }
+
+        // Arc back over the head to the slot
+        private static void BuildReturnFace(AnimationClip c)
+        {
+            Position(c, (0f, Vector3.zero), (0.15f, new Vector3(0f, 0.5f, 0f)), (0.35f, Vector3.zero));
+            Rotation(c, (0f, Vector3.zero), (0.35f, Vector3.zero));
+            Scale(c, (0f, Vector3.one), (0.35f, Vector3.one));
         }
 
         // Knocked back (away from the attacker = -z), squashed, optionally shaken

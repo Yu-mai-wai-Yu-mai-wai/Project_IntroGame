@@ -16,6 +16,7 @@ namespace TawanOS.CardEngine
         public CardInstance target; // opposing familiar being hit, or null for the player
         public int targetColumn;    // column of the target familiar (== column when hitting the player)
         public bool isCrit;         // critical hit: double damage, and the card pulls back to charge first
+        public bool overhead;       // ตีข้ามหัว over a card in the opposite slot: plays the *Face clips
     }
 
     // Plays the end-of-turn board clash visuals. CombatManager decides who hits whom and applies the
@@ -172,10 +173,9 @@ namespace TawanOS.CardEngine
             var pRig = new CardClashRig(playerView.transform, pSlot.transform, dir);
             var eRig = new CardClashRig(enemyView.transform, eSlot.transform, -dir);
 
-            // Critical strikers pull back and charge up first; the other card waits in its slot
-            float windUp = 0f;
-            if (playerStrike.isCrit) windUp = Mathf.Max(windUp, pRig.Play(CardClashRig.WindUp));
-            if (enemyStrike.isCrit) windUp = Mathf.Max(windUp, eRig.Play(CardClashRig.WindUp));
+            // Both get ready in their slots first: critical strikers pull back and charge up (WindUp), the
+            // others play Ready
+            float windUp = Mathf.Max(GetReady(pRig, playerStrike, false), GetReady(eRig, enemyStrike, false));
             if (windUp > 0f) yield return new WaitForSeconds(windUp);
 
             float charge = Mathf.Max(pRig.Play(ChargeState(playerStrike)), eRig.Play(ChargeState(enemyStrike)));
@@ -202,8 +202,8 @@ namespace TawanOS.CardEngine
             yield return ProcessDeaths();
         }
 
-        // One familiar charges its target: a familiar in target column, or the opposing side's slot in
-        // its own column when it is hitting the player
+        // One familiar charges its target: a familiar in target column, or the middle of the opposing side's
+        // row when it is hitting the player
         public IEnumerator Strike(ClashStrike strike, Action<ClashStrike> apply)
         {
             var attackerSlots = strike.fromPlayer ? playerSlots : enemySlots;
@@ -221,9 +221,11 @@ namespace TawanOS.CardEngine
             }
 
             var targetView = strike.target != null ? ViewIn(opposingSlots, strike.targetColumn) : null;
+            bool face = strike.overhead;
 
             Vector3 aPos = aSlot.transform.position;
-            Vector3 tPos = tSlot.transform.position;
+            // Hitting the player (no target card): the card goes to the middle of the opposing side's row
+            Vector3 tPos = strike.target != null ? tSlot.transform.position : RowCenter(opposingSlots);
             Vector3 dir = Direction(aPos, tPos);
             Vector3 chargeTo = tPos + Vector3.up * liftHeight - dir * collisionGap;
 
@@ -236,25 +238,35 @@ namespace TawanOS.CardEngine
                 tRig = new CardClashRig(targetView.transform, tSlot.transform, -dir); // +Z toward the attacker
             }
 
-            // Critical strikers pull back and charge up before the lunge
-            if (strike.isCrit) yield return new WaitForSeconds(aRig.Play(CardClashRig.WindUp));
+            // Get ready in the slot before the lunge (critical strikers pull back and charge up)
+            float ready = GetReady(aRig, strike, face);
+            if (ready > 0f) yield return new WaitForSeconds(ready);
 
-            float charge = aRig.Play(ChargeState(strike));
+            float charge = aRig.Play(Pick(face, strike.isCrit ? CardClashRig.ChargeFaceCrit : CardClashRig.ChargeFace, ChargeState(strike)));
             yield return aRig.Mover.DOMove(chargeTo, charge).SetEase(Ease.InQuad).WaitForCompletion();
 
-            float impact = aRig.Play(ImpactState(strike));
+            float impact = aRig.Play(Pick(face, strike.isCrit ? CardClashRig.ImpactFaceCrit : CardClashRig.ImpactFace, ImpactState(strike)));
             yield return WaitForImpact(impact, aRig);
             apply(strike);
             float hit = tRig != null ? tRig.Play(strike.isCrit ? CardClashRig.HitCrit : CardClashRig.Hit) : 0f;
             float rest = Mathf.Max(impact - impactWaited, hit);
             if (rest > 0f) yield return new WaitForSeconds(rest);
 
-            float back = aRig.Play(CardClashRig.Return);
+            float back = aRig.Play(Pick(face, CardClashRig.ReturnFace, CardClashRig.Return));
             yield return aRig.Mover.DOLocalMove(aRig.Home, back).SetEase(Ease.OutQuad).WaitForCompletion();
 
             aRig.Release();
             tRig?.Release();
             yield return ProcessDeaths();
+        }
+
+        // Plays WindUp (critical) or Ready in the slot and returns how long it lasts; 0 when the controller
+        // has no Ready clip (the card then lunges at once)
+        private static float GetReady(CardClashRig rig, ClashStrike strike, bool face)
+        {
+            if (strike.isCrit) return rig.Play(Pick(face, CardClashRig.WindUpFace, CardClashRig.WindUp));
+            string ready = Pick(face, CardClashRig.ReadyFace, CardClashRig.Ready);
+            return CardClashRig.Has(ready) ? rig.Play(ready) : 0f;
         }
 
         private static string ChargeState(ClashStrike strike)
@@ -265,6 +277,12 @@ namespace TawanOS.CardEngine
         private static string ImpactState(ClashStrike strike)
         {
             return strike.isCrit ? CardClashRig.ImpactCrit : CardClashRig.Impact;
+        }
+
+        // The over-the-head (Overhead keyword) state when the controller has its clip, else the usual one
+        private static string Pick(bool face, string faceState, string state)
+        {
+            return face && CardClashRig.Has(faceState) ? faceState : state;
         }
 
         // Waits (at most `limit` seconds) for the first OnImpact event among the rigs; impactWaited is how
@@ -285,6 +303,13 @@ namespace TawanOS.CardEngine
                 yield return null;
                 impactWaited += Time.deltaTime;
             }
+        }
+
+        private static Vector3 RowCenter(Dictionary<int, BoardSlotView> slots)
+        {
+            Vector3 sum = Vector3.zero;
+            foreach (var slot in slots.Values) sum += slot.transform.position;
+            return slots.Count > 0 ? sum / slots.Count : Vector3.zero;
         }
 
         private static Vector3 Direction(Vector3 from, Vector3 to)
