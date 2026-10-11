@@ -10,10 +10,17 @@ namespace TawanOS.MapEngine
         public SpriteRenderer iconRenderer;
         public SpriteRenderer backgroundRenderer;
         [SerializeField] private Vector3 baseScale = Vector3.one;
-        [SerializeField] private Vector3 hoverScale = new Vector3(1.25f, 1.25f, 1.25f);
-        [SerializeField] private float animationSpeed = 0.2f;
         [Tooltip("Icon width in world units, independent of PNG resolution. FBX pedestal disc is 1.4.")]
         [SerializeField] private float iconWorldSize = 1.2f;
+
+        [Header("Hover ring (a thin black circle around a node the player can go to)")]
+        [Tooltip("Ring diameter as a multiple of the icon size.")]
+        [SerializeField] private float hoverRingSize = 1.45f;
+        [Tooltip("Line width as a fraction of the ring's radius.")]
+        [Range(0.01f, 0.3f)] [SerializeField] private float hoverRingThickness = 0.06f;
+        [SerializeField] private Color hoverRingColor = new Color(0f, 0f, 0f, 0.9f);
+        [Tooltip("Seconds the ring takes to show or hide.")]
+        [SerializeField] private float hoverRingFade = 0.15f;
 
         public NodeBlueprint NodeData { get; private set; }
         public NodeProfileSO Profile { get; private set; }
@@ -22,9 +29,8 @@ namespace TawanOS.MapEngine
         public event Action<MapNodeView> OnNodeHoverEnter;
         public event Action<MapNodeView> OnNodeHoverExit;
 
-        private Tween scaleTween;
-        private Tween pulseTween;
-        private Tween colorTween;
+        private Tween ringTween;
+        private SpriteRenderer hoverRing;
 
         private void Awake()
         {
@@ -38,9 +44,7 @@ namespace TawanOS.MapEngine
 
         private void KillTweens()
         {
-            if (scaleTween != null && scaleTween.IsActive()) scaleTween.Kill();
-            if (pulseTween != null && pulseTween.IsActive()) pulseTween.Kill();
-            if (colorTween != null && colorTween.IsActive()) colorTween.Kill();
+            if (ringTween != null && ringTween.IsActive()) ringTween.Kill();
         }
 
         public void Setup(NodeBlueprint nodeData, NodeProfileSO profile, Vector3 worldPosition)
@@ -52,7 +56,6 @@ namespace TawanOS.MapEngine
 
             baseScale = (nodeData.type == NodeType.Boss) ? new Vector3(1.3f, 1.3f, 1.3f) : Vector3.one;
             transform.localScale = baseScale;
-            hoverScale = baseScale * 1.2f;
 
             Sprite circleSprite = GetFallbackCircleSprite();
 
@@ -82,6 +85,8 @@ namespace TawanOS.MapEngine
                 float fit = iconWorldSize / Mathf.Max(spriteSize.x, spriteSize.y, 0.001f);
                 iconRenderer.transform.localScale = new Vector3(fit, fit, 1f);
             }
+
+            SetupHoverRing();
 
             UpdateVisualState();
         }
@@ -127,15 +132,10 @@ namespace TawanOS.MapEngine
                     bgColor = targetColor * 0.4f;
                     bgColor.a = 1f;
 
-                    // Smooth breathing pulse animation
-                    pulseTween = transform.DOScale(baseScale * 1.15f, 0.75f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
-
-                    // Luminous glow pulse for attainable icon
-                    Color glowColor = Color.Lerp(targetColor, Color.white, 0.55f);
-                    if (iconRenderer != null)
-                    {
-                        colorTween = iconRenderer.DOColor(glowColor, 0.75f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
-                    }
+                    // Still, full-strength icon (Game Designer, 11 Oct: no breathing / glow loop). Pointing at it shows
+                    // the hover ring; the locked nodes around it are faded, so it stands out without moving.
+                    transform.localScale = baseScale;
+                    if (iconRenderer != null) iconRenderer.color = Color.white;
                     break;
                 case NodeStatus.Visited:
                     targetColor = Profile != null ? Profile.visitedColor : new Color(0.9f, 0.75f, 0.2f);
@@ -156,6 +156,7 @@ namespace TawanOS.MapEngine
             }
 
             if (backgroundRenderer != null) backgroundRenderer.color = bgColor;
+            ShowHoverRing(false, instant: true);
         }
 
         private void OnMouseEnter()
@@ -163,26 +164,75 @@ namespace TawanOS.MapEngine
             if (CardEngine.DeckViewerPanelUI.BlocksInput) return; // the deck screen is over the map
             if (NodeData != null && NodeData.status == NodeStatus.Attainable)
             {
-                if (pulseTween != null && pulseTween.IsActive()) pulseTween.Pause();
-                scaleTween = transform.DOScale(hoverScale, animationSpeed).SetEase(Ease.OutBack);
+                ShowHoverRing(true);
                 OnNodeHoverEnter?.Invoke(this);
             }
         }
 
         private void OnMouseExit()
         {
+            ShowHoverRing(false);
             if (NodeData != null && NodeData.status == NodeStatus.Attainable)
             {
-                scaleTween = transform.DOScale(baseScale, animationSpeed).OnComplete(() =>
-                {
-                    if (pulseTween != null && pulseTween.IsActive()) pulseTween.Play();
-                });
                 OnNodeHoverExit?.Invoke(this);
             }
-            else
+        }
+
+        // A thin black ring lying on the paper around the icon, hidden until the pointer is on a node the player can go to
+        private void SetupHoverRing()
+        {
+            if (hoverRing == null)
             {
-                scaleTween = transform.DOScale(baseScale, animationSpeed);
+                var go = new GameObject("HoverRing");
+                go.transform.SetParent(transform, false);
+                hoverRing = go.AddComponent<SpriteRenderer>();
             }
+            hoverRing.sprite = GetRingSprite(hoverRingThickness);
+            hoverRing.sortingOrder = 2;
+            hoverRing.transform.localPosition = new Vector3(0f, 0f, -0.012f);
+            hoverRing.transform.localRotation = Quaternion.identity;
+            float size = iconWorldSize * hoverRingSize / Mathf.Max(hoverRing.sprite.bounds.size.x, 0.001f);
+            hoverRing.transform.localScale = new Vector3(size, size, 1f);
+            ShowHoverRing(false, instant: true);
+        }
+
+        private void ShowHoverRing(bool show, bool instant = false)
+        {
+            if (hoverRing == null) return;
+            if (ringTween != null && ringTween.IsActive()) ringTween.Kill();
+            var target = hoverRingColor;
+            if (!show) target.a = 0f;
+            if (instant) hoverRing.color = target;
+            else ringTween = hoverRing.DOColor(target, hoverRingFade).SetLink(gameObject);
+        }
+
+        private static Sprite ringSprite;
+        private static float ringSpriteThickness = -1f;
+
+        private static Sprite GetRingSprite(float thickness)
+        {
+            if (ringSprite != null && Mathf.Approximately(ringSpriteThickness, thickness)) return ringSprite;
+            const int res = 256;
+            var tex = new Texture2D(res, res, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var colors = new Color[res * res];
+            float outer = res * 0.5f - 2f;
+            float inner = outer * (1f - thickness);
+            var center = new Vector2(res * 0.5f, res * 0.5f);
+            for (int y = 0; y < res; y++)
+            {
+                for (int x = 0; x < res; x++)
+                {
+                    float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), center);
+                    // Soft one-pixel edges on both sides of the line
+                    float a = Mathf.Clamp01(outer - d + 0.5f) * Mathf.Clamp01(d - inner + 0.5f);
+                    colors[y * res + x] = new Color(1f, 1f, 1f, a);
+                }
+            }
+            tex.SetPixels(colors);
+            tex.Apply();
+            ringSprite = Sprite.Create(tex, new Rect(0, 0, res, res), new Vector2(0.5f, 0.5f), 100f);
+            ringSpriteThickness = thickness;
+            return ringSprite;
         }
 
         private void OnMouseDown()
