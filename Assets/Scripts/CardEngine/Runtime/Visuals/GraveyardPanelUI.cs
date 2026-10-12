@@ -74,14 +74,17 @@ namespace TawanOS.CardEngine
             FindCardLook();
             Build();
             EnsureEventSystem();
+
+            // Active before the cards are built: text made under an inactive canvas has no material yet, and the
+            // outline CardFaceLayout.MakeReadable sets on it threw, so the screen opened with no cards in it
+            group.alpha = 0f;
+            canvas.gameObject.SetActive(true);
             Refresh();
             scroll.verticalNormalizedPosition = 1f;
 
             isOpen = true;
             openedFrame = Time.frameCount;
             targetAlpha = 1f;
-            canvas.gameObject.SetActive(true);
-            group.alpha = 0f;
             group.blocksRaycasts = true;
         }
 
