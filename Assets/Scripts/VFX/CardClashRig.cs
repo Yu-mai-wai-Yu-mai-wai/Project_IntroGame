@@ -59,6 +59,7 @@ namespace TawanOS.VFX
         private readonly Vector3 originalScale;
         private readonly Transform aim;
         private readonly Transform unaim;
+        private Quaternion heading = Quaternion.identity;
         private readonly Animator animator;
         private readonly CardClashAnimEvents events;
         private readonly bool hasFaceParam;
@@ -143,10 +144,20 @@ namespace TawanOS.VFX
         public void SetAim(Quaternion rotation)
         {
             aim.localRotation = rotation;
-            unaim.localRotation = Quaternion.Inverse(rotation);
+            unaim.localRotation = Quaternion.Inverse(rotation) * heading;
         }
 
         public Quaternion CurrentAim => aim.localRotation;
+
+        // Turns the card itself about the vertical (on top of the way it faced in its slot), e.g. to point its
+        // head the way it lunges; the clips' moves keep following the aim
+        public void SetHeading(Quaternion rotation)
+        {
+            heading = rotation;
+            unaim.localRotation = Quaternion.Inverse(aim.localRotation) * heading;
+        }
+
+        public Quaternion CurrentHeading => heading;
 
         // Animator parameters: one trigger per step, "crit" picks the critical version of a step and "face"
         // the over-the-head version
@@ -169,15 +180,17 @@ namespace TawanOS.VFX
 
         // Moves to a state through the controller's transitions (its trigger, with "crit" set) and returns
         // how long the state lasts. If the transitions were edited so the state is not reached, it is played
-        // directly so the clash never stalls.
-        public float Play(string state)
+        // directly so the clash never stalls. speed plays the clip faster (> 1) or slower; the next Play resets it.
+        public float Play(string state, float speed = 1f)
         {
+            speed = Mathf.Max(0.05f, speed);
             expectsImpact = HasImpactEvent(state);
             if (events != null) events.ResetImpact();
 
             int hash = Animator.StringToHash(state);
             if (animator != null && animator.HasState(0, hash))
             {
+                animator.speed = speed;
                 string trigger = TriggerFor(state);
                 if (trigger != null)
                 {
@@ -195,7 +208,7 @@ namespace TawanOS.VFX
                     animator.Update(0f);
                 }
             }
-            return Length(state);
+            return Length(state) / speed;
         }
 
         public static bool IsFace(string state)

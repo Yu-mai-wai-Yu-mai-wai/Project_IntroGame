@@ -39,6 +39,18 @@ namespace TawanOS.CardEngine
         public float collisionGap = 0.7f;
         [Tooltip("Seconds an attacker takes, at the start of its lunge, to turn from straight across toward a target in another column.")]
         public float aimTurnTime = 0.15f;
+        [Tooltip("How fast the lunge at the target plays: the Charge clips and the move toward the target both run this many times faster (1 = the clip's own length).")]
+        [Min(0.1f)] public float chargeSpeed = 1.6f;
+        [Tooltip("Height above the table of the burst when a familiar hits the player directly (FaceHitVfx).")]
+        public float faceHitHeight = 0.6f;
+        [Tooltip("How far past the opposing row (away from the attacker's row, toward the character) a familiar hitting the player directly goes.")]
+        public float faceHitReach = 1.5f;
+
+        [Header("Charge tail (empty = Resources/ClashTrail)")]
+        [Tooltip("Tail behind a black-magic familiar while it lunges.")]
+        public ClashChargeTrail blackChargeTrail;
+        [Tooltip("Tail behind a white-magic familiar while it lunges.")]
+        public ClashChargeTrail whiteChargeTrail;
 
         private readonly Dictionary<int, BoardSlotView> playerSlots = new Dictionary<int, BoardSlotView>();
         private readonly Dictionary<int, BoardSlotView> enemySlots = new Dictionary<int, BoardSlotView>();
@@ -97,6 +109,7 @@ namespace TawanOS.CardEngine
 
         private void Start()
         {
+            FaceHitVfx.Prepare();
             resolver = EffectResolver.Instance;
             if (resolver == null) return;
             resolver.OnFamiliarDamaged += HandleDamaged;
@@ -180,11 +193,15 @@ namespace TawanOS.CardEngine
             float windUp = Mathf.Max(GetReady(pRig, playerStrike, false), GetReady(eRig, enemyStrike, false));
             if (windUp > 0f) yield return new WaitForSeconds(windUp);
 
-            float charge = Mathf.Max(pRig.Play(ChargeState(playerStrike)), eRig.Play(ChargeState(enemyStrike)));
+            float charge = Mathf.Max(pRig.Play(ChargeState(playerStrike), chargeSpeed), eRig.Play(ChargeState(enemyStrike), chargeSpeed));
+            var pTrail = StartTrail(playerStrike.attacker, playerView.transform);
+            var eTrail = StartTrail(enemyStrike.attacker, enemyView.transform);
             var seq = DOTween.Sequence();
             seq.Append(pRig.Mover.DOMove(mid - dir * collisionGap, charge).SetEase(Ease.InQuad));
             seq.Join(eRig.Mover.DOMove(mid + dir * collisionGap, charge).SetEase(Ease.InQuad));
             yield return seq.WaitForCompletion();
+            if (pTrail != null) pTrail.Stop();
+            if (eTrail != null) eTrail.Stop();
 
             // Both cards play their impact; the damage lands on the first OnImpact event
             float impact = Mathf.Max(pRig.Play(ImpactState(playerStrike)), eRig.Play(ImpactState(enemyStrike)));
@@ -226,8 +243,9 @@ namespace TawanOS.CardEngine
             bool face = strike.overhead;
 
             Vector3 aPos = aSlot.transform.position;
-            // Hitting the player (no target card): the card goes to the middle of the opposing side's row
-            Vector3 tPos = strike.target != null ? tSlot.transform.position : RowCenter(opposingSlots);
+            // Hitting the player (no target card): the card goes past the middle of the opposing side's row,
+            // toward the character behind it
+            Vector3 tPos = strike.target != null ? tSlot.transform.position : FaceHitPoint(attackerSlots, opposingSlots);
             Vector3 dir = Direction(aPos, tPos);
             Vector3 chargeTo = tPos + Vector3.up * liftHeight - dir * collisionGap;
 
@@ -247,27 +265,62 @@ namespace TawanOS.CardEngine
             float ready = GetReady(aRig, strike, face);
             if (ready > 0f) yield return new WaitForSeconds(ready);
 
-            float charge = aRig.Play(Pick(face, strike.isCrit ? CardClashRig.ChargeFaceCrit : CardClashRig.ChargeFace, ChargeState(strike)));
+            float charge = aRig.Play(Pick(face, strike.isCrit ? CardClashRig.ChargeFaceCrit : CardClashRig.ChargeFace, ChargeState(strike)), chargeSpeed);
             Quaternion aimFrom = aRig.CurrentAim;
             Quaternion aimTo = CardClashRig.AimRotation(dir);
-            DOTween.To(() => 0f, t => aRig.SetAim(Quaternion.Slerp(aimFrom, aimTo, t)), 1f, Mathf.Min(charge, aimTurnTime))
+            // The card's head turns the same way, so it points where it lunges
+            Quaternion headTo = aimTo * Quaternion.Inverse(aimFrom);
+            DOTween.To(() => 0f, t =>
+                {
+                    aRig.SetAim(Quaternion.Slerp(aimFrom, aimTo, t));
+                    aRig.SetHeading(Quaternion.Slerp(Quaternion.identity, headTo, t));
+                }, 1f, Mathf.Min(charge, aimTurnTime))
                 .SetEase(Ease.OutQuad).SetTarget(aRig.Mover);
+            var trail = StartTrail(strike.attacker, attackerView.transform);
             yield return aRig.Mover.DOMove(chargeTo, charge).SetEase(Ease.InQuad).WaitForCompletion();
+            if (trail != null) trail.Stop();
             aRig.SetAim(aimTo);
+            aRig.SetHeading(headTo);
 
             float impact = aRig.Play(Pick(face, strike.isCrit ? CardClashRig.ImpactFaceCrit : CardClashRig.ImpactFace, ImpactState(strike)));
             yield return WaitForImpact(impact, aRig);
             apply(strike);
+            // A direct hit on the player: hit-stop and shake; the screen edges burst in the attacker's school
+            // only when the hit ends the game
+            if (strike.target == null && strike.attacker != null)
+                FaceHitVfx.Play(tPos + Vector3.up * faceHitHeight, dir, strike.attacker.magicSchool == MagicSchool.BlackMagic, strike.isCrit,
+                    IsFinisher(strike), gameObject.scene);
             float hit = tRig != null ? tRig.Play(strike.isCrit ? CardClashRig.HitCrit : CardClashRig.Hit) : 0f;
             float rest = Mathf.Max(impact - impactWaited, hit);
             if (rest > 0f) yield return new WaitForSeconds(rest);
 
             float back = aRig.Play(Pick(face, CardClashRig.ReturnFace, CardClashRig.Return));
+            // Turns back to face straight across on the way home
+            DOTween.To(() => 0f, t => aRig.SetHeading(Quaternion.Slerp(headTo, Quaternion.identity, t)), 1f, back)
+                .SetEase(Ease.InOutQuad).SetTarget(aRig.Mover);
             yield return aRig.Mover.DOLocalMove(aRig.Home, back).SetEase(Ease.OutQuad).WaitForCompletion();
 
             aRig.Release();
             tRig?.Release();
             yield return ProcessDeaths();
+        }
+
+        // A tail in the attacker's school behind the lunging card; null when there is no prefab
+        private ClashChargeTrail StartTrail(CardInstance attacker, Transform card)
+        {
+            bool black = attacker != null && attacker.magicSchool == MagicSchool.BlackMagic;
+            var prefab = black
+                ? (blackChargeTrail != null ? blackChargeTrail : blackChargeTrail = Resources.Load<ClashChargeTrail>(ClashChargeTrail.BlackResource))
+                : (whiteChargeTrail != null ? whiteChargeTrail : whiteChargeTrail = Resources.Load<ClashChargeTrail>(ClashChargeTrail.WhiteResource));
+            return ClashChargeTrail.Spawn(prefab, card);
+        }
+
+        // The strike's damage (already applied) took the opposing player's khwan to 0
+        private static bool IsFinisher(ClashStrike strike)
+        {
+            var combat = CombatManager.Instance;
+            if (combat == null || combat.State == null) return false;
+            return strike.fromPlayer ? combat.State.enemyKhwan <= 0 : combat.State.playerKhwan <= 0;
         }
 
         // Plays WindUp (critical) or Ready in the slot and returns how long it lasts; 0 when the controller
@@ -313,6 +366,12 @@ namespace TawanOS.CardEngine
                 yield return null;
                 impactWaited += Time.deltaTime;
             }
+        }
+
+        private Vector3 FaceHitPoint(Dictionary<int, BoardSlotView> attackerSlots, Dictionary<int, BoardSlotView> opposingSlots)
+        {
+            Vector3 row = RowCenter(opposingSlots);
+            return row + Direction(RowCenter(attackerSlots), row) * faceHitReach;
         }
 
         private static Vector3 RowCenter(Dictionary<int, BoardSlotView> slots)
