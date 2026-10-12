@@ -296,7 +296,7 @@ namespace TawanOS.VFX
         }
 
         // Tileable fractal noise for the ragged fire edge, made once
-        private static Texture2D NoiseTexture()
+        public static Texture2D NoiseTexture()
         {
             if (noiseTexture != null) return noiseTexture;
 

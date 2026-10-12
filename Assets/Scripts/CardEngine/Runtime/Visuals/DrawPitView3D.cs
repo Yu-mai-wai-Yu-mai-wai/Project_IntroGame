@@ -1,5 +1,6 @@
 using UnityEngine;
 using DG.Tweening;
+using TawanOS.VFX;
 
 namespace TawanOS.CardEngine
 {
@@ -23,6 +24,7 @@ namespace TawanOS.CardEngine
 
         private Renderer pitRenderer;
         private Vector3 baseScale;
+        private DrawPitSmoke smoke; // black smoke over the pit when Resources/DrawPit/DarkSmoke.mat exists
 
         // AfterSceneLoad fires only for the first scene played; the combat scene is usually loaded later from the map.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -42,7 +44,10 @@ namespace TawanOS.CardEngine
             var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             go.name = "DrawPit3D";
             var pit = go.AddComponent<DrawPitView3D>();
-            if (!pit.TryPlaceMiddleRight())
+            // The scene's DrawPitSmoke object marks where the pit goes; without one it is worked out from the board
+            var sceneSmoke = FindFirstObjectByType<DrawPitSmoke>();
+            if (sceneSmoke != null) go.transform.position = sceneSmoke.transform.position;
+            else if (!pit.TryPlaceMiddleRight())
             {
                 var deck = FindFirstObjectByType<DeckPileView3D>();
                 if (deck == null)
@@ -114,20 +119,36 @@ namespace TawanOS.CardEngine
 
         private void Start()
         {
-            transform.localScale = new Vector3(pitSize.x, pitSize.y, pitSize.z);
+            // Smoke covers the pit; the cylinder stays as the click target but is not drawn. The scene's
+            // DrawPitSmoke object (Tools > TawanOS > VFX > Use Scene Draw Pit Smoke) is used when there is one
+            // (the pit was placed on it in Bootstrap) and sets the pit's width; otherwise the prefab is placed
+            smoke = FindFirstObjectByType<DrawPitSmoke>();
+            Vector3 size = pitSize;
+            if (smoke != null)
+            {
+                size.x = smoke.pitSize.x;
+                size.z = smoke.pitSize.y;
+                smoke.Follow(transform);
+            }
+            else smoke = DrawPitSmoke.Attach(transform);
+
+            transform.localScale = size; // a unit cylinder: x and z are the pit's width and depth
             baseScale = transform.localScale;
             pitRenderer = GetComponent<Renderer>();
             if (pitRenderer != null) pitRenderer.material.color = pitColor;
+            if (smoke != null && pitRenderer != null) pitRenderer.enabled = false;
         }
 
         private void OnMouseEnter()
         {
             if (pitRenderer != null) pitRenderer.material.color = hoverColor;
+            if (smoke != null) smoke.SetHover(true);
         }
 
         private void OnMouseExit()
         {
             if (pitRenderer != null) pitRenderer.material.color = pitColor;
+            if (smoke != null) smoke.SetHover(false);
         }
 
         private void OnMouseDown()
@@ -143,6 +164,7 @@ namespace TawanOS.CardEngine
             transform.DOKill();
             transform.localScale = baseScale;
             transform.DOPunchScale(baseScale * 0.15f, 0.25f, 6);
+            if (smoke != null) smoke.Burst();
         }
     }
 }

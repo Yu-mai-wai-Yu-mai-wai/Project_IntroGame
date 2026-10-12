@@ -233,6 +233,7 @@ namespace TawanOS.CardEngine
             card.fromPit = false;
             view.transform.position = fromPit ? DrawPitView3D.Instance.SpawnPosition : PileTop();
             view.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            if (fromPit) TawanOS.VFX.PitCardTrail.Spawn(view.transform); // red smoke trailing it to the hand
 
             views.Add(view);
             newlyDrawn.Add(view);

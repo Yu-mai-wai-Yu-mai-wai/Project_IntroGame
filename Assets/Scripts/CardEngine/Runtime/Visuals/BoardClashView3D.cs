@@ -16,6 +16,7 @@ namespace TawanOS.CardEngine
         public CardInstance target; // opposing familiar being hit, or null for the player
         public int targetColumn;    // column of the target familiar (== column when hitting the player)
         public bool isCrit;         // critical hit: double damage, and the card pulls back to charge first
+        public bool overhead;       // ตีข้ามหัว over a card in the opposite slot: plays the *Face clips
     }
 
     // Plays the end-of-turn board clash visuals. CombatManager decides who hits whom and applies the
@@ -36,6 +37,20 @@ namespace TawanOS.CardEngine
         public float liftHeight = 0.8f;
         [Tooltip("Distance kept between the attacker and what it hits, along the charge direction.")]
         public float collisionGap = 0.7f;
+        [Tooltip("Seconds an attacker takes, at the start of its lunge, to turn from straight across toward a target in another column.")]
+        public float aimTurnTime = 0.15f;
+        [Tooltip("How fast the lunge at the target plays: the Charge clips and the move toward the target both run this many times faster (1 = the clip's own length).")]
+        [Min(0.1f)] public float chargeSpeed = 1.6f;
+        [Tooltip("Height above the table of the burst when a familiar hits the player directly (FaceHitVfx).")]
+        public float faceHitHeight = 0.6f;
+        [Tooltip("How far past the opposing row (away from the attacker's row, toward the character) a familiar hitting the player directly goes.")]
+        public float faceHitReach = 1.5f;
+
+        [Header("Charge tail (empty = Resources/ClashTrail)")]
+        [Tooltip("Tail behind a black-magic familiar while it lunges.")]
+        public ClashChargeTrail blackChargeTrail;
+        [Tooltip("Tail behind a white-magic familiar while it lunges.")]
+        public ClashChargeTrail whiteChargeTrail;
 
         private readonly Dictionary<int, BoardSlotView> playerSlots = new Dictionary<int, BoardSlotView>();
         private readonly Dictionary<int, BoardSlotView> enemySlots = new Dictionary<int, BoardSlotView>();
@@ -94,6 +109,7 @@ namespace TawanOS.CardEngine
 
         private void Start()
         {
+            FaceHitVfx.Prepare();
             resolver = EffectResolver.Instance;
             if (resolver == null) return;
             resolver.OnFamiliarDamaged += HandleDamaged;
@@ -172,17 +188,20 @@ namespace TawanOS.CardEngine
             var pRig = new CardClashRig(playerView.transform, pSlot.transform, dir);
             var eRig = new CardClashRig(enemyView.transform, eSlot.transform, -dir);
 
-            // Critical strikers pull back and charge up first; the other card waits in its slot
-            float windUp = 0f;
-            if (playerStrike.isCrit) windUp = Mathf.Max(windUp, pRig.Play(CardClashRig.WindUp));
-            if (enemyStrike.isCrit) windUp = Mathf.Max(windUp, eRig.Play(CardClashRig.WindUp));
+            // Both get ready in their slots first: critical strikers pull back and charge up (WindUp), the
+            // others play Ready
+            float windUp = Mathf.Max(GetReady(pRig, playerStrike, false), GetReady(eRig, enemyStrike, false));
             if (windUp > 0f) yield return new WaitForSeconds(windUp);
 
-            float charge = Mathf.Max(pRig.Play(ChargeState(playerStrike)), eRig.Play(ChargeState(enemyStrike)));
+            float charge = Mathf.Max(pRig.Play(ChargeState(playerStrike), chargeSpeed), eRig.Play(ChargeState(enemyStrike), chargeSpeed));
+            var pTrail = StartTrail(playerStrike.attacker, playerView.transform);
+            var eTrail = StartTrail(enemyStrike.attacker, enemyView.transform);
             var seq = DOTween.Sequence();
             seq.Append(pRig.Mover.DOMove(mid - dir * collisionGap, charge).SetEase(Ease.InQuad));
             seq.Join(eRig.Mover.DOMove(mid + dir * collisionGap, charge).SetEase(Ease.InQuad));
             yield return seq.WaitForCompletion();
+            if (pTrail != null) pTrail.Stop();
+            if (eTrail != null) eTrail.Stop();
 
             // Both cards play their impact; the damage lands on the first OnImpact event
             float impact = Mathf.Max(pRig.Play(ImpactState(playerStrike)), eRig.Play(ImpactState(enemyStrike)));
@@ -202,8 +221,8 @@ namespace TawanOS.CardEngine
             yield return ProcessDeaths();
         }
 
-        // One familiar charges its target: a familiar in target column, or the opposing side's slot in
-        // its own column when it is hitting the player
+        // One familiar charges its target: a familiar in target column, or the middle of the opposing side's
+        // row when it is hitting the player
         public IEnumerator Strike(ClashStrike strike, Action<ClashStrike> apply)
         {
             var attackerSlots = strike.fromPlayer ? playerSlots : enemySlots;
@@ -221,14 +240,20 @@ namespace TawanOS.CardEngine
             }
 
             var targetView = strike.target != null ? ViewIn(opposingSlots, strike.targetColumn) : null;
+            bool face = strike.overhead;
 
             Vector3 aPos = aSlot.transform.position;
-            Vector3 tPos = tSlot.transform.position;
+            // Hitting the player (no target card): the card goes past the middle of the opposing side's row,
+            // toward the character behind it
+            Vector3 tPos = strike.target != null ? tSlot.transform.position : FaceHitPoint(attackerSlots, opposingSlots);
             Vector3 dir = Direction(aPos, tPos);
             Vector3 chargeTo = tPos + Vector3.up * liftHeight - dir * collisionGap;
 
             attackerView.transform.DOKill();
-            var aRig = new CardClashRig(attackerView.transform, aSlot.transform, dir);
+            // The attacker gets ready facing straight across, as in the clip preview: aimed at a target in
+            // another column (or the row centre) the clips' sideways moves would also go forward. It turns
+            // toward the target as it lunges.
+            var aRig = new CardClashRig(attackerView.transform, aSlot.transform, FacingOf(aSlot));
             CardClashRig tRig = null;
             if (targetView != null)
             {
@@ -236,25 +261,75 @@ namespace TawanOS.CardEngine
                 tRig = new CardClashRig(targetView.transform, tSlot.transform, -dir); // +Z toward the attacker
             }
 
-            // Critical strikers pull back and charge up before the lunge
-            if (strike.isCrit) yield return new WaitForSeconds(aRig.Play(CardClashRig.WindUp));
+            // Get ready in the slot before the lunge (critical strikers pull back and charge up)
+            float ready = GetReady(aRig, strike, face);
+            if (ready > 0f) yield return new WaitForSeconds(ready);
 
-            float charge = aRig.Play(ChargeState(strike));
+            float charge = aRig.Play(Pick(face, strike.isCrit ? CardClashRig.ChargeFaceCrit : CardClashRig.ChargeFace, ChargeState(strike)), chargeSpeed);
+            Quaternion aimFrom = aRig.CurrentAim;
+            Quaternion aimTo = CardClashRig.AimRotation(dir);
+            // The card's head turns the same way, so it points where it lunges
+            Quaternion headTo = aimTo * Quaternion.Inverse(aimFrom);
+            DOTween.To(() => 0f, t =>
+                {
+                    aRig.SetAim(Quaternion.Slerp(aimFrom, aimTo, t));
+                    aRig.SetHeading(Quaternion.Slerp(Quaternion.identity, headTo, t));
+                }, 1f, Mathf.Min(charge, aimTurnTime))
+                .SetEase(Ease.OutQuad).SetTarget(aRig.Mover);
+            var trail = StartTrail(strike.attacker, attackerView.transform);
             yield return aRig.Mover.DOMove(chargeTo, charge).SetEase(Ease.InQuad).WaitForCompletion();
+            if (trail != null) trail.Stop();
+            aRig.SetAim(aimTo);
+            aRig.SetHeading(headTo);
 
-            float impact = aRig.Play(ImpactState(strike));
+            float impact = aRig.Play(Pick(face, strike.isCrit ? CardClashRig.ImpactFaceCrit : CardClashRig.ImpactFace, ImpactState(strike)));
             yield return WaitForImpact(impact, aRig);
             apply(strike);
+            // A direct hit on the player: hit-stop and shake; the screen edges burst in the attacker's school
+            // only when the hit ends the game
+            if (strike.target == null && strike.attacker != null)
+                FaceHitVfx.Play(tPos + Vector3.up * faceHitHeight, dir, strike.attacker.magicSchool == MagicSchool.BlackMagic, strike.isCrit,
+                    IsFinisher(strike), gameObject.scene);
             float hit = tRig != null ? tRig.Play(strike.isCrit ? CardClashRig.HitCrit : CardClashRig.Hit) : 0f;
             float rest = Mathf.Max(impact - impactWaited, hit);
             if (rest > 0f) yield return new WaitForSeconds(rest);
 
-            float back = aRig.Play(CardClashRig.Return);
+            float back = aRig.Play(Pick(face, CardClashRig.ReturnFace, CardClashRig.Return));
+            // Turns back to face straight across on the way home
+            DOTween.To(() => 0f, t => aRig.SetHeading(Quaternion.Slerp(headTo, Quaternion.identity, t)), 1f, back)
+                .SetEase(Ease.InOutQuad).SetTarget(aRig.Mover);
             yield return aRig.Mover.DOLocalMove(aRig.Home, back).SetEase(Ease.OutQuad).WaitForCompletion();
 
             aRig.Release();
             tRig?.Release();
             yield return ProcessDeaths();
+        }
+
+        // A tail in the attacker's school behind the lunging card; null when there is no prefab
+        private ClashChargeTrail StartTrail(CardInstance attacker, Transform card)
+        {
+            bool black = attacker != null && attacker.magicSchool == MagicSchool.BlackMagic;
+            var prefab = black
+                ? (blackChargeTrail != null ? blackChargeTrail : blackChargeTrail = Resources.Load<ClashChargeTrail>(ClashChargeTrail.BlackResource))
+                : (whiteChargeTrail != null ? whiteChargeTrail : whiteChargeTrail = Resources.Load<ClashChargeTrail>(ClashChargeTrail.WhiteResource));
+            return ClashChargeTrail.Spawn(prefab, card);
+        }
+
+        // The strike's damage (already applied) took the opposing player's khwan to 0
+        private static bool IsFinisher(ClashStrike strike)
+        {
+            var combat = CombatManager.Instance;
+            if (combat == null || combat.State == null) return false;
+            return strike.fromPlayer ? combat.State.enemyKhwan <= 0 : combat.State.playerKhwan <= 0;
+        }
+
+        // Plays WindUp (critical) or Ready in the slot and returns how long it lasts; 0 when the controller
+        // has no Ready clip (the card then lunges at once)
+        private static float GetReady(CardClashRig rig, ClashStrike strike, bool face)
+        {
+            if (strike.isCrit) return rig.Play(Pick(face, CardClashRig.WindUpFace, CardClashRig.WindUp));
+            string ready = Pick(face, CardClashRig.ReadyFace, CardClashRig.Ready);
+            return CardClashRig.Has(ready) ? rig.Play(ready) : 0f;
         }
 
         private static string ChargeState(ClashStrike strike)
@@ -265,6 +340,12 @@ namespace TawanOS.CardEngine
         private static string ImpactState(ClashStrike strike)
         {
             return strike.isCrit ? CardClashRig.ImpactCrit : CardClashRig.Impact;
+        }
+
+        // The over-the-head (Overhead keyword) state when the controller has its clip, else the usual one
+        private static string Pick(bool face, string faceState, string state)
+        {
+            return face && CardClashRig.Has(faceState) ? faceState : state;
         }
 
         // Waits (at most `limit` seconds) for the first OnImpact event among the rigs; impactWaited is how
@@ -287,6 +368,19 @@ namespace TawanOS.CardEngine
             }
         }
 
+        private Vector3 FaceHitPoint(Dictionary<int, BoardSlotView> attackerSlots, Dictionary<int, BoardSlotView> opposingSlots)
+        {
+            Vector3 row = RowCenter(opposingSlots);
+            return row + Direction(RowCenter(attackerSlots), row) * faceHitReach;
+        }
+
+        private static Vector3 RowCenter(Dictionary<int, BoardSlotView> slots)
+        {
+            Vector3 sum = Vector3.zero;
+            foreach (var slot in slots.Values) sum += slot.transform.position;
+            return slots.Count > 0 ? sum / slots.Count : Vector3.zero;
+        }
+
         private static Vector3 Direction(Vector3 from, Vector3 to)
         {
             Vector3 d = to - from;
@@ -302,12 +396,13 @@ namespace TawanOS.CardEngine
             return across.TryGetValue(slot.slotIndex, out var other) ? Direction(slot.transform.position, other.transform.position) : Vector3.forward;
         }
 
-        // Familiars whose Khwan hit 0 play Die once the cards are back on their slots, then are removed
+        // Familiars whose Khwan hit 0 burn away (or play Die) once the cards are back on their slots, then are removed
         private IEnumerator ProcessDeaths()
         {
             if (died.Count == 0) yield break;
 
             float longest = 0f;
+            bool burning = false;
             foreach (var card in died)
             {
                 var view = FindView(card);
@@ -316,11 +411,16 @@ namespace TawanOS.CardEngine
                 var slot = view.GetComponentInParent<BoardSlotView>();
                 view.transform.DOKill();
                 var rig = new CardClashRig(view.transform, slot != null ? slot.transform : view.transform.parent, FacingOf(slot));
-                float length = rig.Play(CardClashRig.Die);
+                // The card burns away (CardDeathFx); without the burn set up it plays the Die clip
+                float length = CardBurnEffect.Burn(view.transform, CardDeathFxConfigSO.Load());
+                burning |= length > 0f;
+                if (length <= 0f) length = rig.Play(CardClashRig.Die);
                 rig.DestroyWithCard(length);
                 longest = Mathf.Max(longest, length);
             }
             died.Clear();
+            // One fire sound for the whole burn, however many cards catch fire (as on the reward screen)
+            if (burning) TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on");
             if (longest > 0f) yield return new WaitForSeconds(longest);
         }
     }

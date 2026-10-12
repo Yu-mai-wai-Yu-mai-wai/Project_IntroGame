@@ -423,6 +423,9 @@ namespace TawanOS.CardEngine
         // Called once the engine has put the card in its column
         public void PlaceOnBoard()
         {
+            // Auras already in play (amulets) changed this card's Khwan / attack the moment it was played,
+            // while it was still in the hand where the board refresh does not look, so show them now
+            RefreshLabel();
             SnapToBoardSlot();
         }
 
@@ -449,6 +452,8 @@ namespace TawanOS.CardEngine
             transform.DOScale(targetSlot.FitCardScale(baseLocalScale), 0.3f);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
+            // Black smoke or streaks of light from under the card as it lands
+            TawanOS.VFX.CardLandVfx.Play(transform, CardData.magicSchool == MagicSchool.BlackMagic);
 
             // The card has been committed to the board; it no longer drags/hovers like a hand card
             isPlacedOnBoard = true;

@@ -385,6 +385,8 @@ namespace TawanOS.CardEngine
             var resolver = EffectResolver.Instance;
             CardInstance target = resolver != null ? resolver.ChooseStrikeTarget(attacker, col, fromPlayer) : null;
             int targetCol = target != null ? resolver.BoardIndexOf(target, onPlayerSide: !fromPlayer) : -1;
+            // ตีข้ามหัว only looks like it when there is a card in front to fly over; otherwise the usual lunge
+            var opposite = EffectResolver.CardAt(fromPlayer ? state.enemyBoardCards : state.activeBoardCards, col);
 
             return new ClashStrike
             {
@@ -393,7 +395,8 @@ namespace TawanOS.CardEngine
                 attacker = attacker,
                 target = target,
                 targetColumn = targetCol >= 0 ? targetCol : col,
-                isCrit = resolver != null && resolver.RollCrit(attacker, fromPlayer)
+                isCrit = resolver != null && resolver.RollCrit(attacker, fromPlayer),
+                overhead = EffectResolver.HasKeyword(attacker, AbilityEffect.Overhead) && EffectResolver.IsStrikeable(opposite)
             };
         }
 
