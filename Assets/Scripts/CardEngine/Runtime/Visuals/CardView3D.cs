@@ -452,6 +452,8 @@ namespace TawanOS.CardEngine
             transform.DOScale(targetSlot.FitCardScale(baseLocalScale), 0.3f);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
+            // Black smoke or streaks of light from under the card as it lands
+            TawanOS.VFX.CardLandVfx.Play(transform, CardData.magicSchool == MagicSchool.BlackMagic);
 
             // The card has been committed to the board; it no longer drags/hovers like a hand card
             isPlacedOnBoard = true;

@@ -116,7 +116,12 @@ namespace TawanOS.CardEngine
             t.SetParent(slot.transform, worldPositionStays: true);
             t.DOKill();
             t.DOLocalMove(Vector3.zero, placeDuration).SetEase(Ease.OutQuad)
-                .OnComplete(() => t.localPosition = Vector3.zero);
+                .OnComplete(() =>
+                {
+                    t.localPosition = Vector3.zero;
+                    // Black smoke or streaks of light from under the card as it lands
+                    TawanOS.VFX.CardLandVfx.Play(t, card.magicSchool == MagicSchool.BlackMagic);
+                });
             t.DOLocalRotateQuaternion(Quaternion.identity, placeDuration)
                 .OnComplete(() => t.localRotation = Quaternion.identity);
             t.DOScale(slot.FitCardScale(cardPrefab.transform.localScale), placeDuration);
