@@ -423,6 +423,9 @@ namespace TawanOS.CardEngine
         // Called once the engine has put the card in its column
         public void PlaceOnBoard()
         {
+            // Auras already in play (amulets) changed this card's Khwan / attack the moment it was played,
+            // while it was still in the hand where the board refresh does not look, so show them now
+            RefreshLabel();
             SnapToBoardSlot();
         }
 

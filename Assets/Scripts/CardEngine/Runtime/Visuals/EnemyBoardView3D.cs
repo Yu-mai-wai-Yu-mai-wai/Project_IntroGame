@@ -108,6 +108,9 @@ namespace TawanOS.CardEngine
                 view.transform.localRotation = Quaternion.identity;
             }
 
+            // A card reused from the enemy's hand still shows its hand numbers; auras in play may have changed them
+            view.RefreshLabel();
+
             // Fly the card into the slot, then snap exactly onto its centre
             var t = view.transform;
             t.SetParent(slot.transform, worldPositionStays: true);
