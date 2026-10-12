@@ -4,7 +4,7 @@ using UnityEngine;
 namespace TawanOS.VFX
 {
     // Wraps one board card for the duration of a clash, then puts it back:
-    //   slot > ClashMover > ClashAim > ClashPivot (Animator) > ClashUnaim > card
+    //   (scene root) ClashMover > ClashAim > ClashPivot (Animator) > ClashUnaim > card
     // ClashMover travels along the path (DOTween in BoardClashView3D), ClashAim turns +Z toward the other
     // card, and the Animator plays the CardClash clips on ClashPivot. The clips are therefore authored with
     // +Y = up and +Z = toward the target (Assets/Art/Animations/CardClash/CardClashPreview.prefab shows it).
@@ -57,6 +57,8 @@ namespace TawanOS.VFX
         private readonly Vector3 originalPosition;
         private readonly Quaternion originalRotation;
         private readonly Vector3 originalScale;
+        private readonly Transform aim;
+        private readonly Transform unaim;
         private readonly Animator animator;
         private readonly CardClashAnimEvents events;
         private readonly bool hasFaceParam;
@@ -94,26 +96,25 @@ namespace TawanOS.VFX
             originalRotation = card.localRotation;
             originalScale = card.localScale;
 
+            // The mover sits at the scene root so the clips move the card in world units. Slots are rotated
+            // and scaled non-uniformly (lying flat, 1.8 x 3), and no scale under such a parent cancels that:
+            // the clips' sideways moves picked up a forward part and their up/forward moves were squashed
+            // and stretched.
             Mover = new GameObject("ClashMover").transform;
-            Mover.SetParent(slot, false);
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(Mover.gameObject, slot.gameObject.scene);
             Mover.position = card.position;
             Mover.rotation = Quaternion.identity;
-            // Undo the slot's scale so the clips move the card in world units
-            Vector3 s = slot.lossyScale;
-            Mover.localScale = new Vector3(Inverse(s.x), Inverse(s.y), Inverse(s.z));
             Home = Mover.localPosition;
 
-            faceDir.y = 0f;
-            var aim = new GameObject("ClashAim").transform;
+            aim = new GameObject("ClashAim").transform;
             aim.SetParent(Mover, false);
-            aim.rotation = faceDir.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(faceDir.normalized, Vector3.up) : Quaternion.identity;
 
             var pivot = new GameObject("ClashPivot").transform;
             pivot.SetParent(aim, false);
 
-            var unaim = new GameObject("ClashUnaim").transform;
+            unaim = new GameObject("ClashUnaim").transform;
             unaim.SetParent(pivot, false);
-            unaim.localRotation = Quaternion.Inverse(aim.localRotation);
+            Aim(faceDir);
 
             card.SetParent(unaim, worldPositionStays: true);
 
@@ -127,10 +128,25 @@ namespace TawanOS.VFX
             }
         }
 
-        private static float Inverse(float v)
+        public static Quaternion AimRotation(Vector3 faceDir)
         {
-            return Mathf.Abs(v) > 0.0001f ? 1f / v : 1f;
+            faceDir.y = 0f;
+            return faceDir.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(faceDir.normalized, Vector3.up) : Quaternion.identity;
         }
+
+        // Turns the clips' +Z toward faceDir; the card itself keeps facing the way it did in its slot
+        public void Aim(Vector3 faceDir)
+        {
+            SetAim(AimRotation(faceDir));
+        }
+
+        public void SetAim(Quaternion rotation)
+        {
+            aim.localRotation = rotation;
+            unaim.localRotation = Quaternion.Inverse(rotation);
+        }
+
+        public Quaternion CurrentAim => aim.localRotation;
 
         // Animator parameters: one trigger per step, "crit" picks the critical version of a step and "face"
         // the over-the-head version

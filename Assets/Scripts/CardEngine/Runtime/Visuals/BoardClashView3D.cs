@@ -37,6 +37,8 @@ namespace TawanOS.CardEngine
         public float liftHeight = 0.8f;
         [Tooltip("Distance kept between the attacker and what it hits, along the charge direction.")]
         public float collisionGap = 0.7f;
+        [Tooltip("Seconds an attacker takes, at the start of its lunge, to turn from straight across toward a target in another column.")]
+        public float aimTurnTime = 0.15f;
 
         private readonly Dictionary<int, BoardSlotView> playerSlots = new Dictionary<int, BoardSlotView>();
         private readonly Dictionary<int, BoardSlotView> enemySlots = new Dictionary<int, BoardSlotView>();
@@ -230,7 +232,10 @@ namespace TawanOS.CardEngine
             Vector3 chargeTo = tPos + Vector3.up * liftHeight - dir * collisionGap;
 
             attackerView.transform.DOKill();
-            var aRig = new CardClashRig(attackerView.transform, aSlot.transform, dir);
+            // The attacker gets ready facing straight across, as in the clip preview: aimed at a target in
+            // another column (or the row centre) the clips' sideways moves would also go forward. It turns
+            // toward the target as it lunges.
+            var aRig = new CardClashRig(attackerView.transform, aSlot.transform, FacingOf(aSlot));
             CardClashRig tRig = null;
             if (targetView != null)
             {
@@ -243,7 +248,12 @@ namespace TawanOS.CardEngine
             if (ready > 0f) yield return new WaitForSeconds(ready);
 
             float charge = aRig.Play(Pick(face, strike.isCrit ? CardClashRig.ChargeFaceCrit : CardClashRig.ChargeFace, ChargeState(strike)));
+            Quaternion aimFrom = aRig.CurrentAim;
+            Quaternion aimTo = CardClashRig.AimRotation(dir);
+            DOTween.To(() => 0f, t => aRig.SetAim(Quaternion.Slerp(aimFrom, aimTo, t)), 1f, Mathf.Min(charge, aimTurnTime))
+                .SetEase(Ease.OutQuad).SetTarget(aRig.Mover);
             yield return aRig.Mover.DOMove(chargeTo, charge).SetEase(Ease.InQuad).WaitForCompletion();
+            aRig.SetAim(aimTo);
 
             float impact = aRig.Play(Pick(face, strike.isCrit ? CardClashRig.ImpactFaceCrit : CardClashRig.ImpactFace, ImpactState(strike)));
             yield return WaitForImpact(impact, aRig);
