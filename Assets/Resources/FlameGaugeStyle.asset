@@ -24,8 +24,8 @@ MonoBehaviour:
   reducedMotionSpeed: 0.3
   numberSize: 46
   merit:
-    flame: {r: 0.95, g: 0.66, b: 0.18, a: 1}
-    tip: {r: 1, g: 0.92, b: 0.6, a: 1}
+    flame: {r: 0.95, g: 0.66, b: 0, a: 1}
+    tip: {r: 0.9924528, g: 0.9924528, b: 0.9924528, a: 1}
     number: {r: 1, g: 0.9, b: 0.62, a: 1}
   corruption:
     flame: {r: 0.85, g: 0.2, b: 0.15, a: 1}
