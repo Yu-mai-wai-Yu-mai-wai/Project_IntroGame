@@ -337,12 +337,13 @@ namespace TawanOS.CardEngine
             return across.TryGetValue(slot.slotIndex, out var other) ? Direction(slot.transform.position, other.transform.position) : Vector3.forward;
         }
 
-        // Familiars whose Khwan hit 0 play Die once the cards are back on their slots, then are removed
+        // Familiars whose Khwan hit 0 burn away (or play Die) once the cards are back on their slots, then are removed
         private IEnumerator ProcessDeaths()
         {
             if (died.Count == 0) yield break;
 
             float longest = 0f;
+            bool burning = false;
             foreach (var card in died)
             {
                 var view = FindView(card);
@@ -351,11 +352,16 @@ namespace TawanOS.CardEngine
                 var slot = view.GetComponentInParent<BoardSlotView>();
                 view.transform.DOKill();
                 var rig = new CardClashRig(view.transform, slot != null ? slot.transform : view.transform.parent, FacingOf(slot));
-                float length = rig.Play(CardClashRig.Die);
+                // The card burns away (CardDeathFx); without the burn set up it plays the Die clip
+                float length = CardBurnEffect.Burn(view.transform, CardDeathFxConfigSO.Load());
+                burning |= length > 0f;
+                if (length <= 0f) length = rig.Play(CardClashRig.Die);
                 rig.DestroyWithCard(length);
                 longest = Mathf.Max(longest, length);
             }
             died.Clear();
+            // One fire sound for the whole burn, however many cards catch fire (as on the reward screen)
+            if (burning) TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on");
             if (longest > 0f) yield return new WaitForSeconds(longest);
         }
     }
