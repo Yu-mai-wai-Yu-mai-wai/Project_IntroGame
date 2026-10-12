@@ -8,7 +8,7 @@ namespace TawanOS.CardEngine
 {
     // Self-building status display for scenes without a full HUD:
     //  - top centre: enemy name, Khwan bar, shield, AI state, hand size and the enemy's last action
-    //  - bottom left (above Corruption): player Khwan bar and shield
+    //  - bottom left: player Khwan bar and shield
     // Skipped when the scene already has an EnemyCombatView.
     public class CombatStatusHUD : MonoBehaviour
     {
@@ -142,7 +142,8 @@ namespace TawanOS.CardEngine
             actionRt.anchoredPosition = new Vector2(0, -4);
             actionRt.sizeDelta = new Vector2(0, 36);
 
-            player = BuildPanel(canvasGo.transform, "PlayerPanel", Vector2.zero, new Vector2(40, 240),
+            // Bottom left, where the Merit and Corruption panels were before they became flame rings (FlameGaugeHUD)
+            player = BuildPanel(canvasGo.transform, "PlayerPanel", Vector2.zero, new Vector2(40, 40),
                 new Vector2(360, 90), PlayerBar, titleSize: 26, detailSize: 22);
             player.title.text = "ผู้เล่น";
         }
