@@ -2,17 +2,17 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using TawanOS.CardEngine;
-using TawanOS.Settings;
 
 namespace TawanOS.UI
 {
     /// <summary>
     /// The turn shown on the combat table itself (Game Designer, 13 Oct), replacing the top-left turn banner: a word
-    /// lying on the wood between the two rows of card slots, readable from the player's seat, with a burning arrow on
+    /// lying on the wood between the two rows of card slots, readable from the player's seat, with a glowing arrow on
     /// each side of it pointing at whoever's turn it is. "เทิร์นอัญเชิญ" while familiars and amulets are laid
     /// (PlayerBoard / EnemyBoard), "เทิร์นท่องคาถา" while incantations are cast (PlayerSpell / EnemySpell); in the
-    /// other phases (draw, clash, end of turn) word and arrows fade away. When the turn passes to the other side the
-    /// arrows swing round. Created by CombatFeedbackBootstrap with the turn banner.
+    /// other phases (draw, clash, end of turn) word and arrows fade away. When the turn passes to the other side they
+    /// fade out and come back pointing the new way; the arrows never turn on screen (Game Designer, 13 Oct). Created by
+    /// CombatFeedbackBootstrap with the turn banner.
     /// </summary>
     public class TableTurnMarker : MonoBehaviour
     {
@@ -39,7 +39,7 @@ namespace TawanOS.UI
         private Transform[] arrows;
         private Material[] arrowMaterials;
         private float shown;                                  // 0..1, tweened
-        private float facing = 1f;                            // +1 toward the player, -1 toward the enemy
+        private bool towardPlayer = true;
         private bool combatOver;
 
         private void Start()
@@ -126,7 +126,6 @@ namespace TawanOS.UI
                 if (shader != null)
                 {
                     arrowMaterials[i] = new Material(shader);
-                    arrowMaterials[i].SetFloat("_Speed", GameSettings.ReduceMotion ? 0.3f : 1f);
                     renderer.sharedMaterial = arrowMaterials[i];
                 }
                 arrows[i] = quad.transform;
@@ -146,22 +145,19 @@ namespace TawanOS.UI
 
             bool player = phase == TurnPhase.PlayerBoard || phase == TurnPhase.PlayerSpell;
             string text = summon ? SummonWord : ChantWord;
-            float target = player ? 1f : -1f;
 
-            // A new word or a new side: fade out, swap, fade back in; arrows swing round to the new side
-            if (shown > 0.01f && (word.text != text || !Mathf.Approximately(facing, target)))
+            // A new word or a new side: fade out, swap (arrows now point the new way), fade back in
+            if (shown > 0.01f && (word.text != text || towardPlayer != player))
             {
                 DOTween.Kill(this);
                 DOTween.Sequence().SetId(this).SetLink(gameObject)
                     .Append(DOVirtual.Float(shown, 0f, 0.2f, v => { shown = v; Apply(); }))
                     .AppendCallback(() => Set(text, player))
-                    .Append(DOVirtual.Float(facing, target, 0.35f, v => { facing = v; Apply(); }).SetEase(Ease.InOutSine))
-                    .Join(DOVirtual.Float(0f, 1f, 0.3f, v => { shown = v; Apply(); }));
+                    .Append(DOVirtual.Float(0f, 1f, 0.3f, v => { shown = v; Apply(); }));
             }
             else
             {
                 Set(text, player);
-                facing = target;
                 FadeTo(1f);
             }
         }
@@ -169,6 +165,7 @@ namespace TawanOS.UI
         private void Set(string text, bool player)
         {
             word.text = text;
+            towardPlayer = player;
             // The arrows sit just beyond the ends of the word, however long it is
             float half = Mathf.Max(word.GetPreferredValues(text).x, 1f) * 0.5f;
             for (int i = 0; i < arrows.Length; i++)
@@ -196,12 +193,12 @@ namespace TawanOS.UI
             var c = word.color;
             c.a = shown;
             word.color = c;
-            // Arrows lie flat; facing +1 points them toward the player (-Z), -1 toward the enemy, swinging between
-            float angle = Mathf.Lerp(0f, 180f, (1f - facing) * 0.5f);
+            // Arrows lie flat, pointing toward the player (-Z) or the enemy (+Z)
+            float angle = towardPlayer ? 180f : 0f;
             for (int i = 0; i < arrows.Length; i++)
             {
                 if (arrows[i] == null) continue;
-                arrows[i].localRotation = Quaternion.Euler(90f, 0f, 0f) * Quaternion.Euler(0f, 0f, 180f + angle);
+                arrows[i].localRotation = Quaternion.Euler(90f, 0f, 0f) * Quaternion.Euler(0f, 0f, angle);
                 if (arrowMaterials[i] != null) arrowMaterials[i].SetFloat("_Alpha", shown);
             }
         }
