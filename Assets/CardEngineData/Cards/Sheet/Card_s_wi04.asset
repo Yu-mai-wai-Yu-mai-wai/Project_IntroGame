@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_wi04
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wi04
+  enemyOnly: 0
   cardNameThai: "\u0E04\u0E32\u0E16\u0E32\u0E01\u0E31\u0E19\u0E20\u0E31\u0E22"
   cardNameEng: Warding Chant
   descriptionFormat: "\u0E2A\u0E23\u0E49\u0E32\u0E07\u0E40\u0E01\u0E23\u0E32\u0E30\u0E04\u0E38\u0E49\u0E21\u0E20\u0E31\u0E22\u0E43\u0E2B\u0E49\u0E01\u0E32\u0E23\u0E4C\u0E14\u0E1D\u0E31\u0E48\u0E07\u0E40\u0E23\u0E32
@@ -42,7 +43,7 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: 1da5c8a93936a7641ae89afd23f4299f, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: 05c5eea637cb25e409e344f88c1b47c5, type: 3}

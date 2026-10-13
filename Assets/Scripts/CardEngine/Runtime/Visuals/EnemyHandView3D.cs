@@ -40,6 +40,8 @@ namespace TawanOS.CardEngine
         public float conjureRevealTime = 1f;
         [Tooltip("Incantations: time to fly from the showcase into the graveyard.")]
         public float playFlyDuration = 0.4f;
+        [Tooltip("How far (in hand units) a card the enemy is weighing up is pulled out of the hand, toward the table.")]
+        public float considerPull = 0.45f;
 
         [Header("Incantation Showcase")]
         [Tooltip("A cast incantation waits where the player's card waits while being played (same spot and size), for this long before it takes effect. Durations are divided by CombatManager's Enemy Play Speed.")]
@@ -131,6 +133,7 @@ namespace TawanOS.CardEngine
             enemyCards = combat.EnemyCards;
             enemyCards.OnCardDrawn += HandleDrawn;
             enemyCards.OnCardPlayed += HandlePlayed;
+            enemyCards.OnConsidering += HandleConsidering;
             enemyCards.RevealTime = RevealTime;
         }
 
@@ -140,6 +143,16 @@ namespace TawanOS.CardEngine
             enemyCards.OnCardDrawn -= HandleDrawn;
             enemyCards.RevealTime = null;
             enemyCards.OnCardPlayed -= HandlePlayed;
+            enemyCards.OnConsidering -= HandleConsidering;
+        }
+
+        // The card the enemy is weighing up is pulled out of the fan a little; the rest settle back
+        private CardView3D considering;
+
+        private void HandleConsidering(CardInstance card)
+        {
+            considering = card != null ? views.Find(v => v != null && v.CardData == card) : null;
+            layoutDirty = true;
         }
 
         // Finds the enemy deck slot and the middle of the table (where played cards are shown)
@@ -380,6 +393,12 @@ namespace TawanOS.CardEngine
                 float t = count > 1 ? (float)i / (count - 1) - 0.5f : 0f; // -0.5 to +0.5
                 Vector3 pos = new Vector3(startX + i * spacing, -Mathf.Abs(t) * curveDepth * 2f, -i * 0.005f);
                 Quaternion rot = Quaternion.Euler(0f, 0f, -t * arcAngle * count);
+                if (views[i] == considering)
+                {
+                    // Down out of the fan (toward the table) and a little in front of its neighbours, held straight
+                    pos += new Vector3(0f, -considerPull, -0.05f);
+                    rot = Quaternion.identity;
+                }
 
                 var tr = views[i].transform;
                 tr.DOKill();

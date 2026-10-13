@@ -117,6 +117,13 @@ namespace TawanOS.VFX
                     continue;
                 }
                 if (!(r is SpriteRenderer) && !(r is MeshRenderer)) continue;
+                // An upgraded card's smouldering sheet (CardEmber) is not part of the card's body: it goes when the card
+                // burns away, and stays as it is while a card is revealed
+                if (r.sharedMaterial != null && r.sharedMaterial.shader != null && r.sharedMaterial.shader.name == "TawanOS/CardEmber")
+                {
+                    if (!reveal) r.enabled = false;
+                    continue;
+                }
 
                 var original = r.sharedMaterial;
                 if (reveal) originals.Add((r, r.sharedMaterials, r.sortingOrder));

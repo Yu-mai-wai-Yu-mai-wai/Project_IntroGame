@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_wi03
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wi03
+  enemyOnly: 0
   cardNameThai: "\u0E1A\u0E17\u0E0A\u0E34\u0E19\u0E1A\u0E31\u0E0D\u0E0A\u0E23"
   cardNameEng: Chinabanchon Verse
   descriptionFormat: "\u0E25\u0E49\u0E32\u0E07\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E2D\u0E31\u0E1B\u0E21\u0E07\u0E04\u0E25\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14
@@ -43,7 +44,7 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: c19da9aef5813fd48a6f803d08e21d7e, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: 22b868d0251407c4c8b7bf3c22ea73c9, type: 3}

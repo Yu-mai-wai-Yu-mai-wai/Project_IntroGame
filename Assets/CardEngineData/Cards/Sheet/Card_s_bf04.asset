@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_bf04
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bf04
+  enemyOnly: 0
   cardNameThai: "\u0E1C\u0E35\u0E15\u0E32\u0E22\u0E17\u0E31\u0E49\u0E07\u0E01\u0E25\u0E21"
   cardNameEng: Tai Thang Klom Ghost
   descriptionFormat: 
@@ -33,7 +34,7 @@ MonoBehaviour:
   statFontSize: 1
   descriptionFontSize: 1
   abilities: []
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: beaa3d0d72f5fe24e94b44229518df2f, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: 6e7c1c8aec0d5f84ba54f54795dc29b3, type: 3}

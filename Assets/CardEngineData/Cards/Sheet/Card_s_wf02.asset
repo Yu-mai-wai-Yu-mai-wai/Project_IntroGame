@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_wf02
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wf02
+  enemyOnly: 0
   cardNameThai: "\u0E1C\u0E35\u0E40\u0E08\u0E49\u0E32\u0E1B\u0E39\u0E48"
   cardNameEng: Ancestor Spirit
   descriptionFormat: 
@@ -33,7 +34,7 @@ MonoBehaviour:
   statFontSize: 1
   descriptionFontSize: 1
   abilities: []
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: 13cb04056c6bd3b4eb40fceb1094f28f, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: d876c88bf6b75534eb655959ddd2eeed, type: 3}

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_bi01
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bi01
+  enemyOnly: 0
   cardNameThai: "\u0E04\u0E32\u0E16\u0E32\u0E2A\u0E32\u0E1B\u0E41\u0E0A\u0E48\u0E07"
   cardNameEng: Curse Chant
   descriptionFormat: "\u0E21\u0E2D\u0E1A\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E1C\u0E27\u0E32\u0E43\u0E2B\u0E49\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23
@@ -42,7 +43,7 @@ MonoBehaviour:
     duration: 2
     ignoreArmor: 0
     relatedCard: {fileID: 0}
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: d9b740cec03f91140a157d548038ba29, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: 315d9ae405f2307459e380ce7fc73206, type: 3}

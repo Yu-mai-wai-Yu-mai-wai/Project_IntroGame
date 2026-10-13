@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_wf05
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wf05
+  enemyOnly: 0
   cardNameThai: "\u0E01\u0E38\u0E21\u0E32\u0E23\u0E17\u0E2D\u0E07"
   cardNameEng: Kuman Thong
   descriptionFormat: 
@@ -33,7 +34,7 @@ MonoBehaviour:
   statFontSize: 1
   descriptionFontSize: 1
   abilities: []
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: 8cfcbb86aa31f0942a3f368fb37b85ec, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: aecce18ed7ee02949ad0915d8142f5e4, type: 3}

@@ -104,6 +104,7 @@ namespace TawanOS.GameFlow
                 // The framed artwork needs nothing over it: the frame turns see-through but stays on, because it is
                 // the card's click area (the button's target graphic)
                 frame.color = face != null ? Color.white : card.artwork != null ? Color.clear : SchoolColor(card.magicSchool);
+                CardEmber.SetUI(frame, CardEmber.IsUpgraded(card), card);
             }
             if (artwork != null)
             {

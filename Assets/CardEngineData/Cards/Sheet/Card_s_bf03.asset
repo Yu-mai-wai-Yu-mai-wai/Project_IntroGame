@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_bf03
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bf03
+  enemyOnly: 0
   cardNameThai: "\u0E1C\u0E35\u0E2B\u0E31\u0E27\u0E02\u0E32\u0E14"
   cardNameEng: Headless Ghost
   descriptionFormat: "\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A\u0E01\u0E32\u0E23\u0E4C\u0E14
@@ -43,7 +44,7 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 11400000, guid: b7eef879b3f0472183ea9abf12c3ab5b, type: 2}
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: f06c0c5a1f38c3543a5948b61b5ec426, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: 83b377e854d92074db622ce7689f74ee, type: 3}
