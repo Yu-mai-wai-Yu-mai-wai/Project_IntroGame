@@ -130,6 +130,7 @@ namespace TawanOS.CardEngine
             frameImage.enabled = frame != null || card.artwork == null; // the framed artwork needs nothing over it
             artImage.sprite = card.artwork;
             artImage.enabled = !printed && card.artwork != null;
+            CardEmber.SetUI(frameImage, CardEmber.IsUpgraded(card), card.source);
 
             bool familiar = card.cardType == CardType.Familiar;
             bool hasKhwan = familiar || card.maxKhwan > 0;

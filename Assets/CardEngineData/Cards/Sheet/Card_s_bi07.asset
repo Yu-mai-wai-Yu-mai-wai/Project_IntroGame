@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_bi07
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bi07
+  enemyOnly: 0
   cardNameThai: "\u0E1E\u0E34\u0E18\u0E35\u0E40\u0E23\u0E35\u0E22\u0E01\u0E27\u0E34\u0E0D\u0E0D\u0E32\u0E13"
   cardNameEng: Spirit-Calling Rite
   descriptionFormat: "\u0E2A\u0E38\u0E48\u0E21\u0E01\u0E32\u0E23\u0E4C\u0E14\u0E17\u0E35\u0E48\u0E2D\u0E22\u0E39\u0E48\u0E43\u0E19\u0E01\u0E2D\u0E07\u0E2A\u0E38\u0E2A\u0E32\u0E19\u0E02\u0E36\u0E49\u0E19\u0E21\u0E37\u0E2D
@@ -42,7 +43,7 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: a662d45365ed3d349afe53352f77ee34, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: 7fa5745929f4d4a46afe6885f02d0057, type: 3}

@@ -53,6 +53,7 @@ namespace TawanOS.CardEngine
         private SpriteRenderer backgroundFace;
         private SpriteRenderer artworkFace;
         private SpriteRenderer backFace;
+        private MeshRenderer emberFace; // upgraded cards smoulder at the edge (CardEmber)
         private bool faceVisible = true;
 
         // Face text laid out like the card design: cost top-left, name + type top-right,
@@ -130,7 +131,7 @@ namespace TawanOS.CardEngine
         // could draw the frame over the text while the card moves. A Sorting Group keeps each card's parts
         // together (cards still sort against each other by distance) and fixes the order inside the card.
         // The artwork is the full-face background; the frame (see-through inside) is drawn over it, then the text.
-        private const int ArtworkOrder = 0, FrameOrder = 1, TextOrder = 2;
+        private const int ArtworkOrder = 0, FrameOrder = 1, EmberOrder = 2, TextOrder = 3;
 
         private void ApplyDrawOrder()
         {
@@ -139,6 +140,7 @@ namespace TawanOS.CardEngine
             if (backgroundFace != null) backgroundFace.sortingOrder = FrameOrder;
             if (backFace != null) backFace.sortingOrder = FrameOrder;
             if (artworkFace != null) artworkFace.sortingOrder = ArtworkOrder;
+            if (emberFace != null) emberFace.sortingOrder = EmberOrder;
             foreach (var label in new[] { nameLabel, costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel })
             {
                 var textRenderer = label != null ? label.GetComponent<Renderer>() : null;
@@ -158,8 +160,46 @@ namespace TawanOS.CardEngine
             backgroundFace = SetFacePicture(backgroundFace, "FaceBackground", background, Vector2.one, 0f, FaceZ, keepAspect: false);
             artworkFace = SetFacePicture(artworkFace, "FaceArtwork", artwork, CardFaceLayout.Artwork.size, CardFaceLayout.Artwork.center.y, FaceZ + 0.005f, keepAspect: false);
             backFace = SetFacePicture(backFace, "FaceBack", cardBack, Vector2.one, 0f, FaceZ, keepAspect: false);
+            SetEmber(Application.isPlaying && CardEmber.IsUpgraded(CardData));
 
             ApplyFaceVisibility();
+        }
+
+        // Upgraded cards: the dying-card fire burning along the card's frame line (a sheet over the face, under the text)
+        private void SetEmber(bool on)
+        {
+            if (!on || CardEmber.Material == null)
+            {
+                if (emberFace != null) emberFace.gameObject.SetActive(false);
+                return;
+            }
+            if (emberFace == null)
+            {
+                var existing = transform.Find("FaceEmber");
+                emberFace = existing != null ? existing.GetComponent<MeshRenderer>() : null;
+            }
+            if (emberFace == null)
+            {
+                var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                go.name = "FaceEmber";
+                Destroy(go.GetComponent<Collider>());
+                go.transform.SetParent(transform, false);
+                emberFace = go.GetComponent<MeshRenderer>();
+                emberFace.sharedMaterial = CardEmber.Material;
+                emberFace.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                emberFace.receiveShadows = false;
+            }
+            emberFace.gameObject.SetActive(true);
+            // The face spans the cube's local -0.5..0.5 square; the quad faces -Z like the face
+            var t = emberFace.transform;
+            t.localPosition = new Vector3(0f, 0f, FaceZ - 0.002f);
+            t.localRotation = Quaternion.identity;
+            t.localScale = new Vector3(CardEmber.Pad, CardEmber.Pad, 1f);
+            var block = new MaterialPropertyBlock();
+            block.SetFloat(CardEmber.SeedProperty, CardEmber.SeedFor(CardData));
+            block.SetFloat(CardEmber.AspectProperty, baseLocalScale.y != 0f ? baseLocalScale.x / baseLocalScale.y : 0.716f);
+            emberFace.SetPropertyBlock(block);
+            emberFace.sortingOrder = EmberOrder;
         }
 
         // The finished card PNG, else nothing when the artwork has its own frame, else the card's own background,
@@ -230,6 +270,7 @@ namespace TawanOS.CardEngine
             if (backgroundFace != null) backgroundFace.enabled = faceVisible;
             if (artworkFace != null) artworkFace.enabled = faceVisible;
             if (backFace != null) backFace.enabled = !faceVisible;
+            if (emberFace != null) emberFace.enabled = faceVisible;
 
             // A face-up card with a frame shows only the picture: the 3D block behind it is hidden
             // (its collider stays, so the card can still be clicked). Face-down cards keep the block as their back.

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_wi05
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wi05
+  enemyOnly: 0
   cardNameThai: "\u0E04\u0E32\u0E16\u0E32\u0E16\u0E2D\u0E19\u0E04\u0E38\u0E13\u0E44\u0E2A\u0E22"
   cardNameEng: Hex-Breaking Chant
   descriptionFormat: "\u0E25\u0E49\u0E32\u0E07\u0E2A\u0E16\u0E32\u0E19\u0E30\u0E2D\u0E31\u0E1B\u0E21\u0E07\u0E04\u0E25\u0E17\u0E31\u0E49\u0E07\u0E2B\u0E21\u0E14
@@ -43,7 +44,7 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: 4cbe3b7e184f63c4a8737fb31e700aed, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: d0f8b2516b4bb784f82837d3643fd0e7, type: 3}

@@ -29,7 +29,12 @@ namespace TawanOS.CardEngine
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 var card = AssetDatabase.LoadAssetAtPath<CardDataSO>(path);
-                var sprite = FindSprite(card.cardId);
+                if (card.enemyOnly) continue; // enemy cards have no framed art of their own
+                // An upgraded version ("<cardId>_up") wears its normal card's art
+                string artId = card.cardId != null && card.cardId.EndsWith(UpgradedCardsTool.IdSuffix)
+                    ? card.cardId.Substring(0, card.cardId.Length - UpgradedCardsTool.IdSuffix.Length)
+                    : card.cardId;
+                var sprite = FindSprite(artId);
                 if (sprite == null)
                 {
                     missing++;

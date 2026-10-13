@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_wi06
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wi06
+  enemyOnly: 0
   cardNameThai: "\u0E1E\u0E34\u0E18\u0E35\u0E2A\u0E30\u0E40\u0E14\u0E32\u0E30\u0E40\u0E04\u0E23\u0E32\u0E30\u0E2B\u0E4C"
   cardNameEng: Misfortune-Clearing Rite
   descriptionFormat: "\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A\u0E0A\u0E33\u0E23\u0E30\u0E25\u0E49\u0E32\u0E07
@@ -42,7 +43,7 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: 1b9139be69437874b89a0644dd2a3529, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: 20fabd1462049624cac7341d6f59183c, type: 3}

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_wa03
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wa03
+  enemyOnly: 0
   cardNameThai: "\u0E1E\u0E23\u0E30\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07"
   cardNameEng: Buddha Amulet
   descriptionFormat: "\u0E22\u0E31\u0E48\u0E27\u0E22\u0E38"
@@ -42,7 +43,7 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: 25573c775629bac429750ea3174e7137, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: 03667c81611356e408e5b1d1ccdc9159, type: 3}

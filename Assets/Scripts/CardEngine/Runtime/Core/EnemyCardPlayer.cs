@@ -10,7 +10,12 @@ namespace TawanOS.CardEngine
     public class EnemyCardPlayer
     {
         // Play pacing at speed 1; CombatManager.EnemyPlaySpeed divides these
-        private const float DelayBeforePlay = 0.9f;
+        // Thinking before each card: a pause, a look at up to MaxCardsWeighed other cards it could play (each
+        // pulled out of the hand for a moment), then the chosen card held up before it is played
+        private const float ThinkPause = 0.5f;
+        private const float WeighCardTime = 0.55f;
+        private const float ChosenCardTime = 0.6f;
+        private const int MaxCardsWeighed = 2;
         private const float DelayAfterPlay = 0.7f;
         private const float DrawAnimationBase = 0.45f;
         private const float DrawAnimationStagger = 0.12f;
@@ -22,6 +27,8 @@ namespace TawanOS.CardEngine
 
         public event System.Action<CardInstance> OnCardDrawn;
         public event System.Action<CardInstance> OnCardPlayed;
+        // The card the enemy is weighing up right now (hand views pull it out a little); null = none
+        public event System.Action<CardInstance> OnConsidering;
 
         // Seconds the view needs to show a played card before its effect lands (e.g. the incantation showcase)
         public System.Func<CardInstance, float> RevealTime;
@@ -178,7 +185,7 @@ namespace TawanOS.CardEngine
                     continue;
                 }
 
-                yield return new WaitForSeconds(DelayBeforePlay / speed);
+                yield return Think(card, state, costsEnabled, filter, speed);
                 if (combat.IsCombatOver) break;
 
                 // White Magic spends Merit exactly like the player's (checked again in case it changed)
@@ -218,6 +225,34 @@ namespace TawanOS.CardEngine
             }
 
             if (played == 0 && filter == null) combat.ReportEnemyAction("ศัตรูไม่มีการ์ดที่ใช้ได้");
+        }
+
+        // The enemy looks its options over: a pause, then a card or two it could also play, each pulled out of the
+        // hand for a moment, then the one it picked. Fewer options, less to weigh.
+        private IEnumerator Think(CardInstance chosen, CombatStateData s, bool costsEnabled, System.Predicate<CardInstance> filter, float speed)
+        {
+            yield return new WaitForSeconds(ThinkPause / speed);
+
+            var others = hand.FindAll(c => c != chosen && Playable(c, s, costsEnabled, filter));
+            int weigh = Mathf.Min(others.Count, Random.Range(0, MaxCardsWeighed + 1));
+            for (int i = 0; i < weigh; i++)
+            {
+                int pick = Random.Range(0, others.Count);
+                OnConsidering?.Invoke(others[pick]);
+                others.RemoveAt(pick);
+                yield return new WaitForSeconds(WeighCardTime * Random.Range(0.8f, 1.25f) / speed);
+            }
+
+            OnConsidering?.Invoke(chosen);
+            yield return new WaitForSeconds(ChosenCardTime / speed);
+            OnConsidering?.Invoke(null);
+        }
+
+        private static bool Playable(CardInstance card, CombatStateData s, bool costsEnabled, System.Predicate<CardInstance> filter)
+        {
+            if (filter != null && !filter(card)) return false;
+            if (EffectResolver.Instance != null && !EffectResolver.Instance.CanResolve(card, casterIsPlayer: false)) return false;
+            return !costsEnabled || card.magicSchool != MagicSchool.WhiteMagic || card.meritCost <= s.enemyMerit;
         }
 
         // How much a pit pull is worth right now. Higher when the enemy has nothing to play, a small hand,

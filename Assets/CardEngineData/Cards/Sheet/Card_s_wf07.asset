@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_wf07
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wf07
+  enemyOnly: 0
   cardNameThai: "\u0E1C\u0E35\u0E41\u0E21\u0E48\u0E22\u0E48\u0E32\u0E19\u0E32\u0E07"
   cardNameEng: Mae Ya Nang
   descriptionFormat: 
@@ -33,7 +34,7 @@ MonoBehaviour:
   statFontSize: 1
   descriptionFontSize: 1
   abilities: []
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: 0c9afd1a3658c1f428db2c59ee6ed63e, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: a54449492b885ba4791b4f825b8f636c, type: 3}

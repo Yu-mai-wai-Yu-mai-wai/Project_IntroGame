@@ -50,11 +50,19 @@ namespace TawanOS.CardEngine
             (MagicSchool.BlackMagic, CardType.Familiar), (MagicSchool.BlackMagic, CardType.Amulet), (MagicSchool.BlackMagic, CardType.Incantation),
         };
 
+        // One card's spread: its normal version and, when it has one, its upgraded version (the เมรุ's ชำระ),
+        // shown one at a time and switched with the tabs over the card
         private class Entry
         {
-            public CardInstance card;
-            public bool known;
+            public CardInstance normal;
+            public bool normalKnown;
+            public CardInstance upgraded;
+            public bool upgradedKnown;
+            public bool showUpgraded;
             public int section;
+
+            public CardInstance card => showUpgraded && upgraded != null ? upgraded : normal;
+            public bool known => showUpgraded && upgraded != null ? upgradedKnown : normalKnown;
         }
 
         private CardBookStyleSO style;
@@ -146,25 +154,31 @@ namespace TawanOS.CardEngine
             bool shownPlaced = false;
             if (catalog != null)
             {
+                // One spread per normal card; its upgraded version is the other tab of the same spread
                 foreach (var data in catalog.PlayerCards())
                 {
-                    if (data == null) continue;
+                    if (data == null || catalog.IsUpgradedVersion(data)) continue;
+                    var up = data.upgradedCard;
                     bool isShown = shown != null && !shownPlaced && shown.cardId == data.cardId;
-                    shownPlaced |= isShown;
+                    bool isShownUp = shown != null && !shownPlaced && up != null && shown.cardId == up.cardId;
+                    shownPlaced |= isShown || isShownUp;
                     entries.Add(new Entry
                     {
-                        card = isShown ? shown : new CardInstance(data),
-                        known = isShown || IsKnown == null || IsKnown(data),
+                        normal = isShown ? shown : new CardInstance(data),
+                        normalKnown = isShown || IsKnown == null || IsKnown(data),
+                        upgraded = up == null ? null : isShownUp ? shown : new CardInstance(up),
+                        upgradedKnown = up != null && (isShownUp || IsKnown == null || IsKnown(up)),
+                        showUpgraded = isShownUp,
                     });
                 }
             }
-            if (shown != null && !shownPlaced) entries.Add(new Entry { card = shown, known = true });
+            if (shown != null && !shownPlaced) entries.Add(new Entry { normal = shown, normalKnown = true });
 
-            foreach (var e in entries) e.section = SectionOf(e.card);
+            foreach (var e in entries) e.section = SectionOf(e.normal);
             entries.Sort((a, b) =>
             {
                 int c = a.section.CompareTo(b.section);
-                return c != 0 ? c : string.CompareOrdinal(a.card.cardId, b.card.cardId);
+                return c != 0 ? c : string.CompareOrdinal(a.normal.cardId, b.normal.cardId);
             });
             // Contents, then each section: its opening page followed by one spread per card
             spreads.Clear();
@@ -208,7 +222,7 @@ namespace TawanOS.CardEngine
         private int SpreadOf(CardInstance card)
         {
             for (int i = 0; i < spreads.Count; i++)
-                if (spreads[i].entry >= 0 && entries[spreads[i].entry].card == card) return i;
+                if (spreads[i].entry >= 0 && (entries[spreads[i].entry].normal == card || entries[spreads[i].entry].upgraded == card)) return i;
             return 0;
         }
 
@@ -533,7 +547,42 @@ namespace TawanOS.CardEngine
             if (entry.known) CardFace(holder, entry.card);
             else HiddenFace(holder);
 
+            if (entry.upgraded != null) VersionTabs(page, entry);
             PageNumber(page, spreadIndex);
+        }
+
+        // Over the card: "ธรรมดา | อัปเกรด", the one shown in ink, the other faded; a click turns to the other version
+        private void VersionTabs(RectTransform page, Entry entry)
+        {
+            Tab(page, entry, "ธรรมดา", upgraded: false, 0.18f, 0.49f);
+            Tab(page, entry, "อัปเกรด", upgraded: true, 0.51f, 0.82f);
+            var bar = NewText("TabBar", page, 26, TextAlignmentOptions.Center);
+            bar.color = Faded(style.ink, 0.5f);
+            PlaceRow(bar.rectTransform, 0.94f, 0.045f, 0.47f, 0.53f);
+            bar.text = "|";
+        }
+
+        private void Tab(RectTransform page, Entry entry, string label, bool upgraded, float x0, float x1)
+        {
+            bool active = entry.showUpgraded == upgraded;
+            var tab = NewText(upgraded ? "TabUpgraded" : "TabNormal", page, 28, upgraded ? TextAlignmentOptions.Left : TextAlignmentOptions.Right);
+            PlaceRow(tab.rectTransform, 0.94f, 0.045f, x0, x1);
+            Color ink = upgraded ? SchoolInk(entry.normal.magicSchool) : style.ink;
+            tab.color = active ? ink : Faded(ink, 0.45f);
+            tab.text = active ? $"<u>{label}</u>" : label;
+            if (active) return;
+
+            tab.raycastTarget = true;
+            var button = tab.gameObject.AddComponent<Button>();
+            button.transition = Selectable.Transition.None;
+            button.onClick.AddListener(() =>
+            {
+                if (!ClickAllowed) return;
+                entry.showUpgraded = upgraded;
+                Sfx();
+                ShowSpread();
+            });
+            tab.gameObject.AddComponent<CardBookHover>().ink = tab;
         }
 
         // Right page: everything about the card, in ink
@@ -585,6 +634,7 @@ namespace TawanOS.CardEngine
                 var frameImage = NewImage("Frame", holder, Color.white);
                 frameImage.sprite = frame;
                 Stretch(frameImage.rectTransform);
+                CardEmber.SetUI(frameImage, CardEmber.IsUpgraded(card), card.source);
             }
 
             if (!printed)

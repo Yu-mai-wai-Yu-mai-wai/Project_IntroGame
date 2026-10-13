@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_bi03
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bi03
+  enemyOnly: 0
   cardNameThai: "\u0E04\u0E32\u0E16\u0E32\u0E14\u0E39\u0E14\u0E02\u0E27\u0E31\u0E0D"
   cardNameEng: Soul-Draining Chant
   descriptionFormat: "\u0E17\u0E33\u0E14\u0E32\u0E40\u0E21\u0E08 1 \u0E2B\u0E19\u0E48\u0E27\u0E22
@@ -43,7 +44,7 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: 32319cb893571824dbd14354fbac4633, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: 63cdeda11d7222e46a8e8ced302578c9, type: 3}

@@ -297,6 +297,7 @@ namespace TawanOS.CardEngine
             frameImage.sprite = frame;
             frameImage.enabled = frame != null || card.artwork == null; // the framed artwork needs nothing over it
             Stretch(frameImage.rectTransform);
+            CardEmber.SetUI(frameImage, CardEmber.IsUpgraded(card), card.source);
 
             if (!printed)
             {

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_bf02
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_bf02
+  enemyOnly: 0
   cardNameThai: "\u0E01\u0E23\u0E30\u0E2A\u0E37\u0E2D"
   cardNameEng: Krasue
   descriptionFormat: "\u0E1C\u0E35\u0E02\u0E49\u0E32\u0E21\u0E2B\u0E31\u0E27"
@@ -41,7 +42,7 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: 01ce1b1fdc4c9e343ab4cae139de54c3, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: 4c7358bc91f9af749a130281f48fcc86, type: 3}

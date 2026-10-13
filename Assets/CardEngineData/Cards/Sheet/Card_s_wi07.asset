@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_wi07
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_wi07
+  enemyOnly: 0
   cardNameThai: "\u0E1A\u0E17\u0E2A\u0E27\u0E14\u0E2A\u0E48\u0E07\u0E27\u0E34\u0E0D\u0E0D\u0E32\u0E13"
   cardNameEng: Soul-Sending Prayer
   descriptionFormat: "\u0E17\u0E33\u0E25\u0E32\u0E22\u0E01\u0E32\u0E23\u0E4C\u0E14\u0E17\u0E35\u0E48\u0E21\u0E35\u0E02\u0E27\u0E31\u0E0D\u0E19\u0E49\u0E2D\u0E22\u0E01\u0E27\u0E48\u0E32
@@ -42,7 +43,7 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 1
     relatedCard: {fileID: 0}
-  upgradedCard: {fileID: 0}
+  upgradedCard: {fileID: 11400000, guid: 0de3b09231b653d4ea3d7b3a0bd33b78, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}
   artwork: {fileID: 21300000, guid: 522c405cee36f7e4ab9a39ea4c44c067, type: 3}
