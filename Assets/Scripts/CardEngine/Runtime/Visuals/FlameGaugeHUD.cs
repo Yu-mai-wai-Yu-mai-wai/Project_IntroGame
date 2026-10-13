@@ -11,6 +11,9 @@ namespace TawanOS.CardEngine
     // after the drawn flame ring the Game Designer sent: a ring the colour of the fire, live flames burning out from
     // behind it, and a solid black plate with "current/max" on it. Sizes, places, colours and fire speed come from
     // FlameGaugeStyleSO (Resources/FlameGaugeStyle), which redraws the gauges when edited during play.
+    // มลทิน warns before it breaks: with warnPoints or fewer left the ring beats, its fire climbs and its number glows
+    // red, faster with 1 left. When it breaks the ring swells, bursts into sparks and its fire burns back up from low;
+    // the screen-wide part of the break (flash, lightning, shake, khwan lost) is CorruptionBreakFx (Game Designer, 13 Oct).
     // Bootstraps itself in any scene that has a CombatManager.
     public class FlameGaugeHUD : MonoBehaviour
     {
@@ -28,6 +31,15 @@ namespace TawanOS.CardEngine
         private Gauge corruption;
         private CombatManager combat;
         private FlameGaugeStyleSO style;
+        private RectTransform canvasRect;
+        private static Texture2D sparkTexture;
+
+        // มลทิน warning and break
+        private int corruptionNow, corruptionMax;
+        private float warnLevel;                 // 0 = calm, 0.5 = 2 left, 1 = 1 left (with warnPoints = 2)
+        private float warnPhase;
+        private float regrow = 1f;              // the fire's height after a break: 0 = out, 1 = full
+        private float holdFullUntil;            // the number shows max/max a moment after the break
 
         // AfterSceneLoad fires only for the first scene played; the combat scene is usually loaded later from the map.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -79,17 +91,99 @@ namespace TawanOS.CardEngine
         private void HandleMeritChanged(int current, int max) => Refresh(merit, current, max, animate: true);
         private void HandleCorruptionChanged(int current, int max) => Refresh(corruption, current, max, animate: true);
 
+        // The ring swells, bursts into sparks and its fire goes low, then burns back up; the number shows it full
+        // for a moment before it drops to 0
         private void HandleBackfire()
         {
             if (corruption == null) return;
-            var root = corruption.root;
-            root.DOComplete();
-            if (!GameSettings.ReduceMotion) root.DOShakeAnchorPos(0.5f, 20f, 25);
+            corruption.number.text = $"{corruptionMax}/{corruptionMax}";
+            holdFullUntil = Time.time + 0.45f;
+
+            var face = corruption.face;
+            face.DOKill();
+            face.localScale = Vector3.one;
+            DOTween.Sequence().SetLink(gameObject)
+                .Append(face.DOScale(1.22f, 0.12f).SetEase(Ease.OutQuad))
+                .AppendCallback(() =>
+                {
+                    Burst(corruption, style.corruption);
+                    DOTween.Kill(this);
+                    regrow = 0.1f;
+                    DOVirtual.Float(0.1f, 1f, style.breakRegrow, v => regrow = v).SetEase(Ease.OutCubic).SetId(this).SetLink(gameObject);
+                })
+                .Append(face.DOScale(1f, 0.25f).SetEase(Ease.OutBack));
+            if (!GameSettings.ReduceMotion)
+            {
+                corruption.root.DOComplete();
+                corruption.root.DOShakeAnchorPos(0.5f, 20f, 25);
+            }
+        }
+
+        // Sparks flying out from the ring and fading
+        private void Burst(Gauge g, FlameGaugeStyleSO.Palette pal)
+        {
+            if (canvasRect == null) return;
+            int count = style.breakSparks;
+            float radius = style.size * style.outerRadius;
+            for (int i = 0; i < count; i++)
+            {
+                var go = new GameObject("Spark", typeof(RectTransform));
+                go.transform.SetParent(canvasRect, false);
+                var img = go.AddComponent<RawImage>();
+                img.texture = SparkTexture();
+                img.raycastTarget = false;
+                img.color = Color.Lerp(pal.flame, pal.tip, Random.value);
+                var rt = img.rectTransform;
+                rt.anchorMin = rt.anchorMax = g.root.anchorMin;
+                rt.sizeDelta = Vector2.one * Random.Range(10f, 22f);
+                float angle = (i + Random.value * 0.6f) / Mathf.Max(count, 1) * Mathf.PI * 2f;
+                var dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+                rt.anchoredPosition = g.root.anchoredPosition + dir * radius;
+                float flight = Random.Range(0.45f, 0.8f);
+                var target = g.root.anchoredPosition + dir * radius * Random.Range(1.6f, 2.4f) + Vector2.up * Random.Range(10f, 40f);
+                DOTween.Sequence().SetLink(go)
+                    .Append(rt.DOAnchorPos(target, flight).SetEase(Ease.OutCubic))
+                    .Join(rt.DOScale(0.2f, flight).SetEase(Ease.InQuad))
+                    .Join(DOVirtual.Float(1f, 0f, flight, a => { var c = img.color; c.a = a; img.color = c; }).SetEase(Ease.InQuad))
+                    .OnComplete(() => Destroy(go));
+            }
+        }
+
+        // The มลทิน warning beats and the fire's regrowth after a break, every frame
+        private void Update()
+        {
+            if (corruption == null || style == null) return;
+            bool still = GameSettings.ReduceMotion;
+
+            int left = corruptionMax - corruptionNow;
+            float target = corruptionNow > 0 && style.warnPoints > 0 && left <= style.warnPoints
+                ? 1f - (left - 1f) / style.warnPoints : 0f;
+            warnLevel = Mathf.MoveTowards(warnLevel, target, Time.deltaTime * 3f);
+
+            float beats = style.warnBeats * (1f + warnLevel);           // twice as fast at 1 left
+            warnPhase += Time.deltaTime * beats * Mathf.PI;
+            float beat = Mathf.Pow(Mathf.Abs(Mathf.Sin(warnPhase)), 6f); // a sharp thump, like a heartbeat
+
+            if (!still && !DOTween.IsTweening(corruption.face))
+                corruption.face.localScale = Vector3.one * (1f + style.warnPulse * warnLevel * beat);
+
+            float speed = still ? style.reducedMotionSpeed : style.flameSpeed;
+            corruption.material.SetFloat("_FlameScale", style.flameHeight * regrow * (1f + style.warnFlameBoost * warnLevel * (0.7f + 0.3f * beat)));
+            corruption.material.SetFloat("_Motion", speed * (1f + warnLevel * 0.8f));
+
+            if (holdFullUntil > 0f && Time.time >= holdFullUntil)
+            {
+                holdFullUntil = 0f;
+                corruption.number.text = $"{corruptionNow}/{corruptionMax}";
+            }
+            corruption.number.color = Color.Lerp(style.corruption.number, style.warnNumber, warnLevel * (still ? 1f : 0.5f + 0.5f * beat));
         }
 
         private void Refresh(Gauge g, int current, int max, bool animate)
         {
             if (g == null) return;
+            if (g == corruption) { corruptionNow = current; corruptionMax = max; }
+            if (g == corruption && Time.time < holdFullUntil) return; // the break is still showing it full
             g.number.text = $"{current}/{max}";
             if (!animate) return;
             g.root.DOComplete();
@@ -99,8 +193,9 @@ namespace TawanOS.CardEngine
 
         private void BuildUI()
         {
-            var canvasGo = new GameObject("FlameGaugeCanvas");
+            var canvasGo = new GameObject("FlameGaugeCanvas", typeof(RectTransform));
             canvasGo.transform.SetParent(transform, false);
+            canvasRect = (RectTransform)canvasGo.transform;
             var canvas = canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 50;
@@ -182,6 +277,25 @@ namespace TawanOS.CardEngine
             g.number.fontSize = style.numberSize;
             g.number.color = pal.number;
             g.number.rectTransform.sizeDelta = new Vector2(plate * 0.85f, plate * 0.6f);
+        }
+    
+        // A small soft dot of light
+        private static Texture2D SparkTexture()
+        {
+            if (sparkTexture != null) return sparkTexture;
+            const int size = 32;
+            sparkTexture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "FlameGaugeSpark" };
+            var pixels = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = (x + 0.5f) / size - 0.5f, dy = (y + 0.5f) / size - 0.5f;
+                    float a = Mathf.Clamp01(1f - Mathf.Sqrt(dx * dx + dy * dy) * 2f);
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(a * a * 255f));
+                }
+            sparkTexture.SetPixels32(pixels);
+            sparkTexture.Apply();
+            return sparkTexture;
         }
     }
 }

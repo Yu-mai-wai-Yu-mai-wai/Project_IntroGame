@@ -86,6 +86,8 @@ namespace TawanOS.Audio
                 audio.PlaySfx("sfx_corruption_break");
                 audio.PlaySfx("sfx_corruption_thunder");
             };
+            // The enemy's มลทิน breaking: the same thunder, quieter, over there
+            combat.OnEnemyCurseBackfireTriggered += () => audio.PlaySfx("sfx_corruption_thunder", 0.5f);
             combat.OnCombatEnded += victory => audio.PlaySfx(victory ? "sfx_scream" : "sfx_fire_off");
 
             if (EffectResolver.Instance != null)

@@ -53,6 +53,31 @@ namespace TawanOS.CardEngine
         [Header("Number")]
         [Min(8f)] public float numberSize = 46f;
 
+        [Header("มลทิน about to break (warning)")]
+        [Tooltip("The มลทิน ring warns when this many points or fewer are left before it breaks.")]
+        [Range(0, 5)] public int warnPoints = 2;
+        [Tooltip("How much the ring swells on each beat of the warning (0.1 = 10%).")]
+        [Range(0f, 0.5f)] public float warnPulse = 0.08f;
+        [Tooltip("Beats per second of the warning with 2 points left; with 1 left it beats twice as fast.")]
+        [Range(0.2f, 5f)] public float warnBeats = 1.2f;
+        [Tooltip("How much taller the flames get while warning, at 1 point left (0.6 = 60% taller).")]
+        [Range(0f, 2f)] public float warnFlameBoost = 0.6f;
+        public Color warnNumber = new Color(1f, 0.25f, 0.2f);
+
+        [Header("มลทิน breaks")]
+        [Tooltip("How red the whole screen flashes when the player's มลทิน breaks (0 = no flash).")]
+        [Range(0f, 1f)] public float breakFlash = 0.5f;
+        [Tooltip("A lightning bolt strikes the ring when the player's มลทิน breaks, and the enemy when its does.")]
+        public bool breakLightning = true;
+        [Tooltip("How hard the camera shakes when the player's มลทิน breaks (0 = still).")]
+        [Range(0f, 1f)] public float breakShake = 0.25f;
+        [Tooltip("Sparks the ring bursts into.")]
+        [Range(0, 40)] public int breakSparks = 18;
+        [Tooltip("Seconds the ring's fire takes to burn back up after it breaks.")]
+        [Range(0.1f, 3f)] public float breakRegrow = 0.9f;
+        [Tooltip("Colour of the khwan lost, floating up from the khwan bar.")]
+        public Color lossNumber = new Color(1f, 0.3f, 0.25f);
+
         [Header("Colours")]
         public Palette merit = new Palette
         {

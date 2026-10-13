@@ -139,13 +139,16 @@ namespace TawanOS.Audio
             if (clip != null) ambience.Play();
         }
 
-        public void PlaySfx(string key)
+        public void PlaySfx(string key) => PlaySfx(key, 1f);
+
+        /// <summary>A sound effect played quieter (volumeScale below 1) or louder than usual.</summary>
+        public void PlaySfx(string key, float volumeScale)
         {
             var clip = Resolve(key);
             if (clip != null)
             {
                 float vol = mixer != null ? 1f : LoadVolume(AudioChannel.Sfx); // master = AudioListener.volume (GameSettings)
-                sfx.PlayOneShot(clip, vol);
+                sfx.PlayOneShot(clip, vol * volumeScale);
             }
         }
 

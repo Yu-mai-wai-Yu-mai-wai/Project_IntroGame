@@ -48,6 +48,8 @@ namespace TawanOS.CardEngine
         public event Action<int, int> OnCorruptionChanged;
         public event Action<int, bool> OnShieldChanged;
         public event Action OnCurseBackfireTriggered;
+        // The enemy's Corruption filled up and backfired on it (raised before its khwan is taken)
+        public event Action OnEnemyCurseBackfireTriggered;
         public event Action<bool> OnCombatEnded;
         // A boss whose khwan fell to its phase line (EnemyProfileSO.phase2AtKhwanRatio) became its next phase
         // (EnemyProfileSO.phase2Profile): new phase number, new profile
@@ -674,6 +676,7 @@ namespace TawanOS.CardEngine
             if (state.enemyCorruption < state.enemyCorruptionThreshold) return;
 
             state.enemyCorruption = 0;
+            OnEnemyCurseBackfireTriggered?.Invoke();
             EffectResolver.Instance?.TriggerCurseBackfire(toPlayer: false);
         }
 
