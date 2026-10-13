@@ -27,18 +27,18 @@ MonoBehaviour:
   warnPulse: 0.08
   warnBeats: 1.2
   warnFlameBoost: 0.6
-  warnNumber: {r: 1, g: 0.25, b: 0.2, a: 1}
+  warnNumber: {r: 0.2901961, g: 0.03529412, b: 0.058823533, a: 1}
   breakFlash: 0.5
   breakLightning: 1
   breakShake: 0.25
   breakSparks: 18
   breakRegrow: 0.9
-  lossNumber: {r: 1, g: 0.3, b: 0.25, a: 1}
+  lossNumber: {r: 0.28235295, g: 0.03137255, b: 0.050980397, a: 1}
   merit:
-    flame: {r: 1, g: 0.7900684, b: 0.2924527, a: 1}
-    tip: {r: 1, g: 0.84083927, b: 0.3226415, a: 1}
+    flame: {r: 1, g: 0.9439623, b: 0.8132075, a: 1}
+    tip: {r: 0.97735846, g: 0.8344481, b: 0.37434664, a: 1}
     number: {r: 1, g: 0.9, b: 0.62, a: 1}
   corruption:
-    flame: {r: 1, g: 0.261206, b: 0.20188677, a: 1}
-    tip: {r: 0.90943396, g: 0.3268025, b: 0.13555704, a: 1}
+    flame: {r: 0.015686275, g: 0.003921569, b: 0.003921569, a: 1}
+    tip: {r: 0.7132075, g: 0.009419684, b: 0.063557416, a: 1}
     number: {r: 1, g: 0.72, b: 0.64, a: 1}
