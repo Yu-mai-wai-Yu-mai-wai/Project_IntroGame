@@ -12,22 +12,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 162f75ff8675a9d4c8c6ddd415169115, type: 3}
   m_Name: FlameGaugeStyle
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.FlameGaugeStyleSO
-  size: 250
-  leftMargin: 0
+  size: 200
+  leftMargin: 30
   upperY: 115
-  lowerY: -105
+  lowerY: -50
   meritOnTop: 0
-  innerRadius: 0.245
-  outerRadius: 0.3
-  flameHeight: 1.25
+  innerRadius: 0.226
+  outerRadius: 0.236
+  flameHeight: 1.34
   flameSpeed: 1
-  reducedMotionSpeed: 0.3
-  numberSize: 46
+  reducedMotionSpeed: 0.2
+  numberSize: 32
+  warnPoints: 2
+  warnPulse: 0.08
+  warnBeats: 1.2
+  warnFlameBoost: 0.6
+  warnNumber: {r: 1, g: 0.25, b: 0.2, a: 1}
+  breakFlash: 0.5
+  breakLightning: 1
+  breakShake: 0.25
+  breakSparks: 18
+  breakRegrow: 0.9
+  lossNumber: {r: 1, g: 0.3, b: 0.25, a: 1}
   merit:
-    flame: {r: 0.9547169, g: 0.73221844, b: 0.2215663, a: 1}
-    tip: {r: 0.93207544, g: 0.76431835, b: 0.21631177, a: 1}
+    flame: {r: 1, g: 0.7900684, b: 0.2924527, a: 1}
+    tip: {r: 1, g: 0.84083927, b: 0.3226415, a: 1}
     number: {r: 1, g: 0.9, b: 0.62, a: 1}
   corruption:
-    flame: {r: 0.6830188, g: 0.05028359, b: 0, a: 1}
-    tip: {r: 0.6830188, g: 0.1696387, b: 0, a: 1}
+    flame: {r: 1, g: 0.261206, b: 0.20188677, a: 1}
+    tip: {r: 0.90943396, g: 0.3268025, b: 0.13555704, a: 1}
     number: {r: 1, g: 0.72, b: 0.64, a: 1}
