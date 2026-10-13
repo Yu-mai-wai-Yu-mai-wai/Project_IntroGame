@@ -24,10 +24,10 @@ MonoBehaviour:
   reducedMotionSpeed: 0.3
   numberSize: 46
   merit:
-    flame: {r: 0.95, g: 0.66, b: 0, a: 1}
-    tip: {r: 0.9924528, g: 0.9924528, b: 0.9924528, a: 1}
+    flame: {r: 0.9547169, g: 0.73221844, b: 0.2215663, a: 1}
+    tip: {r: 0.93207544, g: 0.76431835, b: 0.21631177, a: 1}
     number: {r: 1, g: 0.9, b: 0.62, a: 1}
   corruption:
-    flame: {r: 0.85, g: 0.2, b: 0.15, a: 1}
-    tip: {r: 1, g: 0.55, b: 0.4, a: 1}
+    flame: {r: 0.6830188, g: 0.05028359, b: 0, a: 1}
+    tip: {r: 0.6830188, g: 0.1696387, b: 0, a: 1}
     number: {r: 1, g: 0.72, b: 0.64, a: 1}
