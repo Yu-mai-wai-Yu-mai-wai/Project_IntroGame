@@ -11,6 +11,8 @@ namespace TawanOS.VFX
     /// one fire front; text glows and fades as the front reaches it; embers rise from the front.
     /// Runs on its own object so the embers outlive the card. It does not destroy the card: whoever calls
     /// <see cref="Burn"/> removes it after the returned number of seconds.
+    /// <see cref="Reveal"/> plays it the other way: a card appears in fire from its bottom edge up, then gets its
+    /// own materials back.
     /// </summary>
     public class CardBurnEffect : MonoBehaviour
     {
@@ -26,6 +28,7 @@ namespace TawanOS.VFX
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int FromCentreId = Shader.PropertyToID("_FromCentre");
         private static readonly int FaceSizeId = Shader.PropertyToID("_FaceSize");
+        private static readonly int TopDownId = Shader.PropertyToID("_TopDown");
 
         private static Sprite emberSprite;
 
@@ -63,6 +66,13 @@ namespace TawanOS.VFX
         private float emberDebt;
         private bool playing;
 
+        // Reveal: the card appears from the bottom up instead of burning away, and keeps its own look afterwards
+        private bool reveal;
+        private bool restored = true;
+        private float duration;
+        private readonly List<(Renderer renderer, Material[] materials, int sortingOrder)> originals =
+            new List<(Renderer, Material[], int)>();
+
         /// <summary>
         /// Starts burning <paramref name="card"/> and returns how long it takes (0 when the config has no burn
         /// material: nothing happens and the caller should fall back to its usual death).
@@ -72,14 +82,31 @@ namespace TawanOS.VFX
             if (card == null || fx == null || fx.burnMaterial == null) return 0f;
             var go = new GameObject("CardBurn");
             UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, card.gameObject.scene);
-            go.AddComponent<CardBurnEffect>().Begin(card, fx);
+            go.AddComponent<CardBurnEffect>().Begin(card, fx, false, fx.burnDuration);
             return fx.burnDuration;
         }
 
-        private void Begin(Transform target, CardDeathFxConfigSO config)
+        /// <summary>
+        /// Makes <paramref name="card"/> appear in fire, from its bottom edge to its top, over
+        /// <paramref name="seconds"/>; afterwards it looks as it did. Returns the time it takes (0 when the config has no
+        /// burn material: the card just shows).
+        /// </summary>
+        public static float Reveal(Transform card, CardDeathFxConfigSO fx, float seconds)
+        {
+            if (card == null || fx == null || fx.burnMaterial == null) return 0f;
+            var go = new GameObject("CardReveal");
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, card.gameObject.scene);
+            go.AddComponent<CardBurnEffect>().Begin(card, fx, true, Mathf.Max(0.1f, seconds));
+            return seconds;
+        }
+
+        private void Begin(Transform target, CardDeathFxConfigSO config, bool revealCard, float seconds)
         {
             card = target;
             fx = config;
+            reveal = revealCard;
+            duration = seconds;
+            restored = !reveal;
 
             foreach (var r in card.GetComponentsInChildren<Renderer>(false))
             {
@@ -92,6 +119,7 @@ namespace TawanOS.VFX
                 if (!(r is SpriteRenderer) && !(r is MeshRenderer)) continue;
 
                 var original = r.sharedMaterial;
+                if (reveal) originals.Add((r, r.sharedMaterials, r.sortingOrder));
                 var mat = new Material(fx.burnMaterial) { name = fx.burnMaterial.name + " (Burn)" };
                 mat.SetTexture(NoiseTexId, UiBurnEffect.NoiseTexture());
                 mat.SetColor(GlowColorId, fx.glowColor);
@@ -191,6 +219,7 @@ namespace TawanOS.VFX
         // The order the fire reaches a point on the face (u, v 0..1), 0 first .. 1 last; see the shader
         private float AlongOf(float u, float v)
         {
+            if (reveal) return 1f - v;
             if (!fx.burnFromCentre) return ((1f - u) + v) * 0.5f;
             var fromCentre = new Vector2((u - 0.5f) * faceSize.x, (v - 0.5f) * faceSize.y);
             return fromCentre.magnitude / (0.5f * faceSize).magnitude;
@@ -218,14 +247,21 @@ namespace TawanOS.VFX
                 else
                 {
                     elapsed += dt;
-                    float progress = Mathf.Clamp01(elapsed / fx.burnDuration);
+                    float progress = Mathf.Clamp01(elapsed / duration);
                     Apply(progress);
-                    SpawnEmbers(FrontAt(progress), progress, dt);
+                    SpawnEmbers(FrontAt(BurnAt(progress)), progress, dt);
                     if (progress >= 1f)
                     {
                         playing = false;
-                        foreach (var r in renderers) if (r != null) r.enabled = false;
-                        foreach (var s in texts) if (s.text != null) s.text.enabled = false;
+                        if (reveal)
+                        {
+                            Restore();
+                        }
+                        else
+                        {
+                            foreach (var r in renderers) if (r != null) r.enabled = false;
+                            foreach (var s in texts) if (s.text != null) s.text.enabled = false;
+                        }
                     }
                 }
             }
@@ -233,19 +269,27 @@ namespace TawanOS.VFX
             if (!playing && embers.Count == 0) Destroy(gameObject);
         }
 
+        // The shader's burn value: a reveal plays the top-down burn backwards, so the card grows from the bottom
+        private float BurnAt(float progress)
+        {
+            return reveal ? 1f - progress : progress;
+        }
+
         private void Apply(float progress)
         {
+            float burn = BurnAt(progress);
             var toFace = WorldToFace();
             foreach (var m in materials)
             {
-                m.SetFloat(BurnId, progress);
+                m.SetFloat(BurnId, burn);
                 m.SetMatrix(CardWorldToLocalId, toFace);
                 m.SetVector(CardRectId, rect);
-                m.SetFloat(FromCentreId, fx.burnFromCentre ? 1f : 0f);
+                m.SetFloat(FromCentreId, !reveal && fx.burnFromCentre ? 1f : 0f);
+                m.SetFloat(TopDownId, reveal ? 1f : 0f);
                 m.SetVector(FaceSizeId, faceSize);
             }
 
-            float front = FrontAt(progress);
+            float front = FrontAt(burn);
             foreach (var s in texts)
             {
                 if (s.text == null) continue;
@@ -280,7 +324,13 @@ namespace TawanOS.VFX
                 for (int tries = 0; tries < 6; tries++)
                 {
                     float u, v;
-                    if (fx.burnFromCentre)
+                    if (reveal)
+                    {
+                        // 1 - v == front
+                        u = Random.value;
+                        v = 1f - front;
+                    }
+                    else if (fx.burnFromCentre)
                     {
                         // A ring `front` of the way from the centre to the corners
                         Vector2 dir = Random.insideUnitCircle.normalized;
@@ -349,8 +399,23 @@ namespace TawanOS.VFX
             }
         }
 
+        // A revealed card gets its own materials, draw order and text colours back
+        private void Restore()
+        {
+            if (restored) return;
+            restored = true;
+            foreach (var (r, mats, order) in originals)
+            {
+                if (r == null) continue;
+                r.sharedMaterials = mats;
+                r.sortingOrder = order;
+            }
+            foreach (var s in texts) if (s.text != null) s.text.color = s.original;
+        }
+
         private void OnDestroy()
         {
+            Restore(); // cut short (the card was played or the scene closed): never leave it half shown
             foreach (var m in materials) if (m != null) Destroy(m);
         }
 

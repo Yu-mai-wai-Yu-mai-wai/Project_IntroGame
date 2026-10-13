@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Card_s_ba07
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CardDataSO
   cardId: s_ba07
+  enemyOnly: 0
   cardNameThai: "\u0E14\u0E49\u0E32\u0E22\u0E41\u0E14\u0E07\u0E1C\u0E39\u0E01\u0E08\u0E34\u0E15"
   cardNameEng: Soul-Binding Red Thread
   descriptionFormat: "\u0E23\u0E30\u0E40\u0E1A\u0E34\u0E14\u0E15\u0E31\u0E27\u0E15\u0E23\u0E07\u0E02\u0E49\u0E32\u0E21\u0E15\u0E32\u0E22\u0E44\u0E1B\u0E1E\u0E23\u0E49\u0E2D\u0E21\u0E01\u0E31\u0E19"
@@ -31,7 +32,7 @@ MonoBehaviour:
   nameFontSize: 1
   typeFontSize: 1
   costFontSize: 1
-  statFontSize: 1
+  statFontSize: 1.5
   descriptionFontSize: 1
   abilities:
   - trigger: 3

@@ -1,5 +1,6 @@
 // Burns a 3D board card away (sprites and the card block): from its centre out to its edges
-// (_FromCentre = 1), or from its bottom-right corner to its top-left corner (_FromCentre = 0).
+// (_FromCentre = 1), or from its bottom-right corner to its top-left corner (_FromCentre = 0), or from its top
+// edge down (_TopDown = 1, which played backwards makes a card appear in fire from the bottom up).
 // The 3D counterpart of UIBurnDissolve.shader, driven by CardBurnEffect.
 // _CardWorldToLocal (set from script) takes a world position into the card's local space, and _CardRect is
 // the card face's rectangle there (xMin, yMin, xMax, yMax), so every part of the card shares one fire front.
@@ -21,6 +22,7 @@ Shader "TawanOS/CardBurnDissolve"
         _CharColor ("Char Color", Color) = (0.12, 0.05, 0.03, 1)
         [Toggle] _FromCentre ("Burn From Centre", Float) = 1
         _FaceSize ("Face Size (world, set from script)", Vector) = (1, 1, 0, 0)
+        [Toggle] _TopDown ("Burn From Top Edge", Float) = 0
     }
 
     SubShader
@@ -71,6 +73,7 @@ Shader "TawanOS/CardBurnDissolve"
             fixed4 _CharColor;
             float _FromCentre;
             float4 _FaceSize;
+            float _TopDown;
 
             v2f vert(appdata_t v)
             {
@@ -97,7 +100,7 @@ Shader "TawanOS/CardBurnDissolve"
                 float2 fromCentre = (cardUV - 0.5) * _FaceSize.xy;
                 float radial = length(fromCentre) / max(length(0.5 * _FaceSize.xy), 0.0001);
                 float diagonal = ((1.0 - cardUV.x) + cardUV.y) * 0.5;
-                float along = lerp(diagonal, radial, _FromCentre);
+                float along = lerp(lerp(diagonal, radial, _FromCentre), 1.0 - cardUV.y, _TopDown);
                 float noise = tex2D(_NoiseTex, cardUV * _NoiseScale).r;
                 float value = along + (noise - 0.5) * _NoiseAmount;
 

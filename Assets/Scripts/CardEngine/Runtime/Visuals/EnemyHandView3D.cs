@@ -36,6 +36,8 @@ namespace TawanOS.CardEngine
         [Header("Animation")]
         public float drawFlyDuration = 0.45f;
         public float drawStagger = 0.12f;
+        [Tooltip("Seconds a card made in the hand out of nothing (a boss's per-turn card) takes to appear in fire, bottom to top.")]
+        public float conjureRevealTime = 1f;
         [Tooltip("Incantations: time to fly from the showcase into the graveyard.")]
         public float playFlyDuration = 0.4f;
 
@@ -231,8 +233,19 @@ namespace TawanOS.CardEngine
             // Start lying flat on top of the enemy's draw pile (or the pit); the layout pass flies it into the hand
             bool fromPit = card.fromPit && DrawPitView3D.Instance != null;
             card.fromPit = false;
-            view.transform.position = fromPit ? DrawPitView3D.Instance.SpawnPosition : PileTop();
-            view.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            if (card.conjured)
+            {
+                // Made out of nothing: it appears in fire right in the hand, from its bottom edge up
+                card.conjured = false;
+                view.transform.localPosition = Vector3.zero;
+                view.transform.localRotation = Quaternion.identity;
+                TawanOS.VFX.CardBurnEffect.Reveal(view.transform, TawanOS.VFX.CardDeathFxConfigSO.Load(), conjureRevealTime);
+            }
+            else
+            {
+                view.transform.position = fromPit ? DrawPitView3D.Instance.SpawnPosition : PileTop();
+                view.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
+            }
             if (fromPit) TawanOS.VFX.PitCardTrail.Spawn(view.transform); // red smoke trailing it to the hand
 
             views.Add(view);

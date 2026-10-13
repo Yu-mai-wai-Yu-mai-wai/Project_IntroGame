@@ -119,7 +119,7 @@ namespace TawanOS.GameFlow
             var collection = CardCollection.Current;
             // The ตำราไสยเวท book, turned page by page; the plain list if the book's art (Resources/CardBook) is missing
             if (CardBookPanel.Available) CardBookPanel.Ensure().Open();
-            else DeckViewerPanelUI.Ensure().ShowCollection(CardBookPanel.Title, catalog.cards, collection.Has, "ยังไม่มีการ์ดในเกม");
+            else DeckViewerPanelUI.Ensure().ShowCollection(CardBookPanel.Title, catalog.PlayerCards(), collection.Has, "ยังไม่มีการ์ดในเกม");
         }
 
         private void OnQuit()

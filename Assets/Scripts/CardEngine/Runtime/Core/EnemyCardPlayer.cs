@@ -56,6 +56,23 @@ namespace TawanOS.CardEngine
             if (!Scripted) Shuffle(drawPile);
         }
 
+        // Switches to another profile (a boss's next phase) keeping the hand, draw pile and discard as they are:
+        // its hand size, draws and cards a turn apply from now on
+        public void SetProfile(EnemyProfileSO enemyProfile)
+        {
+            profile = enemyProfile;
+        }
+
+        // Makes `card` in the hand out of nothing (a boss's per-turn card, EnemyProfileSO.cardEachTurn); the hand view
+        // shows it appearing in fire. False when there is no deck to play it from.
+        public bool CreateInHand(CardDataSO card)
+        {
+            if (!Active || card == null) return false;
+            var instance = new CardInstance(card) { conjured = true };
+            AddToHand(instance);
+            return true;
+        }
+
         // ---------------------------------------------------------------- scripted bot (EnemyProfileSO.scriptedDeck)
 
         private bool Scripted => profile != null && profile.scriptedDeck;
@@ -171,6 +188,12 @@ namespace TawanOS.CardEngine
                 }
 
                 hand.Remove(card);
+                // A familiar or amulet goes where it stops the most damage heading for the enemy's face
+                if (card.cardType != CardType.Incantation && !Scripted) // the tutorial bot keeps its scripted columns
+                {
+                    int slot = BestBlockSlot(state);
+                    if (slot >= 0) card.boardSlot = slot;
+                }
                 PlayingTarget = resolver.PickTarget(card, casterIsPlayer: false);
                 OnCardPlayed?.Invoke(card);
 
@@ -336,6 +359,7 @@ namespace TawanOS.CardEngine
 
                 // Small bonus for spending more Merit so ties use the turn's budget fully
                 float score = Score(card, s, style) + card.meritCost * 0.01f;
+                if (style != EnemyCardPlayStyle.Random) score += BlockScore(card, s);
                 if (score > bestScore)
                 {
                     bestScore = score;
@@ -343,6 +367,92 @@ namespace TawanOS.CardEngine
                 }
             }
             return best;
+        }
+
+        // ---------------------------------------------------------------- defending its own Khwan
+
+        // The damage the player's familiars will deal to the enemy's face in the next clash, by the column they
+        // strike from (blockable by putting a card opposite), plus what no blocker stops (ตีข้ามหัว)
+        private static int[] IncomingFaceDamage(CombatStateData s, out int unblockable)
+        {
+            var damage = new int[EffectResolver.MaxBoardSlots];
+            unblockable = 0;
+            var resolver = EffectResolver.Instance;
+            if (resolver == null) return damage;
+
+            var defenders = s.enemyBoardCards;
+            bool taunt = defenders.Exists(c => EffectResolver.IsStrikeable(c) && EffectResolver.HasTaunt(c));
+            bool magnet = defenders.Exists(c => c != null && !c.IsDead && EffectResolver.HasKeyword(c, AbilityEffect.OverheadMagnet));
+
+            foreach (var attacker in s.activeBoardCards)
+            {
+                if (!resolver.WillStrike(attacker)) continue;
+                int attack = resolver.EffectiveAttack(attacker);
+                if (EffectResolver.HasKeyword(attacker, AbilityEffect.Overhead))
+                {
+                    if (!magnet) unblockable += attack;
+                    continue;
+                }
+                if (taunt) continue; // everything goes into the taunting card
+                int col = attacker.boardSlot;
+                if (col < 0 || col >= damage.Length) continue;
+                if (EffectResolver.IsStrikeable(EffectResolver.CardAt(defenders, col))) continue;
+                damage[col] += attack;
+            }
+            return damage;
+        }
+
+        // The free column where a new card would stop the most face damage; -1 when no free column stops any
+        private static int BestBlockSlot(CombatStateData s)
+        {
+            var damage = IncomingFaceDamage(s, out _);
+            int best = -1, bestDamage = 0;
+            for (int col = 0; col < damage.Length; col++)
+            {
+                if (EffectResolver.CardAt(s.enemyBoardCards, col) != null) continue;
+                if (damage[col] > bestDamage)
+                {
+                    bestDamage = damage[col];
+                    best = col;
+                }
+            }
+            return best;
+        }
+
+        // How much putting this card on the board protects the enemy's Khwan: the damage it would stop (all of
+        // it for a taunting card), worth more the lower its Khwan, and decisive when the hits coming would
+        // otherwise kill it
+        private float BlockScore(CardInstance card, CombatStateData s)
+        {
+            if (card.cardType == CardType.Incantation) return 0f;
+            bool blocks = card.cardType == CardType.Familiar || card.maxKhwan > 0;
+            if (!blocks || EffectResolver.FreeSlot(s.enemyBoardCards) < 0) return 0f;
+
+            var damage = IncomingFaceDamage(s, out int unblockable);
+            int total = unblockable;
+            foreach (int d in damage) total += d;
+
+            int stopped;
+            if (EffectResolver.HasTaunt(card))
+            {
+                stopped = total - unblockable;
+            }
+            else
+            {
+                int slot = BestBlockSlot(s);
+                stopped = slot >= 0 ? damage[slot] : 0;
+            }
+            if (stopped <= 0) return 0f;
+
+            int life = s.enemyKhwan + s.enemyShield;
+            float missing = s.maxEnemyKhwan > 0 ? 1f - Mathf.Clamp01((float)s.enemyKhwan / s.maxEnemyKhwan) : 0f;
+            float score = stopped * (1.5f + 2f * missing);
+            if (total >= life)
+            {
+                // Those hits would kill it: blocking that saves its life comes first, any block still helps
+                score += total - stopped < life ? 100f : 15f;
+            }
+            return score;
         }
 
         private float Score(CardInstance card, CombatStateData s, EnemyCardPlayStyle style)
@@ -493,6 +603,12 @@ namespace TawanOS.CardEngine
 
                     case AbilityEffect.GainMerit:
                         utility += 3f * a.value;
+                        break;
+
+                    case AbilityEffect.DrainKhwan:
+                        // Damage to the player and the same back to itself: worth more the more it is missing
+                        offense += 3f * a.value;
+                        if (s.enemyKhwan < s.maxEnemyKhwan) defense += 1.5f * Mathf.Min(a.value, s.maxEnemyKhwan - s.enemyKhwan);
                         break;
 
                     case AbilityEffect.SummonToBoard:

@@ -146,7 +146,7 @@ namespace TawanOS.CardEngine
             bool shownPlaced = false;
             if (catalog != null)
             {
-                foreach (var data in catalog.cards)
+                foreach (var data in catalog.PlayerCards())
                 {
                     if (data == null) continue;
                     bool isShown = shown != null && !shownPlaced && shown.cardId == data.cardId;

@@ -34,6 +34,10 @@ namespace TawanOS.CardEngine
         public Color textOnPlainBlack = new Color(0.95f, 0.9f, 0.85f);
         [Tooltip("Khwan number colour while a Familiar / Amulet has lost Khwan (below its max).")]
         public Color khwanDamagedColor = new Color(0.9f, 0.1f, 0.1f);
+        [Tooltip("Attack number while it hits for more than its printed attack (might, an adjacent aura).")]
+        public Color attackRaisedColor = new Color(0.35f, 0.95f, 0.35f);
+        [Tooltip("Attack number while it hits for less than its printed attack (ผวา).")]
+        public Color attackLoweredColor = new Color(0.9f, 0.1f, 0.1f);
 
         [Header("Interaction Settings")]
         public float hoverLift = 1f;
@@ -267,7 +271,11 @@ namespace TawanOS.CardEngine
             if (attackLabel != null)
             {
                 attackLabel.gameObject.SetActive(familiar && faceVisible);
-                attackLabel.text = CardData.familiarDamage.ToString();
+                // What it hits for right now (ผวา, might and the adjacent aura included), coloured when it differs
+                int attack = EffectResolver.Instance != null ? EffectResolver.Instance.EffectiveAttack(CardData) : CardData.familiarDamage;
+                attackLabel.text = attack.ToString();
+                attackLabel.color = attack > CardData.familiarDamage ? attackRaisedColor
+                    : attack < CardData.familiarDamage ? attackLoweredColor : faceTextColor;
             }
             if (khwanLabel != null)
             {

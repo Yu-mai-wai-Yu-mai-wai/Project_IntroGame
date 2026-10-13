@@ -27,10 +27,17 @@ namespace TawanOS.CardEngine
             return card != null && cards.Exists(c => c != null && c.upgradedCard == card);
         }
 
-        // The cards random pools (rewards, shop, the pit) draw from: every card except upgraded versions
+        // The cards random pools (rewards, shop, the pit) draw from: every card except upgraded versions and
+        // enemy-only cards
         public List<CardDataSO> BaseCards()
         {
-            return cards.FindAll(c => c != null && !IsUpgradedVersion(c));
+            return cards.FindAll(c => c != null && !c.enemyOnly && !IsUpgradedVersion(c));
+        }
+
+        // Every card a player can own (the card book): enemy-only cards left out
+        public List<CardDataSO> PlayerCards()
+        {
+            return cards.FindAll(c => c != null && !c.enemyOnly);
         }
 
         public static CardCatalogSO Load()

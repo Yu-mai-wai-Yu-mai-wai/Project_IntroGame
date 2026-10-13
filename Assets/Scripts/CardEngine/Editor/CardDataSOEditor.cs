@@ -244,12 +244,15 @@ namespace TawanOS.CardEngine
                 DrawText(r, CardFaceLayout.Khwan.Scaled(Fs(CardFaceLayout.Text.Stat)), card.familiarHealth.ToString(), text, FontStyle.Bold);
             }
 
-            if (printed) return;
-            string description;
-            try { description = string.Format(card.descriptionFormat ?? "", card.baseValue); }
-            catch { description = card.descriptionFormat ?? ""; }
-            DrawText(r, CardFaceLayout.Description, description, text, FontStyle.Normal, wrap: true,
-                maxFont: Mathf.RoundToInt(13 * Fs(CardFaceLayout.Text.Description)));
+            if (!printed)
+            {
+                string description;
+                try { description = string.Format(card.descriptionFormat ?? "", card.baseValue); }
+                catch { description = card.descriptionFormat ?? ""; }
+                DrawText(r, CardFaceLayout.Description, description, text, FontStyle.Normal, wrap: true,
+                    maxFont: Mathf.RoundToInt(13 * Fs(CardFaceLayout.Text.Description)));
+            }
+            FlushTexts(r);
         }
 
         private static Rect BoxRect(Rect card, CardFaceLayout.Box box)
@@ -260,23 +263,125 @@ namespace TawanOS.CardEngine
             return new Rect(cx - w * 0.5f, cy - h * 0.5f, w, h);
         }
 
-        private static void DrawText(Rect card, CardFaceLayout.Box box, string text, Color color, FontStyle style, bool wrap = false, int maxFont = 0)
+        // ---------------------------------------------------------------- preview text (TextMeshPro)
+
+        // The preview's text is written by TextMeshPro with the card's own font, outline and Thai mark positioning,
+        // exactly like the in-game card (the editor's own text puts tone marks into the vowels under them, e.g. ที่):
+        // the labels are rendered by a hidden camera into a texture laid over the preview.
+        private struct PendingText
+        {
+            public CardFaceLayout.Box box;
+            public string text;
+            public Color color;
+            public bool bold, wrap;
+            public int maxFont;
+        }
+
+        private readonly List<PendingText> pendingTexts = new List<PendingText>();
+        private readonly List<TMPro.TextMeshPro> textLabels = new List<TMPro.TextMeshPro>();
+        private PreviewRenderUtility textRenderer;
+
+        private static TMPro.TMP_FontAsset CardFontAsset()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            var label = prefab != null ? prefab.GetComponentInChildren<TMPro.TMP_Text>(true) : null;
+            return label != null ? label.font : null;
+        }
+
+        private void DrawText(Rect card, CardFaceLayout.Box box, string text, Color color, FontStyle style, bool wrap = false, int maxFont = 0)
         {
             if (string.IsNullOrEmpty(text)) return;
-            Rect rect = BoxRect(card, box);
-            int size = Mathf.Max(8, Mathf.RoundToInt(rect.height * 0.75f));
-            if (maxFont > 0) size = Mathf.Min(size, maxFont);
+            pendingTexts.Add(new PendingText { box = box, text = text, color = color, bold = style == FontStyle.Bold, wrap = wrap, maxFont = maxFont });
+        }
 
-            var gs = new GUIStyle(EditorStyles.label)
+        private void FlushTexts(Rect card)
+        {
+            if (Event.current.type != EventType.Repaint || pendingTexts.Count == 0)
             {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = size,
-                fontStyle = style,
-                wordWrap = wrap,
-                clipping = TextClipping.Overflow,
-                normal = { textColor = color },
-            };
-            GUI.Label(rect, text, gs);
+                if (Event.current.type == EventType.Repaint) pendingTexts.Clear();
+                return;
+            }
+
+            var font = CardFontAsset();
+            if (font == null)
+            {
+                pendingTexts.Clear();
+                return;
+            }
+
+            if (textRenderer == null)
+            {
+                textRenderer = new PreviewRenderUtility();
+                var cam = textRenderer.camera;
+                cam.orthographic = true;
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = new Color(0f, 0f, 0f, 0f);
+                cam.transform.position = new Vector3(0f, 0f, -10f);
+                cam.transform.rotation = Quaternion.identity;
+                cam.nearClipPlane = 0.1f;
+                cam.farClipPlane = 100f;
+            }
+
+            // World units: the card is 1 high and as wide as its shape; one preview pixel is 1 / card.height
+            float faceWidth = card.width / card.height;
+            textRenderer.camera.orthographicSize = 0.5f;
+
+            for (int i = 0; i < pendingTexts.Count; i++)
+            {
+                var label = Label(i, font);
+                var t = pendingTexts[i];
+                label.gameObject.SetActive(true);
+                label.text = t.text;
+                label.color = t.color;
+                label.fontStyle = t.bold ? TMPro.FontStyles.Bold : TMPro.FontStyles.Normal;
+                label.textWrappingMode = t.wrap ? TMPro.TextWrappingModes.Normal : TMPro.TextWrappingModes.NoWrap;
+                label.overflowMode = TMPro.TextOverflowModes.Overflow;
+                label.alignment = TMPro.TextAlignmentOptions.Center;
+                label.rectTransform.sizeDelta = new Vector2(t.box.size.x * faceWidth, t.box.size.y);
+                label.transform.localPosition = new Vector3(t.box.center.x * faceWidth, t.box.center.y, 0f);
+
+                // The same size rule as before, in world units (TextMeshPro: font size 10 = 1 unit)
+                float px = t.box.size.y * card.height * 0.75f;
+                if (t.maxFont > 0) px = Mathf.Min(px, t.maxFont);
+                label.enableAutoSizing = true;
+                label.fontSizeMin = 0.05f;
+                label.fontSizeMax = Mathf.Max(8f, px) / card.height * 10f;
+                CardFaceLayout.MakeReadable(label);
+                label.ForceMeshUpdate(); // the preview camera does not drive TextMeshPro's own update
+            }
+            for (int i = pendingTexts.Count; i < textLabels.Count; i++) textLabels[i].gameObject.SetActive(false);
+            pendingTexts.Clear();
+
+            textRenderer.BeginPreview(card, GUIStyle.none);
+            textRenderer.camera.Render();
+            var texture = textRenderer.EndPreview();
+            GUI.DrawTexture(card, texture, ScaleMode.StretchToFill, alphaBlend: true);
+        }
+
+        private TMPro.TextMeshPro Label(int index, TMPro.TMP_FontAsset font)
+        {
+            while (textLabels.Count <= index)
+            {
+                var go = new GameObject("PreviewText", typeof(RectTransform));
+                var label = go.AddComponent<TMPro.TextMeshPro>();
+                label.font = font;
+                textRenderer.AddSingleGO(go);
+                textLabels.Add(label);
+            }
+            var l = textLabels[index];
+            if (l.font != font) l.font = font;
+            return l;
+        }
+
+        private void OnDisable()
+        {
+            if (textRenderer != null)
+            {
+                textRenderer.Cleanup();
+                textRenderer = null;
+            }
+            foreach (var l in textLabels) if (l != null) DestroyImmediate(l.gameObject);
+            textLabels.Clear();
         }
 
         private static void DrawSprite(Rect rect, Sprite sprite, ScaleMode mode)

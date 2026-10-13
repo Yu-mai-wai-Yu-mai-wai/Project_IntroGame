@@ -15,6 +15,10 @@ namespace TawanOS.CardEngine
         public float maxTotalWidth = 6f;
         public float arcAngle = 5f;
         public float curveDepth = 0.15f;
+        [Tooltip("Squeeze the hand so every card stays inside the camera's view, however many there are.")]
+        public bool fitToCamera = true;
+        [Tooltip("Space kept free at each side of the screen, as a share of the screen width.")]
+        [Range(0f, 0.2f)] public float screenMargin = 0.03f;
 
         [Header("Draw Animation")]
         [Tooltip("Optional. Cards fly from this deck pile into the hand. Auto-found in the scene if empty.")]
@@ -27,6 +31,8 @@ namespace TawanOS.CardEngine
         private readonly List<CardView3D> newlyDrawn = new List<CardView3D>();
         private bool layoutDirty;
         private bool simultaneousDraw;
+        private float lastFitSpan = -1f;
+        private Vector2 cardSize; // one card's width and height in the hand container's units, measured once
 
         // The next batch of drawn cards flies in all at once instead of staggered (opening hand)
         public void BeginSimultaneousDraw()
@@ -102,9 +108,65 @@ namespace TawanOS.CardEngine
 
         private void LateUpdate()
         {
+            // The view got narrower or wider (window resized, camera moved to another view): lay the hand out again
+            if (!layoutDirty && fitToCamera && activeViews.Count > 1)
+            {
+                float span = FitSpan();
+                if (span > 0f && Mathf.Abs(span - lastFitSpan) > 0.05f) layoutDirty = true;
+            }
+
             if (!layoutDirty) return;
             layoutDirty = false;
             UpdateHandLayout();
+        }
+
+        // How far apart (in the hand container's units) the first and last card's centres may be so that both
+        // stay on screen, tilt included; 0 when there is no camera to fit to. A camera mid-tween (the hit zoom
+        // kick) keeps the last value, so the hand does not shuffle with it.
+        private float FitSpan()
+        {
+            var cam = Camera.main;
+            if (cam == null || handContainer == null) return 0f;
+            if (lastFitSpan > 0f && DOTween.IsTweening(cam)) return lastFitSpan;
+
+            Vector3 toHand = handContainer.position - cam.transform.position;
+            float depth = Vector3.Dot(toHand, cam.transform.forward);
+            float scale = Mathf.Abs(handContainer.lossyScale.x);
+            if (depth <= 0f || scale <= 0f) return 0f;
+
+            float halfView = depth * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * cam.aspect;
+            float side = Mathf.Abs(Vector3.Dot(toHand, cam.transform.right));
+            float halfRoom = (halfView * (1f - 2f * screenMargin) - side) / scale;
+
+            if (cardSize.x <= 0f) cardSize = MeasureCard();
+            // The outermost cards are tilted the most: their corners reach out further than half a card width
+            float tilt = Mathf.Min(arcAngle * activeViews.Count * 0.5f, 89f) * Mathf.Deg2Rad;
+            float cardHalf = 0.5f * (cardSize.x * Mathf.Cos(tilt) + cardSize.y * Mathf.Sin(tilt));
+            return Mathf.Max(0.01f, 2f * (halfRoom - cardHalf));
+        }
+
+        // A hand card's width and height in the container's units, from its renderers in its own space
+        private Vector2 MeasureCard()
+        {
+            var view = activeViews.Find(v => v != null);
+            if (view == null) return Vector2.zero;
+            Vector3 min = new Vector3(float.MaxValue, float.MaxValue, 0f), max = -min;
+            foreach (var r in view.GetComponentsInChildren<Renderer>(false))
+            {
+                // Only the card itself: no effects (hover glow, trails, particles) that reach past its edges
+                if (r is ParticleSystemRenderer || r is TrailRenderer || r is UnityEngine.VFX.VFXRenderer) continue;
+                Bounds b = r.localBounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 corner = b.center + Vector3.Scale(b.extents, new Vector3(i & 1, (i >> 1) & 1, (i >> 2) & 1) * 2f - Vector3.one);
+                    Vector3 p = view.transform.InverseTransformPoint(r.transform.TransformPoint(corner));
+                    min = Vector3.Min(min, p);
+                    max = Vector3.Max(max, p);
+                }
+            }
+            if (min.x > max.x) return Vector2.zero;
+            Vector3 size = Vector3.Scale(max - min, view.transform.localScale);
+            return new Vector2(Mathf.Abs(size.x), Mathf.Abs(size.y));
         }
 
         private void HandleCardPlayed(CardInstance card)
@@ -151,6 +213,12 @@ namespace TawanOS.CardEngine
             if (count * cardSpacing > maxTotalWidth)
             {
                 effectiveSpacing = maxTotalWidth / count;
+            }
+            if (fitToCamera && count > 1)
+            {
+                float span = FitSpan();
+                lastFitSpan = span;
+                if (span > 0f) effectiveSpacing = Mathf.Min(effectiveSpacing, span / (count - 1));
             }
 
             float startX = -(count - 1) * effectiveSpacing * 0.5f;

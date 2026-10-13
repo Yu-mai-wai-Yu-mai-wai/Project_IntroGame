@@ -60,10 +60,28 @@ namespace TawanOS.VFX
             }
         }
 
-        /// <summary>Draws the edge texture and builds the overlay ahead of time, so the first hit does not stutter.</summary>
-        public static void Prepare()
+        /// <summary>
+        /// Gets everything ready at the start of a fight, so the first direct hit does not stall: draws the edge
+        /// texture and builds the overlay, loads both bursts and plays each once, shrunk to nothing in front of the
+        /// camera, so their shaders are compiled before the real hit.
+        /// </summary>
+        public static void Prepare(UnityEngine.SceneManagement.Scene scene)
         {
             GetRunner();
+            if (blackPrefab == null) blackPrefab = Resources.Load<GameObject>(BlackResource);
+            if (whitePrefab == null) whitePrefab = Resources.Load<GameObject>(WhiteResource);
+
+            var cam = Camera.main;
+            Vector3 at = cam != null ? cam.transform.position + cam.transform.forward * 3f : Vector3.zero;
+            foreach (var prefab in new[] { blackPrefab, whitePrefab })
+            {
+                if (prefab == null) continue;
+                var fx = Object.Instantiate(prefab, at, Quaternion.identity);
+                fx.name = prefab.name + " (warm-up)";
+                fx.transform.localScale = Vector3.one * 0.0001f; // drawn, but far smaller than a pixel
+                if (scene.IsValid()) UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(fx, scene);
+                Object.Destroy(fx, 1f);
+            }
         }
 
         private static void ShakeCamera(float strength)

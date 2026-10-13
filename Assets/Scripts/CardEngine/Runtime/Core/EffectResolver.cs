@@ -22,7 +22,6 @@ namespace TawanOS.CardEngine
         public event Action<CardInstance, bool> OnCardSummoned;
 
         public const int MaxBoardSlots = 5;
-        private const int StatusDebuffDefaultDuration = 2;
 
         private void Awake()
         {
@@ -290,12 +289,6 @@ namespace TawanOS.CardEngine
         {
             if (!CanStrike(attacker)) return;
 
-            if (HasCardStatus(attacker, CardStatusType.Blinded) && UnityEngine.Random.Range(0, 100) < BlindedMissPercent)
-            {
-                Debug.Log($"[Clash] {attacker.cardNameThai} is blinded and misses");
-                return;
-            }
-
             int attack = CombatManager.Instance != null
                 ? ApplyDamageStatusModifier(EffectiveAttack(attacker), attackerIsPlayer: fromPlayer)
                 : EffectiveAttack(attacker);
@@ -400,13 +393,26 @@ namespace TawanOS.CardEngine
             TriggerCurseBackfire(toPlayer: true);
         }
 
+        // Khwan a side loses when its Corruption fills up
+        public const int CurseBackfireKhwanLoss = 5;
+
+        // Crossing the Corruption threshold takes CurseBackfireKhwanLoss khwan straight off (no shield, no status
+        // reduces it), but never below 1: with less left it drops to 1, and only a side already at 1 dies of it
         public void TriggerCurseBackfire(bool toPlayer)
         {
-            // Per design: crossing the Corruption threshold inflicts a random debuff, not fixed damage
-            var values = (StatusEffectType[])Enum.GetValues(typeof(StatusEffectType));
-            var chosen = values[UnityEngine.Random.Range(0, values.Length)];
-            ApplyStatusEffect(chosen, StatusDebuffDefaultDuration, toPlayer);
-            Debug.LogWarning($"[EffectResolver] Curse backfire triggered! {(toPlayer ? "Player" : "Enemy")} afflicted with {chosen} for {StatusDebuffDefaultDuration} turns.");
+            var combat = CombatManager.Instance;
+            if (combat == null || combat.State == null) return;
+            var state = combat.State;
+            int before = toPlayer ? state.playerKhwan : state.enemyKhwan;
+            int after = before <= 1 ? 0 : Mathf.Max(1, before - CurseBackfireKhwanLoss);
+            if (toPlayer) state.playerKhwan = after;
+            else state.enemyKhwan = after;
+            Debug.LogWarning($"[EffectResolver] Curse backfire triggered! {(toPlayer ? "Player" : "Enemy")} khwan {before} -> {after}.");
+
+            if (before - after > 0) OnDamageDealt?.Invoke(before - after, toPlayer);
+            // Decides the outcome now if that was the last of it
+            combat.BeginOutcomeBatch();
+            combat.EndOutcomeBatch();
         }
     }
 }

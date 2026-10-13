@@ -52,6 +52,9 @@ namespace TawanOS.CardEngine
         // Just drawn from the shared pit (หลุมจั่ว): hand views fly it in from the pit, then clear this
         [NonSerialized] public bool fromPit;
 
+        // Made in the hand out of nothing (EnemyCardPlayer.CreateInHand): hand views show it appearing in fire, then clear this
+        [NonSerialized] public bool conjured;
+
         public bool IsDead
         {
             get

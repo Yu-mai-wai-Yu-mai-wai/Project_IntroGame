@@ -9,7 +9,6 @@ namespace TawanOS.CardEngine
     // CardInstance passed to PlayCard is honoured for single-target abilities.
     public partial class EffectResolver
     {
-        private const int BlindedMissPercent = 50;
         private const int FireBreakDamagePerStack = 2;
         private const int CommonFamiliarMaxCost = 3;
         private const int DefaultStatusDuration = 2;
@@ -59,15 +58,21 @@ namespace TawanOS.CardEngine
             return card != null && card.statuses.Exists(s => s.type == type);
         }
 
+        // ผีบังตา: while a card has it, none of its abilities work (triggers, keywords, auras); it still strikes
+        public static bool AbilitiesBlocked(CardInstance card)
+        {
+            return HasCardStatus(card, CardStatusType.Blinded);
+        }
+
         public static bool HasKeyword(CardInstance card, AbilityEffect keyword)
         {
-            return card != null && card.abilities.Exists(a => a.trigger == AbilityTrigger.Passive && a.effect == keyword);
+            return card != null && !AbilitiesBlocked(card) && card.abilities.Exists(a => a.trigger == AbilityTrigger.Passive && a.effect == keyword);
         }
 
         private static int KeywordValue(CardInstance card, AbilityEffect keyword)
         {
             int total = 0;
-            if (card == null) return total;
+            if (card == null || AbilitiesBlocked(card)) return total;
             foreach (var a in card.abilities)
             {
                 if (a.trigger == AbilityTrigger.Passive && a.effect == keyword) total += a.value;
@@ -111,6 +116,7 @@ namespace TawanOS.CardEngine
                 card.statuses.Add(new CardStatus(type, stacks, duration));
             }
             NotifyChanged(card);
+            if (type == CardStatusType.Blinded) RefreshAuras(); // its own auras stop
         }
 
         // Attack after permanent buffs, status effects and the adjacent-attack aura (ตะกรุดดำ)
@@ -140,6 +146,12 @@ namespace TawanOS.CardEngine
         }
 
         // A card may strike this round (dead attackers are allowed: head-on trades hit at the same moment)
+        // Whether this card will strike in the next clash (the enemy bot reads it to see what is coming)
+        public bool WillStrike(CardInstance card)
+        {
+            return CanStrike(card) && !card.IsDead && card.cardType == CardType.Familiar;
+        }
+
         private bool CanStrike(CardInstance card)
         {
             return card != null && !card.summonedThisRound && EffectiveAttack(card) > 0 && !HasCardStatus(card, CardStatusType.PhiAm);
@@ -176,6 +188,11 @@ namespace TawanOS.CardEngine
             CardInstance other = null, object explicitTarget = null)
         {
             if (card == null || card.abilities == null) return;
+            if (AbilitiesBlocked(card))
+            {
+                if (card.abilities.Exists(a => a.trigger == trigger)) Debug.Log($"[Ability] {card.cardNameThai} has ผีบังตา: its {trigger} abilities do nothing");
+                return;
+            }
 
             foreach (var ability in card.abilities)
             {
@@ -215,6 +232,7 @@ namespace TawanOS.CardEngine
                 }
             }
             RemoveDeadFamiliars();
+            RefreshAuras(); // a ผีบังตา that wore off gives the card its auras back
         }
 
         private void TickBoardStatuses(bool isPlayer)
@@ -527,6 +545,10 @@ namespace TawanOS.CardEngine
                 case AbilityEffect.FlipOmens:
                     FlipOmens(source, ownerIsPlayer);
                     return;
+
+                case AbilityEffect.DrainKhwan:
+                    DrainKhwan(a.value, ownerIsPlayer);
+                    return;
             }
 
             var targets = ResolveTargets(a, source, ownerIsPlayer, other, explicitTarget);
@@ -536,6 +558,26 @@ namespace TawanOS.CardEngine
                 Debug.Log($"[Ability] {source?.cardNameThai} -> {target.cardNameThai}: {a.effect} {a.value}");
                 ApplyToCard(a, target, source, ownerIsPlayer);
             }
+        }
+
+        // ดูดขวัญ: hits the opposing player for `value` (shield and damage statuses apply as usual), then the owner
+        // gets back as much khwan as the opponent actually lost, up to its max
+        private void DrainKhwan(int value, bool ownerIsPlayer)
+        {
+            var combat = CombatManager.Instance;
+            if (combat == null || combat.State == null || value <= 0) return;
+            var s = combat.State;
+
+            int damage = ApplyDamageStatusModifier(value, attackerIsPlayer: ownerIsPlayer);
+            int before = ownerIsPlayer ? s.enemyKhwan : s.playerKhwan;
+            combat.TakeDamage(damage, toPlayer: !ownerIsPlayer);
+            OnDamageDealt?.Invoke(damage, !ownerIsPlayer);
+            int drained = Mathf.Max(0, before - (ownerIsPlayer ? s.enemyKhwan : s.playerKhwan));
+            if (drained <= 0 || combat.IsCombatOver) return;
+
+            if (ownerIsPlayer) s.playerKhwan = Mathf.Min(s.maxPlayerKhwan, s.playerKhwan + drained);
+            else s.enemyKhwan = Mathf.Min(s.maxEnemyKhwan, s.enemyKhwan + drained);
+            Debug.Log($"[Ability] ดูดขวัญ: {(ownerIsPlayer ? "player" : "enemy")} drains {drained} khwan.");
         }
 
         private void ApplyToCard(CardAbility a, CardInstance target, CardInstance source, bool ownerIsPlayer)
@@ -590,6 +632,7 @@ namespace TawanOS.CardEngine
                     break;
             }
             NotifyChanged(target);
+            if (a.effect == AbilityEffect.CleanseLatest || a.effect == AbilityEffect.CleanseAll) RefreshAuras();
         }
 
         // ---------------------------------------------------------------- damage / death
@@ -736,7 +779,7 @@ namespace TawanOS.CardEngine
             {
                 foreach (var c in catalog.cards)
                 {
-                    if (c != null && c.cardType == CardType.Familiar && c.meritCost <= CommonFamiliarMaxCost) pool.Add(c);
+                    if (c != null && !c.enemyOnly && c.cardType == CardType.Familiar && c.meritCost <= CommonFamiliarMaxCost) pool.Add(c);
                 }
             }
             if (pool.Count == 0) return null;

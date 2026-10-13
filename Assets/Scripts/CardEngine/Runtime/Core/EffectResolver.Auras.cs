@@ -45,10 +45,45 @@ namespace TawanOS.CardEngine
             return card != null && !card.IsDead && TryFindCard(card, out _, out _);
         }
 
+        // Auras can blind (ผีบังตา) a card that has auras of its own, which then stop: passes repeat until no card
+        // gains or loses ผีบังตา, and every board card's numbers are refreshed at the end
         public void RefreshAuras()
         {
             var combat = CombatManager.Instance;
             if (combat == null || refreshingAuras) return;
+
+            for (int pass = 0; pass < 4; pass++)
+            {
+                var blockedBefore = BlockedOnBoard();
+                ApplyAurasOnce();
+                if (blockedBefore.SetEquals(BlockedOnBoard())) break;
+            }
+
+            for (int side = 0; side < 2; side++)
+            {
+                foreach (var card in BoardOf(side == 0).ToArray())
+                {
+                    if (card != null && !card.IsDead) NotifyChanged(card);
+                }
+            }
+        }
+
+        private HashSet<CardInstance> BlockedOnBoard()
+        {
+            var set = new HashSet<CardInstance>();
+            for (int side = 0; side < 2; side++)
+            {
+                foreach (var card in BoardOf(side == 0))
+                {
+                    if (card != null && !card.IsDead && AbilitiesBlocked(card)) set.Add(card);
+                }
+            }
+            return set;
+        }
+
+        private void ApplyAurasOnce()
+        {
+            var combat = CombatManager.Instance;
             refreshingAuras = true;
 
             RevertEndedFlips();
@@ -67,6 +102,7 @@ namespace TawanOS.CardEngine
                 foreach (var source in own.ToArray())
                 {
                     if (source == null || source.IsDead || source.abilities == null) continue;
+                    if (AbilitiesBlocked(source)) continue; // ผีบังตา: its auras are off
 
                     foreach (var a in source.abilities)
                     {
