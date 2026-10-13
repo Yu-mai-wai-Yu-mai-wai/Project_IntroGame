@@ -9,6 +9,8 @@ namespace TawanOS.CardEngine
         [Header("Identity")]
         [Tooltip("รหัสการ์ด (ว่าง = ใช้ชื่อไฟล์)")]
         public string cardId = "";
+        [Tooltip("การ์ดของศัตรูเท่านั้น (เช่น คาถาดูดขวัญของบอส): ไม่ออกจากหลุมจั่ว รางวัล ร้าน การสุ่มเรียกบริวาร และไม่อยู่ในสมุดการ์ด")]
+        public bool enemyOnly;
         public string cardNameThai = "";
         public string cardNameEng = "";
         [TextArea(2, 4)]

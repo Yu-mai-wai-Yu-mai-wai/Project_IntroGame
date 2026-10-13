@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.TextCore;
 
 namespace TawanOS.CardEngine
 {
@@ -31,15 +33,19 @@ namespace TawanOS.CardEngine
         public enum Text { Name, Type, Cost, Stat, Description }
 
         // The Card Data's size for that text (fontSizeAll x the text's own size); 1 without a Card Data
+        // Attack (สะเทือนขวัญ) and khwan are drawn this much bigger than their box on every card, on top of each
+        // card's own statFontSize
+        public const float StatTextScale = 1.5f;
+
         public static float FontScale(CardDataSO card, Text text)
         {
-            if (card == null) return 1f;
+            if (card == null) return text == Text.Stat ? StatTextScale : 1f;
             float own = text switch
             {
                 Text.Name => card.nameFontSize,
                 Text.Type => card.typeFontSize,
                 Text.Cost => card.costFontSize,
-                Text.Stat => card.statFontSize,
+                Text.Stat => card.statFontSize * StatTextScale,
                 _ => card.descriptionFontSize,
             };
             return card.fontSizeAll * own;
@@ -59,6 +65,17 @@ namespace TawanOS.CardEngine
             if (text == null) return;
             text.outlineWidth = 0.22f;
             text.outlineColor = new Color32(0, 0, 0, 255);
+            PlaceThaiMarks(text);
+        }
+
+        // Thai vowels above/below and tone marks sit where the font puts them (its mark / mark-to-mark positioning)
+        // instead of sinking into the letter under them; the labels only had kerning on
+        public static void PlaceThaiMarks(TMP_Text text)
+        {
+            if (text == null) return;
+            var features = text.fontFeatures;
+            if (features.Contains(OTL_FeatureTag.mark) && features.Contains(OTL_FeatureTag.mkmk)) return;
+            text.fontFeatures = new List<OTL_FeatureTag> { OTL_FeatureTag.kern, OTL_FeatureTag.mark, OTL_FeatureTag.mkmk };
         }
 
         // The frame used for a card with no Card Background of its own

@@ -109,7 +109,10 @@ namespace TawanOS.CardEngine
 
         private void Start()
         {
-            FaceHitVfx.Prepare();
+            // Load (and warm up) the clash effects now, not on the first hit
+            FaceHitVfx.Prepare(gameObject.scene);
+            if (blackChargeTrail == null) blackChargeTrail = Resources.Load<ClashChargeTrail>(ClashChargeTrail.BlackResource);
+            if (whiteChargeTrail == null) whiteChargeTrail = Resources.Load<ClashChargeTrail>(ClashChargeTrail.WhiteResource);
             resolver = EffectResolver.Instance;
             if (resolver == null) return;
             resolver.OnFamiliarDamaged += HandleDamaged;

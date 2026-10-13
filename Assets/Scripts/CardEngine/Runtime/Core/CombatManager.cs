@@ -49,6 +49,15 @@ namespace TawanOS.CardEngine
         public event Action<int, bool> OnShieldChanged;
         public event Action OnCurseBackfireTriggered;
         public event Action<bool> OnCombatEnded;
+        // A boss whose khwan fell to its phase line (EnemyProfileSO.phase2AtKhwanRatio) became its next phase
+        // (EnemyProfileSO.phase2Profile): new phase number, new profile
+        public event Action<int, EnemyProfileSO> OnEnemyPhaseChanged;
+
+        // Seconds the enemy waits after a card appears in its hand (EnemyHandView3D shows it in fire meanwhile)
+        public const float ConjureTime = 1.2f;
+
+        // 1 for the first form, 2 after the boss came back as its phase2Profile, ...
+        public int EnemyPhase { get; private set; } = 1;
 
         private void Awake()
         {
@@ -89,6 +98,7 @@ namespace TawanOS.CardEngine
         public void StartCombat(EnemyProfileSO enemyProfile)
         {
             currentEnemyProfile = enemyProfile;
+            EnemyPhase = 1;
             ApplyPlayerStartingKhwan();
             state.enemyKhwan = enemyProfile != null ? enemyProfile.maxKhwan : 30;
             state.maxEnemyKhwan = state.enemyKhwan;
@@ -232,6 +242,10 @@ namespace TawanOS.CardEngine
             EffectResolver.Instance?.TriggerTurnStart(isPlayer: false);
 
             yield return enemyCards.DrawForTurn(draw);
+
+            // A phase with its own card (บอสเฟส 2: คาถาดูดขวัญ) makes one in its hand every turn
+            if (currentEnemyProfile != null && enemyCards.CreateInHand(currentEnemyProfile.cardEachTurn))
+                yield return new WaitForSeconds(ConjureTime);
         }
 
         // The enemy plays the cards `filter` allows (null = any)
@@ -471,6 +485,7 @@ namespace TawanOS.CardEngine
         {
             if (IsCombatOver || outcomeBatchDepth > 0) return;
 
+            if (ReachedNextPhase()) TryAdvanceEnemyPhase();
             if (state.enemyKhwan <= 0) EndCombat(true);
             else if (state.playerKhwan <= 0) EndCombat(false);
         }
@@ -697,13 +712,72 @@ namespace TawanOS.CardEngine
             OnCorruptionChanged?.Invoke(state.currentCorruption, state.corruptionThreshold);
         }
 
+        // The enemy's khwan is at or under the line where its profile's next phase begins
+        private bool ReachedNextPhase()
+        {
+            var p = currentEnemyProfile;
+            if (p == null || p.phase2Profile == null || p.phase2Profile == p) return false;
+            return state.enemyKhwan <= state.maxEnemyKhwan * p.phase2AtKhwanRatio;
+        }
+
+        // The enemy's khwan fell to its phase line (or ran out): if its profile has a next phase it becomes that
+        // profile and the fight goes on. Its khwan is not refilled (a blow that emptied it leaves it at 1); its
+        // shield, statuses and corruption are cleared and its board stays. False when there is no next phase.
+        private bool TryAdvanceEnemyPhase()
+        {
+            var next = currentEnemyProfile != null ? currentEnemyProfile.phase2Profile : null;
+            if (next == null || next == currentEnemyProfile) return false;
+
+            var previous = currentEnemyProfile;
+            currentEnemyProfile = next;
+            EnemyPhase++;
+            state.enemyKhwan = Mathf.Max(1, state.enemyKhwan);
+            state.enemyShield = 0;
+            state.enemyStatuses.Clear();
+            state.enemyPurify = 0;
+            state.enemyCorruption = 0;
+            OnShieldChanged?.Invoke(state.enemyShield, false);
+
+            enemyAI.Init(next);
+            // A new card deck only when the next phase brings a different one; with the same cards the hand, draw
+            // pile and discard carry on as they were
+            if (next.deck != null && next.deck.Count > 0 && !SameCards(next.deck, previous.deck)) enemyCards.Init(next);
+            else enemyCards.SetProfile(next);
+            PickNextEnemyMove();
+
+            Debug.Log($"[CombatManager] {previous.enemyName} enters phase {EnemyPhase} as {next.enemyName} (khwan {state.enemyKhwan}/{state.maxEnemyKhwan}).");
+            OnEnemyAction?.Invoke($"{next.enemyName} คืนร่าง! (เฟส {EnemyPhase})");
+            OnEnemyPhaseChanged?.Invoke(EnemyPhase, next);
+
+            // The phase's own card appears in its hand right away, as it will at the start of each of its turns
+            enemyCards.CreateInHand(next.cardEachTurn);
+            return true;
+        }
+
+        private static bool SameCards(System.Collections.Generic.List<CardDataSO> a, System.Collections.Generic.List<CardDataSO> b)
+        {
+            if (a == null || b == null || a.Count != b.Count) return false;
+            for (int i = 0; i < a.Count; i++)
+            {
+                if (a[i] != b[i]) return false;
+            }
+            return true;
+        }
+
         public void EndCombat(bool isVictory)
         {
             // A combat ends exactly once; later calls (a second killing blow in the same resolution) are ignored
             if (IsCombatOver) return;
 
+            // A boss with another phase is not beaten yet: it enters that phase with 1 khwan left, and the fight
+            // goes on unless the player fell at the same moment
+            if (state.enemyKhwan <= 0 && TryAdvanceEnemyPhase())
+            {
+                if (state.playerKhwan > 0) return;
+                isVictory = false;
+            }
             // Both sides at 0 Khwan: the player wins
-            if (!isVictory && state.enemyKhwan <= 0) isVictory = true;
+            else if (!isVictory && state.enemyKhwan <= 0) isVictory = true;
 
             SetPhase(isVictory ? CombatPhase.Victory : CombatPhase.Defeat);
             OnCombatEnded?.Invoke(isVictory);

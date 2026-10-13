@@ -28,8 +28,11 @@ namespace TawanOS.CardEngine
         [Header("Slot Picking")]
         [Tooltip("How close (fraction of the screen height) a click must be to a slot to pick it.")]
         public float slotPickRadius = 0.09f;
-        public Color slotColor = new Color(1f, 0.85f, 0.3f, 0.35f);
-        public Color slotHoverColor = new Color(1f, 0.85f, 0.3f, 0.8f);
+        [Tooltip("Light lying on each slot the card can go to (TawanOS/SlotGlow). HDR: above 1 lights up Bloom.")]
+        [ColorUsage(true, true)] public Color slotColor = new Color(0.9f, 0.62f, 0.22f, 0.35f);
+        [ColorUsage(true, true)] public Color slotHoverColor = new Color(1.3f, 0.9f, 0.32f, 0.6f);
+        [Tooltip("The light's size against the card that would be placed there (1 = exactly the card).")]
+        public float slotGlowScale = 1f;
 
         private CardView3D held;
         private int selectedFrame = -1;
@@ -42,6 +45,9 @@ namespace TawanOS.CardEngine
         private readonly Dictionary<BoardSlotView, Renderer> slotMarkers = new Dictionary<BoardSlotView, Renderer>();
         private BoardSlotView hoveredSlot;
         private Material markerMaterial;
+        private const string SlotGlowShader = "Shaders/SlotGlow";
+        private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int AspectId = Shader.PropertyToID("_Aspect");
 
         public static CardPlayController3D Ensure()
         {
@@ -57,7 +63,8 @@ namespace TawanOS.CardEngine
                 return;
             }
             Instance = this;
-            markerMaterial = new Material(Shader.Find("Sprites/Default"));
+            var shader = Resources.Load<Shader>(SlotGlowShader);
+            markerMaterial = new Material(shader != null ? shader : Shader.Find("Sprites/Default"));
         }
 
         private void OnDestroy()
@@ -267,26 +274,59 @@ namespace TawanOS.CardEngine
             }
         }
 
+        // A sheet of light lying flat on every empty slot, the size of the slot. It sits at the scene root: the
+        // slots are rotated and scaled unevenly (1.8 x 3), which would skew a child.
         private void ShowSlotMarkers()
         {
             HideSlotMarkers();
             foreach (var slot in EmptyPlayerSlots())
             {
-                var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 go.name = "SlotMarker";
                 Destroy(go.GetComponent<Collider>());
-                go.transform.SetParent(slot.transform, false);
-                go.transform.localPosition = Vector3.up * 0.03f;
-                go.transform.localRotation = Quaternion.identity;
-                go.transform.localScale = new Vector3(1.5f, 0.02f, 2.1f);
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, slot.gameObject.scene);
+
+                Vector2 size = PlacedCardSize(slot);
+                Vector3 along = Vector3.ProjectOnPlane(slot.transform.up, Vector3.up);
+                if (along.sqrMagnitude < 0.0001f) along = Vector3.forward;
+                go.transform.position = slot.transform.position + Vector3.up * 0.02f;
+                // A quad's face looks down its -Z: face up, its length along the slot's
+                go.transform.rotation = Quaternion.LookRotation(Vector3.down, along.normalized);
+                go.transform.localScale = new Vector3(size.x, size.y, 1f) * slotGlowScale;
 
                 var r = go.GetComponent<Renderer>();
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                r.receiveShadows = false;
                 r.material = markerMaterial;
-                r.material.color = slotColor;
+                r.material.SetFloat(AspectId, size.y > 0f ? size.x / size.y : 0.6f);
+                SetMarkerColor(r, slotColor);
+
+                // Fades in, then gently swells and shrinks while it waits
+                var c = slotColor;
+                var mat = r.material;
+                DOTween.To(() => 0f, a => { c.a = a; mat.SetColor(ColorId, c); }, slotColor.a, 0.2f).SetTarget(go);
                 go.transform.DOScale(go.transform.localScale * 1.08f, 0.5f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
 
                 slotMarkers[slot] = r;
             }
+        }
+
+        // The width and length in world units of the held card once placed in this slot (BoardSlotView.FitCardScale):
+        // as wide as the slot's mesh times its cardFill, with the card's own shape
+        private Vector2 PlacedCardSize(BoardSlotView slot)
+        {
+            var mf = slot.GetComponent<MeshFilter>();
+            Vector3 mesh = mf != null && mf.sharedMesh != null ? mf.sharedMesh.bounds.size : Vector3.one;
+            Vector3 scale = slot.transform.lossyScale;
+            float width = Mathf.Abs(mesh.x * scale.x) * slot.cardFill;
+            Vector3 card = held != null ? held.BaseScale : Vector3.zero;
+            float length = card.x > 0f && card.y > 0f ? width * card.y / card.x : Mathf.Abs(mesh.y * scale.y);
+            return new Vector2(width, length);
+        }
+
+        private static void SetMarkerColor(Renderer r, Color color)
+        {
+            if (r != null) r.material.SetColor(ColorId, color);
         }
 
         private void HideSlotMarkers()
@@ -295,6 +335,7 @@ namespace TawanOS.CardEngine
             {
                 if (r == null) continue;
                 r.transform.DOKill();
+                DOTween.Kill(r.gameObject);
                 Destroy(r.gameObject);
             }
             slotMarkers.Clear();
@@ -321,9 +362,17 @@ namespace TawanOS.CardEngine
             }
 
             if (nearest == hoveredSlot) return;
-            if (hoveredSlot != null && slotMarkers.TryGetValue(hoveredSlot, out var oldR) && oldR != null) oldR.material.color = slotColor;
+            if (hoveredSlot != null && slotMarkers.TryGetValue(hoveredSlot, out var oldR) && oldR != null)
+            {
+                DOTween.Kill(oldR.gameObject); // the fade-in, if still running
+                SetMarkerColor(oldR, slotColor);
+            }
             hoveredSlot = nearest;
-            if (hoveredSlot != null && slotMarkers.TryGetValue(hoveredSlot, out var newR) && newR != null) newR.material.color = slotHoverColor;
+            if (hoveredSlot != null && slotMarkers.TryGetValue(hoveredSlot, out var newR) && newR != null)
+            {
+                DOTween.Kill(newR.gameObject);
+                SetMarkerColor(newR, slotHoverColor);
+            }
         }
 
         // ---------------------------------------------------------------- camera
