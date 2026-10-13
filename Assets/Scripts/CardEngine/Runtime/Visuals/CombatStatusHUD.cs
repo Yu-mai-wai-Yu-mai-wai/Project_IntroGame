@@ -8,13 +8,14 @@ namespace TawanOS.CardEngine
 {
     // Self-building status display for scenes without a full HUD:
     //  - top centre: enemy name, Khwan bar, shield, AI state, hand size and the enemy's last action
-    //  - bottom left: player Khwan bar and shield
+    //  - left, under the กุศล and มลทิน flame rings (FlameGaugeHUD) and clear of the hand: the player's Khwan bar and shield
     // Skipped when the scene already has an EnemyCombatView.
     public class CombatStatusHUD : MonoBehaviour
     {
         private static readonly Color PlayerBar = new Color(0.30f, 0.75f, 0.45f);
         private static readonly Color EnemyBar = new Color(0.85f, 0.25f, 0.25f);
         private static readonly Color Panel = new Color(0.05f, 0.04f, 0.03f, 0.75f);
+        private const float PlayerPanelGap = 24f;   // between the bottom of the lower ring and the khwan bar
 
         private struct BarPanel
         {
@@ -53,13 +54,28 @@ namespace TawanOS.CardEngine
         private void Start()
         {
             BuildUI();
+            PlacePlayerPanel();
+            FlameGaugeStyleSO.Changed += PlacePlayerPanel;
             combat = CombatManager.Instance;
             if (combat != null) combat.OnEnemyAction += HandleEnemyAction;
         }
 
         private void OnDestroy()
         {
+            FlameGaugeStyleSO.Changed -= PlacePlayerPanel;
             if (combat != null) combat.OnEnemyAction -= HandleEnemyAction;
+        }
+
+        // Just under the lower of the กุศล / มลทิน rings, wherever FlameGaugeStyle puts them, so it never sits on the
+        // cards in hand (Game Designer, 13 Oct)
+        private void PlacePlayerPanel()
+        {
+            if (player.root == null) return;
+            var style = FlameGaugeStyleSO.Load();
+            float ringBottom = Mathf.Min(style.upperY, style.lowerY) - style.size * style.outerRadius;
+            player.root.anchorMin = player.root.anchorMax = new Vector2(0f, 0.5f);
+            player.root.pivot = new Vector2(0f, 1f);
+            player.root.anchoredPosition = new Vector2(40f, ringBottom - PlayerPanelGap);
         }
 
         private void HandleEnemyAction(string description)
@@ -88,7 +104,7 @@ namespace TawanOS.CardEngine
 
             // Player
             string pShield = s.playerShield > 0 ? $"  |  เกราะ {s.playerShield}" : "";
-            player.detail.text = $"ขวัญ {s.playerKhwan} / {s.maxPlayerKhwan}{pShield}";
+            player.detail.text = $"{s.playerKhwan} / {s.maxPlayerKhwan}{pShield}";   // the title already says ขวัญ
             SetFill(player.fill, s.maxPlayerKhwan > 0 ? (float)s.playerKhwan / s.maxPlayerKhwan : 0f, s.playerKhwan, ref lastPlayerKhwan);
         }
 
@@ -142,10 +158,10 @@ namespace TawanOS.CardEngine
             actionRt.anchoredPosition = new Vector2(0, -4);
             actionRt.sizeDelta = new Vector2(0, 36);
 
-            // Bottom left, where the Merit and Corruption panels were before they became flame rings (FlameGaugeHUD)
+            // Placed under the flame rings by PlacePlayerPanel
             player = BuildPanel(canvasGo.transform, "PlayerPanel", Vector2.zero, new Vector2(40, 40),
                 new Vector2(360, 90), PlayerBar, titleSize: 26, detailSize: 22);
-            player.title.text = "ผู้เล่น";
+            player.title.text = "ขวัญ";
         }
 
         private BarPanel BuildPanel(Transform parent, string name, Vector2 anchor, Vector2 pos, Vector2 size,
