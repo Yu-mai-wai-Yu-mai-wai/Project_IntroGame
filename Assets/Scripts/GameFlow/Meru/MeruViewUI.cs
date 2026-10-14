@@ -40,6 +40,18 @@ namespace TawanOS.GameFlow
         public RewardCardView resultCard;
         public Button continueButton;
 
+        [Header("Upgrade Fire")]
+        [Tooltip("Seconds the old card is shown before the fire takes it.")]
+        [Min(0f)] public float upgradeDelay = 0.35f;
+        [Tooltip("Seconds the fire from the scorched edge takes to rush in over the old card.")]
+        [Min(0.05f)] public float upgradeFlareIn = 0.6f;
+        [Tooltip("Seconds the fire takes to fall back to the scorch line on the new card.")]
+        [Min(0.05f)] public float upgradeFlareOut = 0.9f;
+        [Tooltip("How far in the fire reaches at its height (card height = 1).")]
+        [Range(0f, 0.4f)] public float upgradeFlareReach = 0.22f;
+        [Tooltip("How much brighter the fire burns at its height.")]
+        [Min(1f)] public float upgradeFlareGlow = 2f;
+
         private MeruManager meru;
         private MeruAction action;
         private int selected = -1;
@@ -161,12 +173,84 @@ namespace TawanOS.GameFlow
             }
             if (resultCard != null)
             {
-                // Burn: the card that was burnt goes up in flames (same burn as the reward screen). Upgrade: the new card.
-                var shown = doneAction == MeruAction.Burn ? card : card.upgradedCard;
+                // Burn: the card that was burnt goes up in flames (same burn as the reward screen).
+                // Upgrade: the old card is taken by the fire of the scorch marks and comes out as the new card.
                 resultCard.gameObject.SetActive(true);
-                resultCard.Setup(shown, null);
+                resultCard.Setup(card, null);
                 if (resultCard.button != null) resultCard.button.interactable = false;
                 if (doneAction == MeruAction.Burn) PlayBurn();
+                else PlayUpgrade(card);
+            }
+        }
+
+        // The upgraded card's scorched edge (CardEmber) catches on the old card and its fire rushes in over it;
+        // at its height the card becomes the upgraded one, then the fire falls back to the scorch line it keeps
+        private void PlayUpgrade(CardDataSO card)
+        {
+            var upgraded = card.upgradedCard;
+            var frame = resultCard.frame;
+            CardEmber.SetUI(frame, true, upgraded);
+            var sheet = CardEmber.UiSheet(frame);
+            if (sheet == null)
+            {
+                // No ember shader: just show the new card
+                resultCard.Setup(upgraded, null);
+                return;
+            }
+
+            float baseGlow = sheet.material.GetFloat(CardEmber.GlowBoostProperty);
+            float flare = 0f;
+            System.Action<float> apply = v =>
+            {
+                flare = v;
+                // Setup keeps the same sheet, but read it again in case the card was rebuilt
+                var s = CardEmber.UiSheet(frame);
+                if (s == null) return;
+                s.material.SetFloat(CardEmber.SurgeProperty, v * upgradeFlareReach);
+                s.material.SetFloat(CardEmber.GlowBoostProperty, baseGlow * Mathf.Lerp(1f, upgradeFlareGlow, v));
+            };
+            // The old card has no scorch yet: the fire fades up out of nothing as it rushes in
+            System.Action<float> fadeSheet = a =>
+            {
+                var s = CardEmber.UiSheet(frame);
+                if (s == null) return;
+                var c = s.color;
+                c.a = a;
+                s.color = c;
+            };
+            apply(0f);
+            fadeSheet(0f);
+
+            float total = upgradeDelay + upgradeFlareIn + upgradeFlareOut;
+            DOTween.Sequence().SetLink(gameObject)
+                .AppendInterval(upgradeDelay)
+                .AppendCallback(() => TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on"))
+                .Append(DOVirtual.Float(0f, 1f, upgradeFlareIn, v =>
+                {
+                    apply(v);
+                    fadeSheet(Mathf.Clamp01(v * 3f));
+                }).SetEase(Ease.InQuad))
+                .AppendCallback(() =>
+                {
+                    resultCard.Setup(upgraded, null);
+                    if (resultCard.button != null) resultCard.button.interactable = false;
+                    apply(flare);
+                    fadeSheet(1f);
+                    resultCard.transform.DOPunchScale(Vector3.one * 0.08f, 0.35f, 6, 0.6f).SetLink(gameObject);
+                })
+                .Append(DOVirtual.Float(1f, 0f, upgradeFlareOut, v => apply(v)).SetEase(Ease.OutCubic))
+                .AppendCallback(() => TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_off"));
+
+            if (resultText != null)
+            {
+                resultText.alpha = 0f;
+                resultText.DOKill();
+                resultText.DOFade(1f, 0.5f).SetDelay(upgradeDelay + upgradeFlareIn).SetLink(gameObject);
+            }
+            if (continueButton != null)
+            {
+                continueButton.interactable = false;
+                DOVirtual.DelayedCall(total, () => continueButton.interactable = true).SetLink(gameObject);
             }
         }
 

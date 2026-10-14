@@ -128,6 +128,13 @@ namespace TawanOS.CardEngine
             sheet.material.SetFloat(SeedId, SeedFor(card));
         }
 
+        /// <summary>The smouldering sheet on a UI card face (null when it has none or it is off), to animate it.</summary>
+        public static Image UiSheet(Graphic over)
+        {
+            var sheet = over != null ? FindSibling(over.transform.parent) : null;
+            return sheet != null && sheet.gameObject.activeSelf && sheet.material != null ? sheet : null;
+        }
+
         private static Image FindSibling(Transform parent)
         {
             if (parent == null) return null;
@@ -138,5 +145,7 @@ namespace TawanOS.CardEngine
         /// <summary>The aspect property id, for 3D cards that set it through a property block.</summary>
         public static int AspectProperty => AspectId;
         public static int SeedProperty => SeedId;
+        public static readonly int SurgeProperty = Shader.PropertyToID("_Surge");
+        public static readonly int GlowBoostProperty = Shader.PropertyToID("_GlowBoost");
     }
 }
