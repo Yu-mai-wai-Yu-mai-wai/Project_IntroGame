@@ -384,19 +384,20 @@ namespace TawanOS.CardEngine
         {
             var resolver = EffectResolver.Instance;
             if (resolver != null) return resolver.CanFamiliarAttack(card);
-            return EffectResolver.IsAliveFamiliar(card) && card.familiarDamage > 0;
+            return EffectResolver.IsStrikerType(card) && card.familiarDamage > 0;
         }
 
+        // The card in this column that may strike: a live familiar, or an amulet (it strikes once it has สะเทือนขวัญ)
         private CardInstance PlayerFamiliarAt(int col)
         {
             var card = EffectResolver.CardAt(state.activeBoardCards, col);
-            return EffectResolver.IsAliveFamiliar(card) ? card : null;
+            return EffectResolver.IsStrikerType(card) ? card : null;
         }
 
         private CardInstance EnemyFamiliarAt(int col)
         {
             var card = EffectResolver.CardAt(state.enemyBoardCards, col);
-            return EffectResolver.IsAliveFamiliar(card) ? card : null;
+            return EffectResolver.IsStrikerType(card) ? card : null;
         }
 
         // Who a familiar hits is decided by EffectResolver.ChooseStrikeTarget: the familiar in the opposite

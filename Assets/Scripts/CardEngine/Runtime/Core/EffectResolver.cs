@@ -274,6 +274,15 @@ namespace TawanOS.CardEngine
             return card != null && card.cardType == CardType.Familiar && card.familiarHealth > 0;
         }
 
+        // Cards that can strike in the clash: live familiars, and amulets still on the board (an amulet strikes only once
+        // it has สะเทือนขวัญ, from a buff or an aura; CanStrike checks the attack)
+        public static bool IsStrikerType(CardInstance card)
+        {
+            if (card == null) return false;
+            if (card.cardType == CardType.Familiar) return card.familiarHealth > 0;
+            return card.cardType == CardType.Amulet && !card.IsDead;
+        }
+
         // Cards a familiar can hit: live familiars, and amulets that have Khwan (they can be destroyed)
         public static bool IsStrikeable(CardInstance card)
         {
@@ -355,7 +364,7 @@ namespace TawanOS.CardEngine
         // One familiar attacks the opposing side's Khwan directly
         public void ResolveFamiliarAttack(CardInstance card, bool fromPlayer)
         {
-            if (card == null || card.cardType != CardType.Familiar) return;
+            if (!IsStrikerType(card)) return;
             ResolveFamiliarStrike(card, null, fromPlayer, RollCrit(card, fromPlayer));
         }
 

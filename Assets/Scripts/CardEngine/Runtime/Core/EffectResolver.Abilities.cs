@@ -149,7 +149,7 @@ namespace TawanOS.CardEngine
         // Whether this card will strike in the next clash (the enemy bot reads it to see what is coming)
         public bool WillStrike(CardInstance card)
         {
-            return CanStrike(card) && !card.IsDead && card.cardType == CardType.Familiar;
+            return CanStrike(card) && !card.IsDead && IsStrikerType(card);
         }
 
         private bool CanStrike(CardInstance card)
@@ -179,7 +179,7 @@ namespace TawanOS.CardEngine
 
         public bool CanFamiliarAttack(CardInstance card)
         {
-            return IsAliveFamiliar(card) && CanStrike(card);
+            return IsStrikerType(card) && CanStrike(card);
         }
 
         // ---------------------------------------------------------------- triggers
