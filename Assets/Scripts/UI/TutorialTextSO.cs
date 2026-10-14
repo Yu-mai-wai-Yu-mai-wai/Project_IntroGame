@@ -58,7 +58,7 @@ namespace TawanOS.UI
 
         [Header("Turn 2")]
         public Hint drawPile = new Hint("กองจั่ว",
-            "การ์ดที่ยังไม่ได้จั่วอยู่ที่นี่ คลิกเพื่อดูว่าเหลือการ์ดอะไรบ้าง");
+            "การ์ดที่ยังไม่ได้จั่วอยู่ที่นี่ ทุกต้นเทิร์นจะจั่วการ์ดจากกองนี้");
         public Hint graveyard = new Hint("หลุมศพ",
             "การ์ดที่ใช้ไปหรือถูกทำลายของทั้งสองฝ่ายมาอยู่ที่นี่ คลิกเพื่อดู");
         [Tooltip("{pit} = Corruption for the next draw, {pitMax} = the most it can cost")]
