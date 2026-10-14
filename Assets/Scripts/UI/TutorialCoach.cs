@@ -466,8 +466,8 @@ namespace TawanOS.UI
             {
                 case Target.EnemyStatus: area.AddUi("EnemyPanel"); break;
                 case Target.PlayerStatus: area.AddUi("PlayerPanel"); break;
-                case Target.Merit: area.AddUi("MeritPanel"); break;
-                case Target.Corruption: area.AddUi("CorruptionPanel"); break;
+                case Target.Merit: area.AddUi("MeritGauge"); break;           // FlameGaugeHUD's flame rings
+                case Target.Corruption: area.AddUi("CorruptionGauge"); break;
 
                 case Target.Hand:
                     var hand = CardManager.Instance != null ? CardManager.Instance.Hand : null;
