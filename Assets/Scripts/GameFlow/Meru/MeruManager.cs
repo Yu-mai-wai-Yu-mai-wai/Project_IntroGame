@@ -85,9 +85,9 @@ namespace TawanOS.GameFlow
                 OnMeruFinished.Invoke();
                 return;
             }
-            // Scene opened on its own: start over so designers can keep testing
+            // Scene opened on its own: start over (from outside the เมรุ) so designers can keep testing
             Debug.Log($"[MeruManager] Left the Meru (no GameFlow listener). Run deck: {Deck.Count} cards.");
-            Begin();
+            UnityEngine.SceneManagement.SceneManager.LoadScene(gameObject.scene.name);
         }
     }
 }

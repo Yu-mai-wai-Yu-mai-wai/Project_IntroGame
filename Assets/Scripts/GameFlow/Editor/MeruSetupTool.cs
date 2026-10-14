@@ -10,7 +10,11 @@ using R = TawanOS.GameFlow.RewardSetupTool;
 
 namespace TawanOS.GameFlow
 {
-    /// <summary>Builds the เมรุ scene (burn or upgrade one card) and adds it to Build Settings.</summary>
+    /// <summary>
+    /// Builds the เมรุ scene (burn or upgrade one card) and adds it to Build Settings: the screen (a burn strip on
+    /// the left and an upgrade strip on the right, each widening into a column of the deck when chosen), then the
+    /// เมรุ model and its stage (<see cref="MeruStageSetupTool"/>).
+    /// </summary>
     public static class MeruSetupTool
     {
         private const string ScenePath = "Assets/Scenes/MeruScene.unity";
@@ -21,11 +25,6 @@ namespace TawanOS.GameFlow
         private static readonly Color Muted = new Color(0.66f, 0.61f, 0.54f);
         private static readonly Color Ember = new Color(0.55f, 0.16f, 0.08f);
         private static readonly Color ButtonBrown = new Color(0.3f, 0.2f, 0.16f);
-
-        private const string Story =
-            "ท้ายวัดร้าง เมรุเก่ายังมีไฟลุกโชนอยู่ทั้งที่ไม่มีใครดูแล กลิ่นควันธูปปนเถ้ากระดูกลอยอบอวล\n" +
-            "สัปเหร่อชราก้มหน้านั่งเฝ้าไฟ \"ไฟนี้เผาได้ทั้งสิ่งที่ไม่ต้องการ... และชำระสิ่งที่ยังไม่บริสุทธิ์\n" +
-            "แต่คืนนี้ ไฟจะรับของจากเจ้าได้เพียงอย่างเดียว\"";
 
         [MenuItem("Tools/TawanOS/Meru/Setup Meru Scene")]
         private static void SetupMeruScene_Menu()
@@ -62,6 +61,7 @@ namespace TawanOS.GameFlow
             manager.view = view;
 
             EditorSceneManager.SaveScene(scene, ScenePath);
+            MeruStageSetupTool.Setup();
             var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
             if (!scenes.Exists(s => s.path == ScenePath))
             {
@@ -73,13 +73,15 @@ namespace TawanOS.GameFlow
             Debug.Log($"<color=green>[MeruSetupTool] Built {ScenePath}. Set each card's upgrade in its Card Data (อัพเกรด (เมรุ)).</color>");
         }
 
-        private static MeruViewUI BuildCanvas()
+        // Room kept clear for the smoky edge of a column, on its side toward the furnace (reference pixels)
+        private const float SmokePixels = 110f;
+
+        internal static MeruViewUI BuildCanvas()
         {
             var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset")
                 ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
             var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
                 ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
-            var sarabun = bodyFont;
             var panelSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
 
             var canvasGo = new GameObject("MeruCanvas");
@@ -90,51 +92,66 @@ namespace TawanOS.GameFlow
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.matchWidthOrHeight = 0.5f;
             canvasGo.AddComponent<GraphicRaycaster>();
+            canvasGo.AddComponent<CanvasGroup>();
             var view = canvasGo.AddComponent<MeruViewUI>();
             var root = canvasGo.transform;
 
-            R.Img("Background", root, Vector2.zero, Vector2.one, new Color(0.07f, 0.04f, 0.04f), null);
-            // Ember glow at the bottom: the pyre
-            R.Img("PyreGlow", root, new Vector2(0f, 0f), new Vector2(1f, 0.35f), new Color(Ember.r, Ember.g, Ember.b, 0.35f), null);
+            view.burnColumn = BuildColumn("BurnColumn", root, true, "เผาการ์ด", "นำการ์ด 1 ใบออกจากสำรับไปตลอดกาล", "เผาทิ้ง",
+                view.stripWidth, charm, bodyFont, panelSprite);
+            view.upgradeColumn = BuildColumn("UpgradeColumn", root, false, "อัพเกรดการ์ด", "ชำระการ์ด 1 ใบในไฟให้แกร่งขึ้น", "อัพเกรด",
+                view.stripWidth, charm, bodyFont, panelSprite);
+            view.smokePixels = SmokePixels;
+            // One hidden card the columns copy; it lives in the burn column's grid
+            view.cardTemplate = R.BuildCardTemplate(view.burnColumn.cardGrid, bodyFont, charm, panelSprite);
 
-            view.titleText = R.Text("Title", root, new Vector2(0.1f, 0.86f), new Vector2(0.9f, 0.97f), charm, 84, Gold, TextAlignmentOptions.Center);
-            view.titleText.text = "เมรุ";
-            view.deckText = R.Text("DeckStatus", root, new Vector2(0.7f, 0.02f), new Vector2(0.98f, 0.08f), sarabun, 26, Muted, TextAlignmentOptions.MidlineRight);
+            view.leaveButton = SmallButton("LeaveButton", root, new Vector2(0.42f, 0.06f), new Vector2(0.58f, 0.12f), bodyFont, panelSprite, "จากไปเฉย ๆ");
 
-            view.storyText = R.Text("Story", root, new Vector2(0.15f, 0.6f), new Vector2(0.85f, 0.84f), sarabun, 32, Parchment, TextAlignmentOptions.Center);
-            view.storyText.text = Story;
-            view.storyText.textWrappingMode = TextWrappingModes.Normal;
-            R.AutoSize(view.storyText, 18, 32);
-
-            BuildChoicePanel(view, root, charm, sarabun, panelSprite);
-            BuildPickerPanel(view, root, charm, sarabun, panelSprite);
-            BuildResultPanel(view, root, charm, sarabun, panelSprite);
+            BuildResultPanel(view, root, charm, bodyFont, panelSprite);
             return view;
         }
 
-        private static void BuildChoicePanel(MeruViewUI view, Transform root, TMP_FontAsset charm, TMP_FontAsset sarabun, Sprite panelSprite)
+        // A black column down one side of the screen. Before choosing it is a narrow strip showing only its name and
+        // what it does, and the whole strip is a button; once chosen it is wide and shows the deck as a scrolling
+        // grid, a prompt, and its back and confirm buttons. Its background is mirrored on the left so the smoky edge
+        // (drawn on the quad's left side) faces the furnace; everything else keeps clear of that edge.
+        private static MeruViewUI.Column BuildColumn(string name, Transform root, bool left, string title, string hint,
+            string confirm, float stripWidth, TMP_FontAsset charm, TMP_FontAsset font, Sprite panelSprite)
         {
-            var panel = R.Rect("ChoicePanel", root, new Vector2(0.2f, 0.12f), new Vector2(0.8f, 0.56f));
-            view.choicePanel = panel.gameObject;
+            var column = new MeruViewUI.Column();
+            column.root = left
+                ? R.Rect(name, root, new Vector2(0f, 0f), new Vector2(stripWidth, 1f))
+                : R.Rect(name, root, new Vector2(1f - stripWidth, 0f), new Vector2(1f, 1f));
 
-            view.burnButton = BigButton("BurnButton", panel, new Vector2(0.02f, 0.3f), new Vector2(0.48f, 1f), charm, sarabun, panelSprite,
-                "เผาการ์ดทิ้ง", "นำการ์ด 1 ใบออกจากสำรับไปตลอดกาล", out _);
-            view.upgradeButton = BigButton("UpgradeButton", panel, new Vector2(0.52f, 0.3f), new Vector2(0.98f, 1f), charm, sarabun, panelSprite,
-                "ชำระการ์ด", "", out view.upgradeHintText);
+            column.background = R.Img("Background", column.root, Vector2.zero, Vector2.one, Color.black, null);
+            column.background.raycastTarget = false;
+            if (left) column.background.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
 
-            view.leaveButton = SmallButton("LeaveButton", panel, new Vector2(0.38f, 0f), new Vector2(0.62f, 0.18f), sarabun, panelSprite, "จากไปเฉย ๆ");
-        }
+            // The strip: a see-through button over the whole column, with the name and a line under it
+            var strip = R.Img("Strip", column.root, Vector2.zero, Vector2.one, Color.clear, null);
+            Inset(strip.rectTransform, left);
+            column.chooseButton = strip.gameObject.AddComponent<Button>();
+            column.chooseButton.transition = Selectable.Transition.None;
+            column.stripGroup = strip.gameObject.AddComponent<CanvasGroup>();
+            column.stripTitle = R.Text("Title", strip.transform, new Vector2(0f, 0.5f), new Vector2(1f, 0.64f), charm, 64, Gold, TextAlignmentOptions.Center);
+            column.stripTitle.text = title;
+            R.AutoSize(column.stripTitle, 36, 64);
+            column.stripHint = R.Text("Hint", strip.transform, new Vector2(0f, 0.36f), new Vector2(1f, 0.5f), font, 24, Parchment, TextAlignmentOptions.Top);
+            column.stripHint.text = hint;
+            column.stripHint.textWrappingMode = TextWrappingModes.Normal;
+            column.stripTitle.raycastTarget = column.stripHint.raycastTarget = false;
 
-        private static void BuildPickerPanel(MeruViewUI view, Transform root, TMP_FontAsset charm, TMP_FontAsset sarabun, Sprite panelSprite)
-        {
-            var panel = R.Rect("PickerPanel", root, new Vector2(0.04f, 0.03f), new Vector2(0.96f, 0.85f));
-            view.pickerPanel = panel.gameObject;
+            // The column once chosen
+            var panel = R.Rect("Panel", column.root, Vector2.zero, Vector2.one);
+            Inset(panel, left);
+            column.panelGroup = panel.gameObject.AddComponent<CanvasGroup>();
+            var panelTitle = R.Text("Title", panel, new Vector2(0f, 0.9f), new Vector2(1f, 0.98f), charm, 60, Gold, TextAlignmentOptions.Center);
+            panelTitle.text = title;
+            column.deckText = R.Text("DeckStatus", panel, new Vector2(0f, 0.86f), new Vector2(1f, 0.9f), font, 22, Muted, TextAlignmentOptions.Center);
+            column.promptText = R.Text("Prompt", panel, new Vector2(0f, 0.81f), new Vector2(1f, 0.86f), font, 26, Parchment, TextAlignmentOptions.Center);
+            R.AutoSize(column.promptText, 16, 26);
 
-            view.pickerTitleText = R.Text("PickerTitle", panel, new Vector2(0f, 0.9f), new Vector2(1f, 1f), sarabun, 36, Parchment, TextAlignmentOptions.Center);
-            R.AutoSize(view.pickerTitleText, 20, 36);
-
-            // Scrollable grid of the run deck
-            var scrollBg = R.Img("DeckScroll", panel, new Vector2(0f, 0.12f), new Vector2(1f, 0.89f), new Color(0f, 0f, 0f, 0.35f), panelSprite);
+            // Scrollable grid of the run deck, four cards across
+            var scrollBg = R.Img("DeckScroll", panel, new Vector2(0f, 0.13f), new Vector2(1f, 0.8f), Color.clear, null);
             var scroll = scrollBg.gameObject.AddComponent<ScrollRect>();
             scroll.horizontal = false;
             scroll.scrollSensitivity = 40f;
@@ -143,20 +160,31 @@ namespace TawanOS.GameFlow
             var content = R.Rect("Content", viewport, new Vector2(0f, 1f), new Vector2(1f, 1f));
             content.pivot = new Vector2(0.5f, 1f);
             var grid = content.gameObject.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(210f, 210f * 1312f / 939f);
-            grid.spacing = new Vector2(24f, 24f);
-            grid.padding = new RectOffset(24, 24, 24, 24);
+            grid.cellSize = new Vector2(180f, 180f * 1312f / 939f);
+            grid.spacing = new Vector2(16f, 16f);
+            grid.padding = new RectOffset(16, 16, 16, 16);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 4;
             grid.childAlignment = TextAnchor.UpperCenter;
             content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             scroll.viewport = viewport;
             scroll.content = content;
-            view.cardGrid = content;
-            view.cardTemplate = R.BuildCardTemplate(content, sarabun, charm, panelSprite);
+            column.cardGrid = content;
 
-            view.backButton = SmallButton("BackButton", panel, new Vector2(0.2f, 0f), new Vector2(0.4f, 0.09f), sarabun, panelSprite, "ย้อนกลับ");
-            view.confirmButton = SmallButton("ConfirmButton", panel, new Vector2(0.6f, 0f), new Vector2(0.8f, 0.09f), sarabun, panelSprite, "ยืนยัน");
-            view.confirmButton.GetComponent<Image>().color = Ember;
-            view.confirmLabel = view.confirmButton.GetComponentInChildren<TextMeshProUGUI>();
+            column.backButton = SmallButton("BackButton", panel, new Vector2(0.08f, 0.03f), new Vector2(0.44f, 0.1f), font, panelSprite, "ย้อนกลับ");
+            column.confirmButton = SmallButton("ConfirmButton", panel, new Vector2(0.56f, 0.03f), new Vector2(0.92f, 0.1f), font, panelSprite, confirm);
+            column.confirmButton.GetComponent<Image>().color = Ember;
+            column.confirmLabel = column.confirmButton.GetComponentInChildren<TextMeshProUGUI>();
+            return column;
+        }
+
+        // Fills the column, less a margin on its outer side and the smoky edge on its side toward the furnace
+        private static void Inset(RectTransform rt, bool left)
+        {
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = new Vector2(left ? 24f : SmokePixels + 10f, 0f);
+            rt.offsetMax = new Vector2(left ? -(SmokePixels + 10f) : -24f, 0f);
         }
 
         private static void BuildResultPanel(MeruViewUI view, Transform root, TMP_FontAsset charm, TMP_FontAsset sarabun, Sprite panelSprite)
@@ -175,20 +203,7 @@ namespace TawanOS.GameFlow
             view.resultCard.name = "ResultCard";
 
             view.continueButton = SmallButton("ContinueButton", panel, new Vector2(0.4f, 0f), new Vector2(0.6f, 0.1f), sarabun, panelSprite, "เดินทางต่อ");
-        }
-
-        private static Button BigButton(string name, Transform parent, Vector2 min, Vector2 max, TMP_FontAsset titleFont, TMP_FontAsset font,
-            Sprite panelSprite, string title, string hint, out TextMeshProUGUI hintText)
-        {
-            var bg = R.Img(name, parent, min, max, ButtonBrown, panelSprite);
-            var button = bg.gameObject.AddComponent<Button>();
-            var t = R.Text("Title", bg.transform, new Vector2(0.05f, 0.45f), new Vector2(0.95f, 0.9f), titleFont, 56, Gold, TextAlignmentOptions.Center);
-            t.text = title;
-            hintText = R.Text("Hint", bg.transform, new Vector2(0.05f, 0.1f), new Vector2(0.95f, 0.45f), font, 26, Parchment, TextAlignmentOptions.Center);
-            hintText.text = hint;
-            hintText.textWrappingMode = TextWrappingModes.Normal;
-            t.raycastTarget = hintText.raycastTarget = false;
-            return button;
+            panel.gameObject.SetActive(false);
         }
 
         private static Button SmallButton(string name, Transform parent, Vector2 min, Vector2 max, TMP_FontAsset font, Sprite panelSprite, string label)
