@@ -78,7 +78,7 @@ namespace TawanOS.GameFlow
         [Range(0f, 0.2f)] public float stripHoverGrow = 0.05f;
         [Tooltip("How far the other strip draws back toward its edge meanwhile, as a fraction of its own width.")]
         [Range(0f, 1f)] public float stripHoverPush = 0.15f;
-        [Min(0.05f)] public float stripHoverSeconds = 0.25f;
+        [Min(0.05f)] public float stripHoverSeconds = 1f;
 
         // Set by MeruStageView in its Awake: the strips wait until the camera is inside
         [NonSerialized] public MeruStageView stage;
