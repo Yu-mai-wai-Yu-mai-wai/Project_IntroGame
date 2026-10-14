@@ -28,6 +28,9 @@ namespace TawanOS.MapEngine
         public event Action<MapNodeView> OnNodeClicked;
         public event Action<MapNodeView> OnNodeHoverEnter;
         public event Action<MapNodeView> OnNodeHoverExit;
+        // The pointer came onto / left any node, whatever its status (the node pop-up, MapLegendUI)
+        public static event Action<MapNodeView> PointerEntered;
+        public static event Action<MapNodeView> PointerLeft;
 
         private Tween ringTween;
         private SpriteRenderer hoverRing;
@@ -162,6 +165,7 @@ namespace TawanOS.MapEngine
         private void OnMouseEnter()
         {
             if (CardEngine.DeckViewerPanelUI.BlocksInput) return; // the deck screen is over the map
+            if (NodeData != null) PointerEntered?.Invoke(this);
             if (NodeData != null && NodeData.status == NodeStatus.Attainable)
             {
                 ShowHoverRing(true);
@@ -172,6 +176,7 @@ namespace TawanOS.MapEngine
         private void OnMouseExit()
         {
             ShowHoverRing(false);
+            PointerLeft?.Invoke(this);
             if (NodeData != null && NodeData.status == NodeStatus.Attainable)
             {
                 OnNodeHoverExit?.Invoke(this);
