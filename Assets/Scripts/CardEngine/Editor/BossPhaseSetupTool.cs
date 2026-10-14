@@ -118,8 +118,8 @@ namespace TawanOS.CardEngine
         }
 
         // Batch: -executeMethod TawanOS.CardEngine.BossPhaseSetupTool.SetupPhase2Rules
-        // Phase 2 starts when the boss is down to half its khwan, and from then on a คาถาดูดขวัญ appears in its hand at
-        // the start of each of its turns (and once as the phase begins). The card is created only when missing.
+        // Phase 2 starts when the boss is down to half its khwan. It used to get a คาถาดูดขวัญ in its hand every turn;
+        // that was taken out (14 Oct), so this clears cardEachTurn. The card asset is still made when missing.
         public static void SetupPhase2Rules()
         {
             var boss = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(BossPath);
@@ -160,11 +160,11 @@ namespace TawanOS.CardEngine
                 EditorUtility.SetDirty(drain);
             }
             boss.phase2AtKhwanRatio = 0.5f;
-            phase2.cardEachTurn = drain;
+            phase2.cardEachTurn = null;
             EditorUtility.SetDirty(boss);
             EditorUtility.SetDirty(phase2);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[BossPhaseSetupTool] Phase 2 at {boss.phase2AtKhwanRatio:P0} khwan; {drain.cardNameThai} in hand each turn.");
+            Debug.Log($"[BossPhaseSetupTool] Phase 2 at {boss.phase2AtKhwanRatio:P0} khwan; no card in hand each turn.");
         }
 
         // The status the first form's curse move inflicts, so the second form curses the same way
