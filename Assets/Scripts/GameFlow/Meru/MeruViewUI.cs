@@ -43,13 +43,11 @@ namespace TawanOS.GameFlow
         [Header("Upgrade Fire")]
         [Tooltip("Seconds the old card is shown before the fire takes it.")]
         [Min(0f)] public float upgradeDelay = 0.35f;
-        [Tooltip("Seconds the fire from the scorched edge takes to rush in over the old card.")]
-        [Min(0.05f)] public float upgradeFlareIn = 0.6f;
-        [Tooltip("Seconds the fire takes to fall back to the scorch line on the new card.")]
+        [Tooltip("Seconds the fire takes to creep in from the card's edge to its scorch line.")]
+        [Min(0.05f)] public float upgradeFlareIn = 0.7f;
+        [Tooltip("Seconds the fire, now at the scorch line, takes to calm down to its usual smoulder.")]
         [Min(0.05f)] public float upgradeFlareOut = 0.9f;
-        [Tooltip("How far in the fire reaches at its height (card height = 1).")]
-        [Range(0f, 0.4f)] public float upgradeFlareReach = 0.22f;
-        [Tooltip("How much brighter the fire burns at its height.")]
+        [Tooltip("How much brighter the fire burns when it reaches the scorch line.")]
         [Min(1f)] public float upgradeFlareGlow = 2f;
 
         private MeruManager meru;
@@ -183,8 +181,9 @@ namespace TawanOS.GameFlow
             }
         }
 
-        // The upgraded card's scorched edge (CardEmber) catches on the old card and its fire rushes in over it;
-        // at its height the card becomes the upgraded one, then the fire falls back to the scorch line it keeps
+        // The upgraded card's fire (CardEmber) catches at the old card's edge and creeps in, flaring, to the scorch
+        // line the upgraded card keeps, and stops there; as it gets there the card becomes the upgraded one and the
+        // fire calms down to its usual smoulder
         private void PlayUpgrade(CardDataSO card)
         {
             var upgraded = card.upgradedCard;
@@ -199,17 +198,16 @@ namespace TawanOS.GameFlow
             }
 
             float baseGlow = sheet.material.GetFloat(CardEmber.GlowBoostProperty);
-            float flare = 0f;
-            System.Action<float> apply = v =>
+            // grow: 0 = at the card's edge .. 1 = at the scorch line; flare: 0 = usual glow .. 1 = brightest
+            System.Action<float, float> apply = (grow, flare) =>
             {
-                flare = v;
                 // Setup keeps the same sheet, but read it again in case the card was rebuilt
                 var s = CardEmber.UiSheet(frame);
                 if (s == null) return;
-                s.material.SetFloat(CardEmber.SurgeProperty, v * upgradeFlareReach);
-                s.material.SetFloat(CardEmber.GlowBoostProperty, baseGlow * Mathf.Lerp(1f, upgradeFlareGlow, v));
+                s.material.SetFloat(CardEmber.GrowProperty, grow);
+                s.material.SetFloat(CardEmber.GlowBoostProperty, baseGlow * Mathf.Lerp(1f, upgradeFlareGlow, flare));
             };
-            // The old card has no scorch yet: the fire fades up out of nothing as it rushes in
+            // The old card has no scorch yet: the fire fades up out of nothing at its edge
             System.Action<float> fadeSheet = a =>
             {
                 var s = CardEmber.UiSheet(frame);
@@ -218,7 +216,7 @@ namespace TawanOS.GameFlow
                 c.a = a;
                 s.color = c;
             };
-            apply(0f);
+            apply(0f, 0f);
             fadeSheet(0f);
 
             float total = upgradeDelay + upgradeFlareIn + upgradeFlareOut;
@@ -227,18 +225,18 @@ namespace TawanOS.GameFlow
                 .AppendCallback(() => TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on"))
                 .Append(DOVirtual.Float(0f, 1f, upgradeFlareIn, v =>
                 {
-                    apply(v);
+                    apply(v, v);
                     fadeSheet(Mathf.Clamp01(v * 3f));
-                }).SetEase(Ease.InQuad))
+                }).SetEase(Ease.OutQuad))
                 .AppendCallback(() =>
                 {
                     resultCard.Setup(upgraded, null);
                     if (resultCard.button != null) resultCard.button.interactable = false;
-                    apply(flare);
+                    apply(1f, 1f);
                     fadeSheet(1f);
                     resultCard.transform.DOPunchScale(Vector3.one * 0.08f, 0.35f, 6, 0.6f).SetLink(gameObject);
                 })
-                .Append(DOVirtual.Float(1f, 0f, upgradeFlareOut, v => apply(v)).SetEase(Ease.OutCubic))
+                .Append(DOVirtual.Float(1f, 0f, upgradeFlareOut, v => apply(1f, v)).SetEase(Ease.OutCubic))
                 .AppendCallback(() => TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_off"));
 
             if (resultText != null)

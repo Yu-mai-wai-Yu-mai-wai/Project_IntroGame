@@ -145,7 +145,7 @@ namespace TawanOS.CardEngine
         /// <summary>The aspect property id, for 3D cards that set it through a property block.</summary>
         public static int AspectProperty => AspectId;
         public static int SeedProperty => SeedId;
-        public static readonly int SurgeProperty = Shader.PropertyToID("_Surge");
+        public static readonly int GrowProperty = Shader.PropertyToID("_Grow");
         public static readonly int GlowBoostProperty = Shader.PropertyToID("_GlowBoost");
     }
 }

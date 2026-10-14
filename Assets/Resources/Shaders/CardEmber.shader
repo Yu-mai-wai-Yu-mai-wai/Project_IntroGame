@@ -17,7 +17,7 @@ Shader "TawanOS/CardEmber"
                 _Ragged ("Ragged Bites (how far in)", Range(0, 0.15)) = 0.04
         _NoiseScale ("Noise Scale", Float) = 7
         _Seed ("Seed (another ragged pattern, same place)", Float) = 0
-        _Surge ("Surge (extra reach in, for the upgrade flare; 0 = at rest)", Range(0, 0.4)) = 0
+        _Grow ("Grow (how far the fire has come in from the edge to its scorch line; 1 = at rest)", Range(0, 1)) = 1
         _EdgeWidth ("Glow Width", Range(0.002, 0.06)) = 0.009
         [HDR] _GlowColor ("Glow Colour", Color) = (1.6, 0.55, 0.12, 1)
         _GlowBoost ("Glow Brightness (above 1 lights up Bloom)", Range(0, 6)) = 2.2
@@ -70,7 +70,7 @@ Shader "TawanOS/CardEmber"
             struct appdata { float4 vertex : POSITION; float4 color : COLOR; float2 uv : TEXCOORD0; };
             struct v2f { float4 pos : SV_POSITION; fixed4 color : COLOR; float2 uv : TEXCOORD0; };
 
-            float _Pad, _Depth, _Seed, _Surge, _GlowBoost, _HaloWidth, _HaloStrength;
+            float _Pad, _Depth, _Seed, _Grow, _GlowBoost, _HaloWidth, _HaloStrength;
             float _Aspect, _Corner, _Ragged, _NoiseScale, _EdgeWidth, _CharStrength, _Flicker, _Creep;
             float _EmberDensity, _EmberSpeed, _EmberStrength;
             float4 _GlowColor, _CharColor;
@@ -116,8 +116,8 @@ Shader "TawanOS/CardEmber"
                 float2 np = p * _NoiseScale + float2(_Seed * 17.31, _Seed * -9.73);
                 float n = Fbm(np * 1.8 + float2(0.0, _Time.y * _Creep));
                 float bite = pow(saturate(n * 1.8 - 0.5), 1.3) + 0.35 * Fbm(np * 5.0 + 11.3);
-                // _Surge pushes the whole ragged line further in (the upgrade flare), keeping its shape
-                float front = _Depth + bite * (_Ragged + _Surge * 0.5) + _Surge;
+                // _Grow brings the line in from the card's edge (0) to where it rests (1), never past it
+                float front = (_Depth + bite * _Ragged) * _Grow;
                 front *= 1.0 + (Noise(np * 0.5 + _Time.y * 0.8) - 0.5) * _Flicker * 0.4;
                 float value = inward - front; // < 0 burnt (toward the outline), > 0 not reached yet
 
