@@ -42,6 +42,8 @@ namespace TawanOS.GameFlow
         private EnemyProfileSO pendingEnemyProfile;
         // The preset deck the pending enemy plays (EnemyDeckProgressionSO); null = its own deck
         private System.Collections.Generic.List<CardDataSO> pendingEnemyDeck;
+        // ...and its max khwan (same source); null = its profile's
+        private int? pendingEnemyKhwan;
         private int? pendingEventFloor;
         private int pendingVictoryIncense;
         private RewardTier pendingRewardTier = RewardTier.Minor;
@@ -296,7 +298,9 @@ namespace TawanOS.GameFlow
                     // Calling StartCombat here as well started two overlapping turn loops.
                     CombatManager.Instance.currentEnemyProfile = profile;
                     CombatManager.Instance.enemyDeckOverride = pendingEnemyDeck;
+                    CombatManager.Instance.enemyMaxKhwanOverride = pendingEnemyKhwan;
                     pendingEnemyDeck = null;
+                    pendingEnemyKhwan = null;
                 }
             }
         }
@@ -306,7 +310,7 @@ namespace TawanOS.GameFlow
             currentCombatNodeType = nodeType;
             RunState.Current.SetResume(ResumeKind.Combat, nodeType);
             pendingEnemyProfile = ResolveEnemyProfile(nodeType);
-            pendingEnemyDeck = ProgressionDeck(nodeType, pendingEnemyProfile);
+            ApplyProgression(nodeType, pendingEnemyProfile);
             pendingVictoryIncense = RollIncense(nodeType switch
             {
                 NodeType.Boss => BossIncense,
@@ -368,7 +372,7 @@ namespace TawanOS.GameFlow
             // The event's enemy is not saved by reference; a resumed fight uses the minor-enemy encounter
             RunState.Current.SetResume(ResumeKind.Combat, NodeType.MinorEnemy);
             pendingEnemyProfile = enemy;
-            pendingEnemyDeck = ProgressionDeck(NodeType.MinorEnemy, enemy);
+            ApplyProgression(NodeType.MinorEnemy, enemy);
             pendingVictoryIncense = RollIncense(EventFightIncense);
             pendingRewardTier = RewardTier.Minor;
             if (Application.isPlaying) SceneTransition.Load(CombatSceneName);
@@ -631,11 +635,18 @@ namespace TawanOS.GameFlow
             }
         }
 
-        // The harder preset deck for how far into the map this fight is (EnemyDeckProgressionSO), or null
-        private static System.Collections.Generic.List<CardDataSO> ProgressionDeck(NodeType nodeType, EnemyProfileSO enemy)
+        // The harder preset deck and the grown khwan for how far into the map this fight is (EnemyDeckProgressionSO)
+        private void ApplyProgression(NodeType nodeType, EnemyProfileSO enemy)
         {
+            pendingEnemyDeck = null;
+            pendingEnemyKhwan = null;
             var progression = EnemyDeckProgressionSO.Load();
-            return progression != null ? progression.DeckFor(nodeType, NodesPassed(), enemy) : null;
+            if (progression == null) return;
+            int nodesPassed = NodesPassed();
+            pendingEnemyDeck = progression.DeckFor(nodeType, nodesPassed, enemy);
+            pendingEnemyKhwan = progression.KhwanFor(nodesPassed, enemy);
+            if (pendingEnemyKhwan.HasValue)
+                Debug.Log($"[GameFlowManager] {enemy.enemyName} at {nodesPassed} nodes passed has {pendingEnemyKhwan.Value} khwan");
         }
 
         // Nodes the player has passed before the one they stand on = its map floor (0 = the first node). From the

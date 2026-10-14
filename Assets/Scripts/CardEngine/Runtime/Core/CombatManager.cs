@@ -27,6 +27,8 @@ namespace TawanOS.CardEngine
         // Cards the enemy plays this fight instead of its profile's deck (set by GameFlowManager from
         // EnemyDeckProgressionSO before the fight starts); null = the profile's own deck
         [System.NonSerialized] public System.Collections.Generic.List<CardDataSO> enemyDeckOverride;
+        // The enemy's max khwan this fight instead of its profile's (same source); null = the profile's
+        [System.NonSerialized] public int? enemyMaxKhwanOverride;
 
         private readonly EnemyCardPlayer enemyCards = new EnemyCardPlayer();
         public EnemyCardPlayer EnemyCards => enemyCards;
@@ -105,7 +107,7 @@ namespace TawanOS.CardEngine
             currentEnemyProfile = enemyProfile;
             EnemyPhase = 1;
             ApplyPlayerStartingKhwan();
-            state.enemyKhwan = enemyProfile != null ? enemyProfile.maxKhwan : 30;
+            state.enemyKhwan = enemyMaxKhwanOverride ?? (enemyProfile != null ? enemyProfile.maxKhwan : 30);
             state.maxEnemyKhwan = state.enemyKhwan;
             state.currentCorruption = 0;
             state.turnNumber = 1;

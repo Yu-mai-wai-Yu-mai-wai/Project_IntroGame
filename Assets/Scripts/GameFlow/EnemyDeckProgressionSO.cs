@@ -10,7 +10,8 @@ namespace TawanOS.GameFlow
     /// Enemies get harder decks the further the player is into the map. For ordinary fights and the boss a list of steps:
     /// from N nodes passed (the fight's map floor, 0 = the first node) the enemy plays that preset's cards instead
     /// of its own deck. The last step whose number is reached wins. Enemies without a card deck (moveset only) and
-    /// the scripted tutorial bot are left as they are. Loaded from Resources/EnemyDeckProgression; create it with
+    /// the scripted tutorial bot are left as they are. Their khwan grows the same way: khwanPerNode for every node
+    /// passed, up to khwanCap. Loaded from Resources/EnemyDeckProgression; create it with
     /// Tools/TawanOS/Game Flow/Create Enemy Deck Presets.
     /// </summary>
     [CreateAssetMenu(fileName = "EnemyDeckProgression", menuName = "TawanOS/Game Flow/Enemy Deck Progression")]
@@ -32,7 +33,23 @@ namespace TawanOS.GameFlow
         public List<Step> minor = new List<Step>();
         public List<Step> boss = new List<Step>();
 
+        [Header("Khwan")]
+        [Tooltip("Off = every enemy keeps its profile's max khwan.")]
+        public bool scaleKhwan = true;
+        [Tooltip("Khwan an enemy gains for every node passed, on top of its profile's max khwan.")]
+        [Min(0)] public int khwanPerNode = 2;
+        [Tooltip("An enemy's khwan never grows past this (one whose profile already has more keeps its own).")]
+        [Min(1)] public int khwanCap = 20;
+
         private static EnemyDeckProgressionSO cached;
+
+        /// <summary>The enemy's max khwan for this fight, or null to keep its profile's.</summary>
+        public int? KhwanFor(int nodesPassed, EnemyProfileSO enemy)
+        {
+            if (!enabled || !scaleKhwan || enemy == null || enemy.scriptedDeck) return null;
+            int grown = Mathf.Min(enemy.maxKhwan + khwanPerNode * Mathf.Max(0, nodesPassed), khwanCap);
+            return Mathf.Max(enemy.maxKhwan, grown);
+        }
 
         public static EnemyDeckProgressionSO Load()
         {
