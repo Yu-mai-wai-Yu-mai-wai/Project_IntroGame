@@ -15,7 +15,8 @@ namespace TawanOS.UI
     /// the screen goes dark except a lit window around what the hint is about (the hand, the board row, the Merit
     /// panel, the draw pile, ...), with the text beside it. The fight is frozen and card input is blocked while a
     /// hint is up; a click or Enter goes to the next one. "ข้ามบทสอน" leaves the fight at once.
-    /// Started by GameFlowManager; built in code, no scene setup needed.
+    /// Started by GameFlowManager; built in code, no scene setup needed. The words come from
+    /// <see cref="TutorialTextSO"/> (Resources/TutorialText.asset), editable in the Inspector.
     /// </summary>
     public class TutorialCoach : MonoBehaviour
     {
@@ -49,6 +50,7 @@ namespace TawanOS.UI
 
         private class Tip
         {
+            public string key;
             public string title;
             public string body;
             public Target target;
@@ -84,6 +86,7 @@ namespace TawanOS.UI
 
         private TurnPhaseController turns;
         private CombatManager combat;
+        private TutorialTextSO words;
 
         public static TutorialCoach Begin(Action skip)
         {
@@ -99,11 +102,10 @@ namespace TawanOS.UI
         private void Awake()
         {
             Instance = this;
+            words = TutorialTextSO.Current;
             Build();
-            Add("enemyKhwan", Target.EnemyStatus, "ขวัญของศัตรู",
-                "เงาดำบุกเข้ามาในฝันของขวัญ!\nทำให้ขวัญของศัตรูตรงนี้เหลือ 0 เพื่อชนะ");
-            Add("playerKhwan", Target.PlayerStatus, "ขวัญของคุณ",
-                "ถ้าขวัญของคุณหมดก่อน คุณจะแพ้\nนี่เป็นแค่ฝัน แพ้ก็ไม่เสียอะไร");
+            Add("enemyKhwan", Target.EnemyStatus, words.enemyKhwan);
+            Add("playerKhwan", Target.PlayerStatus, words.playerKhwan);
         }
 
         private void Start()
@@ -147,36 +149,24 @@ namespace TawanOS.UI
             switch (phase)
             {
                 case TurnPhase.EnemyBoard:
-                    Add("enemyFirst", Target.EnemyBoard, "ศัตรูลงการ์ดก่อนเสมอ",
-                        "ทุกเทิร์น ศัตรูจะลงบริวารและเครื่องรางในแถวนี้ก่อน\nดูว่ามันวางการ์ดไว้ช่องไหน แล้วค่อยวางของคุณตอบโต้");
+                    Add("enemyFirst", Target.EnemyBoard, words.enemyFirst);
                     break;
 
                 case TurnPhase.PlayerBoard:
                     CountHand(out int boardCards, out int incantations);
-                    Add("hand", Target.Hand, "การ์ดในมือ",
-                        $"มือนี้มีบริวาร / เครื่องราง {boardCards} ใบ และอาคม {incantations} ใบ ลองใช้ให้ครบในเทิร์นนี้\n" +
-                        "ตอนนี้เป็นเฟสลงบริวาร / เครื่องราง: คลิกการ์ดบริวารหรือเครื่องรางในมือเพื่อหยิบ");
-                    Add("board", Target.PlayerBoard, "กระดานของคุณ",
-                        "หยิบการ์ดแล้ว คลิกช่องว่างที่สว่างขึ้นในแถวนี้เพื่อวาง\n" +
-                        "คลิกขวาหรือกด Esc เพื่อเอาการ์ดกลับเข้ามือ\nลงเสร็จแล้ว กด Space เพื่อจบเฟส");
+                    Add("hand", Target.Hand, words.hand, ("boardCards", boardCards), ("incantations", incantations));
+                    Add("board", Target.PlayerBoard, words.board);
                     int first = combat != null ? combat.FirstTurnMerit : 2;
                     int max = combat != null ? combat.State.maxMerit : 6;
-                    Add("merit", Target.Merit, "กุศล",
-                        "การ์ดสายขาวใช้กุศล (ตัวเลขมุมซ้ายบนของการ์ด)\n" +
-                        $"เทิร์นแรกมีกุศล {first} แต้ม เพิ่มเทิร์นละ 1 แต้ม สูงสุด {max} แต้ม\n" +
-                        "กุศลที่ไม่ได้ใช้จะไม่สะสมไปเทิร์นหน้า");
+                    Add("merit", Target.Merit, words.merit, ("first", first), ("max", max));
                     break;
 
                 case TurnPhase.PlayerSpell:
-                    Add("spell", Target.Hand, "ร่ายอาคม",
-                        "เฟสนี้ใช้การ์ดอาคม: คลิกการ์ด แล้วคลิกการ์ดเป้าหมาย\n" +
-                        "อาคมที่ไม่มีเป้าหมาย คลิกตรงไหนก็ได้เพื่อร่าย\nร่ายเสร็จแล้ว กด Space");
+                    Add("spell", Target.Hand, words.spell);
                     break;
 
                 case TurnPhase.Clash:
-                    Add("clash", Target.BothBoards, "การ์ดตีกัน",
-                        "บริวารตีกันทีละคอลัมน์ จากซ้ายไปขวา\n" +
-                        "บริวารจะตีบริวารที่อยู่ช่องตรงข้าม ถ้าช่องตรงข้ามว่าง จะตีขวัญของฝ่ายตรงข้ามโดยตรง");
+                    Add("clash", Target.BothBoards, words.clash);
                     break;
             }
         }
@@ -195,30 +185,23 @@ namespace TawanOS.UI
         private void HandleTurnStarted(int turn)
         {
             if (turn != 2) return;
-            Add("drawPile", Target.DrawPile, "กองจั่ว",
-                "การ์ดที่ยังไม่ได้จั่วอยู่ที่นี่ คลิกเพื่อดูว่าเหลือการ์ดอะไรบ้าง");
-            Add("graveyard", Target.Graveyard, "หลุมศพ",
-                "การ์ดที่ใช้ไปหรือถูกทำลายของทั้งสองฝ่ายมาอยู่ที่นี่ คลิกเพื่อดู");
+            Add("drawPile", Target.DrawPile, words.drawPile);
+            Add("graveyard", Target.Graveyard, words.graveyard);
             int pit = CardManager.Instance != null ? CardManager.Instance.NextPitCorruption : 1;
-            Add("pit", Target.DrawPit, "หลุมจั่ว",
-                "ในตาของคุณ คลิกเพื่อจั่วการ์ดสุ่มเพิ่ม 1 ใบ แลกกับมลทิน\n" +
-                $"ครั้งต่อไปได้มลทิน {pit} แต้ม และยิ่งจั่วบ่อย มลทินยิ่งเพิ่ม");
-            Add("inspect", Target.None, "ดูการ์ด",
-                "คลิกขวาที่การ์ดใบไหนก็ได้เพื่อดูรายละเอียด\nกด C เพื่อดูกระดานจากมุมบน");
+            Add("pit", Target.DrawPit, words.pit, ("pit", pit), ("pitMax", CardManager.MaxPitCorruption));
+            Add("inspect", Target.None, words.inspect);
         }
 
         private void HandleCorruption(int current, int threshold)
         {
             if (current <= 0) return;
-            Add("corruption", Target.Corruption, "มลทิน",
-                "การ์ดสายดำไม่ใช้กุศล แต่เพิ่มมลทิน (ตัวเลขมุมซ้ายบนของการ์ดสายดำ)\n" +
-                $"ถ้ามลทินถึง {threshold} คำสาปจะย้อนเข้าตัว: เสียขวัญ {EffectResolver.CurseBackfireKhwanLoss} (ไม่ต่ำกว่า 1 แต่ถ้าเหลือ 1 อยู่แล้วจะแพ้) แล้วมลทินกลับเป็น 0");
+            Add("corruption", Target.Corruption, words.corruption,
+                ("threshold", threshold), ("khwanLoss", EffectResolver.CurseBackfireKhwanLoss));
         }
 
         private void HandleBackfire()
         {
-            Add("backfire", Target.Corruption, "คำสาปย้อน!",
-                $"มลทินเต็มแล้ว คุณจึงเสียขวัญ {EffectResolver.CurseBackfireKhwanLoss}\nถ้าขวัญเหลือ 1 แล้วมลทินเต็มอีก จะแพ้ทันที");
+            Add("backfire", Target.Corruption, words.backfire, ("khwanLoss", EffectResolver.CurseBackfireKhwanLoss));
         }
 
         private void HandleCombatEnded(bool victory)
@@ -226,16 +209,28 @@ namespace TawanOS.UI
             queue.Clear();
             finalQueued = true;
             if (showing) Close();
-            if (victory) Add("end", Target.None, "ชนะฝันร้าย", "เงาดำสลายไป... ขวัญกำลังจะตื่น", final: true);
-            else Add("end", Target.None, "ขวัญแตกในฝัน", "ไม่เป็นไร นี่เป็นแค่ฝัน... ขวัญกำลังจะตื่น", final: true);
+            Enqueue("end", Target.None, victory ? words.won : words.lost, final: true);
         }
 
-        private void Add(string key, Target target, string title, string body, bool final = false)
+        private void Add(string key, Target target, TutorialTextSO.Hint hint, params (string name, int value)[] numbers)
         {
-            if (finalQueued && !final) return;
+            if (finalQueued) return;
+            Enqueue(key, target, hint, false, numbers);
+        }
+
+        private void Enqueue(string key, Target target, TutorialTextSO.Hint hint, bool final, params (string name, int value)[] numbers)
+        {
             if (!shown.Add(key)) return;
             if (queue.Count == 0 && !showing) queuedAt = Time.unscaledTime;
-            queue.Enqueue(new Tip { title = title, body = body, target = target, final = final });
+            queue.Enqueue(new Tip { key = key, title = hint.title, body = Fill(hint.body, numbers), target = target, final = final });
+        }
+
+        // "{name}" in the text set in the Inspector becomes the game's number
+        private static string Fill(string text, (string name, int value)[] numbers)
+        {
+            if (string.IsNullOrEmpty(text)) return "";
+            foreach (var (name, value) in numbers) text = text.Replace("{" + name + "}", value.ToString());
+            return text;
         }
 
         // ---------------------------------------------------------------- showing
@@ -268,7 +263,7 @@ namespace TawanOS.UI
             current = queue.Dequeue();
             titleText.text = current.title;
             bodyText.text = current.body;
-            stepText.text = current.final ? "" : "คลิกหรือกด Enter เพื่อไปต่อ";
+            stepText.text = current.final ? "" : words.nextPrompt;
             buttonsRow.SetActive(!current.final);
             showing = true;
             if (!current.final) FreezeTime();
@@ -278,6 +273,7 @@ namespace TawanOS.UI
         // For the automated test (AutomatedTutorialFlowTest)
         public bool IsShowingHint => showing && current != null && !current.final;
         public string ShowingTitle => showing && current != null ? current.title : null;
+        public string ShowingKey => showing && current != null ? current.key : null;
         public bool ShowingLit { get; private set; }
 
         /// <summary>The text box is entirely on screen (Screen Space Overlay: world corners are screen pixels).</summary>
@@ -470,8 +466,8 @@ namespace TawanOS.UI
             {
                 case Target.EnemyStatus: area.AddUi("EnemyPanel"); break;
                 case Target.PlayerStatus: area.AddUi("PlayerPanel"); break;
-                case Target.Merit: area.AddUi("MeritPanel"); break;
-                case Target.Corruption: area.AddUi("CorruptionPanel"); break;
+                case Target.Merit: area.AddUi("MeritGauge"); break;           // FlameGaugeHUD's flame rings
+                case Target.Corruption: area.AddUi("CorruptionGauge"); break;
 
                 case Target.Hand:
                     var hand = CardManager.Instance != null ? CardManager.Instance.Hand : null;
@@ -647,7 +643,7 @@ namespace TawanOS.UI
             rowLayout.childForceExpandWidth = false;
             rowLayout.childForceExpandHeight = false;
 
-            MakeButton(row, "ข้ามบทสอน", theme.black, theme.text, AskSkip); // child 0, see OverSkipButton
+            MakeButton(row, words.skipButton, theme.black, theme.text, AskSkip); // child 0, see OverSkipButton
             stepText = UiFactory.CreateText(row, "Next", "", theme.labelSize, theme.accent, TextAlignmentOptions.Right, theme.bodyFont);
             stepText.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
 
@@ -679,9 +675,9 @@ namespace TawanOS.UI
             layout.childForceExpandHeight = false;
             panel.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            UiFactory.CreateText(rt, "Title", "ต้องการข้ามบทสอนเล่นไหม?", theme.titleSize, theme.accent, TextAlignmentOptions.Center,
+            UiFactory.CreateText(rt, "Title", words.skipQuestion, theme.titleSize, theme.accent, TextAlignmentOptions.Center,
                 theme.titleFont != null ? theme.titleFont : theme.bodyFont);
-            var body = UiFactory.CreateText(rt, "Body", "ขวัญจะตื่นจากฝันทันที และเรื่องจะดำเนินต่อ\nบทสอนนี้จะไม่กลับมาอีกใน run นี้",
+            var body = UiFactory.CreateText(rt, "Body", words.skipQuestionBody,
                 26f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
             body.lineSpacing = 12f;
 
@@ -692,8 +688,8 @@ namespace TawanOS.UI
             rowLayout.childControlWidth = rowLayout.childControlHeight = true;
             rowLayout.childForceExpandWidth = false;
             rowLayout.childForceExpandHeight = false;
-            MakeButton(row, "เล่นบทสอนต่อ (Esc)", theme.black, theme.text, CancelSkip);
-            MakeButton(row, "ข้ามบทสอน", theme.crimson, theme.text, Skip);
+            MakeButton(row, words.keepPlayingButton, theme.black, theme.text, CancelSkip);
+            MakeButton(row, words.confirmSkipButton, theme.crimson, theme.text, Skip);
 
             confirmRoot.SetActive(false);
         }

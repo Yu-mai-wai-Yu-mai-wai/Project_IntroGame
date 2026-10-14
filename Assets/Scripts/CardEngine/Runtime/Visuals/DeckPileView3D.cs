@@ -6,9 +6,13 @@ namespace TawanOS.CardEngine
     // built at that slot's world position and its height follows CardManager.DrawPile.Count.
     // The stack is a standalone object (not a child) because the slot is tilted and non-uniformly
     // scaled, which would distort a child mesh.
-    // Click the pile to list the cards left in it (DeckViewerPanelUI), sorted so the draw order stays hidden.
+    // With clickToView on, clicking the pile lists the cards left in it (DeckViewerPanelUI), sorted so the draw
+    // order stays hidden.
     public class DeckPileView3D : MonoBehaviour
     {
+        [Tooltip("Clicking the pile lists the cards left in it. Off: the pile cannot be clicked.")]
+        public bool clickToView = false;
+
         [Header("Pile Look")]
         public Vector2 cardSize = new Vector2(0.7f, 1f); // width (x), depth (z) of a card lying flat
         public float thicknessPerCard = 0.02f;
@@ -56,7 +60,7 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
-            if (TawanOS.UI.PauseMenu.IsPaused || !Input.GetMouseButtonDown(0)) return;
+            if (!clickToView || TawanOS.UI.PauseMenu.IsPaused || !Input.GetMouseButtonDown(0)) return;
             if (CardTargeting3D.BlocksInput || CardPlayController3D.BlocksInput || CombatCameraRig3D.BlocksInput) return;
             if (!IsPointerOver()) return;
 

@@ -117,7 +117,7 @@ namespace TawanOS.CardEngine
                             case AbilityEffect.BuffAttack:
                                 foreach (var t in ResolveTargets(a, source, isPlayer, null, null))
                                 {
-                                    if (t.cardType == CardType.Familiar) Add(attack, t, a.value);
+                                    if (t.cardType == CardType.Familiar || t.cardType == CardType.Amulet) Add(attack, t, a.value);
                                 }
                                 break;
 
@@ -146,7 +146,7 @@ namespace TawanOS.CardEngine
                                 {
                                     if (c == null || c.IsDead) continue;
                                     Add(khwan, c, a.value);
-                                    if (c.cardType == CardType.Familiar) Add(attack, c, a.value);
+                                    if (c.cardType == CardType.Familiar || c.cardType == CardType.Amulet) Add(attack, c, a.value);
                                 }
                                 // The copies' lifespan is set once, when they join the formation
                                 foreach (var thread in copies)

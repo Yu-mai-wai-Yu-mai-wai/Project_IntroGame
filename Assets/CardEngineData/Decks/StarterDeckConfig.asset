@@ -18,10 +18,10 @@ MonoBehaviour:
   maxHandSize: 10
   startingCards:
   - {fileID: 11400000, guid: 1ba19c6e581946ddb57e8cab6e2fbb94, type: 2}
+  - {fileID: 11400000, guid: 1ba19c6e581946ddb57e8cab6e2fbb94, type: 2}
   - {fileID: 11400000, guid: 60a7338b3591472cb1c95622807a5661, type: 2}
   - {fileID: 11400000, guid: 7590c4d9a3464f80a678bb0fed6a7a1a, type: 2}
   - {fileID: 11400000, guid: 130dc1e8007e44babdc907a6ecb67eae, type: 2}
-  - {fileID: 11400000, guid: 9c9e71d2c8394afc90a78832d1c906ab, type: 2}
-  - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
   - {fileID: 11400000, guid: 16247a9ec67b4df0ae1fcedec0a5a5a0, type: 2}
   - {fileID: 11400000, guid: ae65b9ddd4324187943853a583d0c67b, type: 2}
+  - {fileID: 11400000, guid: d389b8d3618f4df687885269cba1e6aa, type: 2}

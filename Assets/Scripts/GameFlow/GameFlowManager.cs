@@ -40,6 +40,10 @@ namespace TawanOS.GameFlow
 
         private NodeType currentCombatNodeType = NodeType.MinorEnemy;
         private EnemyProfileSO pendingEnemyProfile;
+        // The preset deck the pending enemy plays (EnemyDeckProgressionSO); null = its own deck
+        private System.Collections.Generic.List<CardDataSO> pendingEnemyDeck;
+        // ...and its max khwan (same source); null = its profile's
+        private int? pendingEnemyKhwan;
         private int? pendingEventFloor;
         private int pendingVictoryIncense;
         private RewardTier pendingRewardTier = RewardTier.Minor;
@@ -293,6 +297,10 @@ namespace TawanOS.GameFlow
                     // CombatManager.Start begins the fight with this profile (sceneLoaded runs before Start).
                     // Calling StartCombat here as well started two overlapping turn loops.
                     CombatManager.Instance.currentEnemyProfile = profile;
+                    CombatManager.Instance.enemyDeckOverride = pendingEnemyDeck;
+                    CombatManager.Instance.enemyMaxKhwanOverride = pendingEnemyKhwan;
+                    pendingEnemyDeck = null;
+                    pendingEnemyKhwan = null;
                 }
             }
         }
@@ -302,6 +310,7 @@ namespace TawanOS.GameFlow
             currentCombatNodeType = nodeType;
             RunState.Current.SetResume(ResumeKind.Combat, nodeType);
             pendingEnemyProfile = ResolveEnemyProfile(nodeType);
+            ApplyProgression(nodeType, pendingEnemyProfile);
             pendingVictoryIncense = RollIncense(nodeType switch
             {
                 NodeType.Boss => BossIncense,
@@ -363,6 +372,7 @@ namespace TawanOS.GameFlow
             // The event's enemy is not saved by reference; a resumed fight uses the minor-enemy encounter
             RunState.Current.SetResume(ResumeKind.Combat, NodeType.MinorEnemy);
             pendingEnemyProfile = enemy;
+            ApplyProgression(NodeType.MinorEnemy, enemy);
             pendingVictoryIncense = RollIncense(EventFightIncense);
             pendingRewardTier = RewardTier.Minor;
             if (Application.isPlaying) SceneTransition.Load(CombatSceneName);
@@ -623,6 +633,33 @@ namespace TawanOS.GameFlow
                 Debug.LogWarning("[GameFlowManager] VictoryScene is not in Build Settings (run Tools > TawanOS > Game Flow > Setup Victory Scene) - returning to Main Menu.");
                 if (Application.isPlaying) SceneTransition.Load(MainMenuSceneName);
             }
+        }
+
+        // The harder preset deck and the grown khwan for how far into the map this fight is (EnemyDeckProgressionSO)
+        private void ApplyProgression(NodeType nodeType, EnemyProfileSO enemy)
+        {
+            pendingEnemyDeck = null;
+            pendingEnemyKhwan = null;
+            var progression = EnemyDeckProgressionSO.Load();
+            if (progression == null) return;
+            int nodesPassed = NodesPassed();
+            pendingEnemyDeck = progression.DeckFor(nodeType, nodesPassed, enemy);
+            pendingEnemyKhwan = progression.KhwanFor(nodesPassed, enemy);
+            if (pendingEnemyKhwan.HasValue)
+                Debug.Log($"[GameFlowManager] {enemy.enemyName} at {nodesPassed} nodes passed has {pendingEnemyKhwan.Value} khwan");
+        }
+
+        // Nodes the player has passed before the one they stand on = its map floor (0 = the first node). From the
+        // live map when there is one, else from the saved map (a fight resumed from the main menu).
+        private static int NodesPassed()
+        {
+            var graph = MapManager.Instance != null ? MapManager.Instance.CurrentGraph : null;
+            if (graph == null)
+            {
+                try { graph = new MapSaveManager().LoadMap(); }
+                catch (System.Exception e) { Debug.LogWarning($"[GameFlowManager] Could not read the saved map: {e.Message}"); }
+            }
+            return graph != null ? Mathf.Max(0, graph.currentPlayerPosition.y) : 0;
         }
 
         private EnemyProfileSO ResolveEnemyProfile(NodeType nodeType)

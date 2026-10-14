@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe8ce0a6000793c4da3c63359af34921, type: 3}
+  m_Name: EnemyDeckProgression
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.GameFlow.EnemyDeckProgressionSO
+  enabled: 1
+  minor:
+  - fromNodesPassed: 0
+    preset: {fileID: 11400000, guid: 72ead65768246e340824661a00a492df, type: 2}
+  - fromNodesPassed: 3
+    preset: {fileID: 11400000, guid: 4b5be3dd2810cd34a967eed711a6018d, type: 2}
+  - fromNodesPassed: 6
+    preset: {fileID: 11400000, guid: 21bf8a1fc7186034f9c0278efbd14306, type: 2}
+  boss:
+  - fromNodesPassed: 0
+    preset: {fileID: 11400000, guid: 21bf8a1fc7186034f9c0278efbd14306, type: 2}
+  scaleKhwan: 1
+  khwanPerNode: 2
+  khwanCap: 20

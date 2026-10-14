@@ -213,9 +213,10 @@ namespace TawanOS.CardEngine
 
         // หลุมจั่ว: the player clicks the pit to draw one random card out of every card in the game.
         // Each pull costs Corruption, whatever the debug cost switch says, since that is the pit's price,
-        // and the price climbs through the fight: 1st pull 1, 2nd pull 2, 3rd pull 3...
+        // and the price climbs through the fight: 1st pull 1, 2nd pull 2, then 3 for every pull after that
+        public const int MaxPitCorruption = 3;
         private int pitDraws;
-        public int NextPitCorruption => pitDraws + 1;
+        public int NextPitCorruption => Mathf.Min(pitDraws + 1, MaxPitCorruption);
 
         public bool DrawFromPit()
         {

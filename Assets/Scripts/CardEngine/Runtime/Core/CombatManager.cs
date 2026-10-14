@@ -24,6 +24,11 @@ namespace TawanOS.CardEngine
         [Header("Active Enemy")]
         public EnemyProfileSO currentEnemyProfile;
         public EnemyMove nextEnemyMove;
+        // Cards the enemy plays this fight instead of its profile's deck (set by GameFlowManager from
+        // EnemyDeckProgressionSO before the fight starts); null = the profile's own deck
+        [System.NonSerialized] public System.Collections.Generic.List<CardDataSO> enemyDeckOverride;
+        // The enemy's max khwan this fight instead of its profile's (same source); null = the profile's
+        [System.NonSerialized] public int? enemyMaxKhwanOverride;
 
         private readonly EnemyCardPlayer enemyCards = new EnemyCardPlayer();
         public EnemyCardPlayer EnemyCards => enemyCards;
@@ -102,7 +107,7 @@ namespace TawanOS.CardEngine
             currentEnemyProfile = enemyProfile;
             EnemyPhase = 1;
             ApplyPlayerStartingKhwan();
-            state.enemyKhwan = enemyProfile != null ? enemyProfile.maxKhwan : 30;
+            state.enemyKhwan = enemyMaxKhwanOverride ?? (enemyProfile != null ? enemyProfile.maxKhwan : 30);
             state.maxEnemyKhwan = state.enemyKhwan;
             state.currentCorruption = 0;
             state.turnNumber = 1;
@@ -128,7 +133,7 @@ namespace TawanOS.CardEngine
             state.playerAuraCorruptionCap = 0;
             state.enemyAuraCorruptionCap = 0;
             enemyAI.Init(enemyProfile);
-            enemyCards.Init(enemyProfile);
+            enemyCards.Init(enemyProfile, enemyDeckOverride);
             PickNextEnemyMove();
 
             // Simplified Draw/Main/End test loop replaces the full turn flow when present
@@ -379,19 +384,20 @@ namespace TawanOS.CardEngine
         {
             var resolver = EffectResolver.Instance;
             if (resolver != null) return resolver.CanFamiliarAttack(card);
-            return EffectResolver.IsAliveFamiliar(card) && card.familiarDamage > 0;
+            return EffectResolver.IsStrikerType(card) && card.familiarDamage > 0;
         }
 
+        // The card in this column that may strike: a live familiar, or an amulet (it strikes once it has สะเทือนขวัญ)
         private CardInstance PlayerFamiliarAt(int col)
         {
             var card = EffectResolver.CardAt(state.activeBoardCards, col);
-            return EffectResolver.IsAliveFamiliar(card) ? card : null;
+            return EffectResolver.IsStrikerType(card) ? card : null;
         }
 
         private CardInstance EnemyFamiliarAt(int col)
         {
             var card = EffectResolver.CardAt(state.enemyBoardCards, col);
-            return EffectResolver.IsAliveFamiliar(card) ? card : null;
+            return EffectResolver.IsStrikerType(card) ? card : null;
         }
 
         // Who a familiar hits is decided by EffectResolver.ChooseStrikeTarget: the familiar in the opposite
@@ -675,9 +681,16 @@ namespace TawanOS.CardEngine
             state.enemyCorruption += amount;
             if (state.enemyCorruption < state.enemyCorruptionThreshold) return;
 
-            state.enemyCorruption = 0;
+            state.enemyCorruption = CorruptionCarryOver(state.enemyCorruption, state.enemyCorruptionThreshold);
             OnEnemyCurseBackfireTriggered?.Invoke();
             EffectResolver.Instance?.TriggerCurseBackfire(toPlayer: false);
+        }
+
+        // Corruption left after a backfire: the part that went past the threshold (6 + 3 at 7 leaves 2).
+        // One backfire per gain, so the leftover stays under the threshold.
+        private static int CorruptionCarryOver(int corruption, int threshold)
+        {
+            return Mathf.Clamp(corruption - threshold, 0, Mathf.Max(0, threshold - 1));
         }
 
         // เบี้ยแก้: raises how much Corruption a side can hold before the curse backfires
@@ -698,10 +711,10 @@ namespace TawanOS.CardEngine
         {
             state.currentCorruption += amount;
 
-            // Threshold curse backfire: at 7+ (the threshold), trigger curse and reset
+            // Threshold curse backfire: at 7+ (the threshold), trigger curse; what went past it carries over
             if (state.currentCorruption >= state.corruptionThreshold)
             {
-                state.currentCorruption = 0;
+                state.currentCorruption = CorruptionCarryOver(state.currentCorruption, state.corruptionThreshold);
                 OnCorruptionChanged?.Invoke(state.currentCorruption, state.corruptionThreshold);
                 OnCurseBackfireTriggered?.Invoke();
 

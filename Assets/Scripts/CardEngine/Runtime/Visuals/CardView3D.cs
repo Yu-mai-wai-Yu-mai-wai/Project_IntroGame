@@ -311,9 +311,11 @@ namespace TawanOS.CardEngine
             bool hasKhwan = familiar || CardData.maxKhwan > 0;
             if (attackLabel != null)
             {
-                attackLabel.gameObject.SetActive(familiar && faceVisible);
-                // What it hits for right now (ผวา, might and the adjacent aura included), coloured when it differs
+                // What it hits for right now (ผวา, might and the adjacent aura included), coloured when it differs.
+                // An amulet shows it only once it has some, since that is when it strikes
                 int attack = EffectResolver.Instance != null ? EffectResolver.Instance.EffectiveAttack(CardData) : CardData.familiarDamage;
+                bool amuletStrikes = CardData.cardType == CardType.Amulet && attack > 0;
+                attackLabel.gameObject.SetActive((familiar || amuletStrikes) && faceVisible);
                 attackLabel.text = attack.ToString();
                 attackLabel.color = attack > CardData.familiarDamage ? attackRaisedColor
                     : attack < CardData.familiarDamage ? attackLoweredColor : faceTextColor;
