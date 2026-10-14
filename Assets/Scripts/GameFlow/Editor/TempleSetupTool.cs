@@ -23,7 +23,7 @@ namespace TawanOS.GameFlow
         private const string ProfilePath = "Assets/MapEngineData/Profiles/TempleProfile.asset";
         private const string RestProfilePath = "Assets/MapEngineData/Profiles/RestProfile.asset";
         private const string MapConfigPath = "Assets/MapEngineData/Profiles/DefaultMapConfig.asset";
-        private const string IconPath = "Assets/Art/MapIcons/วัด.png";
+        private const string IconPath = "Assets/Art/MapIcons/วัด 1.png";
 
         public const string Title = "วัด";
         public const string NodeDescription = "ลานวัดสงบกลางป่า กราบพระเพื่อฟื้นขวัญเต็มหลอด ไม่เสียธูป";
