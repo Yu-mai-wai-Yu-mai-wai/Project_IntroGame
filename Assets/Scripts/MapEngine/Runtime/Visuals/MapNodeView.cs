@@ -13,13 +13,13 @@ namespace TawanOS.MapEngine
         [Tooltip("Icon width in world units, independent of PNG resolution. FBX pedestal disc is 1.4.")]
         [SerializeField] private float iconWorldSize = 1.2f;
 
-        [Header("Hover ring (a thin black circle around a node the player can go to)")]
-        [Tooltip("Ring diameter as a multiple of the icon size.")]
+        [Header("Hover mark (a thin black cross over a node the player can go to; a circle until 14 Oct)")]
+        [Tooltip("Width of the cross as a multiple of the icon size.")]
         [SerializeField] private float hoverRingSize = 1.45f;
-        [Tooltip("Line width as a fraction of the ring's radius.")]
+        [Tooltip("Line width as a fraction of half the cross's width.")]
         [Range(0.01f, 0.3f)] [SerializeField] private float hoverRingThickness = 0.06f;
         [SerializeField] private Color hoverRingColor = new Color(0f, 0f, 0f, 0.9f);
-        [Tooltip("Seconds the ring takes to show or hide.")]
+        [Tooltip("Seconds the cross takes to show or hide.")]
         [SerializeField] private float hoverRingFade = 0.15f;
 
         public NodeBlueprint NodeData { get; private set; }
@@ -133,7 +133,7 @@ namespace TawanOS.MapEngine
                     bgColor.a = 1f;
 
                     // Still, full-strength icon (Game Designer, 11 Oct: no breathing / glow loop). Pointing at it shows
-                    // the hover ring; the locked nodes around it are faded, so it stands out without moving.
+                    // the hover cross; the locked nodes around it are faded, so it stands out without moving.
                     transform.localScale = baseScale;
                     if (iconRenderer != null) iconRenderer.color = Color.white;
                     break;
@@ -178,7 +178,8 @@ namespace TawanOS.MapEngine
             }
         }
 
-        // A thin black ring lying on the paper around the icon, hidden until the pointer is on a node the player can go to
+        // A thin black cross drawn on the paper over the icon, like the X on a treasure map (Game Designer, 14 Oct),
+        // hidden until the pointer is on a node the player can go to
         private void SetupHoverRing()
         {
             if (hoverRing == null)
@@ -187,7 +188,7 @@ namespace TawanOS.MapEngine
                 go.transform.SetParent(transform, false);
                 hoverRing = go.AddComponent<SpriteRenderer>();
             }
-            hoverRing.sprite = GetRingSprite(hoverRingThickness);
+            hoverRing.sprite = GetCrossSprite(hoverRingThickness);
             hoverRing.sortingOrder = 2;
             hoverRing.transform.localPosition = new Vector3(0f, 0f, -0.012f);
             hoverRing.transform.localRotation = Quaternion.identity;
@@ -206,33 +207,45 @@ namespace TawanOS.MapEngine
             else ringTween = hoverRing.DOColor(target, hoverRingFade).SetLink(gameObject);
         }
 
-        private static Sprite ringSprite;
-        private static float ringSpriteThickness = -1f;
+        private static Sprite crossSprite;
+        private static float crossSpriteThickness = -1f;
 
-        private static Sprite GetRingSprite(float thickness)
+        // Two diagonal strokes with rounded ends, corner to corner of the square
+        private static Sprite GetCrossSprite(float thickness)
         {
-            if (ringSprite != null && Mathf.Approximately(ringSpriteThickness, thickness)) return ringSprite;
+            if (crossSprite != null && Mathf.Approximately(crossSpriteThickness, thickness)) return crossSprite;
             const int res = 256;
             var tex = new Texture2D(res, res, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
             var colors = new Color[res * res];
-            float outer = res * 0.5f - 2f;
-            float inner = outer * (1f - thickness);
+            float half = res * 0.5f - 2f;
+            float width = half * thickness;            // the stroke's full width
+            float reach = half * 0.92f - width * 0.5f; // how far each stroke runs from the middle, along its own line
             var center = new Vector2(res * 0.5f, res * 0.5f);
+            var a1 = new Vector2(1f, 1f).normalized;
+            var a2 = new Vector2(1f, -1f).normalized;
             for (int y = 0; y < res; y++)
             {
                 for (int x = 0; x < res; x++)
                 {
-                    float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), center);
-                    // Soft one-pixel edges on both sides of the line
-                    float a = Mathf.Clamp01(outer - d + 0.5f) * Mathf.Clamp01(d - inner + 0.5f);
+                    var p = new Vector2(x + 0.5f, y + 0.5f) - center;
+                    float d = Mathf.Min(StrokeDistance(p, a1, reach), StrokeDistance(p, a2, reach));
+                    // Soft one-pixel edge
+                    float a = Mathf.Clamp01(width * 0.5f - d + 0.5f);
                     colors[y * res + x] = new Color(1f, 1f, 1f, a);
                 }
             }
             tex.SetPixels(colors);
             tex.Apply();
-            ringSprite = Sprite.Create(tex, new Rect(0, 0, res, res), new Vector2(0.5f, 0.5f), 100f);
-            ringSpriteThickness = thickness;
-            return ringSprite;
+            crossSprite = Sprite.Create(tex, new Rect(0, 0, res, res), new Vector2(0.5f, 0.5f), 100f);
+            crossSpriteThickness = thickness;
+            return crossSprite;
+        }
+
+        // Distance from p to the segment through the middle along `axis`, `reach` long each way
+        private static float StrokeDistance(Vector2 p, Vector2 axis, float reach)
+        {
+            float t = Mathf.Clamp(Vector2.Dot(p, axis), -reach, reach);
+            return Vector2.Distance(p, axis * t);
         }
 
         private void OnMouseDown()
