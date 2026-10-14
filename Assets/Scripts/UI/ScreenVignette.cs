@@ -9,7 +9,8 @@ namespace TawanOS.UI
     /// image, not a camera effect, so it also darkens the edges of the screens that are all UI (หมอกดำ, rewards, เมรุ,
     /// วัด, the story). Its falloff is the same formula URP's Vignette uses: black, smoothness 0.45 like the combat
     /// scene, intensity 0.3 (lighter than the fight's 0.45, which was too dark over UI). MainMenu and CombatTestScene keep the
-    /// camera vignette they already have and get no overlay. Created once before the first scene; lives across scenes.
+    /// camera vignette they already have and get no overlay. A scene can have its own, heavier one (SceneIntensity: the
+    /// เมรุ, Game Designer 14 Oct). Created once before the first scene; lives across scenes.
     /// </summary>
     public class ScreenVignette : MonoBehaviour
     {
@@ -24,8 +25,16 @@ namespace TawanOS.UI
         public static float Smoothness = 0.45f;
         public static Color Tint = Color.black;
 
+        // Scenes darker at the edges than the rest. The เมรุ's open stonework is lit and pale, so the usual 0.3 barely
+        // shows there; this makes it read like the dark forest round the กองของเซ่น (Game Designer, 14 Oct). 0.5 hid
+        // the buttons at the screen's corners
+        private static readonly System.Collections.Generic.Dictionary<string, float> SceneIntensity =
+            new System.Collections.Generic.Dictionary<string, float> { { "MeruScene", 0.38f } };
+
         private static ScreenVignette instance;
         private GameObject overlay;
+        private RawImage image;
+        private float builtIntensity = -1f;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -42,10 +51,9 @@ namespace TawanOS.UI
             var group = canvas.GetComponent<CanvasGroup>();
             if (group != null) { group.blocksRaycasts = false; group.interactable = false; }
 
-            var image = new GameObject("Vignette", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
+            image = new GameObject("Vignette", typeof(RectTransform), typeof(RawImage)).GetComponent<RawImage>();
             image.transform.SetParent(canvas.transform, false);
             UiFactory.Stretch(image.rectTransform, 0f);
-            image.texture = BuildTexture(Intensity, Smoothness);
             image.color = Tint;
             image.raycastTarget = false;
             overlay = canvas.gameObject;
@@ -65,6 +73,13 @@ namespace TawanOS.UI
         private void Apply(Scene scene)
         {
             if (overlay != null) overlay.SetActive(System.Array.IndexOf(OwnVignette, scene.name) < 0);
+            float intensity = SceneIntensity.TryGetValue(scene.name, out var own) ? own : Intensity;
+            if (image != null && !Mathf.Approximately(intensity, builtIntensity))
+            {
+                if (image.texture != null) Destroy(image.texture);
+                image.texture = BuildTexture(intensity, Smoothness);
+                builtIntensity = intensity;
+            }
         }
 
         // URP Vignette (not rounded): d = |uv - 0.5| * intensity * 3, factor = (1 - d.d) ^ (smoothness * 5),
