@@ -22,7 +22,7 @@ namespace TawanOS.EventEngine
         private const string ScenePath = "Assets/Scenes/EventScene.unity";
         private const string MapConfigPath = "Assets/MapEngineData/Profiles/DefaultMapConfig.asset";
         private const string EventNodeProfilePath = "Assets/MapEngineData/Profiles/EventProfile.asset";
-        private const string EventIconPath = "Assets/MapEngineData/Icons/event-question.png";
+        private const string EventIconPath = "Assets/Art/MapIcons/หมอกดำ.png";
         private const string PraiEnemyPath = "Assets/CardEngineData/Enemies/PraiGhostProfile.asset";
 
         private static readonly Color Gold = new Color(0.93f, 0.78f, 0.45f);

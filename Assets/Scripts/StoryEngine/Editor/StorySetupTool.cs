@@ -19,7 +19,7 @@ namespace TawanOS.StoryEngine
         private const string BaseFolder = "Assets/StoryEngineData";
         private const string IntroStoryPath = BaseFolder + "/Story_Intro.asset";
         private const string ScenePath = "Assets/Scenes/StoryScene.unity";
-        private const string IconFolder = "Assets/ProjectAsset/MapNavigate/";
+        private const string IconFolder = "Assets/Art/MapIcons/";
 
         private static readonly Color Gold = new Color(0.93f, 0.78f, 0.45f);
         private static readonly Color Parchment = new Color(0.96f, 0.92f, 0.82f);
