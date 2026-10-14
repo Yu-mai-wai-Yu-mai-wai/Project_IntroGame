@@ -212,7 +212,7 @@ namespace TawanOS.UI
             if (current <= 0) return;
             Add("corruption", Target.Corruption, "มลทิน",
                 "การ์ดสายดำไม่ใช้กุศล แต่เพิ่มมลทิน (ตัวเลขมุมซ้ายบนของการ์ดสายดำ)\n" +
-                $"ถ้ามลทินถึง {threshold} คำสาปจะย้อนเข้าตัว: เสียขวัญ {EffectResolver.CurseBackfireKhwanLoss} (ไม่ต่ำกว่า 1 แต่ถ้าเหลือ 1 อยู่แล้วจะแพ้) แล้วมลทินกลับเป็น 0");
+                $"ถ้ามลทินถึง {threshold} คำสาปจะย้อนเข้าตัว: เสียขวัญ {EffectResolver.CurseBackfireKhwanLoss} (ไม่ต่ำกว่า 1 แต่ถ้าเหลือ 1 อยู่แล้วจะแพ้) แล้วมลทินส่วนที่เกินจะยกไปนับต่อ");
         }
 
         private void HandleBackfire()

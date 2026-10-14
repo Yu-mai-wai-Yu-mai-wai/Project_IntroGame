@@ -92,7 +92,7 @@ namespace TawanOS.CardEngine
         private void HandleCorruptionChanged(int current, int max) => Refresh(corruption, current, max, animate: true);
 
         // The ring swells, bursts into sparks and its fire goes low, then burns back up; the number shows it full
-        // for a moment before it drops to 0
+        // for a moment before it drops to what carried over
         private void HandleBackfire()
         {
             if (corruption == null) return;

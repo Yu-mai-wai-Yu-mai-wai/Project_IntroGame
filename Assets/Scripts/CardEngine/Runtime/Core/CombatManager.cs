@@ -675,9 +675,16 @@ namespace TawanOS.CardEngine
             state.enemyCorruption += amount;
             if (state.enemyCorruption < state.enemyCorruptionThreshold) return;
 
-            state.enemyCorruption = 0;
+            state.enemyCorruption = CorruptionCarryOver(state.enemyCorruption, state.enemyCorruptionThreshold);
             OnEnemyCurseBackfireTriggered?.Invoke();
             EffectResolver.Instance?.TriggerCurseBackfire(toPlayer: false);
+        }
+
+        // Corruption left after a backfire: the part that went past the threshold (6 + 3 at 7 leaves 2).
+        // One backfire per gain, so the leftover stays under the threshold.
+        private static int CorruptionCarryOver(int corruption, int threshold)
+        {
+            return Mathf.Clamp(corruption - threshold, 0, Mathf.Max(0, threshold - 1));
         }
 
         // เบี้ยแก้: raises how much Corruption a side can hold before the curse backfires
@@ -698,10 +705,10 @@ namespace TawanOS.CardEngine
         {
             state.currentCorruption += amount;
 
-            // Threshold curse backfire: at 7+ (the threshold), trigger curse and reset
+            // Threshold curse backfire: at 7+ (the threshold), trigger curse; what went past it carries over
             if (state.currentCorruption >= state.corruptionThreshold)
             {
-                state.currentCorruption = 0;
+                state.currentCorruption = CorruptionCarryOver(state.currentCorruption, state.corruptionThreshold);
                 OnCorruptionChanged?.Invoke(state.currentCorruption, state.corruptionThreshold);
                 OnCurseBackfireTriggered?.Invoke();
 
