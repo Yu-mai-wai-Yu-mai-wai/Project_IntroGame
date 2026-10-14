@@ -321,11 +321,10 @@ namespace TawanOS.GameFlow
             var column = doneAction == MeruAction.Burn ? burnColumn : upgradeColumn;
             if (stage != null)
             {
-                // The picked card leaves its column for the furnace; the column slides away behind it
-                var flying = CloneForFlight(pickedView);
+                // The column slides away and the stage carries the picked card into the furnace
                 SlideColumn(column, 1f);
                 group.blocksRaycasts = group.interactable = false;
-                stage.Offer(doneAction, card, flying);
+                stage.Offer(doneAction, card, pickedView);
                 return;
             }
 
@@ -333,24 +332,6 @@ namespace TawanOS.GameFlow
             SlideColumn(column, 1f);
             if (doneAction == MeruAction.Burn) meru.Leave();
             else ShowUpgraded(card, null);
-        }
-
-        // A copy of the picked card on top of everything, where the original sits, for the stage to fly into the furnace
-        private RectTransform CloneForFlight(RewardCardView source)
-        {
-            if (source == null) return null;
-            var copy = Instantiate(source, canvasRect);
-            copy.name = "CardIntoFurnace";
-            var rt = (RectTransform)copy.transform;
-            var from = (RectTransform)source.transform;
-            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = from.rect.size;
-            rt.position = from.TransformPoint(from.rect.center);
-            rt.SetAsLastSibling();
-            if (copy.pickedHighlight != null) copy.pickedHighlight.SetActive(false);
-            if (copy.button != null) copy.button.interactable = false;
-            foreach (var graphic in copy.GetComponentsInChildren<Graphic>()) graphic.raycastTarget = false;
-            return rt;
         }
 
         /// <summary>

@@ -82,9 +82,10 @@ namespace TawanOS.GameFlow
             var door = root.Find("Door");
             var building = root.Find("Building");
             var interior = root.Find("InteriorFurnace")?.GetComponent<Renderer>();
-            if (outsideCamera == null || insideCamera == null || door == null || building == null || interior == null)
+            var cart = root.Find("Cart")?.GetComponent<Renderer>();
+            if (outsideCamera == null || insideCamera == null || door == null || building == null || interior == null || cart == null)
             {
-                Debug.LogError("[MeruStageSetupTool] The model needs Camera, Camera.001, Door, Building and InteriorFurnace.");
+                Debug.LogError("[MeruStageSetupTool] The model needs Camera, Camera.001, Door, Building, InteriorFurnace and Cart.");
                 return false;
             }
 
@@ -155,6 +156,15 @@ namespace TawanOS.GameFlow
             stageView.door = door;
             stageView.doorHinge = hinge;
             stageView.fire = fire;
+            // The card lies in the cart's tray, a little toward the door, covering a sixty-fourth of the cart's top
+            // (Game Designer, 14 Oct)
+            var cartBounds = cart.bounds;
+            float cartAcross = 2f * (Mathf.Abs(right.x) * cartBounds.extents.x + Mathf.Abs(right.z) * cartBounds.extents.z);
+            float cartLength = 2f * (Mathf.Abs(facing.x) * cartBounds.extents.x + Mathf.Abs(facing.z) * cartBounds.extents.z);
+            stageView.cartTop = new Vector3(cartBounds.center.x, cartBounds.max.y - cartBounds.size.y * 0.15f, cartBounds.center.z)
+                                + facing * cartBounds.extents.magnitude * 0.1f;
+            stageView.cartRimY = cartBounds.max.y;
+            stageView.cardWorldWidth = Mathf.Sqrt(cartAcross * cartLength / 64f / (1312f / 939f));
             stageView.fireLight = fireLight;
             EditorUtility.SetDirty(stageView);
 

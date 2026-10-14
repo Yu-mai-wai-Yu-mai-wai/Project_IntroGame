@@ -16,7 +16,8 @@ namespace TawanOS.GameFlow
     /// Choosing a side opens the door and slides the view sideways (no step back) until the door sits beside the
     /// chosen column; going back closes it and slides back. The slide is a lens shift: the camera stays where it is
     /// and the picture moves, so the pillars near the camera never swing across the door. Once a card is burnt or
-    /// upgraded it flies into the furnace, the door shuts, and after a moment the fire (<see cref="MeruFireFx"/>) jets
+    /// upgraded it rises from the bottom of the screen as if held, is carried in through the door and laid on the
+    /// cart, the door shuts, and after a moment the fire (<see cref="MeruFireFx"/>) jets
     /// out of the gaps round the door as it rattles, then smoke rolls up. A burnt card is gone: the screen fades and the
     /// run goes on. An upgraded card comes back out of the reopened door and shows with the way on.
     /// Placed by Tools/TawanOS/Meru/Setup Meru Stage.
@@ -62,7 +63,14 @@ namespace TawanOS.GameFlow
         [Range(0f, 1f)] public float flicker = 0.18f;
 
         [Header("Offering")]
-        [Min(0.05f)] public float cardFlightSeconds = 0.7f;
+        [Tooltip("Top of the cart in the furnace (world space), where the card is laid.")]
+        public Vector3 cartTop;
+        [Tooltip("Height (world y) of the cart's rim; the card stays above it until it is over its place.")]
+        public float cartRimY;
+        [Tooltip("Width of the card in the scene, in world units.")]
+        public float cardWorldWidth = 1.3f;
+        [Min(0.05f)] public float cardRiseSeconds = 0.5f;
+        [Min(0.05f)] public float cardPlaceSeconds = 1.1f;
         [Tooltip("The wait between the door shutting and the fire bursting out.")]
         [Min(0f)] public float burstDelay = 0.6f;
         [Min(0.1f)] public float burstSeconds = 1.6f;
@@ -182,34 +190,26 @@ namespace TawanOS.GameFlow
         /// The card has been burnt or upgraded: it flies into the furnace, the door shuts, the fire bursts out round
         /// it; then the run goes on (burnt) or the new card comes back out (upgraded).
         /// </summary>
-        public void Offer(MeruAction action, CardDataSO card, RectTransform flyingCard)
+        public void Offer(MeruAction action, CardDataSO card, RewardCardView picked)
         {
             SetStage(Stage.Offering);
-            StartCoroutine(OfferRoutine(action, card, flyingCard));
+            StartCoroutine(OfferRoutine(action, card, picked));
         }
 
-        private IEnumerator OfferRoutine(MeruAction action, CardDataSO card, RectTransform flying)
+        private IEnumerator OfferRoutine(MeruAction action, CardDataSO card, RewardCardView picked)
         {
-            // Face the door again, then the card goes in through it
+            // Face the door again, then the card is laid on the cart inside
             SlideView(0f);
             yield return new WaitForSeconds(cameraSlideSeconds);
 
-            if (flying != null)
-            {
-                var cardGroup = flying.GetComponent<CanvasGroup>();
-                if (cardGroup == null) cardGroup = flying.gameObject.AddComponent<CanvasGroup>();
-                Vector2 target = DoorScreenPoint();
-                var flight = DOTween.Sequence().SetLink(flying.gameObject)
-                    .Append(flying.DOMove(new Vector3(target.x, target.y, flying.position.z), cardFlightSeconds).SetEase(Ease.InCubic))
-                    .Join(flying.DOScale(0.08f, cardFlightSeconds).SetEase(Ease.InQuad))
-                    .Join(cardGroup.DOFade(0f, cardFlightSeconds * 0.35f).SetDelay(cardFlightSeconds * 0.65f))
-                    .OnComplete(() => Destroy(flying.gameObject));
-                yield return flight.WaitForCompletion();
-            }
+            var held = picked != null ? WorldCard(picked) : null;
+            if (held != null) yield return LayOnCart(held);
 
             SwingDoor(0f, doorSeconds * 0.8f);
             yield return new WaitForSeconds(doorSeconds * 0.8f + burstDelay);
 
+            // The fire takes the card behind the shut door
+            if (held != null) Destroy(held.gameObject);
             yield return Burst();
 
             if (action == MeruAction.Burn)
@@ -224,6 +224,67 @@ namespace TawanOS.GameFlow
             SwingDoor(1f, doorSeconds);
             yield return new WaitForSeconds(doorSeconds * 0.6f);
             if (view != null) view.ShowUpgraded(card, DoorScreenPoint());
+        }
+
+        // The picked card as a flat card in the scene: a world-space canvas holding a copy of it
+        private Transform WorldCard(RewardCardView picked)
+        {
+            var go = new GameObject("CardOnCart", typeof(RectTransform));
+            var canvas = go.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            canvas.worldCamera = viewCamera;
+            var rt = (RectTransform)go.transform;
+            var size = ((RectTransform)picked.transform).rect.size;
+            if (size.x <= 0f) size = new Vector2(180f, 180f * 1312f / 939f);
+            rt.sizeDelta = size;
+            rt.localScale = Vector3.one * (cardWorldWidth / size.x);
+
+            var copy = Instantiate(picked, rt);
+            var crt = (RectTransform)copy.transform;
+            crt.anchorMin = Vector2.zero;
+            crt.anchorMax = Vector2.one;
+            crt.pivot = new Vector2(0.5f, 0.5f);
+            crt.offsetMin = crt.offsetMax = Vector2.zero;
+            crt.localRotation = Quaternion.identity;
+            crt.localScale = Vector3.one;
+            if (copy.pickedHighlight != null) copy.pickedHighlight.SetActive(false);
+            if (copy.button != null) copy.button.interactable = false;
+            foreach (var graphic in copy.GetComponentsInChildren<Graphic>()) graphic.raycastTarget = false;
+            var cardGroup = copy.GetComponent<CanvasGroup>();
+            if (cardGroup != null) cardGroup.alpha = 1f;
+            return rt;
+        }
+
+        // Up from below the screen as if lifted from the hand, a breath, then in through the door above the cart's rim,
+        // tipping over until it lies face up over its place (its top toward the back of the furnace), and down onto it.
+        // Kept above the rim until it is over its place, so it never passes through the cart's sides
+        private IEnumerator LayOnCart(Transform card)
+        {
+            var cam = viewCamera.transform;
+            float h = cardWorldWidth * 1312f / 939f;
+            float tan = Mathf.Tan(viewCamera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float d = h / (0.9f * tan);                       // close enough to fill about half the screen's height
+            var heldAt = cam.position + cam.forward * d - cam.up * d * tan * 0.3f;
+            var below = cam.position + cam.forward * d - cam.up * (d * tan + h * 0.6f);
+            var upright = Quaternion.LookRotation(cam.forward, cam.up) * Quaternion.Euler(-10f, 0f, 0f);
+            card.SetPositionAndRotation(below, upright);
+
+            var into = Vector3.ProjectOnPlane(cam.forward, Vector3.up).normalized;
+            var flat = Quaternion.LookRotation(Vector3.down, into);
+            float rim = Mathf.Max(cartRimY, cartTop.y);
+            // Upright in the doorway its lower edge clears the rim; flat over its place it hovers a little above it
+            var doorway = new Vector3(doorCenter.x, rim + h * 0.6f, doorCenter.z) - into * 1f;
+            var over = new Vector3(cartTop.x, rim + h * 0.2f, cartTop.z);
+            float carry = cardPlaceSeconds * 0.75f;
+
+            var lay = DOTween.Sequence().SetLink(card.gameObject)
+                .Append(card.DOMove(heldAt, cardRiseSeconds).SetEase(Ease.OutCubic))
+                .AppendInterval(0.2f)
+                .Append(card.DOPath(new[] { doorway, over }, carry, PathType.CatmullRom).SetEase(Ease.InOutSine))
+                .Join(card.DORotateQuaternion(flat, carry).SetEase(Ease.InOutSine))
+                .Append(card.DOMove(cartTop, cardPlaceSeconds - carry).SetEase(Ease.OutQuad));
+            yield return lay.WaitForCompletion();
+            yield return new WaitForSeconds(0.25f);
         }
 
         // Fire jets out of the gaps round the shut door, which rattles against it; the light flares, the view shakes;
