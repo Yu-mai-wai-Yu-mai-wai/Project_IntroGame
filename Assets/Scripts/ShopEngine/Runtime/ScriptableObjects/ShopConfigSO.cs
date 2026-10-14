@@ -35,8 +35,8 @@ namespace TawanOS.ShopEngine
         [Tooltip("Seeds the run deck if the player reaches the shop before any combat.")]
         public DeckConfigSO starterDeck;
         [Min(0)] public int cardsForSale = 5;
-        [Min(0)] public int cardBasePrice = 20;
-        [Min(0)] public int cardPricePerMerit = 8;
+        // Card prices are set per card (CardDataSO.shopPrice) and never vary
+        [Tooltip("How far an amulet's price may vary each visit, either way.")]
         [Range(0f, 0.5f)] public float priceVariance = 0.15f;
 
         [Header("Card Shelf (how cards look and move)")]
@@ -58,10 +58,30 @@ namespace TawanOS.ShopEngine
         // No services (Game Designer, 11 Oct): the shop sells cards only. Khwan is healed at the วัด node,
         // and cards leave the deck at the เมรุ.
 
+        // A card's price is its own shopPrice, set card by card in its Card Data and the same every visit
+        // (Game Designer, 15 Oct). A card without one is priced from its casting cost the same way the starting
+        // prices were made (CardPriceSetupTool): 1-2 for the cheapest, 8 for the dearest.
         public int RollCardPrice(CardDataSO card)
         {
-            int basePrice = cardBasePrice + cardPricePerMerit * card.meritCost;
-            return Vary(basePrice);
+            if (card == null) return 1;
+            if (card.shopPrice > 0) return card.shopPrice;
+            return PriceFromCost(card);
+        }
+
+        /// <summary>
+        /// Starting price of a card from its casting cost (กุศล for white magic, มลทิน for black): cost 1 = 1, 2 = 3,
+        /// 3 = 4, 4 = 6, 5 = 8; a familiar or amulet with 1 khwan is a ธูป cheaper, a familiar that hits harder than
+        /// its cost a ธูป dearer; never under 1 or over 8.
+        /// </summary>
+        public static int PriceFromCost(CardDataSO card)
+        {
+            int cost = card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost : card.corruptionGain;
+            int[] byCost = { 1, 1, 3, 4, 6, 8 };
+            int price = byCost[Mathf.Clamp(cost, 0, byCost.Length - 1)];
+            bool onBoard = card.cardType == CardType.Familiar || card.cardType == CardType.Amulet;
+            if (onBoard && card.familiarHealth <= 1) price--;
+            if (card.cardType == CardType.Familiar && card.familiarDamage > cost) price++;
+            return Mathf.Clamp(price, 1, 8);
         }
 
         public int Vary(int price)

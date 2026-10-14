@@ -27,7 +27,7 @@ namespace TawanOS.GameFlow
     public class RunState
     {
         public const int DefaultMaxHp = 50;
-        public const int DefaultIncense = 50;
+        public const int DefaultIncense = 5; // enough for a cheap card or two (Game Designer, 15 Oct; was 50)
         // 8 floors then the boss (Game Designer, 11 Oct; was 7). Saves keep the floor count they were made with.
         public const int DefaultTotalFloors = 8;
         private const int SaveVersion = 1;

@@ -30,6 +30,7 @@ MonoBehaviour:
     \u0E21\u0E19\u0E15\u0E4C\u0E02\u0E32\u0E27"
   meritCost: 3
   corruptionGain: 0
+  shopPrice: 4
   baseValue: 0
   durability: 0
   familiarHealth: 3

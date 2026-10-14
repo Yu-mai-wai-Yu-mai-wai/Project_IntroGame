@@ -26,6 +26,8 @@ namespace TawanOS.CardEngine
         [Header("Costs & Thresholds")]
         [Range(0, 6)] public int meritCost = 1;
         [Range(0, 9)] public int corruptionGain = 0;
+        [Tooltip("ราคาในศาลตายาย (ธูป) 0 = คิดจากค่าร่ายของการ์ด")]
+        [Range(0, 20)] public int shopPrice = 0;
 
         [Header("Primary Combat Values")]
         public int baseValue = 0;

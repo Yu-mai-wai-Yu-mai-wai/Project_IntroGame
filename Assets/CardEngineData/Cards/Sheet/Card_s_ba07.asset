@@ -24,6 +24,7 @@ MonoBehaviour:
     \u0E21\u0E19\u0E15\u0E4C\u0E14\u0E33"
   meritCost: 0
   corruptionGain: 1
+  shopPrice: 1
   baseValue: 0
   durability: 0
   familiarHealth: 1
