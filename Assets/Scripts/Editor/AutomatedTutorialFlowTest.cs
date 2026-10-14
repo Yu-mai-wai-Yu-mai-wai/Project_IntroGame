@@ -271,13 +271,13 @@ namespace TawanOS.EditorTools
                         }
                         if (!coach.ShowingLit) { Fail($"Hint '{title}' found nothing on screen to light"); break; }
                         if (!coach.BoxOnScreen) { Fail($"Hint '{title}': the text box goes off the screen ({Screen.width}x{Screen.height})"); break; }
-                        SessionState.SetString(KeySeenHints, SessionState.GetString(KeySeenHints, "") + "|" + title);
+                        SessionState.SetString(KeySeenHints, SessionState.GetString(KeySeenHints, "") + "|" + coach.ShowingKey);
                         coach.Next();
                         break;
                     }
 
                     var turns = TurnPhaseController.Instance;
-                    bool sawBoardHints = SessionState.GetString(KeySeenHints, "").Contains("|กุศล");
+                    bool sawBoardHints = SessionState.GetString(KeySeenHints, "").Contains("|merit");
                     if (turns != null && turns.CurrentPhase == TurnPhase.PlayerBoard && sawBoardHints)
                     {
                         if (Time.timeScale != 1f) { Fail($"Time scale left at {Time.timeScale} after the hints closed"); break; }
@@ -298,11 +298,11 @@ namespace TawanOS.EditorTools
                         Debug.Log($"{Tag} hint '{title}' lit={clashCoach.ShowingLit}");
                         if (!clashCoach.ShowingLit) { Fail($"Hint '{title}' found nothing on screen to light"); break; }
                         if (!clashCoach.BoxOnScreen) { Fail($"Hint '{title}': the text box goes off the screen ({Screen.width}x{Screen.height})"); break; }
-                        SessionState.SetString(KeySeenHints, SessionState.GetString(KeySeenHints, "") + "|" + title);
+                        SessionState.SetString(KeySeenHints, SessionState.GetString(KeySeenHints, "") + "|" + clashCoach.ShowingKey);
                         clashCoach.Next();
                         break;
                     }
-                    if (SessionState.GetString(KeySeenHints, "").Contains("|การ์ดตีกัน"))
+                    if (SessionState.GetString(KeySeenHints, "").Contains("|clash"))
                     {
                         Debug.Log($"{Tag} ok   clash hint shown inside the screen");
                         AdvanceTo(Step.LoseFight);
