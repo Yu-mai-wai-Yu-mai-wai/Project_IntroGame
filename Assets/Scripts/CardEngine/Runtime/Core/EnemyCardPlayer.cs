@@ -127,9 +127,9 @@ namespace TawanOS.CardEngine
         private const float PitDrawScoreNeeded = 2.5f;
         private int pitDrawsThisTurn;
 
-        // Same climbing price as the player's: the Nth pull this fight costs N Corruption
+        // Same climbing price as the player's: the Nth pull this fight costs N Corruption, at most MaxPitCorruption
         private int pitDraws;
-        public int NextPitCorruption => pitDraws + 1;
+        public int NextPitCorruption => Mathf.Min(pitDraws + 1, CardManager.MaxPitCorruption);
 
         public IEnumerator PlayTurn(CombatManager combat, int turn, EnemyCardPlayStyle style)
         {

@@ -202,7 +202,7 @@ namespace TawanOS.UI
             int pit = CardManager.Instance != null ? CardManager.Instance.NextPitCorruption : 1;
             Add("pit", Target.DrawPit, "หลุมจั่ว",
                 "ในตาของคุณ คลิกเพื่อจั่วการ์ดสุ่มเพิ่ม 1 ใบ แลกกับมลทิน\n" +
-                $"ครั้งต่อไปได้มลทิน {pit} แต้ม และยิ่งจั่วบ่อย มลทินยิ่งเพิ่ม");
+                $"ครั้งต่อไปได้มลทิน {pit} แต้ม และยิ่งจั่วบ่อย มลทินยิ่งเพิ่ม (สูงสุด {CardManager.MaxPitCorruption})");
             Add("inspect", Target.None, "ดูการ์ด",
                 "คลิกขวาที่การ์ดใบไหนก็ได้เพื่อดูรายละเอียด\nกด C เพื่อดูกระดานจากมุมบน");
         }
