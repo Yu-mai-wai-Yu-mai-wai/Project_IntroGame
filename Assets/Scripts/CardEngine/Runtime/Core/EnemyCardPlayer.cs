@@ -45,7 +45,9 @@ namespace TawanOS.CardEngine
         public int DiscardCount => discardPile.Count;
         public IReadOnlyList<CardInstance> DiscardPile => discardPile;
 
-        public void Init(EnemyProfileSO enemyProfile)
+        // deckOverride: cards to play instead of the profile's own deck (a preset picked by how far into the map the
+        // fight is); null or empty = the profile's deck. Only an enemy that has a deck of its own plays cards at all.
+        public void Init(EnemyProfileSO enemyProfile, List<CardDataSO> deckOverride = null)
         {
             profile = enemyProfile;
             pitDraws = 0;
@@ -55,7 +57,8 @@ namespace TawanOS.CardEngine
 
             if (!Active) return;
 
-            foreach (var template in profile.deck)
+            var cards = deckOverride != null && deckOverride.Count > 0 ? deckOverride : profile.deck;
+            foreach (var template in cards)
             {
                 if (template != null) drawPile.Add(new CardInstance(template));
             }

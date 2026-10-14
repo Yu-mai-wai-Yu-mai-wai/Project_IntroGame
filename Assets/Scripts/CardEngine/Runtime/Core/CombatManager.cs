@@ -24,6 +24,9 @@ namespace TawanOS.CardEngine
         [Header("Active Enemy")]
         public EnemyProfileSO currentEnemyProfile;
         public EnemyMove nextEnemyMove;
+        // Cards the enemy plays this fight instead of its profile's deck (set by GameFlowManager from
+        // EnemyDeckProgressionSO before the fight starts); null = the profile's own deck
+        [System.NonSerialized] public System.Collections.Generic.List<CardDataSO> enemyDeckOverride;
 
         private readonly EnemyCardPlayer enemyCards = new EnemyCardPlayer();
         public EnemyCardPlayer EnemyCards => enemyCards;
@@ -128,7 +131,7 @@ namespace TawanOS.CardEngine
             state.playerAuraCorruptionCap = 0;
             state.enemyAuraCorruptionCap = 0;
             enemyAI.Init(enemyProfile);
-            enemyCards.Init(enemyProfile);
+            enemyCards.Init(enemyProfile, enemyDeckOverride);
             PickNextEnemyMove();
 
             // Simplified Draw/Main/End test loop replaces the full turn flow when present

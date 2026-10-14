@@ -40,6 +40,8 @@ namespace TawanOS.GameFlow
 
         private NodeType currentCombatNodeType = NodeType.MinorEnemy;
         private EnemyProfileSO pendingEnemyProfile;
+        // The preset deck the pending enemy plays (EnemyDeckProgressionSO); null = its own deck
+        private System.Collections.Generic.List<CardDataSO> pendingEnemyDeck;
         private int? pendingEventFloor;
         private int pendingVictoryIncense;
         private RewardTier pendingRewardTier = RewardTier.Minor;
@@ -293,6 +295,8 @@ namespace TawanOS.GameFlow
                     // CombatManager.Start begins the fight with this profile (sceneLoaded runs before Start).
                     // Calling StartCombat here as well started two overlapping turn loops.
                     CombatManager.Instance.currentEnemyProfile = profile;
+                    CombatManager.Instance.enemyDeckOverride = pendingEnemyDeck;
+                    pendingEnemyDeck = null;
                 }
             }
         }
@@ -302,6 +306,7 @@ namespace TawanOS.GameFlow
             currentCombatNodeType = nodeType;
             RunState.Current.SetResume(ResumeKind.Combat, nodeType);
             pendingEnemyProfile = ResolveEnemyProfile(nodeType);
+            pendingEnemyDeck = ProgressionDeck(nodeType, pendingEnemyProfile);
             pendingVictoryIncense = RollIncense(nodeType switch
             {
                 NodeType.Boss => BossIncense,
@@ -363,6 +368,7 @@ namespace TawanOS.GameFlow
             // The event's enemy is not saved by reference; a resumed fight uses the minor-enemy encounter
             RunState.Current.SetResume(ResumeKind.Combat, NodeType.MinorEnemy);
             pendingEnemyProfile = enemy;
+            pendingEnemyDeck = ProgressionDeck(NodeType.MinorEnemy, enemy);
             pendingVictoryIncense = RollIncense(EventFightIncense);
             pendingRewardTier = RewardTier.Minor;
             if (Application.isPlaying) SceneTransition.Load(CombatSceneName);
@@ -623,6 +629,26 @@ namespace TawanOS.GameFlow
                 Debug.LogWarning("[GameFlowManager] VictoryScene is not in Build Settings (run Tools > TawanOS > Game Flow > Setup Victory Scene) - returning to Main Menu.");
                 if (Application.isPlaying) SceneTransition.Load(MainMenuSceneName);
             }
+        }
+
+        // The harder preset deck for how far into the map this fight is (EnemyDeckProgressionSO), or null
+        private static System.Collections.Generic.List<CardDataSO> ProgressionDeck(NodeType nodeType, EnemyProfileSO enemy)
+        {
+            var progression = EnemyDeckProgressionSO.Load();
+            return progression != null ? progression.DeckFor(nodeType, NodesPassed(), enemy) : null;
+        }
+
+        // Nodes the player has passed before the one they stand on = its map floor (0 = the first node). From the
+        // live map when there is one, else from the saved map (a fight resumed from the main menu).
+        private static int NodesPassed()
+        {
+            var graph = MapManager.Instance != null ? MapManager.Instance.CurrentGraph : null;
+            if (graph == null)
+            {
+                try { graph = new MapSaveManager().LoadMap(); }
+                catch (System.Exception e) { Debug.LogWarning($"[GameFlowManager] Could not read the saved map: {e.Message}"); }
+            }
+            return graph != null ? Mathf.Max(0, graph.currentPlayerPosition.y) : 0;
         }
 
         private EnemyProfileSO ResolveEnemyProfile(NodeType nodeType)
