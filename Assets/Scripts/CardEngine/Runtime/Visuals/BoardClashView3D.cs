@@ -162,6 +162,12 @@ namespace TawanOS.CardEngine
                 var v = slot.GetComponentInChildren<CardView3D>();
                 if (v != null && v.CardData == card) return v;
             }
+            // Mid-strike the attacker and its target are out of their slots, in a CardClashRig at the scene root,
+            // and that is exactly when the damage lands: look for the card anywhere
+            foreach (var v in FindObjectsByType<CardView3D>(FindObjectsSortMode.None))
+            {
+                if (v.CardData == card) return v;
+            }
             return null;
         }
 
