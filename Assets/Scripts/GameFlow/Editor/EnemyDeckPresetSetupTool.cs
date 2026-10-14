@@ -57,7 +57,6 @@ namespace TawanOS.GameFlow
                 if (!AssetDatabase.IsValidFolder("Assets/Resources")) AssetDatabase.CreateFolder("Assets", "Resources");
                 progression = ScriptableObject.CreateInstance<EnemyDeckProgressionSO>();
                 progression.minor = Steps((0, early), (3, mid), (6, late));
-                progression.elite = Steps((0, mid), (6, late));
                 progression.boss = Steps((0, late));
                 AssetDatabase.CreateAsset(progression, ProgressionPath);
                 Debug.Log($"[EnemyDeckPresetSetupTool] Created {ProgressionPath}");

@@ -7,7 +7,7 @@ using TawanOS.MapEngine;
 namespace TawanOS.GameFlow
 {
     /// <summary>
-    /// Enemies get harder decks the further the player is into the map. For each kind of fight a list of steps:
+    /// Enemies get harder decks the further the player is into the map. For ordinary fights and the boss a list of steps:
     /// from N nodes passed (the fight's map floor, 0 = the first node) the enemy plays that preset's cards instead
     /// of its own deck. The last step whose number is reached wins. Enemies without a card deck (moveset only) and
     /// the scripted tutorial bot are left as they are. Loaded from Resources/EnemyDeckProgression; create it with
@@ -28,8 +28,8 @@ namespace TawanOS.GameFlow
 
         [Tooltip("Off = every enemy plays its own deck, as before.")]
         public bool enabled = true;
+        // The map has no elite fights any more: everything that is not the boss uses the minor steps
         public List<Step> minor = new List<Step>();
-        public List<Step> elite = new List<Step>();
         public List<Step> boss = new List<Step>();
 
         private static EnemyDeckProgressionSO cached;
@@ -45,13 +45,7 @@ namespace TawanOS.GameFlow
         {
             if (!enabled || enemy == null || enemy.scriptedDeck || enemy.deck == null || enemy.deck.Count == 0) return null;
 
-            List<Step> steps;
-            switch (nodeType)
-            {
-                case NodeType.Boss: steps = boss; break;
-                case NodeType.EliteEnemy: steps = elite; break;
-                default: steps = minor; break;
-            }
+            var steps = nodeType == NodeType.Boss ? boss : minor;
 
             Step best = null;
             foreach (var step in steps)

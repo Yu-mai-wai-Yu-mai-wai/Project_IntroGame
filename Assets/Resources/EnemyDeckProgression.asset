@@ -20,11 +20,6 @@ MonoBehaviour:
     preset: {fileID: 11400000, guid: 4b5be3dd2810cd34a967eed711a6018d, type: 2}
   - fromNodesPassed: 6
     preset: {fileID: 11400000, guid: 21bf8a1fc7186034f9c0278efbd14306, type: 2}
-  elite:
-  - fromNodesPassed: 0
-    preset: {fileID: 11400000, guid: 4b5be3dd2810cd34a967eed711a6018d, type: 2}
-  - fromNodesPassed: 6
-    preset: {fileID: 11400000, guid: 21bf8a1fc7186034f9c0278efbd14306, type: 2}
   boss:
   - fromNodesPassed: 0
     preset: {fileID: 11400000, guid: 21bf8a1fc7186034f9c0278efbd14306, type: 2}
