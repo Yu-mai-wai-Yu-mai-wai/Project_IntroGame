@@ -94,7 +94,7 @@ namespace TawanOS.CardEngine
         public void SetStartingKhwan(int current, int max)
         {
             startingMaxPlayerKhwan = Mathf.Max(1, max);
-            startingPlayerKhwan = Mathf.Clamp(current, 1, startingMaxPlayerKhwan.Value);
+            startingPlayerKhwan = Mathf.Max(1, current); // above max = ขวัญชั่วคราว from the วัด, lost to damage first
         }
 
         /// <summary>Sets the player's max Merit for the next StartCombat (the run's, raised at ศาลตายาย). The enemy keeps maxMerit.</summary>

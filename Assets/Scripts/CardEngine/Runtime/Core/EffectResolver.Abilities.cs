@@ -575,7 +575,7 @@ namespace TawanOS.CardEngine
             int drained = Mathf.Max(0, before - (ownerIsPlayer ? s.enemyKhwan : s.playerKhwan));
             if (drained <= 0 || combat.IsCombatOver) return;
 
-            if (ownerIsPlayer) s.playerKhwan = Mathf.Min(s.maxPlayerKhwan, s.playerKhwan + drained);
+            if (ownerIsPlayer) s.playerKhwan = Mathf.Max(s.playerKhwan, Mathf.Min(s.maxPlayerKhwan, s.playerKhwan + drained)); // keeps ขวัญชั่วคราว
             else s.enemyKhwan = Mathf.Min(s.maxEnemyKhwan, s.enemyKhwan + drained);
             Debug.Log($"[Ability] ดูดขวัญ: {(ownerIsPlayer ? "player" : "enemy")} drains {drained} khwan.");
         }

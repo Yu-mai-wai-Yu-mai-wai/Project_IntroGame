@@ -40,23 +40,22 @@ namespace TawanOS.GameFlow
         [Min(0)] public int sparkCount = 160;
 
         [Header("Text")]
-        public string healLabel = "ฟื้นขวัญเต็ม";
-        public string maxHpLabel = "ขวัญสูงสุด +3";
-        public string fullLabel = "ขวัญเต็มอยู่แล้ว";
+        public string prayLabel = "กราบไหว้";
 
-        public Button HealButton => healButton;
-        public TextMeshProUGUI HealText => healText;
-        public Button MaxHpButton => maxHpButton;
-        public TextMeshProUGUI MaxHpText => maxHpText;
-        public Button PrayButton => healButton;
+        [Header("Khwan bar")]
+        public Color barColour = new Color(0.3f, 0.75f, 0.45f);
+        [Tooltip("The bar's colour while the player has ขวัญชั่วคราว (Khwan above max).")]
+        public Color tempKhwanColour = new Color(1f, 0.8f, 0.35f);
+
+        public Button PrayButton => prayButton;
+        public TextMeshProUGUI PrayText => prayText;
 
         private TempleManager temple;
-        private Button healButton;
-        private TextMeshProUGUI healText;
-        private Button maxHpButton;
-        private TextMeshProUGUI maxHpText;
+        private Button prayButton;
+        private TextMeshProUGUI prayText;
         private CanvasGroup buttonsGroup;
         private RectTransform barFill;
+        private Image barFillImage;
         private TextMeshProUGUI barText;
         private Image fade;
         private ParticleSystem sparks;
@@ -89,46 +88,27 @@ namespace TawanOS.GameFlow
         {
             temple = manager;
             used = false;
-            if (healButton == null) BuildUI();
+            if (prayButton == null) BuildUI();
             if (fade != null) fade.color = new Color(0f, 0f, 0f, 0f);
             shownHp = RunState.Current.CurrentHp;
             SetBar(shownHp);
 
-            bool full = RunState.Current.CurrentHp >= RunState.Current.MaxHp;
-            bool canHeal = temple != null && temple.CanHeal;
-            healButton.interactable = canHeal;
-            healText.text = full ? fullLabel : healLabel;
-            healText.color = canHeal ? new Color(1f, 0.9f, 0.62f) : new Color(0.7f, 0.7f, 0.7f, 0.6f);
-
-            bool canMax = temple != null && temple.CanRaiseMaxHp;
-            maxHpButton.interactable = canMax;
-            maxHpText.text = maxHpLabel;
-            maxHpText.color = canMax ? new Color(1f, 0.9f, 0.62f) : new Color(0.7f, 0.7f, 0.7f, 0.6f);
+            prayButton.interactable = temple != null && temple.CanPray;
+            prayText.text = prayLabel;
 
             if (buttonsGroup != null) buttonsGroup.alpha = 1f;
         }
 
-        private void OnHeal()
+        private void OnPray()
         {
-            if (used || temple == null || !temple.CanHeal) return;
+            if (used || temple == null || !temple.CanPray) return;
             used = true;
-            healButton.interactable = false;
-            maxHpButton.interactable = false;
+            prayButton.interactable = false;
             if (buttonsGroup != null) buttonsGroup.DOFade(0f, 0.3f).SetLink(gameObject);
-            StartCoroutine(Bow(false));
+            StartCoroutine(Bow());
         }
 
-        private void OnMaxHp()
-        {
-            if (used || temple == null || !temple.CanRaiseMaxHp) return;
-            used = true;
-            healButton.interactable = false;
-            maxHpButton.interactable = false;
-            if (buttonsGroup != null) buttonsGroup.DOFade(0f, 0.3f).SetLink(gameObject);
-            StartCoroutine(Bow(true));
-        }
-
-        private IEnumerator Bow(bool isMaxHp)
+        private IEnumerator Bow()
         {
             float before = RunState.Current.CurrentHp;
             bool still = GameSettings.ReduceMotion;
@@ -145,22 +125,14 @@ namespace TawanOS.GameFlow
             }
             else TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_merit_gain");
 
-            // Apply choice
-            if (isMaxHp)
-            {
-                temple.ChooseMaxHp(3);
-            }
-            else
-            {
-                temple.Pray();
-            }
+            temple.Pray();
 
             if (daisGlow != null) daisGlow.DOIntensity(daisGlowBlessed, 0.8f).SetLink(gameObject);
             for (int i = 0; i < candleBase.Length; i++) candleBase[i] *= 1.6f;
             if (sparks != null) sparks.Emit(sparkCount);
 
             float after = RunState.Current.CurrentHp;
-            if (after > before || isMaxHp)
+            if (after > before)
             {
                 yield return DOTween.To(() => shownHp, v => { shownHp = v; SetBar(v); }, after, fillSeconds)
                     .SetEase(Ease.OutCubic).SetLink(gameObject).WaitForCompletion();
@@ -178,7 +150,10 @@ namespace TawanOS.GameFlow
             var run = RunState.Current;
             float t = run.MaxHp > 0 ? Mathf.Clamp01(hp / run.MaxHp) : 0f;
             barFill.anchorMax = new Vector2(t, 1f);
-            barText.text = $"ขวัญ {Mathf.RoundToInt(hp)} / {run.MaxHp}";
+            int shown = Mathf.RoundToInt(hp);
+            int temp = Mathf.Max(0, shown - run.MaxHp);
+            barFillImage.color = temp > 0 ? tempKhwanColour : barColour; // gold while there is ขวัญชั่วคราว
+            barText.text = temp > 0 ? $"ขวัญ {shown} / {run.MaxHp}  <size=80%>(ชั่วคราว +{temp})</size>" : $"ขวัญ {shown} / {run.MaxHp}";
         }
 
         // ---- UI ----
@@ -212,15 +187,15 @@ namespace TawanOS.GameFlow
             trackRect.anchorMax = new Vector2(1f, 0.5f);
             trackRect.offsetMin = new Vector2(18f, 12f);
             trackRect.offsetMax = new Vector2(-18f, -2f);
-            var fill = UiFactory.CreateImage("Fill", track.transform, new Color(0.3f, 0.75f, 0.45f));
-            barFill = fill.rectTransform;
+            barFillImage = UiFactory.CreateImage("Fill", track.transform, barColour);
+            barFill = barFillImage.rectTransform;
             barFill.anchorMin = Vector2.zero;
             barFill.anchorMax = Vector2.one;
             barFill.offsetMin = barFill.offsetMax = Vector2.zero;
             barFill.pivot = new Vector2(0f, 0.5f);
             foreach (var g in bar.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
 
-            // Choice buttons above the bar
+            // The button above the bar
             var buttonsGo = new GameObject("ButtonsRoot", typeof(RectTransform), typeof(CanvasGroup));
             buttonsGo.transform.SetParent(root, false);
             var buttonsRect = (RectTransform)buttonsGo.transform;
@@ -230,27 +205,16 @@ namespace TawanOS.GameFlow
             buttonsRect.sizeDelta = new Vector2(640f, 64f);
             buttonsGroup = buttonsGo.GetComponent<CanvasGroup>();
 
-            // Heal button (left)
-            healButton = UiFactory.CreateButton(buttonsGo.transform, "HealButton", healLabel, theme, new Vector2(0f, 0f), new Vector2(0.48f, 1f));
-            healButton.onClick.AddListener(OnHeal);
-            healText = healButton.GetComponentInChildren<TextMeshProUGUI>();
-            if (theme.titleFont != null) healText.font = theme.titleFont;
-            healText.fontSize = theme.bodySize * 1.25f;
-            healText.color = new Color(1f, 0.9f, 0.62f);
-            var healOutline = healButton.gameObject.AddComponent<Outline>();
-            healOutline.effectColor = new Color(0.93f, 0.78f, 0.45f, 0.9f);
-            healOutline.effectDistance = new Vector2(2f, -2f);
-
-            // Max Khwan button (right)
-            maxHpButton = UiFactory.CreateButton(buttonsGo.transform, "MaxHpButton", maxHpLabel, theme, new Vector2(0.52f, 0f), new Vector2(1f, 1f));
-            maxHpButton.onClick.AddListener(OnMaxHp);
-            maxHpText = maxHpButton.GetComponentInChildren<TextMeshProUGUI>();
-            if (theme.titleFont != null) maxHpText.font = theme.titleFont;
-            maxHpText.fontSize = theme.bodySize * 1.25f;
-            maxHpText.color = new Color(1f, 0.9f, 0.62f);
-            var maxOutline = maxHpButton.gameObject.AddComponent<Outline>();
-            maxOutline.effectColor = new Color(0.93f, 0.78f, 0.45f, 0.9f);
-            maxOutline.effectDistance = new Vector2(2f, -2f);
+            // กราบไหว้, the one thing to do here
+            prayButton = UiFactory.CreateButton(buttonsGo.transform, "PrayButton", prayLabel, theme, new Vector2(0.25f, 0f), new Vector2(0.75f, 1f));
+            prayButton.onClick.AddListener(OnPray);
+            prayText = prayButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (theme.titleFont != null) prayText.font = theme.titleFont;
+            prayText.fontSize = theme.bodySize * 1.25f;
+            prayText.color = new Color(1f, 0.9f, 0.62f);
+            var outline = prayButton.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.93f, 0.78f, 0.45f, 0.9f);
+            outline.effectDistance = new Vector2(2f, -2f);
 
             var fadeCanvas = UiFactory.CreateOverlayCanvas("TempleFadeCanvas", 900, transform);
             fade = UiFactory.CreateImage("Fade", fadeCanvas.transform, Color.black);

@@ -71,46 +71,48 @@ namespace TawanOS.EditorTools
                 failures += Expect("Legend no longer lists Elite", !MapLegendUI.AllNodeTypes.Contains(NodeType.EliteEnemy));
                 failures += Expect("Legend has 7 rows", MapLegendUI.AllNodeTypes.Length == 7);
 
-                // 3. The temple choice: heal to full OR max khwan +3
+                // 3. One bow: heal to full when hurt; ขวัญชั่วคราว +5 when full, stacking; damage takes it first
                 RunState.StartNewRun(RunState.DefaultTotalFloors);
                 var run = RunState.Current;
                 var go = new GameObject("TempleTests");
                 try
                 {
-                    // Part A: Hurt player can choose heal
                     var temple = go.AddComponent<TempleManager>();
                     run.SetCurrentHp(12);
                     failures += Expect("Hurt player can pray", temple.CanPray);
-                    failures += Expect("Hurt player can heal", temple.CanHeal);
                     int healed = temple.Pray();
-                    failures += Expect("Praying heals to full", run.CurrentHp == run.MaxHp);
+                    failures += Expect("Hurt: praying heals to full, no extra", run.CurrentHp == run.MaxHp && run.TempKhwan == 0);
                     failures += Expect("Pray reports the Khwan restored", healed == run.MaxHp - 12);
                     run.SetCurrentHp(5);
                     failures += Expect("Only one blessing per visit", temple.Pray() == 0 && run.CurrentHp == 5);
-                    failures += Expect("Cannot choose +3 after heal in same visit", temple.ChooseMaxHp(3) == 0);
 
-                    // Part B: Full khwan: heal disabled, choosing +3 raises max by 3
                     var stageGo = new GameObject("StageTest");
                     stageGo.transform.SetParent(go.transform);
                     var stage = stageGo.AddComponent<TempleStageView>();
-                    var fresh = stageGo.AddComponent<TempleManager>();
-                    fresh.stage = stage;
+                    var full = stageGo.AddComponent<TempleManager>();
+                    full.stage = stage;
                     run.SetCurrentHp(run.MaxHp);
+                    stage.Show(full);
+                    failures += Expect("Full: the one กราบไหว้ button is enabled", stage.PrayButton.interactable && stage.PrayText.text == "กราบไหว้");
+                    int gained = full.Pray();
+                    failures += Expect("Full: bowing gives ขวัญชั่วคราว +5 (20/20 -> 25/20)", gained == 5 && run.TempKhwan == 5 && run.CurrentHp == run.MaxHp + 5);
 
-                    failures += Expect("heal option disabled when full", !fresh.CanHeal && !fresh.CanPray);
-                    failures += Expect("Can choose +3 max khwan when full", fresh.CanRaiseMaxHp);
+                    var again = go.AddComponent<TempleManager>();
+                    run.SetCurrentHp(run.MaxHp + 3);
+                    again.Pray();
+                    failures += Expect("ขวัญชั่วคราว stacks (23/20 -> 28/20)", run.CurrentHp == run.MaxHp + 8);
 
-                    stage.Show(fresh);
-                    failures += Expect("Stage heal button disabled when full", !stage.HealButton.interactable && stage.HealText.text == "ขวัญเต็มอยู่แล้ว");
-                    failures += Expect("Stage max khwan button enabled", stage.MaxHpButton.interactable && stage.MaxHpText.text == "ขวัญสูงสุด +3");
-
-                    int prevMax = run.MaxHp;
-                    int prevHp = run.CurrentHp;
-                    int added = fresh.ChooseMaxHp(3);
-                    failures += Expect("full khwan: choosing +3 raises max by 3", run.MaxHp == prevMax + 3);
-                    failures += Expect("full khwan: choosing +3 raises current by 3", run.CurrentHp == prevHp + 3);
-                    failures += Expect("ChooseMaxHp reports 3 added", added == 3);
-                    failures += Expect("Only one blessing per visit after max hp choice", fresh.Used && !fresh.CanRaiseMaxHp && !fresh.CanHeal);
+                    run.Heal(10);
+                    failures += Expect("Heals neither add to nor cut ขวัญชั่วคราว", run.CurrentHp == run.MaxHp + 8);
+                    run.TakeDamage(8);
+                    failures += Expect("Damage takes ขวัญชั่วคราว first, gone at max", run.CurrentHp == run.MaxHp && run.TempKhwan == 0);
+                    run.AddTempKhwan(5);
+                    run.ChangeMaxHp(3);
+                    failures += Expect("Max Khwan +3 keeps ขวัญชั่วคราว on top", run.TempKhwan == 5);
+                    run.SetCurrentHp(run.MaxHp + 50);
+                    failures += Expect("SetCurrentHp never adds ขวัญชั่วคราว", run.CurrentHp == run.MaxHp + 5);
+                    run.ChangeMaxHp(-3); // leave the run as the next test expects it
+                    run.TakeDamage(run.TempKhwan);
                 }
                 finally
                 {
