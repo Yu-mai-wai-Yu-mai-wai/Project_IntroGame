@@ -58,13 +58,15 @@ namespace TawanOS.EditorTools
             failures += Expect($"{label}: atlas is static (pre-baked, not Dynamic)",
                 sdf.atlasPopulationMode == AtlasPopulationMode.Static);
 
-            // Every Thai code point the source font has must be baked in (search fallbacks, never add on the fly).
+            // Every Thai code point the source font has must be baked into this atlas itself: a glyph found only in a
+            // fallback is drawn in the other font's style (ำ in RueangLao text came from EkkamaiVibe).
             var missingInAtlas = new StringBuilder();
             for (int c = 0x0E01; c <= 0x0E5B; c++)
             {
                 if (c > 0x0E3A && c < 0x0E3F) continue; // unassigned
                 if (!ttf.HasCharacter((char)c)) continue;
-                if (!sdf.HasCharacter((char)c, searchFallbacks: true, tryAddCharacter: false))
+                if (c == 0x0E4E && label == "MN-RueangLao") continue; // ๎ is not in the font's cmap (Font.HasCharacter says it is)
+                if (!sdf.HasCharacter((char)c, searchFallbacks: false, tryAddCharacter: false))
                     missingInAtlas.Append($"U+{c:X4} ");
             }
             failures += Expect($"{label}: all Thai glyphs baked [missing: {missingInAtlas}]", missingInAtlas.Length == 0);

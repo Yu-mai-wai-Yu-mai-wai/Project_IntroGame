@@ -95,7 +95,7 @@ namespace TawanOS.GameFlow
             }
             if (incenseText != null)
             {
-                incenseText.text = incenseEarned > 0 ? $"＋{incenseEarned} ธูป" : string.Empty;
+                incenseText.text = incenseEarned > 0 ? $"+{incenseEarned} ธูป" : string.Empty;
                 incenseText.transform.localScale = Vector3.one * 1.5f;
                 incenseText.transform.DOScale(1f, 0.45f).SetEase(Ease.OutBack);
             }

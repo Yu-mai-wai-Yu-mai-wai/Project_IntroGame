@@ -289,16 +289,23 @@ namespace TawanOS.GameFlow
 
         // ---------------------------------------------------------------- stats
 
+        /// <summary>
+        /// ขวัญชั่วคราว: Khwan above MaxHp, given only by bowing at the วัด with full Khwan (Game Designer, 15 Oct).
+        /// It is ordinary Khwan that damage takes first, so it is gone once Khwan drops back to MaxHp; heals never
+        /// raise Khwan past MaxHp nor cut the extra off.
+        /// </summary>
+        public int TempKhwan => Mathf.Max(0, CurrentHp - MaxHp);
+
         public void Heal(int amount)
         {
-            CurrentHp = Mathf.Clamp(CurrentHp + Mathf.Max(0, amount), 0, MaxHp);
+            CurrentHp = Mathf.Max(CurrentHp, Mathf.Min(MaxHp, CurrentHp + Mathf.Max(0, amount)));
             Changed();
         }
 
         /// <summary>Events never kill the player outright: HP bottoms out at 1.</summary>
         public void TakeDamage(int amount)
         {
-            CurrentHp = Mathf.Clamp(CurrentHp - Mathf.Max(0, amount), 1, MaxHp);
+            CurrentHp = Mathf.Max(1, CurrentHp - Mathf.Max(0, amount));
             Changed();
         }
 
@@ -308,14 +315,24 @@ namespace TawanOS.GameFlow
         /// </summary>
         public void SetCurrentHp(int hp)
         {
-            CurrentHp = Mathf.Clamp(hp, 1, MaxHp);
+            // Above MaxHp only up to the ขวัญชั่วคราว already held: a fight can lose it but never adds to it
+            CurrentHp = Mathf.Clamp(hp, 1, Mathf.Max(MaxHp, CurrentHp));
             Changed();
         }
 
         public void ChangeMaxHp(int delta)
         {
+            int temp = TempKhwan; // ขวัญชั่วคราว rides on top of whatever the max becomes
+            int baseHp = CurrentHp - temp;
             MaxHp = Mathf.Max(1, MaxHp + delta);
-            CurrentHp = Mathf.Clamp(delta > 0 ? CurrentHp + delta : CurrentHp, 1, MaxHp);
+            CurrentHp = Mathf.Clamp(delta > 0 ? baseHp + delta : baseHp, 1, MaxHp) + temp;
+            Changed();
+        }
+
+        /// <summary>Adds ขวัญชั่วคราว: Khwan above MaxHp (from full, or on top of what is already there).</summary>
+        public void AddTempKhwan(int amount)
+        {
+            CurrentHp = Mathf.Max(CurrentHp, MaxHp) + Mathf.Max(0, amount);
             Changed();
         }
 
@@ -491,7 +508,7 @@ namespace TawanOS.GameFlow
         private void Apply(RunSaveData data)
         {
             MaxHp = Mathf.Max(1, data.maxHp);
-            CurrentHp = Mathf.Clamp(data.currentHp, 1, MaxHp);
+            CurrentHp = Mathf.Max(1, data.currentHp); // above MaxHp = ขวัญชั่วคราว
             MaxMerit = data.maxMerit > 0 ? data.maxMerit : DefaultMaxMerit; // saves from before the field have 0
             Incense = Mathf.Max(0, data.incense);
             TotalFloors = data.totalFloors > 0 ? data.totalFloors : DefaultTotalFloors;

@@ -88,22 +88,20 @@ namespace TawanOS.UI
             borderImg.color = theme != null ? theme.accent : new Color(0.94f, 0.68f, 0.48f);
             borderImg.raycastTarget = false;
 
-            // Inner dark panel
-            var innerGo = new GameObject("InnerPanel", typeof(RectTransform), typeof(Image));
+            // Inner dark panel, behind the text and outside the layout
+            var innerGo = new GameObject("InnerPanel", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             var innerRect = innerGo.GetComponent<RectTransform>();
             innerRect.SetParent(panelRect, false);
             UiFactory.Stretch(innerRect, 2f);
+            innerGo.GetComponent<LayoutElement>().ignoreLayout = true;
             var innerImg = innerGo.GetComponent<Image>();
             innerImg.color = theme != null ? theme.black : new Color(0.04f, 0.04f, 0.05f, 0.95f);
             innerImg.raycastTarget = false;
 
-            // Layout
-            var contentGo = new GameObject("Content", typeof(RectTransform));
-            var contentRect = contentGo.GetComponent<RectTransform>();
-            contentRect.SetParent(innerRect, false);
-            UiFactory.Stretch(contentRect, 10f);
-
-            var layout = contentGo.AddComponent<VerticalLayoutGroup>();
+            // The layout lives on the panel itself, so its ContentSizeFitter can size it to the text
+            // (on a grandchild it gave the panel a height of 0 and the text spilled out of an empty box)
+            var layout = panelGo.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(12, 12, 12, 12);
             layout.childControlWidth = true;
             layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
@@ -114,11 +112,11 @@ namespace TawanOS.UI
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            titleText = UiFactory.CreateText(contentRect, "Title", "", theme != null ? theme.titleSize * 0.75f : 28f,
+            titleText = UiFactory.CreateText(panelRect, "Title", "", theme != null ? theme.titleSize * 0.75f : 28f,
                 theme != null ? theme.accent : Color.yellow, TextAlignmentOptions.TopLeft, theme?.titleFont);
             titleText.textWrappingMode = TextWrappingModes.Normal;
 
-            descriptionText = UiFactory.CreateText(contentRect, "Description", "", theme != null ? theme.bodySize * 0.85f : 20f,
+            descriptionText = UiFactory.CreateText(panelRect, "Description", "", theme != null ? theme.bodySize * 0.85f : 20f,
                 theme != null ? theme.text : Color.white, TextAlignmentOptions.TopLeft, theme?.bodyFont);
             descriptionText.textWrappingMode = TextWrappingModes.Normal;
             UiFactory.EnableThaiMarks(descriptionText);
@@ -134,6 +132,7 @@ namespace TawanOS.UI
             if (descriptionText != null) descriptionText.text = description;
 
             panelRect.gameObject.SetActive(true);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(panelRect); // the real height before it is placed
             UpdatePosition(screenPosition);
         }
 
@@ -146,8 +145,10 @@ namespace TawanOS.UI
             // Convert screen position to canvas space
             Vector2 pos = screenPosition;
             float margin = 20f;
-            float w = panelRect.rect.width > 0 ? panelRect.rect.width : 360f;
-            float h = panelRect.rect.height > 0 ? panelRect.rect.height : 120f;
+            // The panel is sized in canvas units; the mouse and Screen are in pixels
+            float scale = canvas != null ? canvas.scaleFactor : 1f;
+            float w = (panelRect.rect.width > 0 ? panelRect.rect.width : 360f) * scale;
+            float h = (panelRect.rect.height > 0 ? panelRect.rect.height : 120f) * scale;
 
             // Pivot adjustment so tooltip stays inside screen bounds
             float pivotX = 0f;

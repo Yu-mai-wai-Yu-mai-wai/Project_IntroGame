@@ -4,8 +4,9 @@ using UnityEngine;
 namespace TawanOS.GameFlow
 {
     /// <summary>
-    /// วัด (a map node): the player bows to the Buddha and the run's Khwan goes back to full, for free, once per
-    /// visit; then leaves. The only place in the game that heals besides a few หมอกดำ events (Game Designer, 11 Oct).
+    /// วัด (a map node): the player bows to the Buddha once per visit, for free, then leaves. Khwan below max goes
+    /// back to full; with full Khwan the bow gives ขวัญชั่วคราว +5 instead, stacking on any already there
+    /// (Game Designer, 15 Oct; replaces the heal / max Khwan +3 choice).
     /// Raises <see cref="OnTempleFinished"/> when the player leaves.
     /// </summary>
     public class TempleManager : MonoBehaviour
@@ -20,10 +21,10 @@ namespace TawanOS.GameFlow
         // One blessing per visit
         public bool Used { get; private set; }
 
-        public bool CanHeal => !Used && RunState.Current.CurrentHp < RunState.Current.MaxHp;
-        public bool CanPray => CanHeal;
-        public bool CanRaiseMaxHp => !Used;
-        public bool CanPrayMaxHp => CanRaiseMaxHp;
+        [Tooltip("ขวัญชั่วคราว from bowing with full Khwan.")]
+        [Min(0)] public int tempKhwanOnFull = 5;
+
+        public bool CanPray => !Used;
 
         private void Awake()
         {
@@ -46,29 +47,20 @@ namespace TawanOS.GameFlow
             if (stage != null) stage.Show(this);
         }
 
-        /// <summary>Khwan back to full. Returns how much was healed (0 if nothing happened).</summary>
+        /// <summary>
+        /// Khwan back to full, or ขวัญชั่วคราว +<see cref="tempKhwanOnFull"/> when already full.
+        /// Returns the Khwan gained (0 if already used this visit).
+        /// </summary>
         public int Pray()
         {
-            if (!CanHeal) return 0;
+            if (!CanPray) return 0;
             var run = RunState.Current;
-            int healed = run.MaxHp - run.CurrentHp;
-            run.Heal(healed);
+            int before = run.CurrentHp;
+            if (run.CurrentHp < run.MaxHp) run.Heal(run.MaxHp - run.CurrentHp);
+            else run.AddTempKhwan(tempKhwanOnFull);
             Used = true;
-            return healed;
+            return run.CurrentHp - before;
         }
-
-        public int ChooseHeal() => Pray();
-
-        /// <summary>Raises Max Khwan by amount (default +3). Returns amount added (0 if already used).</summary>
-        public int ChooseMaxHp(int amount = 3)
-        {
-            if (!CanRaiseMaxHp) return 0;
-            RunState.Current.ChangeMaxHp(amount);
-            Used = true;
-            return amount;
-        }
-
-        public int PrayMaxHp(int amount = 3) => ChooseMaxHp(amount);
 
         public void Leave()
         {
