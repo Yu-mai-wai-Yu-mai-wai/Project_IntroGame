@@ -41,7 +41,7 @@ namespace TawanOS.ShopEngine
         private readonly Dictionary<RectTransform, int> shelfUsed = new Dictionary<RectTransform, int>();
         private ShopCardShelf cardShelf; // real card faces, when the config has a card template
 
-        // Blessings are smoke buttons like the main menu's, stacked in one column on the amulet shelf
+        // Blessings are smoke buttons like the main menu's, side by side on the amulet shelf
         private RectTransform blessingColumn;
         private readonly List<Button> blessingButtons = new List<Button>();
         private readonly List<ShopOffer> blessingTargets = new List<ShopOffer>();
@@ -147,10 +147,10 @@ namespace TawanOS.ShopEngine
             if (blessingColumn == null && offers.Count > 0)
             {
                 blessingColumn = UiFactory.CreateRect("Blessings", amuletRow);
-                var layout = blessingColumn.gameObject.AddComponent<VerticalLayoutGroup>();
-                layout.spacing = 30f;
+                var layout = blessingColumn.gameObject.AddComponent<HorizontalLayoutGroup>();
+                layout.spacing = 70f;
                 layout.padding = new RectOffset(40, 40, 0, 0); // room for the smoke to spill past the sides
-                layout.childAlignment = TextAnchor.MiddleCenter;
+                layout.childAlignment = TextAnchor.MiddleLeft;
                 layout.childControlWidth = layout.childControlHeight = true;
                 layout.childForceExpandWidth = true;
                 layout.childForceExpandHeight = false;
@@ -174,8 +174,8 @@ namespace TawanOS.ShopEngine
                 // Price on its own line, gold like the card prices (red when the player cannot pay)
                 string price = $"<color={(run.CanAfford(offer.price) ? "#FAD680" : "#E6665A")}>{PriceLabel(offer.price)}</color>";
                 button.GetComponentInChildren<TextMeshProUGUI>(true).text = offer.sold
-                    ? $"{b.displayName}  ·  ถวายแล้ว"
-                    : $"{b.displayName}  ·  {b.description}\n{price}";
+                    ? "ถวายแล้ว"
+                    : $"{b.description}\n{price}";
             }
             for (int i = offers.Count; i < blessingButtons.Count; i++) blessingButtons[i].gameObject.SetActive(false);
         }
@@ -184,7 +184,7 @@ namespace TawanOS.ShopEngine
         {
             var theme = UIThemeSO.Current;
             var rect = UiFactory.CreateRect($"Blessing{index}", blessingColumn);
-            rect.gameObject.AddComponent<LayoutElement>().preferredHeight = 96f;
+            rect.gameObject.AddComponent<LayoutElement>().preferredHeight = 140f; // padding above and below the two lines
             var panel = rect.gameObject.AddComponent<Image>();
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = panel;
