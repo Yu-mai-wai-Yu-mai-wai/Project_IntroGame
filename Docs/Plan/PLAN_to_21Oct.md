@@ -105,7 +105,7 @@
 - ทางเลือก ข (ถ้าทีมเลือกทำ): `RelicEffects` ใน `TawanOS.GameFlow` อ่าน `RunState.RelicIds` ตอนเริ่ม combat แล้วใช้ effect ที่มีอยู่แล้ว (`AddShield`, `AddMerit`, `RaiseCorruptionThreshold`, `ApplyStatus`) map จาก relicId ทีละตัว
 - **Done when:** ไม่มีทางซื้อหรือได้ของที่ไม่มีผลในเกม
 
-### [x] A7 ศัตรู Elite — **ยกเลิก 11 ต.ค. (Game Designer):** ไม่มีโหนด Elite บนแผนที่แล้ว (ส่วนแบ่งโอกาสไปเป็นศัตรูทั่วไป) profile และ `EncounterTable.elite` เก็บไว้ไม่ลบ ~~ตรวจ 10 ต.ค.: `PraiGhostEliteProfile` แยกจาก minor และอยู่ใน `EncounterTable.elite` แล้ว ค้าง: `maxKhwan` ยังเป็น 1 (รอคืนค่า 45)~~
+### [x] A7 ศัตรู Elite — **ยกเลิก 11 ต.ค. (Game Designer):** ไม่มีโหนด Elite บนแผนที่แล้ว (ส่วนแบ่งโอกาสไปเป็นศัตรูทั่วไป) **ลบ profile แล้ว 15 ต.ค.** `EncounterTable.elite` ว่าง ~~profile และ `EncounterTable.elite` เก็บไว้ไม่ลบ~~ ~~ตรวจ 10 ต.ค.: `PraiGhostEliteProfile` แยกจาก minor และอยู่ใน `EncounterTable.elite` แล้ว ค้าง: `maxKhwan` ยังเป็น 1 (รอคืนค่า 45)~~
 - ใน `EncounterTable` (A1) ใส่ศัตรู Elite ที่ต่างจาก minor: duplicate `PraiGhostProfile` เป็น `PraiGhostEliteProfile` ตั้ง `maxKhwan: 45` (1.5 เท่าของศัตรูทั่วไป) แล้วแจ้งทีม Game Design ให้ปรับ
 - ที่มาของตัวเลข (PM มอบให้ Claude กำหนด 6 ต.ค.): ศัตรูทั่วไป 30 (คืนค่าเดิม), Elite 45, Boss 60 ตั้งตามสัดส่วนเวลาต่อสู้ใน Doc (ทั่วไป 5–10 นาที, Boss 10–15 นาที) เป็นค่าเริ่มต้นที่ต้องปรับหลัง playtest รอบ 1 ไม่ใช่ค่าที่ balance แล้ว ค่า 1 เดิมมาจากคอมมิต `3b97241` และน่าจะเป็นค่าทดสอบ
 - **Done when:** Elite กับ minor ใช้ profile คนละตัว, `maxKhwan` ของ Elite = 45
@@ -128,7 +128,7 @@
 - แก้ตัวทดสอบ commit `31eb65e`: `AutomatedCombatFlowTest` เริ่มจาก run ใหม่ (ล้าง save), คลิกเฉพาะโหนดต่อสู้, ใช้งบเวลาจริง 240 วินาทีแทนงบเฟรม
 - **Done when:** compile ผ่าน, smoke test PASS, `git status` หลังรันไม่มีไฟล์แผนที่/scene เปลี่ยน (ตรวจแล้ว: เหลือเฉพาะไฟล์ font ที่ Unity แก้เอง รอ F1)
 
-### [~] A9 ศัตรูทั่วไปตัวที่ 3 + แก้ id ซ้ำ — ตรวจ 10 ต.ค.: `enemyId` ไม่ซ้ำแล้ว (6 ตัว), `EncounterTable` มี minor 3 (Prai, NewEnemy, GraveGhost) / elite 1 / boss 1 ค้าง: `maxKhwan` ยังเป็น 1 (รอคืนค่า 30/60), เล่นแผนที่ 1 รอบเจอศัตรูทั่วไป ≥ 2 แบบ
+### [~] A9 ศัตรูทั่วไปตัวที่ 3 + แก้ id ซ้ำ — **15 ต.ค.: ตัด `GraveGhostProfile` ออก minor เหลือ 2 (Prai, NewEnemy)** ตรวจ 10 ต.ค.: `enemyId` ไม่ซ้ำแล้ว (6 ตัว), `EncounterTable` มี minor 3 (Prai, NewEnemy, GraveGhost) / elite 1 / boss 1 ค้าง: `maxKhwan` ยังเป็น 1 (รอคืนค่า 30/60), เล่นแผนที่ 1 รอบเจอศัตรูทั่วไป ≥ 2 แบบ
 - ปัญหา: roster ตอนนี้มีศัตรูทั่วไปจริงตัวเดียว `NewEnemyProfile` ใช้ `enemyId: enemy_prai` ซ้ำกับ `PraiGhostProfile` และเด็คเริ่มต้นเหมือนกัน
 - ขั้นต่ำที่ต้องมีใน build (PM ตัดสิน): ศัตรูทั่วไป 3 แบบ, Elite 1, Boss 1
 - ทำ: แก้ `NewEnemyProfile` ให้ `enemyId` ไม่ซ้ำ และสร้างศัตรูทั่วไปให้ครบ 3 แบบจากการ์ดที่มีอยู่ (เด็คต่างกัน ชื่อ/ภาพต่างกัน `maxKhwan: 30`) ตัวเลขการ์ดและเด็คเป็นของทีม Game Design ฝั่ง Dev ใส่ค่าเริ่มต้นให้เล่นได้ แล้วส่งให้ทีม Game Design ปรับ

@@ -74,11 +74,12 @@ namespace TawanOS.CardEngine
         }
 
         // Makes `card` in the hand out of nothing (a boss's per-turn card, EnemyProfileSO.cardEachTurn); the hand view
-        // shows it appearing in fire. False when there is no deck to play it from.
+        // shows it appearing in fire. It is free to play: no Merit and no Corruption, only this copy (the card asset
+        // keeps its cost). False when there is no deck to play it from.
         public bool CreateInHand(CardDataSO card)
         {
             if (!Active || card == null) return false;
-            var instance = new CardInstance(card) { conjured = true };
+            var instance = new CardInstance(card) { conjured = true, meritCost = 0, corruptionGain = 0 };
             AddToHand(instance);
             return true;
         }

@@ -704,17 +704,20 @@ namespace TawanOS.CardEngine
             return Mathf.Clamp(corruption - threshold, 0, Mathf.Max(0, threshold - 1));
         }
 
-        // เบี้ยแก้: raises how much Corruption a side can hold before the curse backfires
+        // เบี้ยแก้: raises how much Corruption a side can hold before the curse backfires. A negative amount (the
+        // aura left the board) can bring the threshold down to or under the Corruption already held: the curse
+        // backfires then, exactly as if that Corruption had just been gained.
         public void RaiseCorruptionThreshold(int amount, bool forPlayer)
         {
             if (forPlayer)
             {
                 state.corruptionThreshold += amount;
-                OnCorruptionChanged?.Invoke(state.currentCorruption, state.corruptionThreshold);
+                AddCorruption(0);
             }
             else
             {
                 state.enemyCorruptionThreshold += amount;
+                AddEnemyCorruption(0);
             }
         }
 
