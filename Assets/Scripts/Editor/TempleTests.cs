@@ -58,7 +58,7 @@ namespace TawanOS.EditorTools
                 var profile = config.GetProfileForType(NodeType.Temple);
                 failures += Expect("DefaultMapConfig has a Temple profile", profile != null);
                 failures += Expect("Temple profile is titled วัด", profile != null && profile.title == "วัด");
-                failures += Expect("Temple profile uses the วัด.png icon", profile != null && profile.icon != null && profile.icon.name == "วัด");
+                failures += Expect("Temple profile uses the วัด 1.png icon", profile != null && profile.icon != null && profile.icon.name == "วัด 1");
             }
 
             // 2. Legend: วัด in, Elite out, still 7 rows
