@@ -15,7 +15,7 @@ MonoBehaviour:
   eventId: wods
   title: "\u0E27\u0E2D\u0E14\u0E2A\u0E4C"
   speakerName: "\u0E02\u0E27\u0E31\u0E0D"
-  illustration: {fileID: 21300000, guid: 875fd79f8aa3e6749a1b12f72aafd869, type: 3}
+  illustration: {fileID: 21300000, guid: f6c6f34b616550d4e8c96d4872a023a2, type: 3}
   minFloor: 0
   repeatable: 0
   pages:
@@ -45,7 +45,7 @@ MonoBehaviour:
       hpCost: 0
       outcomes:
       - weight: 1
-        resultText: "[ชั่วคราว] ผียิ้มรับคำขอโทษแล้วมอบธูปให้"
+        resultText: "[\u0E0A\u0E31\u0E48\u0E27\u0E04\u0E23\u0E32\u0E27] \u0E1C\u0E35\u0E22\u0E34\u0E49\u0E21\u0E23\u0E31\u0E1A\u0E04\u0E33\u0E02\u0E2D\u0E42\u0E17\u0E29\u0E41\u0E25\u0E49\u0E27\u0E21\u0E2D\u0E1A\u0E18\u0E39\u0E1B\u0E43\u0E2B\u0E49"
         effects:
         - type: 4
           amount: 5
@@ -59,7 +59,7 @@ MonoBehaviour:
       hpCost: 0
       outcomes:
       - weight: 1
-        resultText: "[ชั่วคราว] ผีโกรธที่คุณเพิกเฉยแล้วเข้าจู่โจม"
+        resultText: "[\u0E0A\u0E31\u0E48\u0E27\u0E04\u0E23\u0E32\u0E27] \u0E1C\u0E35\u0E42\u0E01\u0E23\u0E18\u0E17\u0E35\u0E48\u0E04\u0E38\u0E13\u0E40\u0E1E\u0E34\u0E01\u0E40\u0E09\u0E22\u0E41\u0E25\u0E49\u0E27\u0E40\u0E02\u0E49\u0E32\u0E08\u0E39\u0E48\u0E42\u0E08\u0E21"
         effects:
         - type: 7
           amount: 5
