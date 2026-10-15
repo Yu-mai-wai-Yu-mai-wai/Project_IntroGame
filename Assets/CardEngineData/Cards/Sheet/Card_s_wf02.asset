@@ -26,13 +26,13 @@ MonoBehaviour:
   shopPrice: 4
   baseValue: 0
   durability: 0
-  familiarHealth: 2
+  familiarHealth: 1
   familiarDamage: 3
   fontSizeAll: 1
   nameFontSize: 1
   typeFontSize: 1
   costFontSize: 1
-  statFontSize: 1
+  statFontSize: 1.5
   descriptionFontSize: 1
   abilities: []
   upgradedCard: {fileID: 11400000, guid: 13cb04056c6bd3b4eb40fceb1094f28f, type: 2}

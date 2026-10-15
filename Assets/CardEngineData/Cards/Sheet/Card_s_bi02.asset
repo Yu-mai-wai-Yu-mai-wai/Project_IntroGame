@@ -34,7 +34,7 @@ MonoBehaviour:
   nameFontSize: 1
   typeFontSize: 1
   costFontSize: 1
-  statFontSize: 1
+  statFontSize: 1.5
   descriptionFontSize: 1
   abilities:
   - trigger: 0

@@ -32,7 +32,7 @@ MonoBehaviour:
   nameFontSize: 1
   typeFontSize: 1
   costFontSize: 1
-  statFontSize: 1
+  statFontSize: 1.5
   descriptionFontSize: 1
   abilities: []
   upgradedCard: {fileID: 11400000, guid: 8cfcbb86aa31f0942a3f368fb37b85ec, type: 2}

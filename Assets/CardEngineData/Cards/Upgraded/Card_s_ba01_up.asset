@@ -23,11 +23,11 @@ MonoBehaviour:
   customTypeText: "\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E23\u0E32\u0E07 \u2022
     \u0E21\u0E19\u0E15\u0E4C\u0E14\u0E33"
   meritCost: 0
-  corruptionGain: 0
+  corruptionGain: 1
   shopPrice: 0
   baseValue: 0
   durability: 0
-  familiarHealth: 1
+  familiarHealth: 3
   familiarDamage: 0
   fontSizeAll: 1
   nameFontSize: 1
