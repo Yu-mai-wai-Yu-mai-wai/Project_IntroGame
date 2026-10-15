@@ -148,7 +148,7 @@ namespace TawanOS.ShopEngine
             {
                 blessingColumn = UiFactory.CreateRect("Blessings", amuletRow);
                 var layout = blessingColumn.gameObject.AddComponent<VerticalLayoutGroup>();
-                layout.spacing = 26f;
+                layout.spacing = 30f;
                 layout.padding = new RectOffset(40, 40, 0, 0); // room for the smoke to spill past the sides
                 layout.childAlignment = TextAnchor.MiddleCenter;
                 layout.childControlWidth = layout.childControlHeight = true;
@@ -171,10 +171,11 @@ namespace TawanOS.ShopEngine
                 // Sold: greyed smoke. Unaffordable stays clickable so the guardian can tell the player off
                 button.interactable = !offer.sold;
                 var b = offer.blessing;
-                string price = run.CanAfford(offer.price) ? PriceLabel(offer.price) : $"<color=#E6665A>{PriceLabel(offer.price)}</color>";
+                // Price on its own line, gold like the card prices (red when the player cannot pay)
+                string price = $"<color={(run.CanAfford(offer.price) ? "#FAD680" : "#E6665A")}>{PriceLabel(offer.price)}</color>";
                 button.GetComponentInChildren<TextMeshProUGUI>(true).text = offer.sold
                     ? $"{b.displayName}  ·  ถวายแล้ว"
-                    : $"{b.displayName}  ·  {b.description}  ·  {price}";
+                    : $"{b.displayName}  ·  {b.description}\n{price}";
             }
             for (int i = offers.Count; i < blessingButtons.Count; i++) blessingButtons[i].gameObject.SetActive(false);
         }
@@ -183,7 +184,7 @@ namespace TawanOS.ShopEngine
         {
             var theme = UIThemeSO.Current;
             var rect = UiFactory.CreateRect($"Blessing{index}", blessingColumn);
-            rect.gameObject.AddComponent<LayoutElement>().preferredHeight = 64f;
+            rect.gameObject.AddComponent<LayoutElement>().preferredHeight = 96f;
             var panel = rect.gameObject.AddComponent<Image>();
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = panel;
