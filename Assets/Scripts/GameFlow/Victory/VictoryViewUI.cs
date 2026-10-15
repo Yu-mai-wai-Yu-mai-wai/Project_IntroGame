@@ -1,15 +1,17 @@
+using System.Collections;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Video;
 using TawanOS.UI;
 
 namespace TawanOS.GameFlow
 {
     /// <summary>
-    /// Victory Screen UI (Plan Task A3): Displays run summary and final victory message
-    /// when the player defeats the Boss. Clears save data and allows returning to Main Menu.
+    /// Victory Screen UI (Plan Task A3, P1-8): Displays dad_khwan cutscene ("ขวัญกลับคืนร่าง")
+    /// and run summary when the player defeats the Boss. Clears save data and allows returning to Main Menu.
     /// Uses UIThemeSO colors and typography (WCAG AA compliant, authentic Thai text, zero emojis).
     /// </summary>
     public class VictoryViewUI : MonoBehaviour
@@ -22,6 +24,16 @@ namespace TawanOS.GameFlow
         public Button mainMenuButton;
         public TextMeshProUGUI mainMenuButtonLabel;
         public CanvasGroup contentGroup;
+
+        [Header("Cutscene Sequence (P1-8)")]
+        public CanvasGroup cutsceneGroup;
+        public RawImage cutsceneVideoImage;
+        public VideoPlayer cutsceneVideoPlayer;
+        public TextMeshProUGUI cutsceneCaptionText;
+
+        private bool isCutscenePlaying;
+        private Coroutine cutsceneCoroutine;
+        private RenderTexture videoRt;
 
         private const string DefaultEpilogue =
             "เจ้าได้สะกดวิญญาณร้ายแห่งป่าช้า และรวบรวมขวัญที่กระเจิดกระเจิงกลับคืนสู่ร่างได้สำเร็จ\n" +
@@ -39,10 +51,123 @@ namespace TawanOS.GameFlow
         {
             DisplaySummary();
 
+            if (cutsceneGroup != null && !Application.isBatchMode)
+            {
+                cutsceneCoroutine = StartCoroutine(PlayVictorySequence());
+            }
+            else
+            {
+                ShowContentDirectly();
+            }
+        }
+
+        private void Update()
+        {
+            if (isCutscenePlaying && (Input.anyKeyDown || Input.GetMouseButtonDown(0)))
+            {
+                SkipCutscene();
+            }
+        }
+
+        private void ShowContentDirectly()
+        {
+            if (cutsceneGroup != null)
+            {
+                cutsceneGroup.alpha = 0f;
+                cutsceneGroup.blocksRaycasts = false;
+            }
             if (contentGroup != null)
             {
                 contentGroup.alpha = 0f;
                 contentGroup.DOFade(1f, 1.2f).SetEase(Ease.OutCubic);
+            }
+        }
+
+        private IEnumerator PlayVictorySequence()
+        {
+            isCutscenePlaying = true;
+            if (contentGroup != null) contentGroup.alpha = 0f;
+            if (cutsceneGroup != null) cutsceneGroup.alpha = 1f;
+
+            if (cutsceneCaptionText != null)
+            {
+                cutsceneCaptionText.text = "ขวัญกลับคืนร่าง";
+                var theme = UIThemeSO.Current;
+                if (theme != null && theme.titleFont != null) cutsceneCaptionText.font = theme.titleFont;
+            }
+
+            if (cutsceneVideoPlayer != null && cutsceneVideoPlayer.clip != null)
+            {
+                if (videoRt == null)
+                {
+                    videoRt = new RenderTexture(1920, 1080, 0, RenderTextureFormat.ARGB32);
+                    videoRt.Create();
+                }
+                cutsceneVideoPlayer.targetTexture = videoRt;
+                if (cutsceneVideoImage != null) cutsceneVideoImage.texture = videoRt;
+
+                cutsceneVideoPlayer.Play();
+
+                // Wait until prepared or duration elapsed
+                float elapsed = 0f;
+                float maxWait = (float)cutsceneVideoPlayer.clip.length;
+                if (maxWait <= 0f) maxWait = 6f;
+
+                while (elapsed < maxWait && isCutscenePlaying)
+                {
+                    yield return null;
+                    elapsed += Time.deltaTime;
+                    if (cutsceneVideoPlayer.isPlaying && (ulong)cutsceneVideoPlayer.frame >= cutsceneVideoPlayer.frameCount - 1)
+                        break;
+                }
+            }
+            else
+            {
+                // Brief title banner beat if no video clip assigned
+                yield return new WaitForSeconds(2.5f);
+            }
+
+            FinishCutsceneTransition();
+        }
+
+        private void SkipCutscene()
+        {
+            if (!isCutscenePlaying) return;
+            if (cutsceneCoroutine != null) StopCoroutine(cutsceneCoroutine);
+            FinishCutsceneTransition();
+        }
+
+        private void FinishCutsceneTransition()
+        {
+            isCutscenePlaying = false;
+            if (cutsceneVideoPlayer != null && cutsceneVideoPlayer.isPlaying)
+            {
+                cutsceneVideoPlayer.Stop();
+            }
+
+            if (cutsceneGroup != null)
+            {
+                cutsceneGroup.DOFade(0f, 0.6f).OnComplete(() =>
+                {
+                    cutsceneGroup.blocksRaycasts = false;
+                });
+            }
+
+            if (contentGroup != null)
+            {
+                contentGroup.DOFade(1f, 1.0f).SetEase(Ease.OutCubic);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (videoRt != null)
+            {
+                if (cutsceneVideoPlayer != null) cutsceneVideoPlayer.targetTexture = null;
+                if (cutsceneVideoImage != null) cutsceneVideoImage.texture = null;
+                videoRt.Release();
+                Destroy(videoRt);
+                videoRt = null;
             }
         }
 

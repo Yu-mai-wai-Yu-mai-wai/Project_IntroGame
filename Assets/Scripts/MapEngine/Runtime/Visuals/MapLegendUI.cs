@@ -74,9 +74,17 @@ namespace TawanOS.MapEngine
         /// <summary>The node whose pop-up is up, or null.</summary>
         public MapNodeView Shown => shown;
 
+        public void EnsureUI()
+        {
+            if (popup == null)
+            {
+                BuildUI();
+            }
+        }
+
         private void Awake()
         {
-            BuildUI();
+            EnsureUI();
         }
 
         private void OnEnable()
@@ -166,9 +174,14 @@ namespace TawanOS.MapEngine
             var border = UiFactory.CreateImage("Border", popup, theme.crimson);
             UiFactory.Stretch(border.rectTransform, 0f);
             border.raycastTarget = false;
+            var softBorder = border.gameObject.AddComponent<SoftEdgeImage>();
+            softBorder.SetSides(0.06f, 0.06f, 0.06f, 0.06f);
+
             var bg = UiFactory.CreateImage("Background", popup, theme.panel);
             UiFactory.Stretch(bg.rectTransform, 3f);
             bg.raycastTarget = false;
+            var softBg = bg.gameObject.AddComponent<SoftEdgeImage>();
+            softBg.SetSides(0.06f, 0.06f, 0.06f, 0.06f);
 
             nameText = UiFactory.CreateText(popup, "Name", "", theme.labelSize + 4f, theme.accent, TextAlignmentOptions.TopLeft, theme.bodyFont);
             nameText.fontStyle = FontStyles.Bold;

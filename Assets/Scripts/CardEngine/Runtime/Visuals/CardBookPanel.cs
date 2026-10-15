@@ -727,7 +727,9 @@ namespace TawanOS.CardEngine
                 if (ability.GetComponent<KeywordLinkTrigger>() == null)
                     ability.gameObject.AddComponent<KeywordLinkTrigger>();
             }
-            if (card.cardType == CardType.Familiar || card.maxKhwan > 0)
+            bool isSpell = card.cardType == CardType.Incantation;
+            bool hasKhwan = !isSpell && (card.cardType == CardType.Familiar || (card.cardType == CardType.Amulet && card.maxKhwan > 0));
+            if (hasKhwan)
             {
                 if (card.cardType == CardType.Familiar) FaceText("Attack", holder, CardFaceLayout.Attack, 32).text = card.familiarDamage.ToString();
                 FaceText("Khwan", holder, CardFaceLayout.Khwan, 32).text = card.familiarHealth.ToString();

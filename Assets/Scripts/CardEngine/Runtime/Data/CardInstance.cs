@@ -93,7 +93,7 @@ namespace TawanOS.CardEngine
                 frameBorder = template.frameBorder;
                 customTypeText = template.GetFormattedTypeText();
                 descriptionFormat = template.descriptionFormat;
-                maxKhwan = template.familiarHealth;
+                maxKhwan = template.cardType == CardType.Incantation ? 0 : template.familiarHealth;
                 abilities = template.abilities != null ? new List<CardAbility>(template.abilities) : new List<CardAbility>();
                 source = template;
             }

@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using TawanOS.UI;
+using TawanOS.VFX;
 using TawanOS.GameFlow;
 using TawanOS.CardEngine;
 
@@ -129,7 +130,8 @@ namespace TawanOS.MapEngine
                 hpBarFill.fillMethod = Image.FillMethod.Horizontal;
                 hpText = transform.Find("HpText")?.GetComponent<TextMeshProUGUI>();
                 incenseText = transform.Find("IncenseText")?.GetComponent<TextMeshProUGUI>();
-                deckText = transform.Find("DeckButton/Inner/Label")?.GetComponent<TextMeshProUGUI>();
+                deckText = transform.Find("DeckButton/Inner/Label")?.GetComponent<TextMeshProUGUI>()
+                    ?? transform.Find("DeckButton/Label")?.GetComponent<TextMeshProUGUI>();
                 return;
             }
 
@@ -141,25 +143,29 @@ namespace TawanOS.MapEngine
             rootRect.anchorMin = new Vector2(0f, 1f);
             rootRect.anchorMax = new Vector2(0f, 1f);
             rootRect.pivot = new Vector2(0f, 1f);
-            rootRect.anchoredPosition = new Vector2(24f, -14f);
-            rootRect.sizeDelta = new Vector2(580f, 48f);
+            rootRect.anchoredPosition = new Vector2(28f, -18f);
+            rootRect.sizeDelta = new Vector2(660f, 56f);
 
             // Outer Border
             var border = UiFactory.CreateImage("Border", transform, theme.crimson);
             UiFactory.Stretch(border.rectTransform, 0f);
+            var softBorder = border.gameObject.AddComponent<SoftEdgeImage>();
+            softBorder.SetSides(0.04f, 0.04f, 0.06f, 0.06f);
 
             // Panel Background
             var bg = UiFactory.CreateImage("Panel", transform, theme.panel);
             UiFactory.Stretch(bg.rectTransform, 2f);
+            var softBg = bg.gameObject.AddComponent<SoftEdgeImage>();
+            softBg.SetSides(0.04f, 0.04f, 0.06f, 0.06f);
 
             // --- 1. Khwan (ขวัญ) Section ---
             var hpLabel = UiFactory.CreateText(transform, "HpLabel", "ขวัญ",
-                theme.labelSize, theme.text, TextAlignmentOptions.MidlineLeft, theme.bodyFont);
+                theme.labelSize + 2f, theme.text, TextAlignmentOptions.MidlineLeft, theme.bodyFont);
             hpLabel.rectTransform.anchorMin = new Vector2(0f, 0.5f);
             hpLabel.rectTransform.anchorMax = new Vector2(0f, 0.5f);
             hpLabel.rectTransform.pivot = new Vector2(0f, 0.5f);
-            hpLabel.rectTransform.anchoredPosition = new Vector2(16f, 0f);
-            hpLabel.rectTransform.sizeDelta = new Vector2(48f, 32f);
+            hpLabel.rectTransform.anchoredPosition = new Vector2(18f, 0f);
+            hpLabel.rectTransform.sizeDelta = new Vector2(52f, 36f);
 
             // HP Bar Background
             var barBgGo = new GameObject("HpBarBg", typeof(RectTransform), typeof(Image));
@@ -168,8 +174,8 @@ namespace TawanOS.MapEngine
             barBgRect.anchorMin = new Vector2(0f, 0.5f);
             barBgRect.anchorMax = new Vector2(0f, 0.5f);
             barBgRect.pivot = new Vector2(0f, 0.5f);
-            barBgRect.anchoredPosition = new Vector2(68f, 0f);
-            barBgRect.sizeDelta = new Vector2(110f, 18f);
+            barBgRect.anchoredPosition = new Vector2(74f, 0f);
+            barBgRect.sizeDelta = new Vector2(130f, 22f);
             barBgGo.GetComponent<Image>().color = theme.black;
 
             // HP Bar Fill
@@ -186,30 +192,30 @@ namespace TawanOS.MapEngine
 
             // HP Text
             hpText = UiFactory.CreateText(transform, "HpText", $"{CurrentHp}/{MaxHp}",
-                theme.labelSize, theme.accent, TextAlignmentOptions.MidlineLeft, theme.bodyFont);
+                theme.labelSize + 2f, theme.accent, TextAlignmentOptions.MidlineLeft, theme.bodyFont);
             hpText.rectTransform.anchorMin = new Vector2(0f, 0.5f);
             hpText.rectTransform.anchorMax = new Vector2(0f, 0.5f);
             hpText.rectTransform.pivot = new Vector2(0f, 0.5f);
-            hpText.rectTransform.anchoredPosition = new Vector2(186f, 0f);
-            hpText.rectTransform.sizeDelta = new Vector2(80f, 32f);
+            hpText.rectTransform.anchoredPosition = new Vector2(212f, 0f);
+            hpText.rectTransform.sizeDelta = new Vector2(90f, 36f);
 
             // --- 2. Incense (ธูป) Section ---
             var incenseLabel = UiFactory.CreateText(transform, "IncenseLabel", "ธูป",
-                theme.labelSize, theme.text, TextAlignmentOptions.MidlineLeft, theme.bodyFont);
+                theme.labelSize + 2f, theme.text, TextAlignmentOptions.MidlineLeft, theme.bodyFont);
             incenseLabel.rectTransform.anchorMin = new Vector2(0f, 0.5f);
             incenseLabel.rectTransform.anchorMax = new Vector2(0f, 0.5f);
             incenseLabel.rectTransform.pivot = new Vector2(0f, 0.5f);
-            incenseLabel.rectTransform.anchoredPosition = new Vector2(276f, 0f);
-            incenseLabel.rectTransform.sizeDelta = new Vector2(40f, 32f);
+            incenseLabel.rectTransform.anchoredPosition = new Vector2(310f, 0f);
+            incenseLabel.rectTransform.sizeDelta = new Vector2(44f, 36f);
 
             incenseText = UiFactory.CreateText(transform, "IncenseText", $"{Incense}",
-                theme.labelSize + 2f, theme.accent, TextAlignmentOptions.MidlineLeft, theme.bodyFont);
+                theme.labelSize + 4f, theme.accent, TextAlignmentOptions.MidlineLeft, theme.bodyFont);
             incenseText.fontStyle = FontStyles.Bold;
             incenseText.rectTransform.anchorMin = new Vector2(0f, 0.5f);
             incenseText.rectTransform.anchorMax = new Vector2(0f, 0.5f);
             incenseText.rectTransform.pivot = new Vector2(0f, 0.5f);
-            incenseText.rectTransform.anchoredPosition = new Vector2(322f, 0f);
-            incenseText.rectTransform.sizeDelta = new Vector2(70f, 32f);
+            incenseText.rectTransform.anchoredPosition = new Vector2(360f, 0f);
+            incenseText.rectTransform.sizeDelta = new Vector2(80f, 36f);
 
             // --- 3. Deck Button (สำรับ) Section ---
             var deckBtnGo = new GameObject("DeckButton", typeof(RectTransform), typeof(Image), typeof(Button));
@@ -218,23 +224,25 @@ namespace TawanOS.MapEngine
             deckBtnRect.anchorMin = new Vector2(0f, 0.5f);
             deckBtnRect.anchorMax = new Vector2(0f, 0.5f);
             deckBtnRect.pivot = new Vector2(0f, 0.5f);
-            deckBtnRect.anchoredPosition = new Vector2(404f, 0f);
-            deckBtnRect.sizeDelta = new Vector2(160f, 34f);
+            deckBtnRect.anchoredPosition = new Vector2(454f, 0f);
+            deckBtnRect.sizeDelta = new Vector2(186f, 38f);
 
             var deckBtnImg = deckBtnGo.GetComponent<Image>();
             deckBtnImg.color = theme.crimson;
 
-            var deckInner = new GameObject("Inner", typeof(RectTransform), typeof(Image));
+            var btn = deckBtnGo.GetComponent<Button>();
+            btn.targetGraphic = deckBtnImg;
+            btn.onClick.AddListener(OnDeckClicked);
+
+            var smokeBtn = deckBtnGo.AddComponent<UiSmokeButton>();
+
+            var deckInner = new GameObject("Inner", typeof(RectTransform));
             deckInner.transform.SetParent(deckBtnGo.transform, false);
-            UiFactory.Stretch(deckInner.GetComponent<RectTransform>(), 2f);
-            deckInner.GetComponent<Image>().color = theme.panel;
+            UiFactory.Stretch(deckInner.GetComponent<RectTransform>(), 0f);
 
             deckText = UiFactory.CreateText(deckInner.transform, "Label", $"สำรับ ({DeckCount})",
-                theme.labelSize, theme.accent, TextAlignmentOptions.Center, theme.bodyFont);
+                theme.labelSize + 2f, theme.accent, TextAlignmentOptions.Center, theme.bodyFont);
             UiFactory.Stretch(deckText.rectTransform, 0f);
-
-            var btn = deckBtnGo.GetComponent<Button>();
-            btn.onClick.AddListener(OnDeckClicked);
         }
 
         private void OnDeckClicked()

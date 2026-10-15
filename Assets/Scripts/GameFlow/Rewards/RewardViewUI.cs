@@ -95,9 +95,9 @@ namespace TawanOS.GameFlow
             }
             if (incenseText != null)
             {
-                incenseText.text = incenseEarned > 0 ? $"+{incenseEarned} ธูป" : string.Empty;
-                incenseText.transform.localScale = Vector3.one * 1.3f;
-                incenseText.transform.DOScale(1f, 0.4f).SetEase(Ease.OutBack);
+                incenseText.text = incenseEarned > 0 ? $"＋{incenseEarned} ธูป" : string.Empty;
+                incenseText.transform.localScale = Vector3.one * 1.5f;
+                incenseText.transform.DOScale(1f, 0.45f).SetEase(Ease.OutBack);
             }
             if (promptText != null) promptText.text = manager.Choices.Count > 0 ? "เลือกการ์ด 1 ใบเข้าสำรับ" : "ไม่มีการ์ดให้เลือก";
 
