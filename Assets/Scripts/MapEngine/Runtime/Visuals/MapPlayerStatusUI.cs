@@ -8,9 +8,10 @@ using TawanOS.CardEngine;
 namespace TawanOS.MapEngine
 {
     /// <summary>
-    /// Map Player Status HUD (Plan Task G2): Top-left status bar on the map scene showing the player's
+    /// Map Player Status HUD (Plan Task G2, P0-10): Top-left status bar on the map scene showing the player's
     /// current Khwan (HP bar + numbers), Incense sticks (ธูป currency), and Deck count button.
     /// Synchronizes live with RunState.Current, formatted with UIThemeSO and Thai typography.
+    /// Fill amount follows currentHp / maxHp proportionally.
     /// </summary>
     public class MapPlayerStatusUI : MonoBehaviour
     {
@@ -19,25 +20,59 @@ namespace TawanOS.MapEngine
         private TextMeshProUGUI incenseText;
         private TextMeshProUGUI deckText;
 
+        public Image HpBarFill => hpBarFill;
+        public float FillAmount => hpBarFill != null ? hpBarFill.fillAmount : 0f;
+        public TextMeshProUGUI HpText => hpText;
+
         public int CurrentHp => RunState.Current.CurrentHp;
         public int MaxHp => RunState.Current.MaxHp;
         public int Incense => RunState.Current.Incense;
         public int DeckCount => RunState.Current.Deck != null ? RunState.Current.Deck.Count : 0;
 
+        private static Sprite whiteSprite;
+        public static Sprite GetWhiteSprite()
+        {
+            if (whiteSprite == null)
+            {
+                var tex = Texture2D.whiteTexture;
+                whiteSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+            }
+            return whiteSprite;
+        }
+
+        public void EnsureUI()
+        {
+            if (hpBarFill == null)
+            {
+                BuildUI();
+            }
+        }
+
         private void Awake()
         {
-            BuildUI();
+            EnsureUI();
+        }
+
+        public void Subscribe()
+        {
+            Unsubscribe();
+            RunState.Current.OnChanged += UpdateDisplay;
+        }
+
+        public void Unsubscribe()
+        {
+            RunState.Current.OnChanged -= UpdateDisplay;
         }
 
         private void OnEnable()
         {
-            RunState.Current.OnChanged += UpdateDisplay;
+            Subscribe();
             UpdateDisplay();
         }
 
         private void OnDisable()
         {
-            RunState.Current.OnChanged -= UpdateDisplay;
+            Unsubscribe();
         }
 
         private void Start()
@@ -47,6 +82,8 @@ namespace TawanOS.MapEngine
 
         public void UpdateDisplay()
         {
+            EnsureUI();
+
             int hp = CurrentHp;
             int maxHp = MaxHp > 0 ? MaxHp : RunState.DefaultMaxHp;
             int incense = Incense;
@@ -59,7 +96,13 @@ namespace TawanOS.MapEngine
 
             if (hpBarFill != null)
             {
-                float ratio = Mathf.Clamp01((float)hp / maxHp);
+                if (hpBarFill.sprite == null)
+                {
+                    hpBarFill.sprite = GetWhiteSprite();
+                    hpBarFill.type = Image.Type.Filled;
+                    hpBarFill.fillMethod = Image.FillMethod.Horizontal;
+                }
+                float ratio = maxHp > 0 ? Mathf.Clamp01((float)hp / maxHp) : 0f;
                 hpBarFill.fillAmount = ratio;
             }
 
@@ -76,6 +119,20 @@ namespace TawanOS.MapEngine
 
         private void BuildUI()
         {
+            // If already built in hierarchy, reuse references
+            var existingFill = transform.Find("HpBarBg/HpBarFill")?.GetComponent<Image>();
+            if (existingFill != null)
+            {
+                hpBarFill = existingFill;
+                hpBarFill.sprite = GetWhiteSprite();
+                hpBarFill.type = Image.Type.Filled;
+                hpBarFill.fillMethod = Image.FillMethod.Horizontal;
+                hpText = transform.Find("HpText")?.GetComponent<TextMeshProUGUI>();
+                incenseText = transform.Find("IncenseText")?.GetComponent<TextMeshProUGUI>();
+                deckText = transform.Find("DeckButton/Inner/Label")?.GetComponent<TextMeshProUGUI>();
+                return;
+            }
+
             var theme = UIThemeSO.Current;
 
             var rootRect = GetComponent<RectTransform>();
@@ -121,13 +178,14 @@ namespace TawanOS.MapEngine
             var barFillRect = barFillGo.GetComponent<RectTransform>();
             UiFactory.Stretch(barFillRect, 2f);
             hpBarFill = barFillGo.GetComponent<Image>();
-            hpBarFill.color = theme.crimson;
+            hpBarFill.sprite = GetWhiteSprite();
             hpBarFill.type = Image.Type.Filled;
             hpBarFill.fillMethod = Image.FillMethod.Horizontal;
+            hpBarFill.color = theme.crimson;
             hpBarFill.fillAmount = 1f;
 
             // HP Text
-            hpText = UiFactory.CreateText(transform, "HpText", "50/50",
+            hpText = UiFactory.CreateText(transform, "HpText", $"{CurrentHp}/{MaxHp}",
                 theme.labelSize, theme.accent, TextAlignmentOptions.MidlineLeft, theme.bodyFont);
             hpText.rectTransform.anchorMin = new Vector2(0f, 0.5f);
             hpText.rectTransform.anchorMax = new Vector2(0f, 0.5f);
@@ -144,7 +202,7 @@ namespace TawanOS.MapEngine
             incenseLabel.rectTransform.anchoredPosition = new Vector2(276f, 0f);
             incenseLabel.rectTransform.sizeDelta = new Vector2(40f, 32f);
 
-            incenseText = UiFactory.CreateText(transform, "IncenseText", "50",
+            incenseText = UiFactory.CreateText(transform, "IncenseText", $"{Incense}",
                 theme.labelSize + 2f, theme.accent, TextAlignmentOptions.MidlineLeft, theme.bodyFont);
             incenseText.fontStyle = FontStyles.Bold;
             incenseText.rectTransform.anchorMin = new Vector2(0f, 0.5f);
@@ -171,7 +229,7 @@ namespace TawanOS.MapEngine
             UiFactory.Stretch(deckInner.GetComponent<RectTransform>(), 2f);
             deckInner.GetComponent<Image>().color = theme.panel;
 
-            deckText = UiFactory.CreateText(deckInner.transform, "Label", "สำรับ (0)",
+            deckText = UiFactory.CreateText(deckInner.transform, "Label", $"สำรับ ({DeckCount})",
                 theme.labelSize, theme.accent, TextAlignmentOptions.Center, theme.bodyFont);
             UiFactory.Stretch(deckText.rectTransform, 0f);
 
