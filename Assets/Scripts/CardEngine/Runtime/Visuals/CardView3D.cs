@@ -49,6 +49,10 @@ namespace TawanOS.CardEngine
         private Quaternion originalLocalRotation;
         private bool isPlacedOnBoard;
         private bool isHeld;
+        private bool isHovered;
+        private bool wasIgnoringMouse;
+
+        public bool IsHovered => isHovered;
 
         private SpriteRenderer backgroundFace;
         private SpriteRenderer artworkFace;
@@ -433,14 +437,19 @@ namespace TawanOS.CardEngine
             isHeld = held;
         }
 
-        // Board cards and the enemy's cards (disabled views) never react to the mouse
-        private bool IgnoresMouse => !enabled || isPlacedOnBoard || isHeld || CardTargeting3D.BlocksInput
+        // Enemy's cards (disabled views) and held cards never react to the mouse
+        public bool IgnoresMouse => !enabled || isHeld || CardTargeting3D.BlocksInput
             || CombatCameraRig3D.BlocksInput;
 
         private void OnMouseEnter()
         {
             if (IgnoresMouse) return;
+            Hover();
+        }
 
+        public void Hover()
+        {
+            isHovered = true;
             transform.DOKill();
             transform.DOLocalMove(originalLocalPosition + new Vector3(0, hoverLift, -hoverPullToCamera), 0.15f);
             transform.DOScale(baseLocalScale * hoverScale, 0.15f);
@@ -449,22 +458,70 @@ namespace TawanOS.CardEngine
         private void OnMouseExit()
         {
             if (IgnoresMouse) return;
+            Unhover();
+        }
 
+        public void Unhover(bool instant = false)
+        {
+            isHovered = false;
             transform.DOKill();
-            transform.DOLocalMove(originalLocalPosition, 0.15f);
-            transform.DOLocalRotateQuaternion(originalLocalRotation, 0.15f);
-            transform.DOScale(baseLocalScale, 0.15f);
+            if (instant)
+            {
+                transform.localPosition = originalLocalPosition;
+                transform.localRotation = originalLocalRotation;
+                transform.localScale = baseLocalScale;
+            }
+            else
+            {
+                transform.DOLocalMove(originalLocalPosition, 0.15f);
+                transform.DOLocalRotateQuaternion(originalLocalRotation, 0.15f);
+                transform.DOScale(baseLocalScale, 0.15f);
+            }
+        }
+
+        private void Update()
+        {
+            bool ignoring = IgnoresMouse;
+            if (wasIgnoringMouse && !ignoring)
+            {
+                ResyncHover();
+            }
+            wasIgnoringMouse = ignoring;
+        }
+
+        public void ResyncHover()
+        {
+            if (isHovered || Vector3.Distance(transform.localScale, baseLocalScale) > 0.01f)
+            {
+                if (!IsPointerOverCard())
+                {
+                    Unhover();
+                }
+            }
+        }
+
+        public bool IsPointerOverCard()
+        {
+            var cam = Camera.main;
+            if (cam == null) cam = FindFirstObjectByType<Camera>();
+            if (cam == null) return false;
+
+            var hits = Physics.RaycastAll(cam.ScreenPointToRay(Input.mousePosition), 200f);
+            if (hits == null || hits.Length == 0) return false;
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            return hits[0].collider.GetComponentInParent<CardView3D>() == this;
         }
 
         // Click a hand card to pick it up (it waits at the side of the screen until played or cancelled)
         private void OnMouseDown()
         {
-            if (IgnoresMouse) return;
+            if (IgnoresMouse || isPlacedOnBoard) return;
             CardPlayController3D.Ensure().Select(this);
         }
 
         public void ReturnToHand()
         {
+            isHovered = false;
             transform.DOKill();
             transform.DOLocalMove(originalLocalPosition, 0.25f).SetEase(Ease.OutQuad);
             transform.DOLocalRotateQuaternion(originalLocalRotation, 0.25f);
@@ -503,12 +560,13 @@ namespace TawanOS.CardEngine
             transform.DOScale(targetSlot.FitCardScale(baseLocalScale), 0.3f);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
+            originalLocalPosition = Vector3.zero;
+            originalLocalRotation = Quaternion.identity;
+            baseLocalScale = targetSlot.FitCardScale(baseLocalScale);
+            isPlacedOnBoard = true;
+            isHovered = false;
             // Black smoke or streaks of light from under the card as it lands
             TawanOS.VFX.CardLandVfx.Play(transform, CardData.magicSchool == MagicSchool.BlackMagic);
-
-            // The card has been committed to the board; it no longer drags/hovers like a hand card
-            isPlacedOnBoard = true;
-            enabled = false;
         }
 
         private static BoardSlotView FindPlayerSlot(int index)
