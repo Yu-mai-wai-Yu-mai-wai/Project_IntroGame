@@ -682,13 +682,9 @@ namespace TawanOS.CardEngine
 
             if (!ignoreArmor)
             {
-                var protect = target.statuses.Find(s => s.type == CardStatusType.Protect && s.stacks > 0);
-                if (protect != null)
+                if (ProtectBlocks(target, source))
                 {
-                    protect.stacks--;
-                    if (protect.stacks <= 0) target.statuses.Remove(protect);
                     Debug.Log($"[Ability] {target.cardNameThai}'s เกราะคุ้มภัย blocks {amount} damage");
-                    NotifyChanged(target);
                     return 0;
                 }
 
@@ -732,6 +728,24 @@ namespace TawanOS.CardEngine
                 TriggerAbilities(killer, AbilityTrigger.OnKill, killerIsPlayer, dead);
                 NotifyChanged(killer);
             }
+        }
+
+        // เกราะคุ้มภัย: one stack blocks one hit, and with it everything else `source` does to `target` in the same turn.
+        // In a head-on trade the two cards strike at once, so ด้ายแดงผูกจิต's own strike and its explosion as it dies
+        // would otherwise take two stacks, and a card with one stack would die in spite of it.
+        private static bool ProtectBlocks(CardInstance target, CardInstance source)
+        {
+            int turn = CombatManager.Instance != null ? CombatManager.Instance.State.turnNumber : 0;
+            if (source != null && target.protectedFrom == source && target.protectedTurn == turn) return true;
+
+            var protect = target.statuses.Find(s => s.type == CardStatusType.Protect && s.stacks > 0);
+            if (protect == null) return false;
+            protect.stacks--;
+            if (protect.stacks <= 0) target.statuses.Remove(protect);
+            target.protectedFrom = source;
+            target.protectedTurn = turn;
+            Instance?.NotifyChanged(target);
+            return true;
         }
 
         // ---------------------------------------------------------------- strikes
@@ -877,13 +891,9 @@ namespace TawanOS.CardEngine
             var victim = CardAt(BoardOf(!ownerIsPlayer), index);
             if (victim == null || victim.IsDead) return;
 
-            var protect = victim.statuses.Find(s => s.type == CardStatusType.Protect && s.stacks > 0);
-            if (protect != null)
+            if (ProtectBlocks(victim, source))
             {
-                protect.stacks--;
-                if (protect.stacks <= 0) victim.statuses.Remove(protect);
                 Debug.Log($"[Ability] {victim.cardNameThai}'s เกราะคุ้มภัย absorbs detonation from {source.cardNameThai}");
-                NotifyChanged(victim);
             }
             else
             {
