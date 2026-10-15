@@ -19,6 +19,8 @@ namespace TawanOS.ShopEngine
 
         private static readonly Color AffordableColor = new Color(0.98f, 0.84f, 0.5f);
         private static readonly Color TooExpensiveColor = ShopCardShelf.TooExpensiveColor;
+        // A bit brighter than the card shelf's 0.5: the red price sits inside the dimmed item here
+        internal const float UnaffordableAlpha = 0.6f;
 
         private Action onBuy;
 
@@ -47,6 +49,10 @@ namespace TawanOS.ShopEngine
                 priceText.color = affordable ? AffordableColor : TooExpensiveColor;
             }
             if (soldOverlay != null) soldOverlay.SetActive(sold);
+            // Dim what the player cannot pay for, the same way the card shelf does
+            var group = GetComponent<CanvasGroup>();
+            if (group == null) group = gameObject.AddComponent<CanvasGroup>();
+            group.alpha = sold || affordable ? 1f : UnaffordableAlpha;
             // Unaffordable items stay clickable so the guardian can tell the player off
             if (button != null) button.interactable = !sold && buy != null;
         }

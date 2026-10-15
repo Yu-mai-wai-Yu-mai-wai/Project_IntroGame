@@ -172,7 +172,12 @@ namespace TawanOS.ShopEngine
                 button.interactable = !offer.sold;
                 var b = offer.blessing;
                 // Price on its own line, gold like the card prices (red when the player cannot pay)
-                string price = $"<color={(run.CanAfford(offer.price) ? "#FAD680" : "#E6665A")}>{PriceLabel(offer.price)}</color>";
+                bool affordable = run.CanAfford(offer.price);
+                string red = "#" + ColorUtility.ToHtmlStringRGB(ShopCardShelf.TooExpensiveColor);
+                string price = $"<color={(affordable ? "#FAD680" : red)}>{PriceLabel(offer.price)}</color>";
+                var group = button.GetComponent<CanvasGroup>();
+                if (group == null) group = button.gameObject.AddComponent<CanvasGroup>();
+                group.alpha = offer.sold || affordable ? 1f : ShopItemView.UnaffordableAlpha;
                 button.GetComponentInChildren<TextMeshProUGUI>(true).text = offer.sold
                     ? "ถวายแล้ว"
                     : $"{b.description}\n{price}";
