@@ -8,7 +8,7 @@ namespace TawanOS.CardEngine
 {
     // Self-building status display for scenes without a full HUD:
     //  - top centre: enemy name, Khwan bar, shield, AI state, hand size and the enemy's last action. When a boss
-    //    enters its next phase the bar empties, and fills up again in the new phase's colour when BossPhaseCutscene
+    //    enters its next phase the bar empties, and fills up again when BossPhaseCutscene
     //    starts (in real time: the fight is frozen meanwhile); right away when the scene has no cutscene
     //  - left, clear of the hand (where the flame rings' default layout leaves room under them): the player's Khwan
     //    bar and shield. Its place is its own; it does not follow FlameGaugeStyle (Game Designer, 13 Oct)
@@ -17,7 +17,6 @@ namespace TawanOS.CardEngine
     {
         private static readonly Color PlayerBar = new Color(0.30f, 0.75f, 0.45f);
         private static readonly Color EnemyBar = new Color(0.85f, 0.25f, 0.25f);
-        private static readonly Color NextPhaseBar = new Color(0.55f, 0.12f, 0.45f);
         private const float RefillDelay = 0.6f;  // the empty bar waits a moment as the cutscene begins
         private const float RefillTime = 1.3f;
         private static readonly Color Panel = new Color(0.05f, 0.04f, 0.03f, 0.75f);
@@ -90,21 +89,18 @@ namespace TawanOS.CardEngine
             if (FindFirstObjectByType<TawanOS.VFX.BossPhaseCutscene>() == null) Refill();
         }
 
-        // ...then fills up again in the new phase's colour
+        // ...then fills up again
         private void Refill()
         {
             if (!awaitingRefill) return;
             awaitingRefill = false;
             var s = combat.State;
             float target = s.maxEnemyKhwan > 0 ? Mathf.Clamp01((float)s.enemyKhwan / s.maxEnemyKhwan) : 0f;
-            var image = enemy.fill.GetComponent<Image>();
             enemy.fill.DOKill();
-            image.DOKill();
             DOTween.Sequence().SetUpdate(true).SetLink(gameObject)
                 .Append(enemy.fill.DOAnchorMax(new Vector2(0f, 1f), 0.3f).SetEase(Ease.OutQuad))
                 .AppendInterval(RefillDelay)
                 .Append(enemy.fill.DOAnchorMax(new Vector2(target, 1f), RefillTime).SetEase(Ease.InOutCubic))
-                .Join(image.DOColor(NextPhaseBar, RefillTime))
                 .OnComplete(() =>
                 {
                     refilling = false;

@@ -12,13 +12,13 @@ namespace TawanOS.VFX
     /// <summary>
     /// The boss's comeback, played when it enters its next phase (CombatManager.OnEnemyPhaseChanged) as a short
     /// cutscene from the player's own view. The clash it happened in stops at once (CombatManager), and the cutscene
-    /// waits until the camera is back in the normal view (no clash, no C view, no held card), then the fight freezes (time scale 0, no input), black bars close in, the boss
-    /// shakes and roars under a red flash while the scene's main light strobes red and the camera trembles, then it
+    /// waits until the camera is back in the normal view (no clash, no C view, no held card), then the fight freezes
+    /// (time scale 0, no input), the room darkens, the boss shakes and roars under a red flash while the scene's main light strobes red and the camera trembles, then it
     /// slams the table: the camera shakes and everything on the table jumps up and lands again. Meanwhile its khwan
     /// bar (CombatStatusHUD) empties and fills up again. The room stays lit red (the light and the ambient, breathing
     /// slowly) for the rest of the fight. The props include the board slots, so the cards in play jump with them;
     /// props standing together (a candle and its flame) jump as one. Everything runs in real time. Reduce Motion keeps
-    /// the bars and the red room only. Placed in CombatTestScene by Tools/TawanOS/Combat Scene/Add Boss Phase
+    /// the darkening and the red room only. Placed in CombatTestScene by Tools/TawanOS/Combat Scene/Add Boss Phase
     /// Cutscene, which also fills the boss, the light and the props.
     /// </summary>
     public class BossPhaseCutscene : MonoBehaviour
@@ -26,7 +26,7 @@ namespace TawanOS.VFX
         /// <summary>True while the cutscene plays: the fight takes no input.</summary>
         public static bool Playing { get; private set; }
 
-        private const int SortingOrder = 40; // over the table, under the HUDs (50): the khwan bar shows over the black bars
+        private const int SortingOrder = 40; // over the table, under the HUDs (50): the khwan bar shows over the shade
 
         [Header("Boss")]
         [Tooltip("ตัวบอสในฉาก สั่นตอนคำราม Add Boss Phase Cutscene เติมให้")]
@@ -34,14 +34,15 @@ namespace TawanOS.VFX
         [Min(0f)] public float bossShake = 0.25f;
 
         [Header("Timing (seconds, real time)")]
-        [Min(0.05f)] public float barsTime = 0.35f;
+        [Tooltip("ฉากมืดลงตอนเริ่ม และสว่างกลับตอนจบ")]
+        [UnityEngine.Serialization.FormerlySerializedAs("barsTime")]
+        [Min(0.05f)] public float fadeTime = 0.35f;
         [Tooltip("บอสคำราม ไฟกะพริบ ก่อนทุบโต๊ะ")]
         [Min(0.05f)] public float roar = 1.4f;
-        [Tooltip("ของบนโต๊ะลอยแล้วตกลง ก่อนแถบดำออก")]
+        [Tooltip("ของบนโต๊ะลอยแล้วตกลง ก่อนฉากสว่างกลับ")]
         [Min(0.05f)] public float settle = 0.9f;
 
-        [Header("Black bars")]
-        [Min(0f)] public float barHeight = 120f;
+        [Header("Darken")]
         [Range(0f, 1f)] public float darken = 0.35f;
 
         [Header("Red light")]
@@ -83,7 +84,6 @@ namespace TawanOS.VFX
 
         private CombatManager combat;
         private Canvas canvas;
-        private RectTransform topBar, bottomBar;
         private Image shade, flash;
         private bool redLit; // the room is lit red: Update keeps the light breathing
         private bool pending; // the boss changed phase: the cutscene starts once the camera is back home
@@ -173,9 +173,9 @@ namespace TawanOS.VFX
                 homeFov = cam.fieldOfView;
             }
 
-            // Bars in, the room darkens
-            Bars(true);
-            yield return new WaitForSecondsRealtime(barsTime);
+            // The room darkens
+            Shade(true);
+            yield return new WaitForSecondsRealtime(fadeTime);
 
             // The roar: the boss shakes, a red flash, the light strobes, the camera trembles
             Flash(0.55f);
@@ -201,10 +201,10 @@ namespace TawanOS.VFX
             }
             yield return new WaitForSecondsRealtime(settle);
 
-            // Bars out, the room stays red, the fight goes on
-            Bars(false);
+            // The shade lifts, the room stays red, the fight goes on
+            Shade(false);
             LightRed();
-            yield return new WaitForSecondsRealtime(barsTime);
+            yield return new WaitForSecondsRealtime(fadeTime);
             if (cam != null)
             {
                 cam.transform.DOKill(true);
@@ -242,11 +242,11 @@ namespace TawanOS.VFX
             if (sceneLight != null)
             {
                 sceneLight.DOKill();
-                sceneLight.DOColor(redColor, barsTime).SetUpdate(true);
-                sceneLight.DOIntensity(redIntensity, barsTime * 2f).SetUpdate(true).OnComplete(() => redLit = true);
+                sceneLight.DOColor(redColor, fadeTime).SetUpdate(true);
+                sceneLight.DOIntensity(redIntensity, fadeTime * 2f).SetUpdate(true).OnComplete(() => redLit = true);
             }
             Color from = RenderSettings.ambientLight;
-            DOTween.To(() => 0f, t => RenderSettings.ambientLight = Color.Lerp(from, redAmbient, t), 1f, barsTime * 2f).SetUpdate(true).SetId(this);
+            DOTween.To(() => 0f, t => RenderSettings.ambientLight = Color.Lerp(from, redAmbient, t), 1f, fadeTime * 2f).SetUpdate(true).SetId(this);
         }
 
         // ---------------------------------------------------------------- slam
@@ -327,30 +327,12 @@ namespace TawanOS.VFX
             UiFactory.Stretch(shade.rectTransform, 0f);
             flash = UiFactory.CreateImage("Flash", canvas.transform, new Color(0.45f, 0f, 0.02f, 0f));
             UiFactory.Stretch(flash.rectTransform, 0f);
-
-            topBar = Bar("TopBar", 1f);
-            bottomBar = Bar("BottomBar", 0f);
         }
 
-        private RectTransform Bar(string name, float y)
+        private void Shade(bool show)
         {
-            var bar = UiFactory.CreateImage(name, canvas.transform, Color.black).rectTransform;
-            bar.anchorMin = new Vector2(0f, y);
-            bar.anchorMax = new Vector2(1f, y);
-            bar.pivot = new Vector2(0.5f, y);
-            bar.sizeDelta = new Vector2(0f, 0f);
-            return bar;
-        }
-
-        private void Bars(bool show)
-        {
-            float h = show ? barHeight : 0f;
-            topBar.DOKill();
-            bottomBar.DOKill();
             shade.DOKill();
-            topBar.DOSizeDelta(new Vector2(0f, h), barsTime).SetEase(Ease.OutCubic).SetUpdate(true);
-            bottomBar.DOSizeDelta(new Vector2(0f, h), barsTime).SetEase(Ease.OutCubic).SetUpdate(true);
-            shade.DOFade(show ? darken : 0f, barsTime).SetUpdate(true);
+            shade.DOFade(show ? darken : 0f, fadeTime).SetUpdate(true);
         }
 
         private void Flash(float peak)

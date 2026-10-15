@@ -2740,10 +2740,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.VFX.TableSlamFx
   boss: {fileID: 1121356483}
   bossShake: 0.25
-  barsTime: 0.35
+  fadeTime: 0.35
   roar: 1.4
   settle: 0.9
-  barHeight: 120
   darken: 0.35
   sceneLight: {fileID: 202345595}
   redColor: {r: 1, g: 0.1, b: 0.06, a: 1}
