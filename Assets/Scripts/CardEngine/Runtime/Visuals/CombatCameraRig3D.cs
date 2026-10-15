@@ -132,6 +132,17 @@ namespace TawanOS.CardEngine
             Apply();
         }
 
+        // Back to the normal view: drops the player's C view (a lock or a held card still wins until released)
+        public void ReturnHome()
+        {
+            if (!userTop) return;
+            userTop = false;
+            Apply();
+        }
+
+        /// <summary>The camera shows the normal view and is not gliding to another.</summary>
+        public bool IsHome => appliedView == View.Home && (cam == null || !DG.Tweening.DOTween.IsTweening(cam.transform));
+
         // Holds the top view (with hands and UI) and ignores the player's toggle until unlocked
         public void SetLocked(bool on)
         {

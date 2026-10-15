@@ -330,11 +330,13 @@ namespace TawanOS.CardEngine
         // clashes with the familiar in the opposite slot of the same column; when that slot has no live
         // familiar, it hits the opposing player's Khwan.
         // Damage is applied through EffectResolver at the moment of impact; without a 3D board view it
-        // is applied instantly.
+        // is applied instantly. A boss that enters its next phase ends the clash at once: the strikes left are
+        // not made (BossPhaseCutscene plays once the camera is back).
         private IEnumerator BoardClashSequence()
         {
             var resolver = EffectResolver.Instance;
             if (resolver == null) yield break;
+            int phaseAtStart = EnemyPhase;
 
             var view = BoardClashView3D.Instance;
             Action<ClashStrike> apply = s => resolver.ResolveFamiliarStrike(s.attacker, s.target, s.fromPlayer, s.isCrit);
@@ -373,7 +375,7 @@ namespace TawanOS.CardEngine
                         CardInstance attacker = fromPlayer ? playerCard : enemyCard;
 
                         // Re-check: the first strike may just have killed or disabled this column's other familiar
-                        if (IsCombatOver || !CanAttack(attacker)) continue;
+                        if (IsCombatOver || EnemyPhase != phaseAtStart || !CanAttack(attacker)) continue;
 
                         var strike = MakeStrike(col, attacker, fromPlayer, view);
                         if (view != null) yield return view.Strike(strike, apply);
@@ -381,7 +383,7 @@ namespace TawanOS.CardEngine
                     }
                 }
 
-                if (state.enemyKhwan <= 0 || state.playerKhwan <= 0) break;
+                if (state.enemyKhwan <= 0 || state.playerKhwan <= 0 || EnemyPhase != phaseAtStart) break;
             }
 
             // Dead familiars leave the board only now, since removing them shifts the slots

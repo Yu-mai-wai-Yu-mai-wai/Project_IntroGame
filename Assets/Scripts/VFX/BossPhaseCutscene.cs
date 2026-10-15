@@ -11,7 +11,8 @@ namespace TawanOS.VFX
 {
     /// <summary>
     /// The boss's comeback, played when it enters its next phase (CombatManager.OnEnemyPhaseChanged) as a short
-    /// cutscene from the player's own view: the fight freezes (time scale 0, no input), black bars close in, the boss
+    /// cutscene from the player's own view. The clash it happened in stops at once (CombatManager), and the cutscene
+    /// waits until the camera is back in the normal view (no clash, no C view, no held card), then the fight freezes (time scale 0, no input), black bars close in, the boss
     /// shakes and roars under a red flash while the scene's main light strobes red and the camera trembles, then it
     /// slams the table: the camera shakes and everything on the table jumps up and lands again. Meanwhile its khwan
     /// bar (CombatStatusHUD) empties and fills up again. The room stays lit red (the light and the ambient, breathing
@@ -85,6 +86,12 @@ namespace TawanOS.VFX
         private RectTransform topBar, bottomBar;
         private Image shade, flash;
         private bool redLit; // the room is lit red: Update keeps the light breathing
+        private bool pending; // the boss changed phase: the cutscene starts once the camera is back home
+        private float pendingSince;
+        private const float MaxWait = 6f; // real seconds; plays anyway if the normal view never comes back
+
+        /// <summary>Raised when the cutscene starts (after the camera is back in the normal view).</summary>
+        public static event System.Action Started;
 
         private void Start()
         {
@@ -105,6 +112,11 @@ namespace TawanOS.VFX
 
         private void Update()
         {
+            if (pending && !Playing && ReadyToPlay())
+            {
+                pending = false;
+                Play();
+            }
             if (!redLit || sceneLight == null || GameSettings.ReduceMotion) return;
             sceneLight.intensity = redIntensity * (1f + breathe * Mathf.Sin(Time.unscaledTime * 1.7f));
         }
@@ -113,7 +125,23 @@ namespace TawanOS.VFX
         {
             // The player fell in the same blow: the defeat screen comes instead
             if (combat != null && combat.State.playerKhwan <= 0) return;
-            Play();
+            pending = true;
+            pendingSince = Time.realtimeSinceStartup;
+            var rig = CombatCameraRig3D.Instance;
+            if (rig != null) rig.ReturnHome(); // out of the player's C view
+        }
+
+        // Not during the clash (its camera lock comes off when it ends) nor with the camera away from the normal view
+        private bool ReadyToPlay()
+        {
+            if (combat != null && combat.IsCombatOver) { pending = false; return false; }
+            if (Time.realtimeSinceStartup - pendingSince > MaxWait) return true;
+            var turns = TurnPhaseController.Instance;
+            if (turns != null && turns.CurrentPhase == TurnPhase.Clash) return false;
+            var rig = CombatCameraRig3D.Instance;
+            if (rig == null) return true;
+            rig.ReturnHome();
+            return rig.IsHome;
         }
 
         /// <summary>Plays the cutscene; ignored while one is already playing.</summary>
@@ -129,6 +157,7 @@ namespace TawanOS.VFX
             Time.timeScale = 0f;
             bool still = GameSettings.ReduceMotion;
             BuildUI();
+            Started?.Invoke();
 
             var cam = Camera.main;
             Vector3 homePos = default;
