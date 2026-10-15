@@ -58,7 +58,7 @@ namespace TawanOS.CardEngine
         public static readonly Box Khwan = new Box(0.105f, -0.114f, 0.1f, 0.055f);         // right badge (blood drop)
         public static readonly Box Description = new Box(0f, -0.29f, 0.78f, 0.22f);        // bottom box
         public static readonly Box Artwork = new Box(0f, 0f, 1f, 1f);                      // the picture fills the whole face; the frame is see-through and drawn over it
-        public static readonly Box Statuses = new Box(0f, -0.01f, 0.92f, 0.07f);           // status tags over the picture's lower edge, just above the attack / Khwan badges
+        public static readonly Box Statuses = new Box(-0.04f, -0.01f, 0.62f, 0.07f);          // status tags over the picture's lower edge, just above the attack / Khwan badges
 
         // Text now sits on the full-face artwork, so every face label gets a dark outline to stay readable on bright art
         public static void MakeReadable(TMP_Text text)

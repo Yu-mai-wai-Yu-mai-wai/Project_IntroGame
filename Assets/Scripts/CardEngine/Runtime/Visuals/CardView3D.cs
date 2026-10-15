@@ -140,7 +140,7 @@ namespace TawanOS.CardEngine
         // could draw the frame over the text while the card moves. A Sorting Group keeps each card's parts
         // together (cards still sort against each other by distance) and fixes the order inside the card.
         // The artwork is the full-face background; the frame (see-through inside) is drawn over it, then the text.
-        private const int ArtworkOrder = 0, FrameOrder = 1, EmberOrder = 2, TextOrder = 3;
+        private const int ArtworkOrder = 0, FrameOrder = 1, EmberOrder = 2, TextOrder = 3, SymbolOrder = 4;
 
         private void ApplyDrawOrder()
         {
@@ -540,10 +540,10 @@ namespace TawanOS.CardEngine
                 if (s == null || s.stacks <= 0) continue;
                 if (b.Length > 0) b.Append(' ');
                 string alpha = s.fromAura ? "B3" : "FF";
-                b.Append("<mark=#").Append(StatusColour(s.type)).Append(alpha).Append("> ")
+                b.Append("<mark=#").Append(StatusColour(s.type)).Append(alpha).Append(">\u00A0")
                  .Append(StatusName(s.type));
-                if (s.stacks > 1) b.Append(" ×").Append(s.stacks);
-                b.Append(" </mark>");
+                if (s.stacks > 1) b.Append("\u00A0×").Append(s.stacks);
+                b.Append("\u00A0</mark>");
             }
             string text = b.ToString();
             bool show = text.Length > 0 && faceVisible;
@@ -552,6 +552,74 @@ namespace TawanOS.CardEngine
             shownStatuses = text;
             statusLabel.text = text;
             statusLabel.gameObject.SetActive(show);
+            ApplyStatusSymbols();
+        }
+
+        // ---------------------------------------------------------------- status symbols
+
+        // A picture per status that tells what it does at a glance (StatusSymbols): sizes and places are fractions of
+        // the face (the cube's local -0.5..0.5 square), sizes of the face's height so the pictures stay square
+        private readonly System.Collections.Generic.Dictionary<string, SpriteRenderer> symbols =
+            new System.Collections.Generic.Dictionary<string, SpriteRenderer>();
+
+        private void ApplyStatusSymbols()
+        {
+            bool Has(CardStatusType t) => faceVisible && CardData.statuses.Exists(x => x != null && x.type == t && x.stacks > 0);
+            Color Tint(CardStatusType t) => ColorUtility.TryParseHtmlString("#" + StatusColour(t), out var c) ? c : Color.white;
+
+            // เกราะคุ้มภัย: a shield at the top right of the picture, clear of the tags
+            Symbol("Shield", Has(CardStatusType.Protect), StatusSymbols.Shield, new Vector2(0.33f, 0.215f), 0.15f, 0.15f,
+                Color.Lerp(Tint(CardStatusType.Protect), new Color(0.45f, 0.9f, 1f), 0.5f), 0f);
+            // ยั่วยุ: the whole card glows gold at its edge
+            Symbol("TauntFrame", Has(CardStatusType.Taunt), StatusSymbols.Frame, Vector2.zero, 1.03f, 1.02f,
+                new Color(1f, 0.78f, 0.2f, 0.95f), 0f, stretch: true);
+            // ผีบังตา: its ability text is crossed out
+            var desc = CardFaceLayout.Description;
+            Symbol("BlindCross", Has(CardStatusType.Blinded), StatusSymbols.Cross, desc.center, desc.size.y * 1.15f, desc.size.y * 1.15f,
+                new Color(0.9f, 0.1f, 0.1f, 0.9f), 0f, stretch: true, widthFraction: desc.size.x * 0.75f);
+            // ผีอำ: it cannot strike, so its attack is crossed out
+            var atk = CardFaceLayout.Attack;
+            Symbol("NoStrike", Has(CardStatusType.PhiAm), StatusSymbols.Cross, atk.center, 0.11f, 0.11f, new Color(0.9f, 0.1f, 0.1f, 0.95f), 0f);
+            // ผวา / ฮึกเหิม: an arrow beside the attack, down or up
+            Symbol("AttackDown", Has(CardStatusType.Phawa), StatusSymbols.Arrow, atk.center + new Vector2(-0.14f, 0f), 0.09f, 0.09f,
+                Color.Lerp(Tint(CardStatusType.Phawa), Color.white, 0.25f), 180f);
+            Symbol("AttackUp", Has(CardStatusType.Might), StatusSymbols.Arrow, atk.center + new Vector2(-0.14f, Has(CardStatusType.Phawa) ? 0.09f : 0f),
+                0.09f, 0.09f, Color.Lerp(Tint(CardStatusType.Might), Color.white, 0.2f), 0f);
+            // ฟื้นขวัญ: a plus beside the Khwan
+            var khwan = CardFaceLayout.Khwan;
+            Symbol("KhwanPlus", Has(CardStatusType.Vital), StatusSymbols.Plus, khwan.center + new Vector2(0.14f, 0f), 0.08f, 0.08f,
+                Color.Lerp(Tint(CardStatusType.Vital), Color.white, 0.25f), 0f);
+        }
+
+        // height: a fraction of the face's height. A square picture keeps its shape (its width follows the card's aspect);
+        // stretch spreads it over widthFraction of the face's width (or as wide as it is high in face units)
+        private void Symbol(string name, bool on, Sprite sprite, Vector2 center, float height, float width, Color tint, float angle,
+            bool stretch = false, float widthFraction = -1f)
+        {
+            symbols.TryGetValue(name, out var sr);
+            if (!on)
+            {
+                if (sr != null && sr.gameObject.activeSelf) sr.gameObject.SetActive(false);
+                return;
+            }
+            if (sr == null)
+            {
+                var go = new GameObject("Status" + name);
+                go.transform.SetParent(transform, false);
+                sr = go.AddComponent<SpriteRenderer>();
+                sr.sortingOrder = SymbolOrder;
+                symbols[name] = sr;
+            }
+            sr.sprite = sprite;
+            sr.color = tint;
+            sr.gameObject.SetActive(true);
+
+            float faceAspect = baseLocalScale.y != 0f ? baseLocalScale.x / baseLocalScale.y : 0.716f;
+            float x = stretch ? (widthFraction > 0f ? widthFraction : width) : height / faceAspect;
+            var t = sr.transform;
+            t.localPosition = new Vector3(center.x, center.y, FaceZ - 0.003f);
+            t.localRotation = Quaternion.Euler(0f, 0f, angle);
+            t.localScale = new Vector3(x, height, 1f);
         }
 
         // A colour per status, so two tags never look alike: อัปมงคล in dark, cold or bloody tones, สิริมงคล in gold,
