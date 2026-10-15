@@ -39,7 +39,7 @@ namespace TawanOS.GameFlow
         [Tooltip("Khwan an enemy gains for every node passed, on top of its profile's max khwan.")]
         [Min(0)] public int khwanPerNode = 2;
         [Tooltip("An enemy's khwan never grows past this (one whose profile already has more keeps its own).")]
-        [Min(1)] public int khwanCap = 20;
+        [Min(1)] public int khwanCap = 10;
 
         private static EnemyDeckProgressionSO cached;
 
