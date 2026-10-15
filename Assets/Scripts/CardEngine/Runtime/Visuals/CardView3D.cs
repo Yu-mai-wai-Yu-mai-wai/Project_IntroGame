@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using TMPro;
 using DG.Tweening;
+using TawanOS.VFX;
 
 namespace TawanOS.CardEngine
 {
@@ -437,8 +438,11 @@ namespace TawanOS.CardEngine
             isHeld = held;
         }
 
-        // Enemy's cards (disabled views) and held cards never react to the mouse
-        public bool IgnoresMouse => !enabled || isHeld || CardTargeting3D.BlocksInput
+        private bool isDying;
+        public bool IsDying => isDying;
+
+        // Enemy's cards (disabled views), held cards, and dying cards never react to the mouse
+        public bool IgnoresMouse => !enabled || isHeld || isDying || CardTargeting3D.BlocksInput
             || CombatCameraRig3D.BlocksInput;
 
         private void OnMouseEnter()
@@ -567,6 +571,49 @@ namespace TawanOS.CardEngine
             isHovered = false;
             // Black smoke or streaks of light from under the card as it lands
             TawanOS.VFX.CardLandVfx.Play(transform, CardData.magicSchool == MagicSchool.BlackMagic);
+        }
+
+        private static float lastDeathFireSfxTime = -1f;
+
+        public float PlayDeathAnimation(BoardSlotView slot = null)
+        {
+            if (isDying) return 0f;
+            isDying = true;
+            isHovered = false;
+
+            transform.DOKill();
+
+            if (slot == null) slot = GetComponentInParent<BoardSlotView>();
+            Vector3 facing = Vector3.forward;
+            if (BoardClashView3D.Instance != null && slot != null)
+            {
+                facing = BoardClashView3D.Instance.FacingOf(slot);
+            }
+            else if (slot != null)
+            {
+                facing = slot.side == BoardSlotView.SlotSide.Player ? Vector3.forward : Vector3.back;
+            }
+
+            Transform parentForRig = slot != null ? slot.transform : transform.parent;
+            var rig = new CardClashRig(transform, parentForRig != null ? parentForRig : transform, facing);
+
+            var config = CardDeathFxConfigSO.Load();
+            float length = CardBurnEffect.Burn(transform, config);
+            if (length > 0f)
+            {
+                if (Time.time - lastDeathFireSfxTime > 0.1f)
+                {
+                    lastDeathFireSfxTime = Time.time;
+                    TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on");
+                }
+            }
+            else
+            {
+                length = rig.Play(CardClashRig.Die);
+            }
+
+            rig.DestroyWithCard(length);
+            return length;
         }
 
         private static BoardSlotView FindPlayerSlot(int index)

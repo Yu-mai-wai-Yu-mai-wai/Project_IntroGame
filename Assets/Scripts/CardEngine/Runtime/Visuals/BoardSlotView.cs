@@ -55,7 +55,7 @@ namespace TawanOS.CardEngine
                 EffectResolver.Instance.OnSlotOccupied += HandleSlotOccupied;
                 EffectResolver.Instance.OnSlotCleared += HandleSlotCleared;
             }
-            ClearSlot();
+            ClearSlot(playDeathFx: false);
         }
 
         private void OnDestroy()
@@ -124,7 +124,7 @@ namespace TawanOS.CardEngine
             }
         }
 
-        public void ClearSlot()
+        public void ClearSlot(bool playDeathFx = true)
         {
             currentCard = null;
             if (occupiedRoot != null) occupiedRoot.SetActive(false);
@@ -134,10 +134,20 @@ namespace TawanOS.CardEngine
             for (int i = transform.childCount - 1; i >= 0; i--)
             {
                 Transform child = transform.GetChild(i);
-                if (child.GetComponent<CardView3D>() != null)
+                var cardView = child.GetComponent<CardView3D>();
+                if (cardView != null)
                 {
-                    child.DOKill();
-                    Destroy(child.gameObject);
+                    if (cardView.IsDying) continue;
+
+                    if (playDeathFx)
+                    {
+                        cardView.PlayDeathAnimation(this);
+                    }
+                    else
+                    {
+                        child.DOKill();
+                        Destroy(child.gameObject);
+                    }
                 }
             }
         }
