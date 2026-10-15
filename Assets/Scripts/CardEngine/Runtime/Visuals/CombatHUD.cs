@@ -62,7 +62,7 @@ namespace TawanOS.CardEngine
 
             if (CombatManager.Instance != null)
             {
-                HandleMeritChanged(CombatManager.Instance.CurrentMerit, CombatManager.Instance.State.maxMerit);
+                HandleMeritChanged(CombatManager.Instance.CurrentMerit, CombatManager.Instance.State.playerMaxMerit);
             }
         }
 

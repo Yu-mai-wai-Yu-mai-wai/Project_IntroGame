@@ -288,6 +288,7 @@ namespace TawanOS.GameFlow
                 else if (RunState.Current.IsPersistent)
                 {
                     CombatManager.Instance.SetStartingKhwan(RunState.Current.CurrentHp, RunState.Current.MaxHp);
+                    CombatManager.Instance.SetPlayerMaxMerit(RunState.Current.MaxMerit);
                 }
 
                 if (pendingEnemyProfile != null)

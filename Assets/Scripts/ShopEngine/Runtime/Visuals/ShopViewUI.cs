@@ -9,7 +9,8 @@ using UnityEngine.UI;
 namespace TawanOS.ShopEngine
 {
     /// <summary>
-    /// Spirit-house shop screen: the shrine and its guardian on the left, shelves of cards and amulets on the right.
+    /// Spirit-house shop screen: the shrine and its guardian on the left, shelves of cards and amulets (and the
+    /// guardian's blessings: max khwan, max กุศล) on the right.
     /// No services (heal, card removal) since 11 Oct: those belong to the วัด and the เมรุ.
     /// </summary>
     public class ShopViewUI : MonoBehaviour
@@ -123,6 +124,15 @@ namespace TawanOS.ShopEngine
                 Spawn(amuletRow).Setup(offer.amulet.icon, offer.amulet.displayName, "เครื่องราง",
                     offer.amulet.description, PriceLabel(offer.price), run.CanAfford(offer.price), offer.sold,
                     () => shop.BuyAmulet(o));
+            }
+
+            // Blessings share the amulet shelf (the shop sells no amulets at the moment)
+            foreach (var offer in shop.BlessingOffers)
+            {
+                var o = offer;
+                Spawn(amuletRow).Setup(offer.blessing.icon, offer.blessing.displayName, "พรเจ้าที่",
+                    offer.blessing.description, PriceLabel(offer.price), run.CanAfford(offer.price), offer.sold,
+                    () => shop.BuyBlessing(o));
             }
 
             HideUnused(cardRow);

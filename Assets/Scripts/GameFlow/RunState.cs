@@ -27,6 +27,7 @@ namespace TawanOS.GameFlow
     public class RunState
     {
         public const int DefaultMaxHp = 50;
+        public const int DefaultMaxMerit = 6;
         public const int DefaultIncense = 50;
         // 8 floors then the boss (Game Designer, 11 Oct; was 7). Saves keep the floor count they were made with.
         public const int DefaultTotalFloors = 8;
@@ -40,6 +41,7 @@ namespace TawanOS.GameFlow
 
         public int CurrentHp { get; private set; }
         public int MaxHp { get; private set; }
+        public int MaxMerit { get; private set; } = DefaultMaxMerit; // Player's กุศล cap in combat, raised at ศาลตายาย
         public int Incense { get; private set; } // Run currency (ธูป)
         public int TotalFloors { get; private set; } = DefaultTotalFloors;
         public IReadOnlyList<string> RelicIds => relicIds;
@@ -187,6 +189,7 @@ namespace TawanOS.GameFlow
         {
             MaxHp = DefaultMaxHp;
             CurrentHp = DefaultMaxHp;
+            MaxMerit = DefaultMaxMerit;
             Incense = DefaultIncense;
             TotalFloors = DefaultTotalFloors;
             CardRemovalsBought = 0;
@@ -227,6 +230,12 @@ namespace TawanOS.GameFlow
         {
             MaxHp = Mathf.Max(1, MaxHp + delta);
             CurrentHp = Mathf.Clamp(delta > 0 ? CurrentHp + delta : CurrentHp, 1, MaxHp);
+            Changed();
+        }
+
+        public void ChangeMaxMerit(int delta)
+        {
+            MaxMerit = Mathf.Max(1, MaxMerit + delta);
             Changed();
         }
 
@@ -341,6 +350,7 @@ namespace TawanOS.GameFlow
                 version = SaveVersion,
                 currentHp = CurrentHp,
                 maxHp = MaxHp,
+                maxMerit = MaxMerit,
                 incense = Incense,
                 totalFloors = TotalFloors,
                 cardRemovalsBought = CardRemovalsBought,
@@ -366,6 +376,7 @@ namespace TawanOS.GameFlow
         {
             MaxHp = Mathf.Max(1, data.maxHp);
             CurrentHp = Mathf.Clamp(data.currentHp, 1, MaxHp);
+            MaxMerit = data.maxMerit > 0 ? data.maxMerit : DefaultMaxMerit; // saves from before the field have 0
             Incense = Mathf.Max(0, data.incense);
             TotalFloors = data.totalFloors > 0 ? data.totalFloors : DefaultTotalFloors;
             CardRemovalsBought = data.cardRemovalsBought;
@@ -399,6 +410,7 @@ namespace TawanOS.GameFlow
             public int version;
             public int currentHp;
             public int maxHp;
+            public int maxMerit;
             public int incense;
             public int totalFloors;
             public int cardRemovalsBought;
