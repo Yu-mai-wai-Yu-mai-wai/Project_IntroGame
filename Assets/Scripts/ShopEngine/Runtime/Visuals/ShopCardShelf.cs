@@ -20,8 +20,10 @@ namespace TawanOS.ShopEngine
         private const float PriceBand = 0.12f;          // share of the slot height kept for the price
 
         private static readonly Color AffordableColor = new Color(0.98f, 0.84f, 0.5f);
-        private static readonly Color TooExpensiveColor = new Color(0.9f, 0.4f, 0.35f);
+        // A clear red: the old (0.9, 0.4, 0.35) read as orange-gold on the warm wood background
+        internal static readonly Color TooExpensiveColor = new Color(1f, 0.22f, 0.18f);
         private static readonly Color SoldColor = new Color(0.6f, 0.55f, 0.5f, 0.8f);
+        internal const float UnaffordableCardAlpha = 0.5f; // card face dims while the player cannot pay
 
         private class Slot
         {
@@ -31,6 +33,7 @@ namespace TawanOS.ShopEngine
             public TextMeshProUGUI price;
             public ShopOffer offer;
             public bool flown;
+            public float cardAlpha = 1f; // the alpha the card face is shown at (dimmed when unaffordable)
         }
 
         private readonly List<Slot> slots = new List<Slot>();
@@ -81,7 +84,8 @@ namespace TawanOS.ShopEngine
                 if (!used) continue;
 
                 var offer = offers[i];
-                if (slot.offer != offer) Fill(slot, offer); // new stock (the shop opened or restocked)
+                bool affordable = run.CanAfford(offer.price);
+                if (slot.offer != offer) Fill(slot, offer, affordable ? 1f : UnaffordableCardAlpha); // new stock
 
                 if (offer.sold)
                 {
@@ -92,7 +96,8 @@ namespace TawanOS.ShopEngine
                 else
                 {
                     slot.price.text = $"ธูป {offer.price}";
-                    slot.price.color = run.CanAfford(offer.price) ? AffordableColor : TooExpensiveColor;
+                    slot.price.color = affordable ? AffordableColor : TooExpensiveColor;
+                    SetCardAlpha(slot, affordable ? 1f : UnaffordableCardAlpha);
                 }
             }
 
@@ -137,8 +142,9 @@ namespace TawanOS.ShopEngine
         }
 
         // A fresh card face for this offer (a card that flew to the deck is gone, so each stock gets new ones)
-        private void Fill(Slot slot, ShopOffer offer)
+        private void Fill(Slot slot, ShopOffer offer, float alpha)
         {
+            slot.cardAlpha = alpha;
             if (slot.card != null) Destroy(slot.card.gameObject);
 
             var card = Instantiate(template, slot.cardArea);
@@ -160,8 +166,19 @@ namespace TawanOS.ShopEngine
             if (group != null)
             {
                 group.alpha = 0f;
-                group.DOFade(1f, 0.3f).SetDelay(0.06f * slots.IndexOf(slot)).SetLink(card.gameObject);
+                group.DOFade(alpha, 0.3f).SetDelay(0.06f * slots.IndexOf(slot)).SetLink(card.gameObject);
             }
+        }
+
+        // Dims or restores a card already on the shelf when the player's incense changes
+        private static void SetCardAlpha(Slot slot, float alpha)
+        {
+            if (slot.card == null || Mathf.Approximately(slot.cardAlpha, alpha)) return;
+            slot.cardAlpha = alpha;
+            var group = slot.card.GetComponent<CanvasGroup>();
+            if (group == null) return;
+            group.DOKill();
+            group.DOFade(alpha, 0.2f).SetLink(slot.card.gameObject);
         }
 
         private void OnCardClicked(Slot slot)

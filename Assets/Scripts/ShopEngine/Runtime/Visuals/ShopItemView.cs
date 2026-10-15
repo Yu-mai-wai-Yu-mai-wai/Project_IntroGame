@@ -18,7 +18,7 @@ namespace TawanOS.ShopEngine
         public GameObject soldOverlay;
 
         private static readonly Color AffordableColor = new Color(0.98f, 0.84f, 0.5f);
-        private static readonly Color TooExpensiveColor = new Color(0.9f, 0.4f, 0.35f);
+        private static readonly Color TooExpensiveColor = ShopCardShelf.TooExpensiveColor;
 
         private Action onBuy;
 
