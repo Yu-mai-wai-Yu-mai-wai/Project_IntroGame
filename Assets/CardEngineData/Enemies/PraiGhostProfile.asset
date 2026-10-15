@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyId: enemy_prai
   enemyName: "\u0E1C\u0E35\u0E1E\u0E23\u0E32\u0E22\u0E19\u0E49\u0E33\u0E19\u0E2D\u0E07"
   portrait: {fileID: 0}
-  maxKhwan: 3
+  maxKhwan: 4
   deck:
   - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
   - {fileID: 11400000, guid: 904986997b8348699a37abc9397be673, type: 2}
@@ -59,7 +59,12 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1affc8bd5a564ff8838b52bae88a0373, type: 2}
   - {fileID: 11400000, guid: 1aa76638236c464fbf62f706d5d48482, type: 2}
   - {fileID: 11400000, guid: 7590c4d9a3464f80a678bb0fed6a7a1a, type: 2}
+  startingHandSize: 3
+  drawPerTurn: 1
+  maxHandSize: 10
   maxCardsPerTurn: 1
+  scriptedDeck: 0
+  cardsPerTurn: 
   moves:
   - intent: 0
     baseValue: 6
@@ -79,5 +84,18 @@ MonoBehaviour:
     weight: 1
     moveDescription: "\u0E25\u0E32\u0E01\u0E25\u0E07\u0E19\u0E49\u0E33 (\u0E42\u0E08\u0E21\u0E15\u0E35\u0E2B\u0E19\u0E31\u0E01
       10)"
+  aiStates: []
+  initialAIState: 
   isBoss: 0
   phase2Profile: {fileID: 0}
+  phase2AtKhwanRatio: 0
+  cardEachTurn: {fileID: 0}
+  lines:
+    combatStart: []
+    playCard: []
+    hurt: []
+    playerHurt: []
+    lowKhwan: []
+    phaseChange: []
+    enemyWins: []
+    enemyLoses: []

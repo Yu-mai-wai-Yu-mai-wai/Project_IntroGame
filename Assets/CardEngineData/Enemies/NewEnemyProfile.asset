@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyId: enemy_krasue
   enemyName: "\u0E1C\u0E35\u0E01\u0E23\u0E30\u0E2A\u0E37\u0E2D"
   portrait: {fileID: 0}
-  maxKhwan: 3
+  maxKhwan: 4
   deck:
   - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
   - {fileID: 11400000, guid: 904986997b8348699a37abc9397be673, type: 2}
@@ -63,6 +63,8 @@ MonoBehaviour:
   drawPerTurn: 1
   maxHandSize: 10
   maxCardsPerTurn: 1
+  scriptedDeck: 0
+  cardsPerTurn: 
   moves: []
   aiStates:
   - stateName: Opening
@@ -119,3 +121,14 @@ MonoBehaviour:
   initialAIState: Opening
   isBoss: 0
   phase2Profile: {fileID: 0}
+  phase2AtKhwanRatio: 0
+  cardEachTurn: {fileID: 0}
+  lines:
+    combatStart: []
+    playCard: []
+    hurt: []
+    playerHurt: []
+    lowKhwan: []
+    phaseChange: []
+    enemyWins: []
+    enemyLoses: []
