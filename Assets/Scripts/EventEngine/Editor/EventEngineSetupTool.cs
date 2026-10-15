@@ -157,7 +157,7 @@ namespace TawanOS.EventEngine
                 PaidChoice(0, 8, "แลกด้วยเลือด", "รับตะกรุด",
                     Outcome("ตาหมอกรีดปลายนิ้วคุณหยดลงบนตะกรุด ตัวอักษรขอมบนแผ่นโลหะเรืองแสงวาบ",
                         Effect(EventEffectType.CardReward, 0))),
-                PaidChoice(40, 0, "แลกด้วยธูป", "เพิ่ม HP สูงสุด",
+                PaidChoice(40, 0, "แลกด้วยธูป", "เพิ่มขวัญสูงสุด",
                     Outcome("น้ำมนต์เย็นเฉียบไหลผ่านลำคอ คุณรู้สึกแข็งแรงขึ้นกว่าเดิม",
                         Effect(EventEffectType.ChangeMaxHp, 8))),
                 Choice("ไม่แลกอะไร", null,

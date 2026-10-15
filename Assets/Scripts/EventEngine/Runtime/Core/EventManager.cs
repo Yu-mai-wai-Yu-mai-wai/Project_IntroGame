@@ -158,7 +158,7 @@ namespace TawanOS.EventEngine
             if (choice.hpCost > 0)
             {
                 run.TakeDamage(choice.hpCost);
-                summary.Add($"-{choice.hpCost} HP");
+                summary.Add($"-{choice.hpCost} ขวัญ");
             }
 
             var outcome = RollOutcome(choice.outcomes);
@@ -247,13 +247,13 @@ namespace TawanOS.EventEngine
             {
                 case EventEffectType.Heal:
                     run.Heal(effect.amount);
-                    return $"+{effect.amount} HP";
+                    return $"+{effect.amount} ขวัญ";
                 case EventEffectType.TakeDamage:
                     run.TakeDamage(effect.amount);
-                    return $"-{effect.amount} HP";
+                    return $"-{effect.amount} ขวัญ";
                 case EventEffectType.ChangeMaxHp:
                     run.ChangeMaxHp(effect.amount);
-                    return $"{(effect.amount >= 0 ? "+" : "")}{effect.amount} HP สูงสุด";
+                    return $"{(effect.amount >= 0 ? "+" : "")}{effect.amount} ขวัญสูงสุด";
                 case EventEffectType.GainIncense:
                     run.AddIncense(effect.amount);
                     return $"+{effect.amount} ธูป";
@@ -304,7 +304,7 @@ namespace TawanOS.EventEngine
             if (choice.hpCost > 0)
             {
                 if (sb.Length > 0) sb.Append("  ");
-                sb.Append($"HP {choice.hpCost}");
+                sb.Append($"ขวัญ {choice.hpCost}");
             }
             return sb.ToString();
         }

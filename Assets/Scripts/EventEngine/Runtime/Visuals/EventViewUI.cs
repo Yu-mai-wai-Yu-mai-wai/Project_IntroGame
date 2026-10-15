@@ -231,7 +231,7 @@ namespace TawanOS.EventEngine
         private void RefreshRunStatus()
         {
             var run = RunState.Current;
-            if (hpText != null) hpText.text = $"HP {run.CurrentHp}/{run.MaxHp}";
+            if (hpText != null) hpText.text = $"ขวัญ {run.CurrentHp}/{run.MaxHp}";
             if (incenseText != null) incenseText.text = $"ธูป {run.Incense}";
         }
     }

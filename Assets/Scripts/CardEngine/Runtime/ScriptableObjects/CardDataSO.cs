@@ -33,7 +33,7 @@ namespace TawanOS.CardEngine
         public int baseValue = 0;
         [Tooltip("อายุขลังของเครื่องราง (0 = อยู่บนสนามจนกว่าจะพัง)")]
         public int durability = 0;
-        [Tooltip("ขวัญ (HP) ของบริวาร / เครื่องราง (เครื่องราง 0 = ตีไม่ได้)")]
+        [Tooltip("ขวัญของบริวาร / เครื่องราง (เครื่องราง 0 = ตีไม่ได้)")]
         public int familiarHealth = 1;
         [Tooltip("สะเทือนขวัญ (ATK) ของบริวาร")]
         public int familiarDamage = 1;

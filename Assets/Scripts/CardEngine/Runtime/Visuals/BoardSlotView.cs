@@ -116,9 +116,9 @@ namespace TawanOS.CardEngine
             if (statBadgeText != null)
             {
                 if (card.cardType == CardType.Familiar)
-                    statBadgeText.text = $"HP:{card.familiarHealth} | ATK:{card.familiarDamage}";
+                    statBadgeText.text = $"ขวัญ:{card.familiarHealth} | ATK:{card.familiarDamage}";
                 else if (card.maxKhwan > 0)
-                    statBadgeText.text = $"HP:{card.familiarHealth}";
+                    statBadgeText.text = $"ขวัญ:{card.familiarHealth}";
                 else
                     statBadgeText.text = $"ความคงทน: {card.currentDurability}";
             }

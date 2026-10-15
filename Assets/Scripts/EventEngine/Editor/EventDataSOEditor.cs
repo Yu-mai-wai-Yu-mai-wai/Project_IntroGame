@@ -182,7 +182,7 @@ namespace TawanOS.EventEngine
                     Field(choice.FindPropertyRelative("hint"), "Hint", "Small grey line under the button that hints at the outcome");
                     EditorGUILayout.BeginHorizontal();
                     Field(choice.FindPropertyRelative("incenseCost"), "Incense Cost");
-                    Field(choice.FindPropertyRelative("hpCost"), "HP Cost");
+                    Field(choice.FindPropertyRelative("hpCost"), "ขวัญ Cost");
                     EditorGUILayout.EndHorizontal();
                     EditorGUI.indentLevel -= 2;
 
@@ -432,7 +432,7 @@ namespace TawanOS.EventEngine
         {
             var parts = new List<string>();
             if (choice.incenseCost > 0) parts.Add($"Incense {choice.incenseCost}");
-            if (choice.hpCost > 0) parts.Add($"HP {choice.hpCost}");
+            if (choice.hpCost > 0) parts.Add($"ขวัญ {choice.hpCost}");
             return string.Join(", ", parts);
         }
 
