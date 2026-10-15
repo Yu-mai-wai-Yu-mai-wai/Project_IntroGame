@@ -51,6 +51,8 @@ namespace TawanOS.CardEngine
         [Header("Draw Pile")]
         public Vector2 pileCardSize = new Vector2(0.7f, 1f);
         public float thicknessPerCard = 0.02f;
+        [Tooltip("Card-back material for the enemy pile. Empty = borrows from player pile or URP Unlit.")]
+        public Material pileMaterial;
 
         private readonly List<CardView3D> views = new List<CardView3D>();
         private readonly List<CardView3D> newlyDrawn = new List<CardView3D>();
@@ -126,6 +128,14 @@ namespace TawanOS.CardEngine
             container.SetParent(transform, false);
             container.localScale = Vector3.one * handCardScale;
             AnchorToCamera();
+            if (pileMaterial == null)
+            {
+                var playerPile = FindFirstObjectByType<DeckPileView3D>();
+                if (playerPile != null && playerPile.pileMaterial != null)
+                {
+                    pileMaterial = playerPile.pileMaterial;
+                }
+            }
             BuildPile();
 
             var combat = CombatManager.Instance;
@@ -212,8 +222,24 @@ namespace TawanOS.CardEngine
 
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = "EnemyDeckPile3D";
-            Destroy(go.GetComponent<Collider>());
-            go.GetComponent<Renderer>().material.color = backColor;
+            var col = go.GetComponent<Collider>();
+            if (col != null)
+            {
+                if (Application.isPlaying) Destroy(col);
+                else DestroyImmediate(col);
+            }
+            var r = go.GetComponent<Renderer>();
+            if (pileMaterial != null)
+            {
+                r.sharedMaterial = pileMaterial;
+            }
+            else
+            {
+                var unlitShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
+                var mat = new Material(unlitShader);
+                mat.color = backColor;
+                r.material = mat;
+            }
             pile = go.transform;
             pile.SetParent(transform, true);
             SetPileThickness(0f);

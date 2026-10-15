@@ -143,6 +143,13 @@ namespace TawanOS.SceneDressing
                 Undo.RecordObject(pile, "Deck card back");
                 pile.pileMaterial = backMat;
             }
+
+            var enemyHand = Object.FindFirstObjectByType<TawanOS.CardEngine.EnemyHandView3D>();
+            if (enemyHand != null && backMat != null)
+            {
+                Undo.RecordObject(enemyHand, "Enemy deck card back");
+                enemyHand.pileMaterial = backMat;
+            }
         }
 
         private static Bounds ExactBounds(GameObject root, string name)

@@ -680,6 +680,7 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 
 ### P0 (เสร็จ 17 ต.ค.)
 - [ ] **P0-1 กองการ์ดศัตรูสีชมพูใน build** — หา material/shader ที่หายใน build (`Shader.Find`, Always Included Shaders) | Done when: build .exe เปิด CombatTestScene แล้วกองศัตรูไม่ชมพู (ภาพหน้าจอ)
+  - *สถานะ 15 ต.ค.:* ผูก BackCardMat (URP Lit) ให้ EnemyHandView3D ใน CombatTestScene, ปรับ DeckPileView3D และ EnemyHandView3D ให้ fallback เป็น URP Unlit แทน built-in default material, และเพิ่ม Universal Render Pipeline/Unlit ใน AlwaysIncludedShaders; Test: `Tools/TawanOS/Tests/Enemy Deck Material` PASS
 - [ ] **P0-2 แพ้แล้วยังกดได้ + หน้าแพ้ใหม่** | Done when: test ยืนยันว่าหลังขวัญ = 0 คลิกการ์ดไม่มีผล; ลำดับคัตซีนตามตาราง
   - *สถานะ 15 ต.ค.:* ปิด input gates ทั้งหมดเมื่อ IsCombatOver ใน CardPlayController3D, TurnPhaseController, CombatCameraRig3D, CardView3D, CardTargeting3D, CombatHUD พร้อมเพิ่มคัตซีนแพ้ GameOverScreen (IMG_7920.JPG, บทพูด [ชั่วคราว] 3 บรรทัด, procedural red blood overlay, ฟอนต์ RueangLao/EkkamaiVibe); Test: `Tools/TawanOS/Tests/Defeat Sequence` (`DefeatSequenceTests.cs`) PASS
 - [ ] **P0-3 hover ค้างหลังปิดหนังสือ (ข้อ 2)** — sync hover ตอนปิดหนังสือ | Done when: ทดสอบมือ: ชี้ → คลิกขวา → ย้ายเมาส์ → ปิด แล้วการ์ดลงที่เดิม

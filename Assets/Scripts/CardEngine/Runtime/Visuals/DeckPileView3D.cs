@@ -45,10 +45,24 @@ namespace TawanOS.CardEngine
         {
             var pileGo = GameObject.CreatePrimitive(PrimitiveType.Cube);
             pileGo.name = "DeckPile3D";
-            Destroy(pileGo.GetComponent<Collider>()); // must not intercept card mouse events
+            var col = pileGo.GetComponent<Collider>();
+            if (col != null)
+            {
+                if (Application.isPlaying) Destroy(col);
+                else DestroyImmediate(col);
+            }
             var pileRenderer = pileGo.GetComponent<Renderer>();
-            if (pileMaterial != null) pileRenderer.sharedMaterial = pileMaterial;
-            else pileRenderer.material.color = pileColor;
+            if (pileMaterial != null)
+            {
+                pileRenderer.sharedMaterial = pileMaterial;
+            }
+            else
+            {
+                var unlitShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
+                var mat = new Material(unlitShader);
+                mat.color = pileColor;
+                pileRenderer.material = mat;
+            }
             pile = pileGo.transform;
             ApplyThickness(0f);
         }
