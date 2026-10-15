@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
 using TawanOS.Settings;
+using TawanOS.UI;
 
 namespace TawanOS.CardEngine
 {
@@ -138,6 +139,7 @@ namespace TawanOS.CardEngine
             actionText.color = new Color(1f, 0.85f, 0.5f);
             actionText.alignment = TextAlignmentOptions.Center;
             actionText.raycastTarget = false;
+            UiFactory.EnableThaiMarks(actionText);
             var actionRt = actionText.rectTransform;
             actionRt.anchorMin = new Vector2(0f, 0f);
             actionRt.anchorMax = new Vector2(1f, 0f);
@@ -207,6 +209,7 @@ namespace TawanOS.CardEngine
             t.color = color;
             t.alignment = TextAlignmentOptions.Left;
             t.raycastTarget = false;
+            UiFactory.EnableThaiMarks(t);
             var rt = t.rectTransform;
             rt.anchorMin = anchorMin;
             rt.anchorMax = anchorMax;

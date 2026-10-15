@@ -19,13 +19,12 @@ namespace TawanOS.EditorTools
         private const string EkkamaiVibeTtf = "Assets/Fonts/EkkamaiVibe-Regular.ttf";
         private const string RueangLaoSdf = "Assets/Fonts/MN-RueangLao SDF.asset";
         private const string RueangLaoOtf = "Assets/Fonts/MN Rueang Lao.otf";
-        private const string SarabunSdf = "Assets/Fonts/Sarabun-Regular SDF.asset";
-        private const string SarabunTtf = "Assets/Fonts/Sarabun-Regular.ttf";
 
         // Text that appears in the UI today (menu, map HUD/legend, shop, events share the Thai range test below).
         private static readonly string[] Samples =
         {
             "เริ่มเกมใหม่", "เล่นต่อ", "ออกจากเกม", "เส้นทางของหมอธรรม", "ขวัญ", "ธูป", "สำรับ",
+            "หมอกดำ", "กำลัง", "ผีบ้านผีเรือน",
             "สัญลักษณ์ (L)", "สัญลักษณ์และเส้นทางบนแผนที่", "โหมดสั้น 4 ชั้น", "เล่นเต็ม (7 ชั้น)",
             "ผู้ ปู ซื้อ ที่ ปี่ ก๊ ก๋ ก้ ก็ กั กิ กี กึ กื กุ กู เ แ โ ใ ไ ำ ์ ํ ๆ"
         };
@@ -40,7 +39,6 @@ namespace TawanOS.EditorTools
             int failures = 0;
             failures += CheckFont("EkkamaiVibe", EkkamaiVibeSdf, EkkamaiVibeTtf);
             failures += CheckFont("MN-RueangLao", RueangLaoSdf, RueangLaoOtf);
-            failures += CheckFont("Sarabun", SarabunSdf, SarabunTtf);
             failures += CheckLegendCorner();
 
             if (failures == 0) Debug.Log("[ThaiGlyphTests] PASS");

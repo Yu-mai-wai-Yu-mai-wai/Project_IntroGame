@@ -4,6 +4,7 @@ using TawanOS.GameFlow;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using TawanOS.UI;
 
 namespace TawanOS.ShopEngine
 {
@@ -130,6 +131,7 @@ namespace TawanOS.ShopEngine
             slot.price.fontSizeMax = 30f;
             slot.price.alignment = TextAlignmentOptions.Center;
             slot.price.raycastTarget = false;
+            UiFactory.EnableThaiMarks(slot.price);
 
             return slot;
         }
@@ -264,6 +266,7 @@ namespace TawanOS.ShopEngine
             deckCount.color = new Color(0.96f, 0.92f, 0.82f);
             deckCount.alignment = TextAlignmentOptions.MidlineLeft;
             deckCount.raycastTarget = false;
+            UiFactory.EnableThaiMarks(deckCount);
         }
     }
 }

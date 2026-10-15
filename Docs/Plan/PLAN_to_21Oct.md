@@ -697,6 +697,7 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 - [ ] **P0-10 แถบขวัญหน้าแผนที่ไม่ลด (เสริม 4)** | Done when: ขวัญ 10/20 แถบเต็มครึ่ง
   - *สถานะ 15 ต.ค.:* MapPlayerStatusUI กำหนด sprite สีขาวให้ hpBarFill เพื่อให้ Image.Type.Filled ทำงาน, คำนวณ fillAmount = currentHp / maxHp พร้อม sync live กับ RunState.Current.OnChanged; Test: `Tools/TawanOS/Tests/Map Khwan Bar` (`MapKhwanBarTests.cs`) PASS
 - [ ] **P0-11 สระอำและฟอนต์ (ข้อ 6, 15, เสริม 10)** | Done when: ThaiGlyphTests ผ่าน; grep ไม่พบ Sarabun/LiberationSans/Charm ใน scene และ prefab ที่ใช้งาน
+  - *สถานะ 15 ต.ค.:* ยกเลิก forced bold บน EkkamaiVibe ใน CardBookPanel, แทนที่ Charm/Sarabun/LiberationSans ด้วย RueangLao (ชื่อการ์ด/หัวข้อ) และ EkkamaiVibe (เนื้อหา) ใน CardCube3DPrefab, Graveyard3D, CombatTestScene, StoryScene และ setup tools, เปิด UiFactory.EnableThaiMarks ทุกจุดสร้าง TMP, ThaiGlyphTests ตรวจเฉพาะ 2 ฟอนต์พร้อมคำทดสอบ หมอกดำ/สำรับ/กำลัง/ผีบ้านผีเรือน
 - [ ] **P0-12 HP → ขวัญ (เสริม 9)** | Done when: grep ข้อความที่ผู้เล่นเห็นไม่พบ "HP"
 - [ ] **P0-13 ข้อความสอนเล่น (ข้อ 1)** | Done when: ข้อความใหม่ + แก้ "แต่ะเทิร์น"
   - *สถานะ 15 ต.ค.:* แก้คำใบ้กระดานใน TutorialText.asset และ TutorialTextSO.cs เป็น "คลิกขวาหรือกด Esc เพื่อยกเลิกการ์ดที่เลือก (ก่อนวางลงสนาม) การ์ดที่วางแล้วเอาคืนไม่ได้" และแก้คำผิด "แต่ะเทิร์น" -> "แต่ละเทิร์น"; Test: `Tools/TawanOS/Tests/Tutorial Text` (`TutorialTextTests.cs`) PASS

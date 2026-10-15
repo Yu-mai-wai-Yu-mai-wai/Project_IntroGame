@@ -13,7 +13,7 @@ namespace TawanOS.EditorTools
     {
         private const string CombatScenePath = "Assets/Scenes/CombatTestScene.unity";
         // Has the Thai mark positioning the UI theme fonts lack (tone marks over upper vowels, e.g. ที่)
-        private const string FontPath = "Assets/Fonts/Charm-Bold SDF.asset";
+        private const string FontPath = "Assets/Fonts/EkkamaiVibe SDF.asset";
 
         [MenuItem("Tools/TawanOS/UI/Add Enemy Speech")]
         private static void Add_Menu()

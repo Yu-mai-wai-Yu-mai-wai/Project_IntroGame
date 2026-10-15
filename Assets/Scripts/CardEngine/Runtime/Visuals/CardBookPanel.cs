@@ -885,7 +885,7 @@ namespace TawanOS.CardEngine
             t.alignment = align;
             t.richText = true;
             t.raycastTarget = false;
-            t.fontStyle = FontStyles.Bold; // ink on paper reads better heavy; the card face and titles set their own
+            t.fontStyle = FontStyles.Normal; // body text in EkkamaiVibe SDF is not forced bold
             UiFactory.EnableThaiMarks(t);
             return t;
         }
