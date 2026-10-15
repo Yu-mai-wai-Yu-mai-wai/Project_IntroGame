@@ -300,10 +300,9 @@ namespace TawanOS.CardEngine
                 {
                     if (PickFlipTarget(casterIsPlayer, out _) == null) return false;
                 }
-                else if (a.target == AbilityTarget.FriendlyCard || a.target == AbilityTarget.EnemyCard)
+                else if (IsChosenCardTarget(a.target))
                 {
-                    var pool = BoardOf(a.target == AbilityTarget.FriendlyCard ? casterIsPlayer : !casterIsPlayer);
-                    if (AutoPick(a, pool) == null) return false;
+                    if (AutoPickFor(a, casterIsPlayer) == null) return false;
                 }
             }
             return true;
@@ -311,13 +310,41 @@ namespace TawanOS.CardEngine
 
         // ---------------------------------------------------------------- targeting
 
-        // The first OnPlay ability of an incantation that acts on one chosen card (FriendlyCard / EnemyCard).
+        // The first OnPlay ability that acts on one card the player picks: an incantation's FriendlyCard / EnemyCard /
+        // AnyCard, or any card's FlipOmens (ผ้ายันต์กลับด้าน, an amulet: picked after its slot).
         // null = the card needs no target from the player.
         public static CardAbility GetTargetedAbility(CardInstance card)
         {
-            if (card == null || card.cardType != CardType.Incantation || card.abilities == null) return null;
+            if (card == null || card.abilities == null) return null;
             return card.abilities.Find(a => a.trigger == AbilityTrigger.OnPlay
-                && (a.target == AbilityTarget.FriendlyCard || a.target == AbilityTarget.EnemyCard));
+                && (a.effect == AbilityEffect.FlipOmens
+                    || (card.cardType == CardType.Incantation && IsChosenCardTarget(a.target))));
+        }
+
+        private static bool IsChosenCardTarget(AbilityTarget t)
+        {
+            return t == AbilityTarget.FriendlyCard || t == AbilityTarget.EnemyCard || t == AbilityTarget.AnyCard;
+        }
+
+        // The cards a FriendlyCard / EnemyCard / AnyCard ability may land on
+        private List<CardInstance> ChosenCardPool(CardAbility a, bool ownerIsPlayer)
+        {
+            if (a.target == AbilityTarget.FriendlyCard) return BoardOf(ownerIsPlayer);
+            if (a.target == AbilityTarget.EnemyCard) return BoardOf(!ownerIsPlayer);
+            var all = new List<CardInstance>(BoardOf(ownerIsPlayer));
+            all.AddRange(BoardOf(!ownerIsPlayer));
+            return all;
+        }
+
+        // The game's own pick. AnyCard looks first on the side the effect is meant for: harm goes to the other side,
+        // help (ยั่วยุ, a heal) to our own
+        private CardInstance AutoPickFor(CardAbility a, bool ownerIsPlayer)
+        {
+            if (a.target != AbilityTarget.AnyCard) return AutoPick(a, ChosenCardPool(a, ownerIsPlayer));
+            bool harms = a.effect == AbilityEffect.DamageCard || a.effect == AbilityEffect.DestroyBelowKhwan
+                || (a.effect == AbilityEffect.ApplyStatus && CardStatus.IsDebuff(a.status));
+            return AutoPick(a, BoardOf(harms ? !ownerIsPlayer : ownerIsPlayer))
+                ?? AutoPick(a, BoardOf(harms ? ownerIsPlayer : !ownerIsPlayer));
         }
 
         // Cards the caster may pick for that ability (the same rules the auto-pick uses)
@@ -327,8 +354,15 @@ namespace TawanOS.CardEngine
             var a = GetTargetedAbility(card);
             if (a == null) return result;
 
-            var pool = BoardOf(a.target == AbilityTarget.FriendlyCard ? casterIsPlayer : !casterIsPlayer);
-            foreach (var c in pool)
+            if (a.effect == AbilityEffect.FlipOmens)
+            {
+                // Our cards with an อัปมงคล to turn good, the other side's with a สิริมงคล to turn bad
+                foreach (var c in BoardOf(casterIsPlayer)) if (c != null && !c.IsDead && CountDebuffs(c) > 0) result.Add(c);
+                foreach (var c in BoardOf(!casterIsPlayer)) if (c != null && !c.IsDead && CountBlessings(c) > 0) result.Add(c);
+                return result;
+            }
+
+            foreach (var c in ChosenCardPool(a, casterIsPlayer))
             {
                 if (c != null && !c.IsDead && TryScore(a, c, out _)) result.Add(c);
             }
@@ -341,7 +375,8 @@ namespace TawanOS.CardEngine
         {
             var a = GetTargetedAbility(card);
             if (a == null) return null;
-            return AutoPick(a, BoardOf(a.target == AbilityTarget.FriendlyCard ? casterIsPlayer : !casterIsPlayer));
+            if (a.effect == AbilityEffect.FlipOmens) return PickFlipTarget(casterIsPlayer, out _);
+            return AutoPickFor(a, casterIsPlayer);
         }
 
         private CardInstance AutoPick(CardAbility a, List<CardInstance> pool)
@@ -469,13 +504,14 @@ namespace TawanOS.CardEngine
 
                 case AbilityTarget.FriendlyCard:
                 case AbilityTarget.EnemyCard:
-                    var pool = a.target == AbilityTarget.FriendlyCard ? own : foe;
+                case AbilityTarget.AnyCard:
+                    var pool = ChosenCardPool(a, ownerIsPlayer);
                     CardInstance pick = null;
                     if (explicitTarget is CardInstance chosen && pool.Contains(chosen) && !chosen.IsDead && TryScore(a, chosen, out _))
                     {
                         pick = chosen;
                     }
-                    if (pick == null) pick = AutoPick(a, pool);
+                    if (pick == null) pick = AutoPickFor(a, ownerIsPlayer);
                     if (pick != null) result.Add(pick);
                     break;
             }
@@ -543,7 +579,7 @@ namespace TawanOS.CardEngine
                     return;
 
                 case AbilityEffect.FlipOmens:
-                    FlipOmens(source, ownerIsPlayer);
+                    FlipOmens(source, ownerIsPlayer, explicitTarget as CardInstance);
                     return;
 
                 case AbilityEffect.DrainKhwan:
@@ -906,9 +942,22 @@ namespace TawanOS.CardEngine
         }
 
         // Each flip is remembered so it can be turned back when the amulet leaves the board (RefreshAuras)
-        private void FlipOmens(CardInstance source, bool ownerIsPlayer)
+        // `chosen`: the card the player picked; one that has nothing to flip falls back to the game's pick
+        private void FlipOmens(CardInstance source, bool ownerIsPlayer, CardInstance chosen)
         {
-            var target = PickFlipTarget(ownerIsPlayer, out bool toBlessing);
+            CardInstance target;
+            bool toBlessing;
+            if (chosen != null && !chosen.IsDead && BoardOf(ownerIsPlayer).Contains(chosen) && CountDebuffs(chosen) > 0)
+            {
+                target = chosen;
+                toBlessing = true;
+            }
+            else if (chosen != null && !chosen.IsDead && BoardOf(!ownerIsPlayer).Contains(chosen) && CountBlessings(chosen) > 0)
+            {
+                target = chosen;
+                toBlessing = false;
+            }
+            else target = PickFlipTarget(ownerIsPlayer, out toBlessing);
             if (target == null) return;
 
             foreach (var s in target.statuses)

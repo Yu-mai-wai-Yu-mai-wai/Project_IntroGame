@@ -29,7 +29,8 @@ namespace TawanOS.CardEngine
         [InspectorName("การ์ดช่องตรงข้าม")] Opposite,               // การ์ดฝั่งตรงข้ามในช่องเดียวกัน
         [InspectorName("ผู้ที่สังหารใบนี้")] Killer,                 // การ์ดที่สังหารใบนี้ (ใช้กับ OnDeath)
         [InspectorName("การ์ดทุกใบบนสนาม (ทั้งสองฝั่ง)")] AllOnBoard,
-        [InspectorName("การ์ดที่ถูกตี")] StruckCard              // การ์ดที่ใบนี้เพิ่งตีโดน (ใช้กับ OnHit)
+        [InspectorName("การ์ดที่ถูกตี")] StruckCard,             // การ์ดที่ใบนี้เพิ่งตีโดน (ใช้กับ OnHit)
+        [InspectorName("การ์ดใดก็ได้ 1 ใบ (ผู้เล่นเลือก)")] AnyCard                 // การ์ด 1 ใบจากฝั่งไหนก็ได้ (ระบบเลือกให้: สิริมงคลลงฝั่งเรา อัปมงคล/ดาเมจลงฝั่งตรงข้าม)
     }
 
     public enum AbilityEffect

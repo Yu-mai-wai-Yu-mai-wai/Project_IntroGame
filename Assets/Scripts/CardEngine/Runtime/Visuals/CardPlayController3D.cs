@@ -44,6 +44,7 @@ namespace TawanOS.CardEngine
 
         private readonly Dictionary<BoardSlotView, Renderer> slotMarkers = new Dictionary<BoardSlotView, Renderer>();
         private BoardSlotView hoveredSlot;
+        private BoardSlotView pendingSlot; // an amulet's slot, waiting for the card its ability acts on
         private Material markerMaterial;
         private const string SlotGlowShader = "Shaders/SlotGlow";
         private static readonly int ColorId = Shader.PropertyToID("_Color");
@@ -146,6 +147,7 @@ namespace TawanOS.CardEngine
         private void Release(bool returnToHand, bool keepCamera = false)
         {
             HideSlotMarkers();
+            pendingSlot = null;
             var view = held;
             held = null;
             endedFrame = Time.frameCount;
@@ -206,6 +208,7 @@ namespace TawanOS.CardEngine
             var card = held.CardData;
             bool boardCard = card.cardType == CardType.Familiar || card.cardType == CardType.Amulet;
 
+            if (boardCard && CardTargeting3D.BlocksInput) return; // picking the card an amulet acts on
             if (boardCard) UpdateSlotHover();
 
             if (!Input.GetMouseButtonDown(0) || Time.frameCount == selectedFrame) return;
@@ -225,7 +228,8 @@ namespace TawanOS.CardEngine
 
         private void OnTargetChosen(CardInstance target)
         {
-            PlayHeld(target);
+            if (pendingSlot != null) PlaceHeld(target);
+            else PlayHeld(target);
         }
 
         private void OnTargetCancelled()
@@ -233,11 +237,36 @@ namespace TawanOS.CardEngine
             Release(returnToHand: true, keepCamera: switching);
         }
 
+        // A card whose ability acts on a card the player picks (ผ้ายันต์กลับด้าน) asks for it once the slot is chosen,
+        // unless only one card fits
         private void PlayOnSlot(BoardSlotView slot)
         {
+            var card = held.CardData;
+            card.boardSlot = slot.slotIndex;
+            pendingSlot = slot;
+
+            if (EffectResolver.GetTargetedAbility(card) != null && EffectResolver.Instance != null)
+            {
+                var targets = EffectResolver.Instance.GetValidTargets(card, casterIsPlayer: true);
+                if (targets.Count > 1)
+                {
+                    HideSlotMarkers();
+                    CardTargeting3D.Ensure().Begin(held, targets, OnTargetChosen, OnTargetCancelled);
+                    return;
+                }
+                if (targets.Count == 1)
+                {
+                    PlaceHeld(targets[0]);
+                    return;
+                }
+            }
+            PlaceHeld(null);
+        }
+
+        private void PlaceHeld(CardInstance target)
+        {
             var view = held;
-            view.CardData.boardSlot = slot.slotIndex;
-            bool played = CardManager.Instance != null && CardManager.Instance.PlayCard(view.CardData);
+            bool played = CardManager.Instance != null && CardManager.Instance.PlayCard(view.CardData, target);
 
             Release(returnToHand: !played);
             if (played) view.PlaceOnBoard();
