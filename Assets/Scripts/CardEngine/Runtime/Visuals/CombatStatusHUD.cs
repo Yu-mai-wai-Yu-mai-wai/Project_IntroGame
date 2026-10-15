@@ -18,7 +18,7 @@ namespace TawanOS.CardEngine
         private static readonly Color PlayerBar = new Color(0.30f, 0.75f, 0.45f);
         private static readonly Color EnemyBar = new Color(0.85f, 0.25f, 0.25f);
         private static readonly Color NextPhaseBar = new Color(0.55f, 0.12f, 0.45f);
-        private const float RefillDelay = 0.9f;  // the empty bar waits while the camera pushes in on the boss
+        private const float RefillDelay = 0.9f;  // the empty bar waits a moment as the boss starts to roar
         private const float RefillTime = 1.3f;
         private static readonly Color Panel = new Color(0.05f, 0.04f, 0.03f, 0.75f);
 
