@@ -93,13 +93,12 @@ namespace TawanOS.CardEngine
                 ? $"  |  การ์ดในมือ {combat.EnemyCards.Hand.Count}"
                 : "";
             string shield = s.enemyShield > 0 ? $"  |  เกราะ {s.enemyShield}" : "";
-            string khwanWord = theme != null && theme.titleFont != null ? $"<font=\"{theme.titleFont.name}\">ขวัญ</font>" : "ขวัญ";
-            enemy.detail.text = $"{khwanWord} {s.enemyKhwan} / {s.maxEnemyKhwan}{shield}  |  {combat.EnemyAIStateName}{handInfo}";
+            enemy.detail.text = $"ขวัญ {s.enemyKhwan} / {s.maxEnemyKhwan}{shield}  |  {combat.EnemyAIStateName}{handInfo}";
             SetFill(enemy.fill, s.maxEnemyKhwan > 0 ? (float)s.enemyKhwan / s.maxEnemyKhwan : 0f, s.enemyKhwan, ref lastEnemyKhwan);
 
             // Player
             string pShield = s.playerShield > 0 ? $"  |  เกราะ {s.playerShield}" : "";
-            player.detail.text = $"{khwanWord} {s.playerKhwan} / {s.maxPlayerKhwan}{pShield}";
+            player.detail.text = $"ขวัญ {s.playerKhwan} / {s.maxPlayerKhwan}{pShield}";
             SetFill(player.fill, s.maxPlayerKhwan > 0 ? (float)s.playerKhwan / s.maxPlayerKhwan : 0f, s.playerKhwan, ref lastPlayerKhwan);
 
             var turns = TurnPhaseController.Instance;
