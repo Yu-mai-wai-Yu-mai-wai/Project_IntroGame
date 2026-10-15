@@ -133,6 +133,7 @@ namespace TawanOS.MapEngine
             if (existingFill != null)
             {
                 hpBarFill = existingFill;
+                hpBarFill.color = KhwanDisplay.BarColour;
                 hpBarFill.sprite = GetWhiteSprite();
                 hpBarFill.type = Image.Type.Filled;
                 hpBarFill.fillMethod = Image.FillMethod.Horizontal;
@@ -195,7 +196,7 @@ namespace TawanOS.MapEngine
             hpBarFill.sprite = GetWhiteSprite();
             hpBarFill.type = Image.Type.Filled;
             hpBarFill.fillMethod = Image.FillMethod.Horizontal;
-            hpBarFill.color = theme.crimson;
+            hpBarFill.color = KhwanDisplay.BarColour;
             hpBarFill.fillAmount = 1f;
 
             // HP Text

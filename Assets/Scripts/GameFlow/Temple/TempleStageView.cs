@@ -43,7 +43,7 @@ namespace TawanOS.GameFlow
         public string prayLabel = "กราบไหว้";
 
         [Header("Khwan bar")]
-        public Color barColour = new Color(0.3f, 0.75f, 0.45f);
+        public Color barColour = KhwanDisplay.BarColour;
 
         public Button PrayButton => prayButton;
         public TextMeshProUGUI PrayText => prayText;

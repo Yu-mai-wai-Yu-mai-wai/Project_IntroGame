@@ -15,8 +15,8 @@ namespace TawanOS.CardEngine
     // Skipped when the scene already has an EnemyCombatView.
     public class CombatStatusHUD : MonoBehaviour
     {
-        private static readonly Color PlayerBar = new Color(0.30f, 0.75f, 0.45f);
-        private static readonly Color EnemyBar = new Color(0.85f, 0.25f, 0.25f);
+        private static readonly Color PlayerBar = KhwanDisplay.BarColour;
+        private static readonly Color EnemyBar = new Color(0.85f, 0.25f, 0.25f); // the enemy stays red (Game Designer, 15 Oct)
         private static readonly Color Panel = new Color(0.05f, 0.04f, 0.03f, 0.75f);
 
         private struct BarPanel

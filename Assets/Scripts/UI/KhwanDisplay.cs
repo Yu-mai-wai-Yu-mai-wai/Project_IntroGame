@@ -11,6 +11,8 @@ namespace TawanOS.UI
     public static class KhwanDisplay
     {
         public static readonly Color TempColour = new Color(1f, 0.8f, 0.35f);
+        /// <summary>Every Khwan bar is this green (Game Designer, 15 Oct: red bars were hard to read).</summary>
+        public static readonly Color BarColour = new Color(0.30f, 0.75f, 0.45f);
         /// <summary>"25/20" or "17/20" (Game Designer: no separate "+5"). <paramref name="separator"/> goes between the numbers.</summary>
         public static string Text(int khwan, int max, string separator = "/") => $"{khwan}{separator}{max}";
 
