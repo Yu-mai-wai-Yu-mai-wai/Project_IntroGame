@@ -26,7 +26,7 @@ MonoBehaviour:
   baseValue: 0
   durability: 0
   familiarHealth: 2
-  familiarDamage: 4
+  familiarDamage: 3
   fontSizeAll: 1
   nameFontSize: 1
   typeFontSize: 1
