@@ -20,6 +20,7 @@ namespace TawanOS.CardEngine
         // The ตำราไสยเวท book (CardBookPanel) now shows a card's details, so it counts as this screen.
         public static bool BlocksInput => CardBookPanel.BlocksInput || (Instance != null && (Instance.isOpen || Time.frameCount <= Instance.closedFrame));
         public static bool IsOpen => CardBookPanel.IsOpen || (Instance != null && Instance.isOpen);
+        public static bool JustOpened => CardBookPanel.JustOpened || (Instance != null && Instance.openedFrame == Time.frameCount);
 
         private const float CardHeight = 820f;
         private const float CardAspect = 939f / 1312f;

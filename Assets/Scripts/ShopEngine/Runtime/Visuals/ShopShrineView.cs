@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using DG.Tweening;
+using TawanOS.CardEngine;
+using TawanOS.GameFlow;
 using TawanOS.UI;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace TawanOS.ShopEngine
@@ -92,7 +95,19 @@ namespace TawanOS.ShopEngine
 
             if (MenuOpen)
             {
-                if (EscapeKey.Use() || Input.GetMouseButtonDown(1)) SetMenu(false);
+                if (!CardDetailPanelUI.BlocksInput && !CardDetailPanelUI.JustOpened)
+                {
+                    if (EscapeKey.Use())
+                    {
+                        SetMenu(false);
+                        return;
+                    }
+                    if (Input.GetMouseButtonDown(1) && !IsPointerOverCard())
+                    {
+                        SetMenu(false);
+                        return;
+                    }
+                }
                 return;
             }
             if (slideTween != null && slideTween.IsActive()) return; // still sliding out
@@ -108,6 +123,29 @@ namespace TawanOS.ShopEngine
             if (incensePot == null || viewCamera == null) return false;
             var ray = viewCamera.ScreenPointToRay(Input.mousePosition);
             return incensePot.Raycast(ray, out _, 1000f);
+        }
+
+        public static bool IsPointerOverCard()
+        {
+            if (EventSystem.current == null) return false;
+            var pointer = new PointerEventData(EventSystem.current)
+            {
+                position = Input.mousePosition
+            };
+            var hits = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(pointer, hits);
+            for (int i = 0; i < hits.Count; i++)
+            {
+                var hit = hits[i].gameObject;
+                if (hit != null && (hit.GetComponentInParent<RewardCardView>() != null || hit.GetComponentInParent<CardEngine.CardView3D>() != null))
+                    return true;
+            }
+            return false;
+        }
+
+        public static bool ShouldSkipCloseOnRightClick()
+        {
+            return CardDetailPanelUI.BlocksInput || CardDetailPanelUI.JustOpened || IsPointerOverCard();
         }
 
         private void SetHover(bool on)

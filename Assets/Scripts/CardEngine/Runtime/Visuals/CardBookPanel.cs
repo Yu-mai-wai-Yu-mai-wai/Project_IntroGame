@@ -29,6 +29,9 @@ namespace TawanOS.CardEngine
         /// <summary>Open (or closed this frame): clicks should not also reach the table, the map or other screens.</summary>
         public static bool BlocksInput => Instance != null && (Instance.isOpen || Time.frameCount <= Instance.closedFrame);
 
+        /// <summary>True during the frame the book opened.</summary>
+        public static bool JustOpened => Instance != null && Instance.openedFrame == Time.frameCount;
+
         /// <summary>False when the book's art is missing (Resources/CardBook); callers fall back to their old screens.</summary>
         public static bool Available => CardBookStyleSO.Load() is { } s && s.spread != null && s.page != null;
 
