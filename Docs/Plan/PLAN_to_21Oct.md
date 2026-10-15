@@ -681,18 +681,24 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 ### P0 (เสร็จ 17 ต.ค.)
 - [ ] **P0-1 กองการ์ดศัตรูสีชมพูใน build** — หา material/shader ที่หายใน build (`Shader.Find`, Always Included Shaders) | Done when: build .exe เปิด CombatTestScene แล้วกองศัตรูไม่ชมพู (ภาพหน้าจอ)
 - [ ] **P0-2 แพ้แล้วยังกดได้ + หน้าแพ้ใหม่** | Done when: test ยืนยันว่าหลังขวัญ = 0 คลิกการ์ดไม่มีผล; ลำดับคัตซีนตามตาราง
+  - *สถานะ 15 ต.ค.:* ปิด input gates ทั้งหมดเมื่อ IsCombatOver ใน CardPlayController3D, TurnPhaseController, CombatCameraRig3D, CardView3D, CardTargeting3D, CombatHUD พร้อมเพิ่มคัตซีนแพ้ GameOverScreen (IMG_7920.JPG, บทพูด [ชั่วคราว] 3 บรรทัด, procedural red blood overlay, ฟอนต์ RueangLao/EkkamaiVibe); Test: `Tools/TawanOS/Tests/Defeat Sequence` (`DefeatSequenceTests.cs`) PASS
 - [ ] **P0-3 hover ค้างหลังปิดหนังสือ (ข้อ 2)** — sync hover ตอนปิดหนังสือ | Done when: ทดสอบมือ: ชี้ → คลิกขวา → ย้ายเมาส์ → ปิด แล้วการ์ดลงที่เดิม
+  - *สถานะ 15 ต.ค.:* CardView3D ตรวจการเปลี่ยนสถานะของ IgnoresMouse เมื่อหนังสือปิดแล้ว re-sync hover ทันทีหากเมาส์ไม่ได้อยู่บนการ์ด (รองรับทั้งการ์ดบนมือและบนสนาม); Test: `Tools/TawanOS/Tests/Card Hover Resync` (`CardHoverResyncTests.cs`) PASS
 - [ ] **P0-4 คลิกขวาในร้านปิดเมนู (ข้อ 12)** — `ShopShrineView` เช็ก `CardDetailPanelUI.BlocksInput` | Done when: คลิกขวาการ์ดในร้านเปิดหนังสือ และร้านยังอยู่
+  - *สถานะ 15 ต.ค.:* ShopShrineView.Update ข้ามการปิดเมนูเมื่อ CardDetailPanelUI.BlocksInput เป็นจริง หรือคลิกขวาบน CardView3D หรือเปิดหนังสือในเฟรมเดียวกัน; Test: `Tools/TawanOS/Tests/Shop Right Click` (`ShopRightClickTests.cs`) PASS
 - [x] **P0-5 เกราะกันระเบิด (ข้อ 8)** | Done when: CombatEnd test ใหม่ "Detonate ใส่การ์ดที่มีเกราะ: เกราะลด 1 การ์ดรอด" fail ก่อนแล้วผ่าน
 - [ ] **P0-6 การ์ดตายทุกทางมี animation เผา (ข้อ 14)** — รวมทาง `ClearSlot` / `RemoveView` ให้ผ่าน CardDeathFx | Done when: อาคมฆ่า, tick, ระเบิด, เครื่องรางหมดอายุ เห็นเผาทุกกรณี
+  - *สถานะ 15 ต.ค.:* BoardSlotView.ClearSlot และ EnemyBoardView3D.RemoveView ส่งการลบการ์ดผ่าน CardDeathFx.PlayBurnDeath และรอ destroy view หลังเอฟเฟกต์จบ พร้อม guard ไม่ให้เล่นซ้ำ; Test: `Tools/TawanOS/Tests/Card Death FX` (`CardDeathFxTests.cs`) PASS
 - [x] **P0-7 ศัตรูอัปเกรด + สำรับธีม + ขวัญ (ข้อ 18, เสริม 12)** | Done when: EncounterTableTests แก้ให้ตรงกฎใหม่และผ่าน; test ใหม่: ผู้เล่นอัปเกรด 0 ใบ ศัตรูชั้น 7 มี `_up` ≤ 1
 - [x] **P0-8 เศรษฐกิจ (ข้อ 17, เสริม 8, 11)** | Done when: test: ซื้อพรขวัญ 3 ครั้งราคา 8/12/16 และราคาจำข้ามการเข้าร้าน; ธูปชนะอยู่ใน 6-10
   - *สถานะ 15 ต.ค.:* GameFlowManager ปรับ MinorEnemyIncense/EventFightIncense = (6, 10), ShopConfig.asset ปรับพรขวัญ (amount 5 base 8 step +4) และพรกุศล (amount 1 base 15 step +8), ShopBlessing เพิ่มฟิลด์ priceStep, RunState บันทึกและโหลด blessingPurchases ข้ามเซฟ; Test: `Tools/TawanOS/Tests/Shop Economy` (`ShopEconomyTests.cs`) PASS
 - [x] **P0-9 ช่องโหว่เซฟ** | Done when: test: ออก-เข้าเมรุใช้ซ้ำไม่ได้, ร้านของเดิม, รางวัลค้างกลับมา
 - [ ] **P0-10 แถบขวัญหน้าแผนที่ไม่ลด (เสริม 4)** | Done when: ขวัญ 10/20 แถบเต็มครึ่ง
+  - *สถานะ 15 ต.ค.:* MapPlayerStatusUI กำหนด sprite สีขาวให้ hpBarFill เพื่อให้ Image.Type.Filled ทำงาน, คำนวณ fillAmount = currentHp / maxHp พร้อม sync live กับ RunState.Current.OnChanged; Test: `Tools/TawanOS/Tests/Map Khwan Bar` (`MapKhwanBarTests.cs`) PASS
 - [ ] **P0-11 สระอำและฟอนต์ (ข้อ 6, 15, เสริม 10)** | Done when: ThaiGlyphTests ผ่าน; grep ไม่พบ Sarabun/LiberationSans/Charm ใน scene และ prefab ที่ใช้งาน
 - [ ] **P0-12 HP → ขวัญ (เสริม 9)** | Done when: grep ข้อความที่ผู้เล่นเห็นไม่พบ "HP"
 - [ ] **P0-13 ข้อความสอนเล่น (ข้อ 1)** | Done when: ข้อความใหม่ + แก้ "แต่ะเทิร์น"
+  - *สถานะ 15 ต.ค.:* แก้คำใบ้กระดานใน TutorialText.asset และ TutorialTextSO.cs เป็น "คลิกขวาหรือกด Esc เพื่อยกเลิกการ์ดที่เลือก (ก่อนวางลงสนาม) การ์ดที่วางแล้วเอาคืนไม่ได้" และแก้คำผิด "แต่ะเทิร์น" -> "แต่ละเทิร์น"; Test: `Tools/TawanOS/Tests/Tutorial Text` (`TutorialTextTests.cs`) PASS
 
 ผลรัน 15 ต.ค. (Claude Code ใน Editor): CombatEnd 8/8, EncounterTable, ShopEconomy, SaveExploit, Temple, EightFloorMap, RunKhwanSync, SetupGuard, EventCatalog 46/46 ผ่านทั้งหมด 0 error
 
