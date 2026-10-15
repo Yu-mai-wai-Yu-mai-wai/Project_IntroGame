@@ -161,6 +161,9 @@ namespace TawanOS.GameFlow
             cutsceneGo.transform.SetParent(canvas.transform, false);
             UiFactory.Stretch(cutsceneGo.GetComponent<RectTransform>(), 0f);
             screen.cutsceneGroup = cutsceneGo.GetComponent<CanvasGroup>();
+            // The cutscene is look-only: it must never catch the clicks meant for the buttons
+            screen.cutsceneGroup.blocksRaycasts = false;
+            screen.cutsceneGroup.interactable = false;
 
             // Character Art
             var charHolderGo = new GameObject("CharacterHolder", typeof(RectTransform));
@@ -289,7 +292,9 @@ namespace TawanOS.GameFlow
             yield return new WaitForSeconds(0.8f);
 
             // --- Part 3: Show Stats Panel & Buttons ---
-            statsGroup.DOFade(1f, 0.6f);
+            cutsceneGroup.blocksRaycasts = false;
+            statsGroup.transform.SetAsLastSibling();
+            statsGroup.DOFade(1f, 0.6f).SetUpdate(true);
             statsGroup.interactable = true;
             statsGroup.blocksRaycasts = true;
 
