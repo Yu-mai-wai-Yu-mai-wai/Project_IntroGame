@@ -18,7 +18,7 @@ namespace TawanOS.ShopEngine
 
     public enum ShopBlessingKind { MaxKhwan, MaxMerit }
 
-    /// <summary>A blessing from the guardian spirit: raises the run's max khwan or max กุศล. Fixed price, once per visit.</summary>
+    /// <summary>A blessing from the guardian spirit: raises the run's max khwan or max กุศล. Base price + step * times bought.</summary>
     [Serializable]
     public class ShopBlessing
     {
@@ -27,7 +27,11 @@ namespace TawanOS.ShopEngine
         [TextArea(2, 4)] public string description;
         public Sprite icon;
         [Min(1)] public int amount = 1;
-        [Min(0)] public int price = 50;
+        [Min(0)] public int price = 8;
+        [Min(0)] public int priceStep = 0;
+
+        public int BasePrice => price;
+        public int GetPrice(int timesBought = 0) => price + priceStep * Mathf.Max(0, timesBought);
     }
 
     /// <summary>
@@ -72,9 +76,14 @@ namespace TawanOS.ShopEngine
         [Header("Blessings (shown on the amulet shelf)")]
         public List<ShopBlessing> blessings = new List<ShopBlessing>
         {
-            new ShopBlessing { kind = ShopBlessingKind.MaxKhwan, displayName = "พรขวัญ", description = "ขวัญสูงสุด +3", amount = 3, price = 10 },
-            new ShopBlessing { kind = ShopBlessingKind.MaxMerit, displayName = "พรกุศล", description = "กุศลสูงสุด +1", amount = 1, price = 20 },
+            new ShopBlessing { kind = ShopBlessingKind.MaxKhwan, displayName = "พรขวัญ", description = "ขวัญสูงสุด +5", amount = 5, price = 8, priceStep = 4 },
+            new ShopBlessing { kind = ShopBlessingKind.MaxMerit, displayName = "พรกุศล", description = "กุศลสูงสุด +1", amount = 1, price = 15, priceStep = 8 },
         };
+
+        public int RollBlessingPrice(ShopBlessing blessing, int timesBought = 0)
+        {
+            return blessing != null ? blessing.GetPrice(timesBought) : 0;
+        }
 
         // No services (Game Designer, 11 Oct): the shop sells cards only. Khwan is healed at the วัด node,
         // and cards leave the deck at the เมรุ.

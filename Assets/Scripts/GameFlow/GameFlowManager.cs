@@ -60,12 +60,11 @@ namespace TawanOS.GameFlow
         private int rewardIncense;
         private RewardTier rewardTier;
 
-        // Incense (ธูป) paid on victory, rolled per fight: [min, max] inclusive. Scaled down with the shop's prices
-        // (1-8 a card) so a fight pays for about one card (Game Designer, 15 Oct; was 15-25 / 35-45 / 80-100)
-        private static readonly Vector2Int MinorEnemyIncense = new Vector2Int(3, 8);
+        // Incense (ธูป) paid on victory, rolled per fight: [min, max] inclusive. (Game Designer Grill, 15 Oct: 6-10)
+        private static readonly Vector2Int MinorEnemyIncense = new Vector2Int(6, 10);
         private static readonly Vector2Int EliteEnemyIncense = new Vector2Int(3, 8);
         private static readonly Vector2Int BossIncense = new Vector2Int(10, 15);
-        private static readonly Vector2Int EventFightIncense = new Vector2Int(3, 8);
+        private static readonly Vector2Int EventFightIncense = new Vector2Int(6, 10);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()

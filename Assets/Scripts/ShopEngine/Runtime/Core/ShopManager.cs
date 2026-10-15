@@ -91,9 +91,13 @@ namespace TawanOS.ShopEngine
             foreach (var amulet in PickDistinct(config.amulets, config.amuletsForSale))
                 amuletOffers.Add(new ShopOffer { amulet = amulet, price = config.Vary(amulet.price) });
 
-            // Every visit offers each blessing once, at its fixed price
+            // Every visit offers each blessing once, scaled by how many times bought this run (P0-8)
             foreach (var blessing in config.blessings)
-                if (blessing != null) blessingOffers.Add(new ShopOffer { blessing = blessing, price = blessing.price });
+                if (blessing != null)
+                {
+                    int timesBought = RunState.Current.GetBlessingPurchases(blessing.kind);
+                    blessingOffers.Add(new ShopOffer { blessing = blessing, price = blessing.GetPrice(timesBought) });
+                }
         }
 
         private static List<T> PickDistinct<T>(List<T> source, int count) where T : class
@@ -129,6 +133,7 @@ namespace TawanOS.ShopEngine
         {
             if (!TryPay(offer)) return;
             var blessing = offer.blessing;
+            RunState.Current.RecordBlessingPurchase(blessing.kind);
             if (blessing.kind == ShopBlessingKind.MaxMerit)
             {
                 RunState.Current.ChangeMaxMerit(blessing.amount);
@@ -139,6 +144,12 @@ namespace TawanOS.ShopEngine
                 RunState.Current.ChangeMaxHp(blessing.amount);
                 Thank($"ขวัญสูงสุด +{blessing.amount} (เป็น {RunState.Current.MaxHp})");
             }
+        }
+
+        public int GetBlessingPrice(ShopBlessing blessing)
+        {
+            if (blessing == null) return 0;
+            return blessing.GetPrice(RunState.Current.GetBlessingPurchases(blessing.kind));
         }
 
         public void Leave()

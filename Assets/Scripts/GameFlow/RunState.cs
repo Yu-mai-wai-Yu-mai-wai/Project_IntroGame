@@ -3,6 +3,7 @@ using System.IO;
 using Newtonsoft.Json;
 using TawanOS.CardEngine;
 using TawanOS.MapEngine;
+using TawanOS.ShopEngine;
 using UnityEngine;
 
 namespace TawanOS.GameFlow
@@ -64,6 +65,7 @@ namespace TawanOS.GameFlow
         private readonly List<string> relicIds = new List<string>();
         private readonly HashSet<string> seenEventIds = new HashSet<string>();
         private readonly List<CardDataSO> deck = new List<CardDataSO>();
+        private readonly Dictionary<string, int> blessingPurchases = new Dictionary<string, int>();
         private bool deckInitialized;
 
         private RunState()
@@ -196,6 +198,7 @@ namespace TawanOS.GameFlow
             relicIds.Clear();
             seenEventIds.Clear();
             deck.Clear();
+            blessingPurchases.Clear();
             deckInitialized = false;
             Resume = ResumeKind.None;
             OnChanged?.Invoke();
@@ -266,6 +269,32 @@ namespace TawanOS.GameFlow
         {
             if (string.IsNullOrEmpty(eventId)) return;
             seenEventIds.Add(eventId);
+            Changed();
+        }
+
+        // ---------------------------------------------------------------- blessings (ศาลตายาย)
+
+        public int GetBlessingPurchases(ShopBlessingKind kind)
+        {
+            return blessingPurchases.TryGetValue(kind.ToString(), out int count) ? count : 0;
+        }
+
+        public int GetBlessingPurchases(string kindName)
+        {
+            if (string.IsNullOrEmpty(kindName)) return 0;
+            return blessingPurchases.TryGetValue(kindName, out int count) ? count : 0;
+        }
+
+        public void RecordBlessingPurchase(ShopBlessingKind kind)
+        {
+            string key = kind.ToString();
+            blessingPurchases[key] = GetBlessingPurchases(kind) + 1;
+            Changed();
+        }
+
+        public void SetBlessingPurchases(ShopBlessingKind kind, int count)
+        {
+            blessingPurchases[kind.ToString()] = Mathf.Max(0, count);
             Changed();
         }
 
@@ -361,6 +390,7 @@ namespace TawanOS.GameFlow
                 resume = Resume,
                 resumeNodeType = ResumeNodeType,
                 resumeFloor = ResumeFloor,
+                blessingPurchases = new Dictionary<string, int>(blessingPurchases),
             };
             try
             {
@@ -402,6 +432,13 @@ namespace TawanOS.GameFlow
             Resume = data.resume;
             ResumeNodeType = data.resumeNodeType;
             ResumeFloor = data.resumeFloor;
+
+            blessingPurchases.Clear();
+            if (data.blessingPurchases != null)
+            {
+                foreach (var kvp in data.blessingPurchases)
+                    blessingPurchases[kvp.Key] = kvp.Value;
+            }
         }
 
         /// <summary>On-disk shape of a run. Cards are stored by cardId and resolved through the card catalog.</summary>
@@ -421,6 +458,7 @@ namespace TawanOS.GameFlow
             public ResumeKind resume;
             public NodeType resumeNodeType;
             public int resumeFloor;
+            public Dictionary<string, int> blessingPurchases;
         }
     }
 }
