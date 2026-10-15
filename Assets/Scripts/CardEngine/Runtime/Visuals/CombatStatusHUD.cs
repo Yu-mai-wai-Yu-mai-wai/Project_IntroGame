@@ -25,6 +25,7 @@ namespace TawanOS.CardEngine
             public TMP_Text title;
             public TMP_Text detail;
             public RectTransform fill;
+            public RectTransform tempStrip; // ขวัญชั่วคราว over the fill (player only)
             public Button button;
             public TMP_Text buttonLabel;
         }
@@ -98,8 +99,9 @@ namespace TawanOS.CardEngine
 
             // Player
             string pShield = s.playerShield > 0 ? $"  |  เกราะ {s.playerShield}" : "";
-            player.detail.text = $"ขวัญ {s.playerKhwan} / {s.maxPlayerKhwan}{pShield}";
-            SetFill(player.fill, s.maxPlayerKhwan > 0 ? (float)s.playerKhwan / s.maxPlayerKhwan : 0f, s.playerKhwan, ref lastPlayerKhwan);
+            player.detail.text = $"ขวัญ {KhwanDisplay.Text(s.playerKhwan, s.maxPlayerKhwan, " / ")}{pShield}";
+            SetFill(player.fill, KhwanDisplay.Fill(s.playerKhwan, s.maxPlayerKhwan), s.playerKhwan, ref lastPlayerKhwan);
+            KhwanDisplay.SetTempStrip(player.tempStrip, s.playerKhwan, s.maxPlayerKhwan);
 
             var turns = TurnPhaseController.Instance;
             bool isCombatOver = combat.IsCombatOver;
@@ -238,6 +240,7 @@ namespace TawanOS.CardEngine
             var fillImg = fillGo.AddComponent<Image>();
             fillImg.color = PlayerBar;
             fillImg.raycastTarget = false;
+            p.tempStrip = KhwanDisplay.AddTempStrip(trackRt);
 
             // End Turn Button
             var btnGo = new GameObject("EndTurnButton", typeof(RectTransform));

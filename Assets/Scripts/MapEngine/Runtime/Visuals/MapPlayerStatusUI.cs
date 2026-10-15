@@ -17,6 +17,7 @@ namespace TawanOS.MapEngine
     public class MapPlayerStatusUI : MonoBehaviour
     {
         private TextMeshProUGUI hpText;
+        private RectTransform tempStrip;
         private Image hpBarFill;
         private TextMeshProUGUI incenseText;
         private TextMeshProUGUI deckText;
@@ -92,7 +93,7 @@ namespace TawanOS.MapEngine
 
             if (hpText != null)
             {
-                hpText.text = $"{hp}/{maxHp}";
+                hpText.text = KhwanDisplay.Text(hp, maxHp);
             }
 
             if (hpBarFill != null)
@@ -103,8 +104,15 @@ namespace TawanOS.MapEngine
                     hpBarFill.type = Image.Type.Filled;
                     hpBarFill.fillMethod = Image.FillMethod.Horizontal;
                 }
-                float ratio = maxHp > 0 ? Mathf.Clamp01((float)hp / maxHp) : 0f;
-                hpBarFill.fillAmount = ratio;
+                hpBarFill.fillAmount = KhwanDisplay.Fill(hp, maxHp);
+                // ขวัญชั่วคราว: gold strip over the bar (found again if the bar was built in the scene)
+                if (tempStrip == null)
+                {
+                    var track = (RectTransform)hpBarFill.transform.parent;
+                    var found = track.Find("TempKhwan");
+                    tempStrip = found != null ? (RectTransform)found : KhwanDisplay.AddTempStrip(track, 2f);
+                }
+                KhwanDisplay.SetTempStrip(tempStrip, hp, maxHp);
             }
 
             if (incenseText != null)

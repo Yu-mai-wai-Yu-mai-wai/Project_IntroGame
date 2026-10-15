@@ -44,8 +44,6 @@ namespace TawanOS.GameFlow
 
         [Header("Khwan bar")]
         public Color barColour = new Color(0.3f, 0.75f, 0.45f);
-        [Tooltip("The bar's colour while the player has ขวัญชั่วคราว (Khwan above max).")]
-        public Color tempKhwanColour = new Color(1f, 0.8f, 0.35f);
 
         public Button PrayButton => prayButton;
         public TextMeshProUGUI PrayText => prayText;
@@ -56,6 +54,7 @@ namespace TawanOS.GameFlow
         private CanvasGroup buttonsGroup;
         private RectTransform barFill;
         private Image barFillImage;
+        private RectTransform tempStrip;
         private TextMeshProUGUI barText;
         private Image fade;
         private ParticleSystem sparks;
@@ -151,9 +150,8 @@ namespace TawanOS.GameFlow
             float t = run.MaxHp > 0 ? Mathf.Clamp01(hp / run.MaxHp) : 0f;
             barFill.anchorMax = new Vector2(t, 1f);
             int shown = Mathf.RoundToInt(hp);
-            int temp = Mathf.Max(0, shown - run.MaxHp);
-            barFillImage.color = temp > 0 ? tempKhwanColour : barColour; // gold while there is ขวัญชั่วคราว
-            barText.text = temp > 0 ? $"ขวัญ {shown} / {run.MaxHp}  <size=80%>(ชั่วคราว +{temp})</size>" : $"ขวัญ {shown} / {run.MaxHp}";
+            KhwanDisplay.SetTempStrip(tempStrip, shown, run.MaxHp); // ขวัญชั่วคราว as a gold strip over the full bar
+            barText.text = $"ขวัญ {KhwanDisplay.Text(shown, run.MaxHp, " / ")}";
         }
 
         // ---- UI ----
@@ -193,6 +191,7 @@ namespace TawanOS.GameFlow
             barFill.anchorMax = Vector2.one;
             barFill.offsetMin = barFill.offsetMax = Vector2.zero;
             barFill.pivot = new Vector2(0f, 0.5f);
+            tempStrip = KhwanDisplay.AddTempStrip(track.rectTransform);
             foreach (var g in bar.GetComponentsInChildren<Graphic>()) g.raycastTarget = false;
 
             // The button above the bar
