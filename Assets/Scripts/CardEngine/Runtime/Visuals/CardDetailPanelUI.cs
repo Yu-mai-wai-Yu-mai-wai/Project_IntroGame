@@ -173,40 +173,64 @@ namespace TawanOS.CardEngine
         // A line break inside rich text
         private const char NL = (char)10;
 
-        /// <summary>Name, English name and type line, as rich text (also written in the ตำราไสยเวท book).</summary>
+        /// <summary>Name and cost, live stats (if any), and type line, as rich text (also written in the ตำราไสยเวท book).</summary>
         public static string InfoHeader(CardInstance card, Color accent, string mutedHex, float scale = 1f)
         {
             string accentHex = ColorUtility.ToHtmlStringRGB(accent);
             var h = new StringBuilder();
-            h.Append($"<size={64 * scale:0}>{card.cardNameThai}</size>").Append(NL);
-            if (!string.IsNullOrEmpty(card.cardNameEng)) h.Append($"<size={26 * scale:0}><color=#{mutedHex}>{card.cardNameEng}</color></size>").Append(NL);
-            h.Append($"<size={30 * scale:0}><color=#{accentHex}>{TypeLine(card)}</color></size>");
+
+            // Line 1: card name with the cost beside it ("กุศล 2" or "มลทิน 2")
+            string costText = card.magicSchool == MagicSchool.WhiteMagic
+                ? $"กุศล {card.meritCost}"
+                : $"มลทิน {card.corruptionGain}";
+            h.Append($"<size={48 * scale:0}>{card.cardNameThai}</size>   <size={26 * scale:0}><color=#{accentHex}>{costText}</color></size>").Append(NL);
+
+            // Line 2: "ขวัญ 2/2" and "สะเทือนขวัญ 2" on the same line (only for cards that have them; hidden for spells)
+            bool isSpell = card.cardType == CardType.Incantation;
+            bool isFamiliar = card.cardType == CardType.Familiar;
+            bool hasKhwan = !isSpell && (isFamiliar || card.maxKhwan > 0);
+            bool hasDurability = !isSpell && card.cardType == CardType.Amulet && card.currentDurability > 0;
+            bool hasArmor = !isSpell && card.armor > 0;
+            bool hasStats = !isSpell && (hasKhwan || hasDurability || hasArmor);
+
+            if (hasStats)
+            {
+                var stats = new StringBuilder();
+                if (hasKhwan)
+                {
+                    stats.Append($"<color=#{accentHex}>ขวัญ</color> {card.familiarHealth}/{card.maxKhwan}");
+                }
+                if (isFamiliar)
+                {
+                    int atk = AttackOf(card);
+                    string atkText = atk != card.familiarDamage ? $"{atk} <size={Mathf.RoundToInt(20 * scale)}><color=#{mutedHex}>(ฐาน {card.familiarDamage})</color></size>" : atk.ToString();
+                    if (stats.Length > 0) stats.Append("      ");
+                    stats.Append($"<color=#{accentHex}>สะเทือนขวัญ</color> {atkText}");
+                }
+                if (hasArmor)
+                {
+                    if (stats.Length > 0) stats.Append("      ");
+                    stats.Append($"<color=#{accentHex}>เกราะ</color> {card.armor}");
+                }
+                if (hasDurability)
+                {
+                    if (stats.Length > 0) stats.Append("      ");
+                    stats.Append($"<color=#{accentHex}>อายุขลัง</color> {card.currentDurability}");
+                }
+                h.Append($"<size={26 * scale:0}>{stats}</size>").Append(NL);
+            }
+
+            // Line 3: then the type line
+            h.Append($"<size={26 * scale:0}><color=#{accentHex}>{TypeLine(card)}</color></size>");
             return h.ToString();
         }
 
-        /// <summary>Cost and live stats, ability text, ability breakdown and statuses, as rich text.</summary>
+        /// <summary>Ability text, ability breakdown and statuses, as rich text.</summary>
         public static string InfoBody(CardInstance card, Color accent, string mutedHex, string detailHex, string blessingHex, string debuffHex, float scale = 1f)
         {
             string accentHex = ColorUtility.ToHtmlStringRGB(accent);
             int small = Mathf.RoundToInt(24 * scale), label = Mathf.RoundToInt(26 * scale);
             var b = new StringBuilder();
-            b.Append(card.magicSchool == MagicSchool.WhiteMagic
-                ? $"<color=#{accentHex}>กุศล</color>  {card.meritCost}"
-                : $"<color=#{accentHex}>มลทิน</color>  +{card.corruptionGain}");
-
-            if (card.cardType == CardType.Familiar)
-            {
-                int atk = AttackOf(card);
-                string atkText = atk != card.familiarDamage ? $"{atk} <size={Mathf.RoundToInt(22 * scale)}><color=#{mutedHex}>(ฐาน {card.familiarDamage})</color></size>" : atk.ToString();
-                b.Append($"      <color=#{accentHex}>สะเทือนขวัญ</color>  {atkText}");
-            }
-            if (card.cardType == CardType.Familiar || card.maxKhwan > 0)
-            {
-                b.Append($"      <color=#{accentHex}>ขวัญ</color>  {card.familiarHealth}/{card.maxKhwan}");
-            }
-            if (card.armor > 0) b.Append($"      <color=#{accentHex}>เกราะ</color>  {card.armor}");
-            if (card.cardType == CardType.Amulet && card.currentDurability > 0) b.Append($"      <color=#{accentHex}>อายุขลัง</color>  {card.currentDurability}");
-            b.Append(NL).Append(NL);
 
             b.Append($"<size={label}><color=#{accentHex}>ความสามารถ</color></size>").Append(NL);
             string description = Description(card);
@@ -350,7 +374,8 @@ namespace TawanOS.CardEngine
             panelOutline = panel.gameObject.AddComponent<Outline>();
             panelOutline.effectDistance = new Vector2(3f, -3f);
 
-            headerText = NewText("Header", panel, font, 30, TextAlignmentOptions.TopLeft);
+            var titleFont = UIThemeSO.Current.titleFont;
+            headerText = NewText("Header", panel, titleFont != null ? titleFont : font, 30, TextAlignmentOptions.TopLeft);
             SetRect(headerText.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(40f, -190f), new Vector2(-40f, -30f));
 
             var line = NewImage("Divider", panel, new Color(1f, 1f, 1f, 0.15f));

@@ -594,9 +594,11 @@ namespace TawanOS.CardEngine
             Color accent = SchoolInk(entry.card.magicSchool);
             string muted = ColorUtility.ToHtmlStringRGB(Color.Lerp(style.ink, new Color(0.72f, 0.64f, 0.46f), 0.3f)); // ink thinned a little toward the paper
 
+            var titleFont = UIThemeSO.Current.titleFont;
             var header = NewText("Header", page, 34, TextAlignmentOptions.TopLeft);
+            if (titleFont != null) header.font = titleFont;
             header.color = style.ink;
-            Place(header.rectTransform, 0.78f, 0.98f);
+            Place(header.rectTransform, 0.74f, 0.98f);
 
             var body = NewText("Body", page, 28, TextAlignmentOptions.TopLeft);
             body.color = style.ink;
@@ -604,7 +606,7 @@ namespace TawanOS.CardEngine
             body.enableAutoSizing = true;
             body.fontSizeMin = 18f;
             body.fontSizeMax = 30f;
-            Place(body.rectTransform, 0.03f, 0.74f);
+            Place(body.rectTransform, 0.03f, 0.70f);
 
             if (!entry.known)
             {
@@ -617,7 +619,7 @@ namespace TawanOS.CardEngine
                 body.text = CardDetailPanelUI.InfoBody(entry.card, accent, muted,
                     ColorUtility.ToHtmlStringRGB(style.ink), "1F5A2C", "7A1414", 1.1f);
             }
-            Rule(page, 0.76f, 0f, 1f);
+            Rule(page, 0.72f, 0f, 1f);
         }
 
         // The card picture, with cost, attack, khwan and the ability written on it (as on the 3D card)
