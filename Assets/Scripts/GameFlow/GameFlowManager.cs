@@ -55,10 +55,6 @@ namespace TawanOS.GameFlow
         private int storyResumePage = -1;
         private System.Collections.Generic.List<CardDataSO> tutorialOpeningHand;
 
-        // TEST ONLY (ตีข้ามหัว clash animation): this card is added to the tutorial fight's deck and drawn as an
-        // extra opening card. Empty = off. Remove before the presentation.
-        private const string TutorialTestExtraCardId = "s_bf02"; // กระสือ, Overhead
-
         // Filled on victory, consumed when RewardScene loads
         private bool hasPendingReward;
         private int rewardIncense;
@@ -269,7 +265,6 @@ namespace TawanOS.GameFlow
                 if (tutorialFightActive)
                 {
                     CardManager.Instance.fixedOpeningCards = tutorialOpeningHand;
-                    AddTutorialTestCard(CardManager.Instance);
                 }
             }
 
@@ -563,27 +558,6 @@ namespace TawanOS.GameFlow
             runDeck.maxHandSize = source.maxHandSize;
             runDeck.startingCards = new System.Collections.Generic.List<CardDataSO>(run.Deck);
             cardManager.defaultDeckConfig = runDeck;
-        }
-
-        // TEST ONLY: see TutorialTestExtraCardId. Only the runtime deck copy and this fight's opening hand change.
-        private static void AddTutorialTestCard(CardManager cardManager)
-        {
-            if (string.IsNullOrEmpty(TutorialTestExtraCardId)) return;
-            var catalog = CardCatalogSO.Load();
-            var card = catalog != null ? catalog.cards.Find(c => c != null && c.cardId == TutorialTestExtraCardId) : null;
-            if (card == null || cardManager.defaultDeckConfig == null)
-            {
-                Debug.LogWarning($"[GameFlowManager] Tutorial test card {TutorialTestExtraCardId} not found - skipped.");
-                return;
-            }
-
-            cardManager.defaultDeckConfig.startingCards.Add(card);
-            var hand = new System.Collections.Generic.List<CardDataSO>();
-            if (cardManager.fixedOpeningCards != null) hand.AddRange(cardManager.fixedOpeningCards);
-            hand.Add(card);
-            cardManager.fixedOpeningCards = hand;
-            if (TurnPhaseController.Instance != null) TurnPhaseController.Instance.openingHandSize = hand.Count;
-            Debug.Log($"[GameFlowManager] TEST: {card.cardId} added to the tutorial opening hand.");
         }
 
         private System.Collections.IEnumerator ShowGameOverAfterDelay(GameOverSummary summary)
