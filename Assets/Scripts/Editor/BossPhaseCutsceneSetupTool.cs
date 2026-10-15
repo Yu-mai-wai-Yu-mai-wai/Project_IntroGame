@@ -9,26 +9,29 @@ using UnityEngine.SceneManagement;
 
 namespace TawanOS.EditorTools
 {
-    // Puts a TableSlamFx (the boss slams the table when it changes phase) in CombatTestScene and fills its props:
-    // the dressing's things standing on the table top (candles, beads, decks, slot outlines), every board slot, so
-    // the cards in play jump too, the draw pile and the graveyard. Running it again refills the props and keeps the other values. The scene is
+    // Puts a BossPhaseCutscene (the boss's comeback when it changes phase) in CombatTestScene and fills its boss (the
+    // dressing's Scarecrow) and its props: the dressing's things standing on the table top (candles, beads, decks,
+    // slot outlines), every board slot, so the cards in play jump too, the draw pile and the graveyard. Running it
+    // again refills the boss and the props and keeps the other values. The scene is
     // opened additively when it is not open, saved and closed again, so the scene open in the editor is untouched.
-    public static class TableSlamFxSetupTool
+    public static class BossPhaseCutsceneSetupTool
     {
         private const string ScenePath = "Assets/Scenes/CombatTestScene.unity";
         private const string DressingName = "CombatDressing";
         private const string TableName = "Table";
+        private const string BossName = "Scarecrow";
+        private const string ObjectName = "BossPhaseCutscene";
 
         // Dressing parts that are not on the table top: the table, the backdrop and the strings overhead
         private static readonly string[] NotProps = { "Table", "Camera", "Bg", "Ground", "TreeBG", "Scarecrow", "RedString" };
 
-        [MenuItem("Tools/TawanOS/Combat Scene/Add Table Slam Fx")]
+        [MenuItem("Tools/TawanOS/Combat Scene/Add Boss Phase Cutscene")]
         private static void Setup_Menu()
         {
             Setup();
         }
 
-        // Batch: -executeMethod TawanOS.EditorTools.TableSlamFxSetupTool.Setup
+        // Batch: -executeMethod TawanOS.EditorTools.BossPhaseCutsceneSetupTool.Setup
         public static void Setup()
         {
             var scene = SceneManager.GetSceneByPath(ScenePath);
@@ -52,24 +55,28 @@ namespace TawanOS.EditorTools
             var tableRenderer = table != null ? table.GetComponentInChildren<Renderer>() : null;
             if (tableRenderer == null)
             {
-                Debug.LogError($"[TableSlamFxSetupTool] {DressingName}/{TableName} not found in {scene.path} (run Apply Blender Dressing first).");
+                Debug.LogError($"[BossPhaseCutsceneSetupTool] {DressingName}/{TableName} not found in {scene.path} (run Apply Blender Dressing first).");
                 return false;
             }
 
-            TableSlamFx fx = null;
+            BossPhaseCutscene fx = null;
             foreach (var root in scene.GetRootGameObjects())
             {
-                if (fx == null) fx = root.GetComponentInChildren<TableSlamFx>(true);
+                if (fx == null) fx = root.GetComponentInChildren<BossPhaseCutscene>(true);
             }
             if (fx == null)
             {
-                var go = new GameObject("TableSlamFx");
+                var go = new GameObject(ObjectName);
                 SceneManager.MoveGameObjectToScene(go, scene);
-                Undo.RegisterCreatedObjectUndo(go, "Add Table Slam Fx");
-                fx = go.AddComponent<TableSlamFx>();
+                Undo.RegisterCreatedObjectUndo(go, "Add Boss Phase Cutscene");
+                fx = go.AddComponent<BossPhaseCutscene>();
             }
 
-            Undo.RecordObject(fx, "Fill Table Slam Fx");
+            Undo.RecordObject(fx, "Fill Boss Phase Cutscene");
+            Undo.RecordObject(fx.gameObject, "Fill Boss Phase Cutscene");
+            fx.gameObject.name = ObjectName;
+            fx.boss = dressing.transform.Find(BossName);
+            if (fx.boss == null) Debug.LogWarning($"[BossPhaseCutsceneSetupTool] {DressingName}/{BossName} not found: set the boss in the Inspector.");
             var top = tableRenderer.bounds;
             fx.props = new List<Transform>();
             foreach (Transform child in dressing.transform)
@@ -91,7 +98,7 @@ namespace TawanOS.EditorTools
             }
             EditorUtility.SetDirty(fx);
             EditorSceneManager.MarkSceneDirty(scene);
-            Debug.Log($"<color=green>[TableSlamFxSetupTool] TableSlamFx in {scene.name}: {dressingProps} table props and {fx.props.Count - dressingProps} board slots.</color>");
+            Debug.Log($"<color=green>[BossPhaseCutsceneSetupTool] BossPhaseCutscene in {scene.name}: boss {(fx.boss != null ? fx.boss.name : "none")}, {dressingProps} table props and {fx.props.Count - dressingProps} board objects.</color>");
             return true;
         }
 

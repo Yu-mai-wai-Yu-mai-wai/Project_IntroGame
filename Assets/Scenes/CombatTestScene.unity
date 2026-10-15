@@ -2720,7 +2720,7 @@ GameObject:
   - component: {fileID: 659100293}
   - component: {fileID: 659100292}
   m_Layer: 0
-  m_Name: TableSlamFx
+  m_Name: BossPhaseCutscene
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2738,6 +2738,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14a256064261e14488d16ed8a5dcb156, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.VFX.TableSlamFx
+  boss: {fileID: 1121356483}
+  closeDistance: 7
+  title: "{0}\n\u0E04\u0E37\u0E19\u0E23\u0E48\u0E32\u0E07!"
+  titleColor: {r: 0.95, g: 0.22, b: 0.16, a: 1}
+  bossShake: 0.25
+  barsTime: 0.35
+  pushIn: 0.9
+  roar: 1.4
+  pullBack: 0.22
+  settle: 0.9
+  barHeight: 120
+  darken: 0.35
   props:
   - {fileID: 507071883}
   - {fileID: 507071882}
@@ -2827,7 +2839,6 @@ MonoBehaviour:
   - {fileID: 108837749}
   - {fileID: 1305718492}
   - {fileID: 629996792}
-  delay: 0.15
   stagger: 0.06
   jumpHeight: {x: 0.6, y: 1.2}
   jumpTime: 0.55
@@ -3580,6 +3591,11 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 909768759}
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1121356483 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3545046421299738353, guid: 45de815a193a30b47b0b6d742814be16, type: 3}
+  m_PrefabInstance: {fileID: 507071807}
+  m_PrefabAsset: {fileID: 0}
 --- !u!21 &1195697070
 Material:
   serializedVersion: 8

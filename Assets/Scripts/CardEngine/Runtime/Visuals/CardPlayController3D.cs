@@ -203,6 +203,7 @@ namespace TawanOS.CardEngine
 
             if (!Input.GetMouseButtonDown(0) || Time.frameCount == selectedFrame) return;
             if (TawanOS.UI.TutorialCoach.Blocking) return; // the click that closes a tutorial hint, not a cast
+            if (TawanOS.VFX.BossPhaseCutscene.Playing) return;
             if (ClickedHandCard()) return; // that card's own click selects it instead
 
             if (boardCard)

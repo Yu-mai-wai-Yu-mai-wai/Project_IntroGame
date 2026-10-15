@@ -117,7 +117,8 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
-            if (Input.GetKeyDown(endTurnKey) && !TawanOS.UI.PauseMenu.IsPaused && !TawanOS.UI.TutorialCoach.Blocking) RequestEndTurn();
+            if (Input.GetKeyDown(endTurnKey) && !TawanOS.UI.PauseMenu.IsPaused && !TawanOS.UI.TutorialCoach.Blocking
+                && !TawanOS.VFX.BossPhaseCutscene.Playing) RequestEndTurn();
         }
 
         private IEnumerator TurnLoop()

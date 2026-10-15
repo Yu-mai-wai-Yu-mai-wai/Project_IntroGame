@@ -63,9 +63,10 @@ namespace TawanOS.CardEngine
         public bool IsBoardOnlyView => userTop && topRequests == 0 && !locked;
         public static bool HideOverlay => Instance != null && Instance.IsBoardOnlyView;
 
-        // A card screen or a tutorial hint is showing (or closed this frame): clicks should not also pick up or play cards
+        // A card screen, a tutorial hint (or one closed this frame) or the boss's phase cutscene: clicks should not also
+        // pick up or play cards
         public static bool BlocksInput => CardDetailPanelUI.BlocksInput || GraveyardPanelUI.BlocksInput || DeckViewerPanelUI.BlocksInput
-            || TawanOS.UI.TutorialCoach.Blocking;
+            || TawanOS.UI.TutorialCoach.Blocking || TawanOS.VFX.BossPhaseCutscene.Playing;
 
         // AfterSceneLoad fires only for the first scene played; the combat scene is usually loaded later from the map.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -156,7 +157,7 @@ namespace TawanOS.CardEngine
         {
             if (TawanOS.UI.PauseMenu.IsPaused) return;
             if (Input.GetKeyDown(toggleKey) && !CardDetailPanelUI.IsOpen && !GraveyardPanelUI.IsOpen && !DeckViewerPanelUI.IsOpen
-                && !TawanOS.UI.TutorialCoach.Blocking) ToggleTopView();
+                && !TawanOS.UI.TutorialCoach.Blocking && !TawanOS.VFX.BossPhaseCutscene.Playing) ToggleTopView();
 
             // Right-click a card: its detail screen. A held card or a target choice uses right-click to cancel.
             if (!Input.GetMouseButtonDown(1) || BlocksInput
