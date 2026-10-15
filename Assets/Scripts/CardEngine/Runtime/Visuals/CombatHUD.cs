@@ -81,7 +81,7 @@ namespace TawanOS.CardEngine
 
         private void OnEndTurnClicked()
         {
-            if (CombatManager.Instance != null)
+            if (CombatManager.Instance != null && !CombatManager.Instance.IsCombatOver)
             {
                 CombatManager.Instance.EndPlayerTurn();
             }

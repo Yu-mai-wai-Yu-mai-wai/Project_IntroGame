@@ -71,6 +71,7 @@ namespace TawanOS.CardEngine
         // Finishes the player's current phase (familiars/amulets, then incantations)
         public void RequestEndTurn()
         {
+            if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver) return;
             if (IsPlayerPhase(CurrentPhase)) endTurnRequested = true;
         }
 
@@ -92,6 +93,7 @@ namespace TawanOS.CardEngine
         // Which of the player's cards may be played right now
         public bool CanPlayCard(CardInstance card)
         {
+            if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver) return false;
             switch (CurrentPhase)
             {
                 case TurnPhase.PlayerBoard: return IsBoardCard(card);
@@ -117,6 +119,7 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
+            if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver) return;
             if (Input.GetKeyDown(endTurnKey) && !TawanOS.UI.PauseMenu.IsPaused && !TawanOS.UI.TutorialCoach.Blocking) RequestEndTurn();
         }
 

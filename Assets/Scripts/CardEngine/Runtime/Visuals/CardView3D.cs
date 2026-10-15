@@ -485,6 +485,10 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
+            if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver && isHovered)
+            {
+                Unhover();
+            }
             bool ignoring = IgnoresMouse;
             if (wasIgnoringMouse && !ignoring)
             {
