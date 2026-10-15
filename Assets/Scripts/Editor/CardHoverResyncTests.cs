@@ -9,7 +9,7 @@ namespace TawanOS.EditorTools
     /// <summary>
     /// Checks plan task P0-3: Re-sync card hover after closing the card book.
     /// 1. Hand card unhovers when book closes if mouse is not over it.
-    /// 2. Board card unhovers when book closes if mouse is not over it.
+    /// 2. Board cards never hover (P0-3 regression: jitter and cut clash tweens).
     /// Menu: Tools/TawanOS/Tests/Card Hover Resync. Batch: -executeMethod TawanOS.EditorTools.CardHoverResyncTests.Run
     /// </summary>
     public static class CardHoverResyncTests
@@ -70,44 +70,20 @@ namespace TawanOS.EditorTools
                 failures += Expect("Hover is cleared after ResyncHover", !card.IsHovered);
                 failures += Expect("Scale returned to baseLocalScale", Mathf.Approximately(card.transform.localScale.x, 1f));
 
-                // --- 2. Board card hover and unhover ---
+                // --- 2. Board cards never hover (a hover lifts the card off its collider and cuts the clash tweens) ---
                 var boardSlotGo = new GameObject("TestBoardSlot", typeof(MeshFilter), typeof(BoardSlotView));
                 boardSlotGo.transform.SetParent(testGo.transform);
-                var slot = boardSlotGo.GetComponent<BoardSlotView>();
-                slot.side = BoardSlotView.SlotSide.Player;
-
                 var boardCardGo = new GameObject("TestBoardCard", typeof(BoxCollider), typeof(CardView3D));
                 boardCardGo.transform.SetParent(boardSlotGo.transform);
                 var boardCard = boardCardGo.GetComponent<CardView3D>();
-
                 baseScaleField.SetValue(boardCard, Vector3.one);
                 typeof(CardView3D).GetField("isPlacedOnBoard", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(boardCard, true);
-                typeof(CardView3D).GetField("originalLocalPosition", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(boardCard, Vector3.zero);
-                typeof(CardView3D).GetField("originalLocalRotation", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(boardCard, Quaternion.identity);
 
-                failures += Expect("Board card is not ignoring mouse when idle", !boardCard.IgnoresMouse);
-
-                boardCard.Hover();
+                failures += Expect("Board card ignores the mouse", boardCard.IgnoresMouse);
+                typeof(CardView3D).GetMethod("OnMouseEnter", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(boardCard, null);
                 DOTween.CompleteAll();
-                failures += Expect("Board card is hovered", boardCard.IsHovered);
-                failures += Expect("Board card scaled up on hover", boardCard.transform.localScale.x > 1f);
-
-                // Simulate book open
-                typeof(CardBookPanel).GetField("isOpen", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(book, true);
-                failures += Expect("Board card ignores mouse while book is open", boardCard.IgnoresMouse);
-
-                // OnMouseExit called while book open
-                typeof(CardView3D).GetMethod("OnMouseExit", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(boardCard, null);
-                failures += Expect("Board card hover stuck while book open", boardCard.IsHovered);
-
-                // Close book & resync
-                typeof(CardBookPanel).GetField("isOpen", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(book, false);
-                typeof(CardBookPanel).GetField("closedFrame", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(book, -1);
-                boardCard.ResyncHover();
-                DOTween.CompleteAll();
-
-                failures += Expect("Board card unhovered after book closed", !boardCard.IsHovered);
-                failures += Expect("Board card scale restored to base scale", Mathf.Approximately(boardCard.transform.localScale.x, 1f));
+                failures += Expect("Mouse enter does not hover a board card", !boardCard.IsHovered);
+                failures += Expect("Board card keeps its scale", Mathf.Approximately(boardCard.transform.localScale.x, 1f));
             }
             finally
             {
