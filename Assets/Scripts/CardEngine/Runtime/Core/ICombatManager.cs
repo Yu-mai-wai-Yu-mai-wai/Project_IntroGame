@@ -13,7 +13,7 @@ namespace TawanOS.CardEngine
 
         void StartCombat(EnemyProfileSO enemyProfile);
         void EndPlayerTurn();
-        void TakeDamage(int amount, bool toPlayer);
+        void TakeDamage(int amount, bool toPlayer, string cause = null);
         void AddMerit(int amount);
         bool SpendMerit(int amount);
         void AddCorruption(int amount);

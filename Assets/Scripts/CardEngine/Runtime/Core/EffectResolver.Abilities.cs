@@ -570,7 +570,7 @@ namespace TawanOS.CardEngine
 
             int damage = ApplyDamageStatusModifier(value, attackerIsPlayer: ownerIsPlayer);
             int before = ownerIsPlayer ? s.enemyKhwan : s.playerKhwan;
-            combat.TakeDamage(damage, toPlayer: !ownerIsPlayer);
+            combat.TakeDamage(damage, toPlayer: !ownerIsPlayer, cause: !ownerIsPlayer ? "ถูกดูดขวัญ" : null);
             OnDamageDealt?.Invoke(damage, !ownerIsPlayer);
             int drained = Mathf.Max(0, before - (ownerIsPlayer ? s.enemyKhwan : s.playerKhwan));
             if (drained <= 0 || combat.IsCombatOver) return;

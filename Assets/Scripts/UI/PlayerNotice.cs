@@ -29,10 +29,20 @@ namespace TawanOS.UI
 
         public static void Show(string message, NoticeKind kind = NoticeKind.Warning)
         {
+            if (string.IsNullOrEmpty(message)) return;
+
+            NoticeHost.EnsureExists();
+
+            if (NoticeHost.Instance != null && NoticeHost.Instance.TryExtend(message))
+            {
+                lastMessage = message;
+                lastTime = Time.unscaledTime;
+                return;
+            }
+
             if (!ShouldShow(message, Time.unscaledTime)) return;
 
             Debug.Log($"[Notice] {message}");
-            NoticeHost.EnsureExists();
             OnNotice?.Invoke(message, kind);
         }
 
@@ -65,19 +75,24 @@ namespace TawanOS.UI
         private const float Gap = 10f;
         private const float TopOffset = 190f;
 
-        private class Toast
+        public class Toast
         {
+            public string message;
             public RectTransform root;
             public CanvasGroup group;
+            public TextMeshProUGUI label;
             public float age;
             public float life;
         }
 
+        public static NoticeHost Instance => instance;
         private static NoticeHost instance;
 
-        private readonly List<Toast> toasts = new List<Toast>();
+        public readonly List<Toast> toasts = new List<Toast>();
         private RectTransform container;
         private CanvasGroup rootGroup;
+
+        public int VisibleCount => toasts.Count;
 
         public static void EnsureExists()
         {
@@ -89,16 +104,20 @@ namespace TawanOS.UI
             instance = go.AddComponent<NoticeHost>();
         }
 
+        public static NoticeHost CreateHostForTesting(Transform parent = null)
+        {
+            var go = new GameObject("TestNoticeHost");
+            if (parent != null) go.transform.SetParent(parent, false);
+            var host = go.AddComponent<NoticeHost>();
+            instance = host;
+            return host;
+        }
+
         private void Awake()
         {
-            var canvas = UiFactory.CreateOverlayCanvas("NoticeCanvas", 950, transform);
-            rootGroup = canvas.GetComponent<CanvasGroup>();
-            container = UiFactory.CreateRect("Toasts", canvas.transform);
-            container.anchorMin = new Vector2(0.5f, 1f);
-            container.anchorMax = new Vector2(0.5f, 1f);
-            container.pivot = new Vector2(0.5f, 1f);
-            container.sizeDelta = new Vector2(Width, 0f);
-
+            instance = this;
+            EnsureContainer();
+            PlayerNotice.OnNotice -= Add;
             PlayerNotice.OnNotice += Add;
         }
 
@@ -108,17 +127,62 @@ namespace TawanOS.UI
             if (instance == this) instance = null;
         }
 
-        private void Add(string message, NoticeKind kind)
+        public void EnsureContainer()
         {
+            if (container != null) return;
+            var canvas = GetComponentInChildren<Canvas>();
+            if (canvas == null)
+            {
+                canvas = UiFactory.CreateOverlayCanvas("NoticeCanvas", 950, transform);
+            }
+            rootGroup = canvas.GetComponent<CanvasGroup>();
+            container = UiFactory.CreateRect("Toasts", canvas.transform);
+            container.anchorMin = new Vector2(0.5f, 1f);
+            container.anchorMax = new Vector2(0.5f, 1f);
+            container.pivot = new Vector2(0.5f, 1f);
+            container.sizeDelta = new Vector2(Width, 0f);
+        }
+
+        /// <summary>
+        /// (a) If the same text is already visible, extends its display time and returns true.
+        /// </summary>
+        public bool TryExtend(string message)
+        {
+            if (string.IsNullOrEmpty(message)) return false;
+            for (int i = 0; i < toasts.Count; i++)
+            {
+                if (toasts[i].message == message)
+                {
+                    toasts[i].age = 0f;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public void Add(string message, NoticeKind kind)
+        {
+            if (string.IsNullOrEmpty(message)) return;
+
+            // (a) If the same text is already visible, do not add a new row; extend that row's display time instead.
+            if (TryExtend(message)) return;
+
+            // (c) At most 3 rows visible.
             while (toasts.Count >= MaxVisible)
             {
-                Destroy(toasts[0].root.gameObject);
+                if (toasts[0].root != null)
+                {
+                    if (Application.isPlaying) Destroy(toasts[0].root.gameObject);
+                    else DestroyImmediate(toasts[0].root.gameObject);
+                }
                 toasts.RemoveAt(0);
             }
 
             var theme = UIThemeSO.Current;
             bool warning = kind == NoticeKind.Warning;
             Color border = warning ? theme.accent : theme.crimson;
+
+            EnsureContainer();
 
             var root = UiFactory.CreateRect("Toast", container);
             root.anchorMin = new Vector2(0.5f, 1f);
@@ -133,11 +197,49 @@ namespace TawanOS.UI
             var inner = UiFactory.CreateImage("Panel", root, theme.panel);
             UiFactory.Stretch(inner.rectTransform, 3f);
 
+            bool hasKhwanOrThup = message.Contains("ขวัญ") || message.Contains("ธูป");
+            TMP_FontAsset fontToUse = (hasKhwanOrThup && theme.titleFont != null) ? theme.titleFont : theme.bodyFont;
             var label = UiFactory.CreateText(root, "Message", message, theme.bodySize + 2f,
-                warning ? theme.accent : theme.text, TextAlignmentOptions.Center, theme.bodyFont);
+                warning ? theme.accent : theme.text, TextAlignmentOptions.Center, fontToUse);
+
+            // (b) Text must fit its box: auto-size within limits or wrap with the box growing; no overflow.
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 16f;
+            label.fontSizeMax = theme.bodySize + 2f;
+            label.overflowMode = TextOverflowModes.Ellipsis;
+            label.textWrappingMode = TextWrappingModes.Normal;
             UiFactory.Stretch(label.rectTransform, 12f);
 
-            toasts.Add(new Toast { root = root, group = group, age = 0f, life = warning ? 3.8f : 3f });
+            float prefHeight = label.preferredHeight + 24f;
+            if (prefHeight > Height)
+            {
+                root.sizeDelta = new Vector2(Width, prefHeight);
+            }
+
+            toasts.Add(new Toast
+            {
+                message = message,
+                root = root,
+                group = group,
+                label = label,
+                age = 0f,
+                life = warning ? 3.8f : 3f
+            });
+
+            Relayout();
+        }
+
+        public void Relayout()
+        {
+            float y = -TopOffset;
+            for (int i = 0; i < toasts.Count; i++)
+            {
+                if (toasts[i].root != null)
+                {
+                    toasts[i].root.anchoredPosition = new Vector2(0f, y);
+                    y -= toasts[i].root.sizeDelta.y + Gap;
+                }
+            }
         }
 
         private void Update()
@@ -153,7 +255,11 @@ namespace TawanOS.UI
 
                 if (toast.age >= toast.life + FadeOut)
                 {
-                    Destroy(toast.root.gameObject);
+                    if (toast.root != null)
+                    {
+                        if (Application.isPlaying) Destroy(toast.root.gameObject);
+                        else DestroyImmediate(toast.root.gameObject);
+                    }
                     toasts.RemoveAt(i);
                     continue;
                 }

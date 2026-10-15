@@ -80,7 +80,8 @@ namespace TawanOS.CardEngine
                 int damage = ApplyDamageStatusModifier(card.baseValue, attackerIsPlayer: casterIsPlayer);
                 if (CombatManager.Instance != null)
                 {
-                    CombatManager.Instance.TakeDamage(damage, toPlayer: !casterIsPlayer);
+                    string cause = !casterIsPlayer && card != null ? $"ถูก {card.cardNameThai} โจมตี" : null;
+                    CombatManager.Instance.TakeDamage(damage, toPlayer: !casterIsPlayer, cause: cause);
                 }
                 OnDamageDealt?.Invoke(damage, !casterIsPlayer);
             }
@@ -226,6 +227,10 @@ namespace TawanOS.CardEngine
 
         public void ResolveEnemyIntent(EnemyIntent intent, int value, StatusEffectType status = StatusEffectType.KhwanPhawa)
         {
+            string enemyCause = CombatManager.Instance?.currentEnemyProfile != null && !string.IsNullOrEmpty(CombatManager.Instance.currentEnemyProfile.enemyName)
+                ? $"ถูก {CombatManager.Instance.currentEnemyProfile.enemyName} โจมตี"
+                : "ถูกโจมตี";
+
             switch (intent)
             {
                 case EnemyIntent.Attack:
@@ -233,7 +238,7 @@ namespace TawanOS.CardEngine
                     int damage = ApplyDamageStatusModifier(value, attackerIsPlayer: false);
                     if (CombatManager.Instance != null)
                     {
-                        CombatManager.Instance.TakeDamage(damage, toPlayer: true);
+                        CombatManager.Instance.TakeDamage(damage, toPlayer: true, cause: enemyCause);
                     }
                     OnDamageDealt?.Invoke(damage, true);
                     break;
@@ -251,7 +256,7 @@ namespace TawanOS.CardEngine
                     int fallbackDamage = ApplyDamageStatusModifier(value, attackerIsPlayer: false);
                     if (CombatManager.Instance != null)
                     {
-                        CombatManager.Instance.TakeDamage(fallbackDamage, toPlayer: true);
+                        CombatManager.Instance.TakeDamage(fallbackDamage, toPlayer: true, cause: enemyCause);
                     }
                     OnDamageDealt?.Invoke(fallbackDamage, true);
                     break;
@@ -375,7 +380,14 @@ namespace TawanOS.CardEngine
 
             int shield = fromPlayer ? combat.CurrentEnemyShield : combat.CurrentPlayerShield;
             Debug.Log($"[Clash] {card.cardNameThai} hits {(fromPlayer ? "enemy" : "player")} Khwan for {damage} (target shield {shield} absorbs first)");
-            combat.TakeDamage(damage, toPlayer: !fromPlayer);
+            string cause = null;
+            if (!fromPlayer && card != null)
+            {
+                cause = HasKeyword(card, AbilityEffect.Overhead)
+                    ? $"{card.cardNameThai}ตีข้ามหัว"
+                    : $"ถูก {card.cardNameThai} โจมตี";
+            }
+            combat.TakeDamage(damage, toPlayer: !fromPlayer, cause: cause);
             OnDamageDealt?.Invoke(damage, !fromPlayer);
         }
 
@@ -418,7 +430,15 @@ namespace TawanOS.CardEngine
             else state.enemyKhwan = after;
             Debug.LogWarning($"[EffectResolver] Curse backfire triggered! {(toPlayer ? "Player" : "Enemy")} khwan {before} -> {after}.");
 
-            if (before - after > 0) OnDamageDealt?.Invoke(before - after, toPlayer);
+            int lost = before - after;
+            if (lost > 0)
+            {
+                OnDamageDealt?.Invoke(lost, toPlayer);
+                if (toPlayer)
+                {
+                    TawanOS.UI.PlayerNotice.Show($"−{lost} ขวัญ คำสาปย้อน", TawanOS.UI.NoticeKind.Warning);
+                }
+            }
             // Decides the outcome now if that was the last of it
             combat.BeginOutcomeBatch();
             combat.EndOutcomeBatch();
