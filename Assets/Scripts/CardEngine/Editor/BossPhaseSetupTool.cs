@@ -97,6 +97,43 @@ namespace TawanOS.CardEngine
                       $"cards a turn: phase 1 {boss.maxCardsPerTurn}, phase 2 {phase2.maxCardsPerTurn}.</color>");
         }
 
+        private const string EnemyFolder = "Assets/CardEngineData/Enemies";
+
+        [MenuItem("Tools/TawanOS/Card Engine/Give Every Enemy A Card Deck")]
+        private static void GiveEveryEnemyACardDeck_Menu()
+        {
+            GiveEveryEnemyACardDeck();
+        }
+
+        // Batch: -executeMethod TawanOS.CardEngine.BossPhaseSetupTool.GiveEveryEnemyACardDeck
+        // Every enemy plays cards: one without a deck of its own (it only had moves) gets ผีพรายน้ำนอง's deck, hand
+        // size, draws and cards a turn. Enemies that already have a deck, and scripted ones (the tutorial), are left as
+        // they are.
+        public static void GiveEveryEnemyACardDeck()
+        {
+            var normal = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(NormalEnemyPath);
+            if (normal == null || normal.deck == null || normal.deck.Count == 0)
+            {
+                Debug.LogError($"[BossPhaseSetupTool] {NormalEnemyPath} with a deck is needed.");
+                if (Application.isBatchMode) EditorApplication.Exit(1);
+                return;
+            }
+
+            var given = new List<string>();
+            foreach (string guid in AssetDatabase.FindAssets("t:EnemyProfileSO", new[] { EnemyFolder }))
+            {
+                var enemy = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(AssetDatabase.GUIDToAssetPath(guid));
+                if (enemy == null || enemy == normal || enemy.scriptedDeck) continue;
+                if (enemy.deck != null && enemy.deck.Count > 0) continue;
+                CopyCardPlay(normal, enemy, 0);
+                given.Add(enemy.enemyName);
+            }
+            AssetDatabase.SaveAssets();
+            Debug.Log(given.Count > 0
+                ? $"<color=green>[BossPhaseSetupTool] {given.Count} enemies now play {normal.enemyName}'s {normal.deck.Count} cards: {string.Join(", ", given)}</color>"
+                : "[BossPhaseSetupTool] Every enemy already has a card deck.");
+        }
+
         private static void CopyCardPlay(EnemyProfileSO from, EnemyProfileSO to, int extraCardsPerTurn)
         {
             to.deck = new List<CardDataSO>(from.deck);
