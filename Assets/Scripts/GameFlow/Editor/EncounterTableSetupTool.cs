@@ -17,8 +17,6 @@ namespace TawanOS.GameFlow
 
         private const string PraiGhostPath = "Assets/CardEngineData/Enemies/PraiGhostProfile.asset";
         private const string KrasueGhostPath = "Assets/CardEngineData/Enemies/NewEnemyProfile.asset";
-        private const string GraveGhostPath = "Assets/CardEngineData/Enemies/GraveGhostProfile.asset";
-        private const string PraiElitePath = "Assets/CardEngineData/Enemies/PraiGhostEliteProfile.asset";
         private const string BossPath = "Assets/CardEngineData/Enemies/PhiTaiHongBossProfile.asset";
 
         [MenuItem("Tools/TawanOS/Game Flow/Create Encounter Table")]
@@ -38,13 +36,11 @@ namespace TawanOS.GameFlow
         {
             var prai = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(PraiGhostPath);
             var krasue = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(KrasueGhostPath);
-            var grave = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(GraveGhostPath);
-            var praiElite = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(PraiElitePath);
             var boss = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(BossPath);
 
-            if (prai == null || krasue == null || grave == null || praiElite == null || boss == null)
+            if (prai == null || krasue == null || boss == null)
             {
-                Debug.LogError($"[EncounterTableSetupTool] Missing enemy asset (Prai={(prai != null)}, Krasue={(krasue != null)}, Grave={(grave != null)}, Elite={(praiElite != null)}, Boss={(boss != null)})");
+                Debug.LogError($"[EncounterTableSetupTool] Missing enemy asset (Prai={(prai != null)}, Krasue={(krasue != null)}, Boss={(boss != null)})");
                 return false;
             }
 
@@ -65,9 +61,7 @@ namespace TawanOS.GameFlow
 
             AddIfMissing(table.minor, prai);
             AddIfMissing(table.minor, krasue);
-            AddIfMissing(table.minor, grave);
-
-            AddIfMissing(table.elite, praiElite);
+            // No elite enemy: the map has no elite nodes (D6). ผีป่าช้า and the elite ผีพราย were cut (15 Oct).
             AddIfMissing(table.boss, boss);
 
             EditorUtility.SetDirty(table);
