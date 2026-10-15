@@ -331,7 +331,12 @@ namespace TawanOS.CardEngine
                 khwanLabel.text = CardData.familiarHealth.ToString();
                 khwanLabel.color = CardData.familiarHealth < CardData.maxKhwan ? khwanDamagedColor : faceTextColor;
             }
-            if (descriptionLabel != null) descriptionLabel.text = Description(CardData);
+            if (descriptionLabel != null)
+            {
+                descriptionLabel.text = KeywordGlossarySO.WrapKeywords(Description(CardData));
+                if (descriptionLabel.GetComponent<TawanOS.UI.KeywordLinkTrigger>() == null)
+                    descriptionLabel.gameObject.AddComponent<TawanOS.UI.KeywordLinkTrigger>();
+            }
         }
 
         // "บริวาร  มนต์ดำ" (the • separator from the data becomes a gap, as on the card design)

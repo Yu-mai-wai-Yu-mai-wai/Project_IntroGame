@@ -707,6 +707,7 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 
 ### P1 (18-19 ต.ค.)
 - [ ] **P1-1 คีย์เวิร์ด tooltip + หน้าในตำรา (ข้อ 3-4, เสริม 1)**
+  - *สถานะ 15 ต.ค.:* KeywordGlossarySO (11 คำสำคัญ) ใน Resources พร้อม WrapKeywords (<link="kw:term"><u><color>...), KeywordTooltipView สไตล์ MapTooltipView (RueangLao/EkkamaiVibe), KeywordLinkTrigger บน 3D card/ตำรา/รางวัล/ร้านค้า, เพิ่มบล็อกคำสำคัญในหน้าขวาตำราและการ์ดดีเทล, เพิ่มหน้า "คำสำคัญ" ในตำราไสยเวทพร้อมลิงก์สารบัญ; Test: `Tools/TawanOS/Tests/Keyword Glossary Tests` (`KeywordGlossaryTests.cs`) PASS (22/22)
 - [ ] **P1-2 หน้าหนังสือ: ชื่อ+กุศล / ขวัญ+สะเทือนขวัญ (ข้อ 5)**
   - *สถานะ 15 ต.ค.:* ปรับหน้าขวาของตำราและการ์ดดีเทล: บรรทัด 1 แสดงชื่อการ์ด (ฟอนต์ RueangLao) พร้อมค่าร่าย ("กุศล X" หรือ "มลทิน X"), บรรทัด 2 แสดง "ขวัญ X/Y" และ "สะเทือนขวัญ Z" บนบรรทัดเดียวกัน (ซ่อนในอาคม), บรรทัด 3 แสดงประเภทการ์ด, และส่วนล่างเริ่มด้วยความสามารถ; Test: `Tools/TawanOS/Tests/Card Book Layout` (`CardBookLayoutTests.cs`) PASS
 - [ ] **P1-3 ปุ่มจบเทิร์นในกรอบขวัญ + ตกแต่งกรอบ (ข้อ 7, เสริม 3)**

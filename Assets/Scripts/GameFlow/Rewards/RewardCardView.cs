@@ -126,11 +126,15 @@ namespace TawanOS.GameFlow
             SetText(nameText, nameOnArt ? "" : card.cardNameThai, CardFaceLayout.Name, card, CardFaceLayout.Text.Name);
             SetText(typeText, nameOnArt ? "" : card.GetFormattedTypeText().Replace(" • ", "  "), CardFaceLayout.Type, card, CardFaceLayout.Text.Type);
             SetText(attackText, familiar ? card.familiarDamage.ToString() : "", CardFaceLayout.Attack, card, CardFaceLayout.Text.Stat);
+            if (attackText != null) attackText.gameObject.SetActive(familiar);
             SetText(khwanText, hasKhwan ? card.familiarHealth.ToString() : "", CardFaceLayout.Khwan, card, CardFaceLayout.Text.Stat);
+            if (khwanText != null) khwanText.gameObject.SetActive(hasKhwan);
             if (descriptionText != null)
             {
-                descriptionText.text = printed ? "" : FormatDescription(card);
+                descriptionText.text = printed ? "" : KeywordGlossarySO.WrapKeywords(FormatDescription(card));
                 CardFaceLayout.MakeReadable(descriptionText);
+                if (descriptionText.GetComponent<TawanOS.UI.KeywordLinkTrigger>() == null)
+                    descriptionText.gameObject.AddComponent<TawanOS.UI.KeywordLinkTrigger>();
             }
 
             if (pickedHighlight != null) pickedHighlight.SetActive(false);

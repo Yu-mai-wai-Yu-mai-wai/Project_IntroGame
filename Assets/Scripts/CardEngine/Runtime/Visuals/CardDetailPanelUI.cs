@@ -141,8 +141,12 @@ namespace TawanOS.CardEngine
             faceName.text = nameOnArt ? "" : card.cardNameThai;
             faceType.text = nameOnArt ? "" : TypeLine(card);
             faceAttack.text = familiar ? AttackOf(card).ToString() : "";
+            faceAttack.gameObject.SetActive(familiar);
             faceKhwan.text = hasKhwan ? card.familiarHealth.ToString() : "";
-            faceDescription.text = printed ? "" : Description(card);
+            faceKhwan.gameObject.SetActive(hasKhwan);
+            faceDescription.text = printed ? "" : KeywordGlossarySO.WrapKeywords(Description(card));
+            if (faceDescription.GetComponent<KeywordLinkTrigger>() == null)
+                faceDescription.gameObject.AddComponent<KeywordLinkTrigger>();
 
             faceType.color = frame != null ? new Color(0.95f, 0.72f, 0.72f) : Color.white;
 
@@ -168,6 +172,8 @@ namespace TawanOS.CardEngine
             panelOutline.effectColor = accent;
             headerText.text = InfoHeader(card, accent, "9A9090");
             bodyText.text = InfoBody(card, accent, "9A9090", "C8C0C0", "80D090", "E07070");
+            if (bodyText.GetComponent<KeywordLinkTrigger>() == null)
+                bodyText.gameObject.AddComponent<KeywordLinkTrigger>();
         }
 
         // A line break inside rich text
@@ -234,6 +240,10 @@ namespace TawanOS.CardEngine
 
             b.Append($"<size={label}><color=#{accentHex}>ความสามารถ</color></size>").Append(NL);
             string description = Description(card);
+            if (!string.IsNullOrEmpty(description))
+            {
+                description = KeywordGlossarySO.WrapKeywords(description, accentHex);
+            }
             b.Append(string.IsNullOrEmpty(description) ? $"<color=#{mutedHex}>ไม่มีความสามารถ</color>" : description);
             b.Append(NL);
 
@@ -241,6 +251,18 @@ namespace TawanOS.CardEngine
             {
                 b.Append(NL).Append($"<size={small}><color=#{accentHex}>รายละเอียด</color></size>").Append(NL).Append($"<size={small}><color=#{detailHex}>");
                 foreach (var a in card.abilities) b.Append("• ").Append(AbilityLine(a)).Append(NL);
+                b.Append("</color></size>");
+            }
+
+            var keywords = KeywordGlossarySO.GetKeywordsOnCard(card);
+            if (keywords != null && keywords.Count > 0)
+            {
+                b.Append(NL).Append($"<size={small}><color=#{accentHex}>คำสำคัญ</color></size>").Append(NL).Append($"<size={small}><color=#{detailHex}>");
+                foreach (var kw in keywords)
+                {
+                    string def = KeywordGlossarySO.Current.GetDefinition(kw);
+                    b.Append($"• <color=#{accentHex}>{kw}</color> ({def})").Append(NL);
+                }
                 b.Append("</color></size>");
             }
 
