@@ -79,6 +79,7 @@ namespace TawanOS.CardEngine
         public void Select(CardView3D view)
         {
             if (view == null || view.CardData == null) return;
+            if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver) return;
             if (held == view) return;
 
             // An unplayable card leaves the current selection as it is
@@ -118,6 +119,7 @@ namespace TawanOS.CardEngine
         // Same checks PlayCard makes, done up front so an unplayable card never leaves the hand
         private static bool CanStartPlaying(CardInstance card)
         {
+            if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver) return false;
             var cards = CardManager.Instance;
             var resolver = EffectResolver.Instance;
             if (cards == null || resolver == null) return false;
@@ -187,6 +189,11 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
+            if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver)
+            {
+                if (held != null) Cancel();
+                return;
+            }
             if (held == null || TawanOS.UI.PauseMenu.IsPaused) return;
 
             if (Input.GetMouseButtonDown(1) || TawanOS.UI.EscapeKey.Use())

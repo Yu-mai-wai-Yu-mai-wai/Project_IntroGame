@@ -89,6 +89,7 @@ namespace TawanOS.CardEngine
         // targets = the cards the ability may act on; their views on the board are highlighted
         public void Begin(CardView3D sourceView, List<CardInstance> targets, Action<CardInstance> chosen, Action cancelled)
         {
+            if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver) return;
             if (active) Cancel();
 
             source = sourceView;
@@ -145,6 +146,11 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
+            if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver)
+            {
+                if (active) Cancel();
+                return;
+            }
             if (TawanOS.UI.PauseMenu.IsPaused) return;
             if (!active)
             {

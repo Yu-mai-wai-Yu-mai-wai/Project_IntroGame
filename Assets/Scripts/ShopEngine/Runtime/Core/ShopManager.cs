@@ -77,6 +77,12 @@ namespace TawanOS.ShopEngine
             amuletOffers.Clear();
             blessingOffers.Clear();
 
+            if (RunState.Current.HasSavedShopStock)
+            {
+                RestoreSavedStock();
+                return;
+            }
+
             var catalog = CardCatalogSO.Load();
             if (catalog != null)
             {
@@ -91,9 +97,69 @@ namespace TawanOS.ShopEngine
             foreach (var amulet in PickDistinct(config.amulets, config.amuletsForSale))
                 amuletOffers.Add(new ShopOffer { amulet = amulet, price = config.Vary(amulet.price) });
 
-            // Every visit offers each blessing once, at its fixed price
+            // Every visit offers each blessing once, scaled by how many times bought this run (P0-8)
             foreach (var blessing in config.blessings)
-                if (blessing != null) blessingOffers.Add(new ShopOffer { blessing = blessing, price = blessing.price });
+                if (blessing != null)
+                {
+                    int timesBought = RunState.Current.GetBlessingPurchases(blessing.kind);
+                    blessingOffers.Add(new ShopOffer { blessing = blessing, price = blessing.GetPrice(timesBought) });
+                }
+
+            SaveStockToRunState();
+        }
+
+        private void RestoreSavedStock()
+        {
+            var stock = RunState.Current.ShopStock;
+            var catalog = CardCatalogSO.Load();
+
+            if (stock.cards != null && catalog != null)
+            {
+                foreach (var saved in stock.cards)
+                {
+                    var card = catalog.cards.Find(c => c != null && c.cardId == saved.id);
+                    if (card != null)
+                        cardOffers.Add(new ShopOffer { card = card, price = saved.price, sold = saved.sold });
+                }
+            }
+
+            if (stock.amulets != null && config != null && config.amulets != null)
+            {
+                foreach (var saved in stock.amulets)
+                {
+                    var amulet = config.amulets.Find(a => a != null && a.relicId == saved.id);
+                    if (amulet != null)
+                        amuletOffers.Add(new ShopOffer { amulet = amulet, price = saved.price, sold = saved.sold });
+                }
+            }
+
+            if (stock.blessings != null && config != null && config.blessings != null)
+            {
+                foreach (var saved in stock.blessings)
+                {
+                    var blessing = config.blessings.Find(b => b != null && b.kind.ToString() == saved.id);
+                    if (blessing != null)
+                        blessingOffers.Add(new ShopOffer { blessing = blessing, price = saved.price, sold = saved.sold });
+                }
+            }
+        }
+
+        public void SaveStockToRunState()
+        {
+            var stock = new SavedShopStock();
+            foreach (var o in cardOffers)
+                if (o.card != null)
+                    stock.cards.Add(new SavedShopOffer { id = o.card.cardId, price = o.price, sold = o.sold });
+
+            foreach (var o in amuletOffers)
+                if (o.amulet != null)
+                    stock.amulets.Add(new SavedShopOffer { id = o.amulet.relicId, price = o.price, sold = o.sold });
+
+            foreach (var o in blessingOffers)
+                if (o.blessing != null)
+                    stock.blessings.Add(new SavedShopOffer { id = o.blessing.kind.ToString(), price = o.price, sold = o.sold });
+
+            RunState.Current.SetShopStock(stock);
         }
 
         private static List<T> PickDistinct<T>(List<T> source, int count) where T : class
@@ -129,6 +195,7 @@ namespace TawanOS.ShopEngine
         {
             if (!TryPay(offer)) return;
             var blessing = offer.blessing;
+            RunState.Current.RecordBlessingPurchase(blessing.kind);
             if (blessing.kind == ShopBlessingKind.MaxMerit)
             {
                 RunState.Current.ChangeMaxMerit(blessing.amount);
@@ -141,8 +208,16 @@ namespace TawanOS.ShopEngine
             }
         }
 
+        public int GetBlessingPrice(ShopBlessing blessing)
+        {
+            if (blessing == null) return 0;
+            return blessing.GetPrice(RunState.Current.GetBlessingPurchases(blessing.kind));
+        }
+
         public void Leave()
         {
+            RunState.Current.ClearShopStock();
+            RunState.Current.ClearResume();
             if (OnShopClosed != null)
             {
                 OnShopClosed.Invoke();
@@ -162,6 +237,7 @@ namespace TawanOS.ShopEngine
                 return false;
             }
             offer.sold = true;
+            SaveStockToRunState();
             return true;
         }
 

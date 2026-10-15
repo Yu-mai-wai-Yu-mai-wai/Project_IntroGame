@@ -3,6 +3,7 @@ using System.IO;
 using Newtonsoft.Json;
 using TawanOS.CardEngine;
 using TawanOS.MapEngine;
+using TawanOS.ShopEngine;
 using UnityEngine;
 
 namespace TawanOS.GameFlow
@@ -15,7 +16,32 @@ namespace TawanOS.GameFlow
         Event,
         Shop,
         Meru, // appended last: saves store the enum as a number
-        Temple
+        Temple,
+        Reward
+    }
+
+    [System.Serializable]
+    public class SavedShopOffer
+    {
+        public string id;
+        public int price;
+        public bool sold;
+    }
+
+    [System.Serializable]
+    public class SavedShopStock
+    {
+        public List<SavedShopOffer> cards = new List<SavedShopOffer>();
+        public List<SavedShopOffer> amulets = new List<SavedShopOffer>();
+        public List<SavedShopOffer> blessings = new List<SavedShopOffer>();
+    }
+
+    [System.Serializable]
+    public class SavedRewardData
+    {
+        public List<string> cardIds = new List<string>();
+        public int incenseEarned;
+        public RewardTier tier;
     }
 
     /// <summary>
@@ -26,9 +52,9 @@ namespace TawanOS.GameFlow
     /// </summary>
     public class RunState
     {
-        public const int DefaultMaxHp = 50;
+        public const int DefaultMaxHp = 20; // Game Designer, 15 Oct; was 50
         public const int DefaultMaxMerit = 6;
-        public const int DefaultIncense = 50;
+        public const int DefaultIncense = 5; // enough for a cheap card or two (Game Designer, 15 Oct; was 50)
         // 8 floors then the boss (Game Designer, 11 Oct; was 7). Saves keep the floor count they were made with.
         public const int DefaultTotalFloors = 8;
         private const int SaveVersion = 1;
@@ -56,6 +82,61 @@ namespace TawanOS.GameFlow
         public NodeType ResumeNodeType { get; private set; }
         public int ResumeFloor { get; private set; }
 
+        public bool MeruUsed { get; private set; }
+        public void SetMeruUsed(bool used)
+        {
+            MeruUsed = used;
+            Changed();
+        }
+
+        public void ClearMeruUsed()
+        {
+            if (!MeruUsed) return;
+            MeruUsed = false;
+            Changed();
+        }
+
+        public SavedShopStock ShopStock { get; private set; }
+        public bool HasSavedShopStock => ShopStock != null && (
+            (ShopStock.cards != null && ShopStock.cards.Count > 0) ||
+            (ShopStock.amulets != null && ShopStock.amulets.Count > 0) ||
+            (ShopStock.blessings != null && ShopStock.blessings.Count > 0));
+
+        public void SetShopStock(SavedShopStock stock)
+        {
+            ShopStock = stock;
+            Changed();
+        }
+
+        public void ClearShopStock()
+        {
+            if (ShopStock == null) return;
+            ShopStock = null;
+            Changed();
+        }
+
+        public SavedRewardData PendingReward { get; private set; }
+        public bool HasPendingReward => PendingReward != null;
+        public bool HasPendingRewardCards => PendingReward != null && PendingReward.cardIds != null && PendingReward.cardIds.Count > 0;
+
+        public void SetPendingReward(List<string> cardIds, int incenseEarned, RewardTier tier)
+        {
+            PendingReward = new SavedRewardData
+            {
+                cardIds = cardIds != null ? new List<string>(cardIds) : new List<string>(),
+                incenseEarned = incenseEarned,
+                tier = tier
+            };
+            Changed();
+        }
+
+        public void ClearPendingReward()
+        {
+            if (PendingReward == null) return;
+            PendingReward = null;
+            Changed();
+        }
+
         /// <summary>True for runs started or loaded from the main menu: these autosave.</summary>
         public bool IsPersistent { get; private set; }
 
@@ -64,6 +145,7 @@ namespace TawanOS.GameFlow
         private readonly List<string> relicIds = new List<string>();
         private readonly HashSet<string> seenEventIds = new HashSet<string>();
         private readonly List<CardDataSO> deck = new List<CardDataSO>();
+        private readonly Dictionary<string, int> blessingPurchases = new Dictionary<string, int>();
         private bool deckInitialized;
 
         private RunState()
@@ -114,7 +196,7 @@ namespace TawanOS.GameFlow
                 var data = JsonConvert.DeserializeObject<RunSaveData>(File.ReadAllText(SavePath));
                 if (data == null) return null;
                 int cards = data.deckCardIds != null ? data.deckCardIds.Count : 0;
-                return $"HP {data.currentHp}/{data.maxHp}   •   ธูป {data.incense}   •   สำรับ {cards} ใบ";
+                return $"ขวัญ {data.currentHp}/{data.maxHp}   •   ธูป {data.incense}   •   สำรับ {cards} ใบ";
             }
             catch (System.Exception)
             {
@@ -196,8 +278,12 @@ namespace TawanOS.GameFlow
             relicIds.Clear();
             seenEventIds.Clear();
             deck.Clear();
+            blessingPurchases.Clear();
             deckInitialized = false;
             Resume = ResumeKind.None;
+            MeruUsed = false;
+            ShopStock = null;
+            PendingReward = null;
             OnChanged?.Invoke();
         }
 
@@ -266,6 +352,32 @@ namespace TawanOS.GameFlow
         {
             if (string.IsNullOrEmpty(eventId)) return;
             seenEventIds.Add(eventId);
+            Changed();
+        }
+
+        // ---------------------------------------------------------------- blessings (ศาลตายาย)
+
+        public int GetBlessingPurchases(ShopBlessingKind kind)
+        {
+            return blessingPurchases.TryGetValue(kind.ToString(), out int count) ? count : 0;
+        }
+
+        public int GetBlessingPurchases(string kindName)
+        {
+            if (string.IsNullOrEmpty(kindName)) return 0;
+            return blessingPurchases.TryGetValue(kindName, out int count) ? count : 0;
+        }
+
+        public void RecordBlessingPurchase(ShopBlessingKind kind)
+        {
+            string key = kind.ToString();
+            blessingPurchases[key] = GetBlessingPurchases(kind) + 1;
+            Changed();
+        }
+
+        public void SetBlessingPurchases(ShopBlessingKind kind, int count)
+        {
+            blessingPurchases[kind.ToString()] = Mathf.Max(0, count);
             Changed();
         }
 
@@ -361,6 +473,10 @@ namespace TawanOS.GameFlow
                 resume = Resume,
                 resumeNodeType = ResumeNodeType,
                 resumeFloor = ResumeFloor,
+                blessingPurchases = new Dictionary<string, int>(blessingPurchases),
+                meruUsed = MeruUsed,
+                shopStock = ShopStock,
+                pendingReward = PendingReward,
             };
             try
             {
@@ -402,6 +518,17 @@ namespace TawanOS.GameFlow
             Resume = data.resume;
             ResumeNodeType = data.resumeNodeType;
             ResumeFloor = data.resumeFloor;
+
+            blessingPurchases.Clear();
+            if (data.blessingPurchases != null)
+            {
+                foreach (var kvp in data.blessingPurchases)
+                    blessingPurchases[kvp.Key] = kvp.Value;
+            }
+
+            MeruUsed = data.meruUsed;
+            ShopStock = data.shopStock;
+            PendingReward = data.pendingReward;
         }
 
         /// <summary>On-disk shape of a run. Cards are stored by cardId and resolved through the card catalog.</summary>
@@ -421,6 +548,10 @@ namespace TawanOS.GameFlow
             public ResumeKind resume;
             public NodeType resumeNodeType;
             public int resumeFloor;
+            public Dictionary<string, int> blessingPurchases;
+            public bool meruUsed;
+            public SavedShopStock shopStock;
+            public SavedRewardData pendingReward;
         }
     }
 }

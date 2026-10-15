@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,15 +7,14 @@ using TawanOS.UI;
 namespace TawanOS.MapEngine
 {
     /// <summary>
-    /// Map Legend UI (Plan Task G2): Displays authentic Thai descriptions for the 7 node types on the map
-    /// (Elite is no longer rolled and วัด took its row, Game Designer 11 Oct),
-    /// styled cleanly with UIThemeSO (CI colors, Sarabun Thai font, WCAG AA contrast >= 4.5:1, zero emojis).
-    /// Can be toggled with key 'L' or the toggle button, persisting state in PlayerPrefs.
+    /// The map's node names and descriptions in Thai for the 7 node types (Plan Task G2; Elite is no longer rolled and
+    /// วัด took its row, Game Designer 11 Oct), shown as a pop-up beside whichever node the pointer is on, whether the
+    /// player can go there, has not reached it yet or has passed it (Game Designer, 15 Oct: replaces the legend panel
+    /// and its "สัญลักษณ์ (L)" button at the top right). The pop-up sits above the node, or below it near the top of the
+    /// screen, kept inside the screen, and follows the node while the camera moves. Styled with UIThemeSO.
     /// </summary>
     public class MapLegendUI : MonoBehaviour
     {
-        public const string PrefsKeyVisible = "MapLegend_Visible";
-
         public static readonly NodeType[] AllNodeTypes = new[]
         {
             NodeType.MinorEnemy,
@@ -58,43 +58,93 @@ namespace TawanOS.MapEngine
             }
         }
 
-        private GameObject panelRoot;
-        private CanvasGroup panelGroup;
-        private bool isVisible = true;
+        [Tooltip("Width of the pop-up, in reference pixels (1920 wide screen).")]
+        [SerializeField] private float popupWidth = 440f;
+        [Tooltip("Gap between the node and the pop-up, in reference pixels.")]
+        [SerializeField] private float popupGap = 46f;
+        [SerializeField] private float fadeSeconds = 0.12f;
 
-        public bool IsVisible => isVisible;
+        private RectTransform selfRect;
+        private RectTransform popup;
+        private CanvasGroup popupGroup;
+        private TextMeshProUGUI nameText;
+        private TextMeshProUGUI descText;
+        private MapNodeView shown;
+
+        /// <summary>The node whose pop-up is up, or null.</summary>
+        public MapNodeView Shown => shown;
+
+        public void EnsureUI()
+        {
+            if (popup == null)
+            {
+                BuildUI();
+            }
+        }
 
         private void Awake()
         {
-            isVisible = PlayerPrefs.GetInt(PrefsKeyVisible, 1) == 1;
-            BuildUI();
-            UpdateVisibility();
+            EnsureUI();
         }
 
-        private void Update()
+        private void OnEnable()
         {
-            if (Input.GetKeyDown(KeyCode.L) && !TawanOS.UI.PauseMenu.IsPaused)
-            {
-                Toggle();
-            }
+            MapNodeView.PointerEntered += Show;
+            MapNodeView.PointerLeft += Hide;
         }
 
-        public void Toggle()
+        private void OnDisable()
         {
-            isVisible = !isVisible;
-            PlayerPrefs.SetInt(PrefsKeyVisible, isVisible ? 1 : 0);
-            PlayerPrefs.Save();
-            UpdateVisibility();
+            MapNodeView.PointerEntered -= Show;
+            MapNodeView.PointerLeft -= Hide;
         }
 
-        private void UpdateVisibility()
+        public void Show(MapNodeView node)
         {
-            if (panelGroup != null)
-            {
-                panelGroup.alpha = isVisible ? 1f : 0f;
-                panelGroup.blocksRaycasts = isVisible;
-                panelGroup.interactable = isVisible;
-            }
+            if (node == null || node.NodeData == null || popup == null) return;
+            shown = node;
+            nameText.text = GetNodeTitle(node.NodeData.type);
+            descText.text = GetNodeDescription(node.NodeData.type);
+            // Height from the description's wrapped lines
+            float textWidth = popupWidth - 40f;
+            float descHeight = descText.GetPreferredValues(descText.text, textWidth, 0f).y;
+            popup.sizeDelta = new Vector2(popupWidth, 20f + 34f + 6f + descHeight + 20f);
+            Place();
+            popupGroup.DOKill();
+            popupGroup.DOFade(1f, fadeSeconds).SetLink(popup.gameObject);
+        }
+
+        public void Hide(MapNodeView node)
+        {
+            if (node != shown) return;
+            shown = null;
+            if (popupGroup == null) return;
+            popupGroup.DOKill();
+            popupGroup.DOFade(0f, fadeSeconds).SetLink(popup.gameObject);
+        }
+
+        private void LateUpdate()
+        {
+            if (shown != null) Place();
+        }
+
+        // Above the node; below it when there is no room above; slid sideways to stay inside the screen
+        private void Place()
+        {
+            var cam = Camera.main;
+            if (cam == null || shown == null) return;
+            Vector3 screen = cam.WorldToScreenPoint(shown.transform.position);
+            if (screen.z < 0f) return;
+            var canvas = GetComponentInParent<Canvas>();
+            var eventCam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(selfRect, screen, eventCam, out var local)) return;
+
+            var area = selfRect.rect;
+            var size = popup.sizeDelta;
+            bool above = local.y + popupGap + size.y <= area.yMax - 12f;
+            float y = above ? local.y + popupGap + size.y * 0.5f : local.y - popupGap - size.y * 0.5f;
+            float x = Mathf.Clamp(local.x, area.xMin + size.x * 0.5f + 12f, area.xMax - size.x * 0.5f - 12f);
+            popup.anchoredPosition = new Vector2(x, y);
         }
 
         private void BuildUI()
@@ -102,113 +152,56 @@ namespace TawanOS.MapEngine
             var theme = UIThemeSO.Current;
 
             // The setup tool creates this object empty under the Canvas, so it has a zero-size rect at the
-            // screen centre. Anchors on children resolve against that rect, which pushed the button to the
-            // middle of the screen. Stretch it over the whole canvas so the anchors mean screen corners.
-            var selfRect = GetComponent<RectTransform>();
+            // screen centre. Stretch it over the whole canvas so positions are measured from the screen's middle.
+            selfRect = GetComponent<RectTransform>();
             if (selfRect == null) selfRect = gameObject.AddComponent<RectTransform>();
             selfRect.anchorMin = Vector2.zero;
             selfRect.anchorMax = Vector2.one;
             selfRect.offsetMin = Vector2.zero;
             selfRect.offsetMax = Vector2.zero;
 
-            // --- Toggle Button "สัญลักษณ์ (L)" ---
-            var toggleGo = new GameObject("ToggleLegendButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            toggleGo.transform.SetParent(transform, false);
-            var toggleRect = toggleGo.GetComponent<RectTransform>();
-            toggleRect.anchorMin = new Vector2(1f, 1f);
-            toggleRect.anchorMax = new Vector2(1f, 1f);
-            toggleRect.pivot = new Vector2(1f, 1f);
-            toggleRect.anchoredPosition = new Vector2(-24f, -24f);
-            toggleRect.sizeDelta = new Vector2(170f, 44f);
+            var go = new GameObject("NodePopup", typeof(RectTransform), typeof(CanvasGroup));
+            go.transform.SetParent(transform, false);
+            popup = (RectTransform)go.transform;
+            popup.anchorMin = popup.anchorMax = new Vector2(0.5f, 0.5f);
+            popup.pivot = new Vector2(0.5f, 0.5f);
+            popup.sizeDelta = new Vector2(popupWidth, 120f);
+            popupGroup = go.GetComponent<CanvasGroup>();
+            popupGroup.alpha = 0f;
+            popupGroup.blocksRaycasts = false; // never in the way of the pointer on the map
+            popupGroup.interactable = false;
 
-            var toggleImg = toggleGo.GetComponent<Image>();
-            toggleImg.color = theme.crimson;
-
-            var toggleBtn = toggleGo.GetComponent<Button>();
-            toggleBtn.onClick.AddListener(Toggle);
-
-            var btnInnerGo = new GameObject("Inner", typeof(RectTransform), typeof(Image));
-            btnInnerGo.transform.SetParent(toggleGo.transform, false);
-            var innerRect = btnInnerGo.GetComponent<RectTransform>();
-            UiFactory.Stretch(innerRect, 2f);
-            btnInnerGo.GetComponent<Image>().color = theme.panel;
-
-            var toggleText = UiFactory.CreateText(btnInnerGo.transform, "Label", "สัญลักษณ์ (L)",
-                theme.labelSize, theme.accent, TextAlignmentOptions.Center, theme.bodyFont);
-            UiFactory.Stretch(toggleText.rectTransform, 0f);
-
-            // --- Legend Panel ---
-            panelRoot = new GameObject("LegendPanel", typeof(RectTransform), typeof(CanvasGroup));
-            panelRoot.transform.SetParent(transform, false);
-            panelGroup = panelRoot.GetComponent<CanvasGroup>();
-
-            var panelRect = panelRoot.GetComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(1f, 1f);
-            panelRect.anchorMax = new Vector2(1f, 1f);
-            panelRect.pivot = new Vector2(1f, 1f);
-            panelRect.anchoredPosition = new Vector2(-24f, -78f);
-            panelRect.sizeDelta = new Vector2(660f, 716f); // wider and taller so rows are not packed together
-
-            // Border & Background
-            var border = UiFactory.CreateImage("Border", panelRoot.transform, theme.crimson);
+            var border = UiFactory.CreateImage("Border", popup, theme.crimson);
             UiFactory.Stretch(border.rectTransform, 0f);
+            border.raycastTarget = false;
+            var softBorder = border.gameObject.AddComponent<SoftEdgeImage>();
+            softBorder.SetSides(0.06f, 0.06f, 0.06f, 0.06f);
 
-            var bg = UiFactory.CreateImage("Background", panelRoot.transform, theme.panel);
+            var bg = UiFactory.CreateImage("Background", popup, theme.panel);
             UiFactory.Stretch(bg.rectTransform, 3f);
+            bg.raycastTarget = false;
+            var softBg = bg.gameObject.AddComponent<SoftEdgeImage>();
+            softBg.SetSides(0.06f, 0.06f, 0.06f, 0.06f);
 
-            // Title
-            var titleText = UiFactory.CreateText(panelRoot.transform, "Title", "สัญลักษณ์และเส้นทางบนแผนที่",
-                theme.bodySize, theme.accent, TextAlignmentOptions.TopLeft, theme.titleFont != null ? theme.titleFont : theme.bodyFont);
-            titleText.rectTransform.anchorMin = new Vector2(0f, 1f);
-            titleText.rectTransform.anchorMax = new Vector2(1f, 1f);
-            titleText.rectTransform.pivot = new Vector2(0f, 1f);
-            titleText.rectTransform.anchoredPosition = new Vector2(26f, -16f);
-            titleText.rectTransform.sizeDelta = new Vector2(-52f, 40f);
+            nameText = UiFactory.CreateText(popup, "Name", "", theme.labelSize + 4f, theme.accent, TextAlignmentOptions.TopLeft, theme.bodyFont);
+            nameText.fontStyle = FontStyles.Bold;
+            nameText.raycastTarget = false;
+            var nameRect = nameText.rectTransform;
+            nameRect.anchorMin = new Vector2(0f, 1f);
+            nameRect.anchorMax = new Vector2(1f, 1f);
+            nameRect.pivot = new Vector2(0f, 1f);
+            nameRect.anchoredPosition = new Vector2(20f, -20f);
+            nameRect.sizeDelta = new Vector2(-40f, 34f);
 
-            // Divider Line
-            var divider = UiFactory.CreateImage("Divider", panelRoot.transform, theme.crimson);
-            divider.rectTransform.anchorMin = new Vector2(0f, 1f);
-            divider.rectTransform.anchorMax = new Vector2(1f, 1f);
-            divider.rectTransform.pivot = new Vector2(0f, 1f);
-            divider.rectTransform.anchoredPosition = new Vector2(22f, -62f);
-            divider.rectTransform.sizeDelta = new Vector2(-44f, 2f);
-
-            // 7 Node Entries
-            float yPos = -76f;
-            foreach (var nodeType in AllNodeTypes)
-            {
-                var entryGo = new GameObject($"Entry_{nodeType}", typeof(RectTransform));
-                entryGo.transform.SetParent(panelRoot.transform, false);
-
-                var entryRect = entryGo.GetComponent<RectTransform>();
-                entryRect.anchorMin = new Vector2(0f, 1f);
-                entryRect.anchorMax = new Vector2(1f, 1f);
-                entryRect.pivot = new Vector2(0f, 1f);
-                entryRect.anchoredPosition = new Vector2(26f, yPos);
-                entryRect.sizeDelta = new Vector2(-52f, 84f);
-
-                // Title (Accent peach color, font size >= 20)
-                var nameText = UiFactory.CreateText(entryGo.transform, "Name", GetNodeTitle(nodeType),
-                    theme.labelSize + 2f, theme.accent, TextAlignmentOptions.TopLeft, theme.bodyFont);
-                nameText.fontStyle = FontStyles.Bold;
-                nameText.rectTransform.anchorMin = new Vector2(0f, 1f);
-                nameText.rectTransform.anchorMax = new Vector2(1f, 1f);
-                nameText.rectTransform.pivot = new Vector2(0f, 1f);
-                nameText.rectTransform.anchoredPosition = new Vector2(0f, 0f);
-                nameText.rectTransform.sizeDelta = new Vector2(0f, 32f);
-
-                // Description (Text gray color, font size >= 20)
-                var descText = UiFactory.CreateText(entryGo.transform, "Desc", GetNodeDescription(nodeType),
-                    theme.labelSize, theme.text, TextAlignmentOptions.TopLeft, theme.bodyFont);
-                descText.rectTransform.anchorMin = new Vector2(0f, 1f);
-                descText.rectTransform.anchorMax = new Vector2(1f, 1f);
-                descText.rectTransform.pivot = new Vector2(0f, 1f);
-                descText.lineSpacing = 8f;
-                descText.rectTransform.anchoredPosition = new Vector2(0f, -36f);
-                descText.rectTransform.sizeDelta = new Vector2(0f, 52f);
-
-                yPos -= 90f;
-            }
+            descText = UiFactory.CreateText(popup, "Desc", "", theme.labelSize, theme.text, TextAlignmentOptions.TopLeft, theme.bodyFont);
+            descText.textWrappingMode = TextWrappingModes.Normal;
+            descText.lineSpacing = 8f;
+            descText.raycastTarget = false;
+            var descRect = descText.rectTransform;
+            descRect.anchorMin = new Vector2(0f, 0f);
+            descRect.anchorMax = new Vector2(1f, 1f);
+            descRect.offsetMin = new Vector2(20f, 20f);
+            descRect.offsetMax = new Vector2(-20f, -60f);
         }
     }
 }

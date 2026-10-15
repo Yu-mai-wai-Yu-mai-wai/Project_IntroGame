@@ -66,7 +66,8 @@ namespace TawanOS.CardEngine
         // A card screen, a tutorial hint (or one closed this frame) or the boss's phase cutscene: clicks should not also
         // pick up or play cards
         public static bool BlocksInput => CardDetailPanelUI.BlocksInput || GraveyardPanelUI.BlocksInput || DeckViewerPanelUI.BlocksInput
-            || TawanOS.UI.TutorialCoach.Blocking || TawanOS.VFX.BossPhaseCutscene.Playing;
+            || TawanOS.UI.TutorialCoach.Blocking || TawanOS.VFX.BossPhaseCutscene.Playing
+            || (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver);
 
         // AfterSceneLoad fires only for the first scene played; the combat scene is usually loaded later from the map.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -127,7 +128,7 @@ namespace TawanOS.CardEngine
         {
             // While a card is held the view is already top-down; a toggle now would only take effect on
             // release and drop the player into the board-only zoom right after playing the card
-            if (locked || topRequests > 0) return;
+            if (locked || topRequests > 0 || (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver)) return;
             userTop = !userTop;
             Apply();
         }
@@ -166,7 +167,7 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
-            if (TawanOS.UI.PauseMenu.IsPaused) return;
+            if (TawanOS.UI.PauseMenu.IsPaused || (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver)) return;
             if (Input.GetKeyDown(toggleKey) && !CardDetailPanelUI.IsOpen && !GraveyardPanelUI.IsOpen && !DeckViewerPanelUI.IsOpen
                 && !TawanOS.UI.TutorialCoach.Blocking && !TawanOS.VFX.BossPhaseCutscene.Playing) ToggleTopView();
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using TMPro;
 using DG.Tweening;
+using TawanOS.VFX;
 
 namespace TawanOS.CardEngine
 {
@@ -49,6 +50,10 @@ namespace TawanOS.CardEngine
         private Quaternion originalLocalRotation;
         private bool isPlacedOnBoard;
         private bool isHeld;
+        private bool isHovered;
+        private bool wasIgnoringMouse;
+
+        public bool IsHovered => isHovered;
 
         private SpriteRenderer backgroundFace;
         private SpriteRenderer artworkFace;
@@ -307,15 +312,16 @@ namespace TawanOS.CardEngine
             }
             if (typeLabel != null) typeLabel.text = TypeLine(CardData);
 
+            bool isSpell = CardData.cardType == CardType.Incantation;
             bool familiar = CardData.cardType == CardType.Familiar;
-            bool hasKhwan = familiar || CardData.maxKhwan > 0;
+            bool hasKhwan = !isSpell && (familiar || (CardData.cardType == CardType.Amulet && CardData.maxKhwan > 0));
             if (attackLabel != null)
             {
                 // What it hits for right now (ผวา, might and the adjacent aura included), coloured when it differs.
                 // An amulet shows it only once it has some, since that is when it strikes
                 int attack = EffectResolver.Instance != null ? EffectResolver.Instance.EffectiveAttack(CardData) : CardData.familiarDamage;
                 bool amuletStrikes = CardData.cardType == CardType.Amulet && attack > 0;
-                attackLabel.gameObject.SetActive((familiar || amuletStrikes) && faceVisible);
+                attackLabel.gameObject.SetActive(!isSpell && (familiar || amuletStrikes) && faceVisible);
                 attackLabel.text = attack.ToString();
                 attackLabel.color = attack > CardData.familiarDamage ? attackRaisedColor
                     : attack < CardData.familiarDamage ? attackLoweredColor : faceTextColor;
@@ -326,7 +332,12 @@ namespace TawanOS.CardEngine
                 khwanLabel.text = CardData.familiarHealth.ToString();
                 khwanLabel.color = CardData.familiarHealth < CardData.maxKhwan ? khwanDamagedColor : faceTextColor;
             }
-            if (descriptionLabel != null) descriptionLabel.text = Description(CardData);
+            if (descriptionLabel != null)
+            {
+                descriptionLabel.text = KeywordGlossarySO.WrapKeywords(Description(CardData));
+                if (descriptionLabel.GetComponent<TawanOS.UI.KeywordLinkTrigger>() == null)
+                    descriptionLabel.gameObject.AddComponent<TawanOS.UI.KeywordLinkTrigger>();
+            }
         }
 
         // "บริวาร  มนต์ดำ" (the • separator from the data becomes a gap, as on the card design)
@@ -433,14 +444,23 @@ namespace TawanOS.CardEngine
             isHeld = held;
         }
 
-        // Board cards and the enemy's cards (disabled views) never react to the mouse
-        private bool IgnoresMouse => !enabled || isPlacedOnBoard || isHeld || CardTargeting3D.BlocksInput
+        private bool isDying;
+        public bool IsDying => isDying;
+
+        // Board cards, the enemy's cards (disabled views), held cards and dying cards never react to the mouse.
+        // A hovered board card lifts off its collider and loops enter/exit (jitter), and its DOKill stops the clash tweens.
+        public bool IgnoresMouse => !enabled || isPlacedOnBoard || isHeld || isDying || CardTargeting3D.BlocksInput
             || CombatCameraRig3D.BlocksInput;
 
         private void OnMouseEnter()
         {
             if (IgnoresMouse) return;
+            Hover();
+        }
 
+        public void Hover()
+        {
+            isHovered = true;
             transform.DOKill();
             transform.DOLocalMove(originalLocalPosition + new Vector3(0, hoverLift, -hoverPullToCamera), 0.15f);
             transform.DOScale(baseLocalScale * hoverScale, 0.15f);
@@ -449,22 +469,74 @@ namespace TawanOS.CardEngine
         private void OnMouseExit()
         {
             if (IgnoresMouse) return;
+            Unhover();
+        }
 
+        public void Unhover(bool instant = false)
+        {
+            isHovered = false;
             transform.DOKill();
-            transform.DOLocalMove(originalLocalPosition, 0.15f);
-            transform.DOLocalRotateQuaternion(originalLocalRotation, 0.15f);
-            transform.DOScale(baseLocalScale, 0.15f);
+            if (instant)
+            {
+                transform.localPosition = originalLocalPosition;
+                transform.localRotation = originalLocalRotation;
+                transform.localScale = baseLocalScale;
+            }
+            else
+            {
+                transform.DOLocalMove(originalLocalPosition, 0.15f);
+                transform.DOLocalRotateQuaternion(originalLocalRotation, 0.15f);
+                transform.DOScale(baseLocalScale, 0.15f);
+            }
+        }
+
+        private void Update()
+        {
+            if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver && isHovered)
+            {
+                Unhover();
+            }
+            bool ignoring = IgnoresMouse;
+            if (wasIgnoringMouse && !ignoring)
+            {
+                ResyncHover();
+            }
+            wasIgnoringMouse = ignoring;
+        }
+
+        public void ResyncHover()
+        {
+            if (isHovered || Vector3.Distance(transform.localScale, baseLocalScale) > 0.01f)
+            {
+                if (!IsPointerOverCard())
+                {
+                    Unhover();
+                }
+            }
+        }
+
+        public bool IsPointerOverCard()
+        {
+            var cam = Camera.main;
+            if (cam == null) cam = FindFirstObjectByType<Camera>();
+            if (cam == null) return false;
+
+            var hits = Physics.RaycastAll(cam.ScreenPointToRay(Input.mousePosition), 200f);
+            if (hits == null || hits.Length == 0) return false;
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            return hits[0].collider.GetComponentInParent<CardView3D>() == this;
         }
 
         // Click a hand card to pick it up (it waits at the side of the screen until played or cancelled)
         private void OnMouseDown()
         {
-            if (IgnoresMouse) return;
+            if (IgnoresMouse || isPlacedOnBoard) return;
             CardPlayController3D.Ensure().Select(this);
         }
 
         public void ReturnToHand()
         {
+            isHovered = false;
             transform.DOKill();
             transform.DOLocalMove(originalLocalPosition, 0.25f).SetEase(Ease.OutQuad);
             transform.DOLocalRotateQuaternion(originalLocalRotation, 0.25f);
@@ -503,12 +575,59 @@ namespace TawanOS.CardEngine
             transform.DOScale(targetSlot.FitCardScale(baseLocalScale), 0.3f);
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
+            originalLocalPosition = Vector3.zero;
+            originalLocalRotation = Quaternion.identity;
+            baseLocalScale = targetSlot.FitCardScale(baseLocalScale);
+            isPlacedOnBoard = true;
+            isHovered = false;
             // Black smoke or streaks of light from under the card as it lands
             TawanOS.VFX.CardLandVfx.Play(transform, CardData.magicSchool == MagicSchool.BlackMagic);
 
-            // The card has been committed to the board; it no longer drags/hovers like a hand card
-            isPlacedOnBoard = true;
+            // The card has been committed to the board; it no longer hovers like a hand card
             enabled = false;
+        }
+
+        private static float lastDeathFireSfxTime = -1f;
+
+        public float PlayDeathAnimation(BoardSlotView slot = null)
+        {
+            if (isDying) return 0f;
+            isDying = true;
+            isHovered = false;
+
+            transform.DOKill();
+
+            if (slot == null) slot = GetComponentInParent<BoardSlotView>();
+            Vector3 facing = Vector3.forward;
+            if (BoardClashView3D.Instance != null && slot != null)
+            {
+                facing = BoardClashView3D.Instance.FacingOf(slot);
+            }
+            else if (slot != null)
+            {
+                facing = slot.side == BoardSlotView.SlotSide.Player ? Vector3.forward : Vector3.back;
+            }
+
+            Transform parentForRig = slot != null ? slot.transform : transform.parent;
+            var rig = new CardClashRig(transform, parentForRig != null ? parentForRig : transform, facing);
+
+            var config = CardDeathFxConfigSO.Load();
+            float length = CardBurnEffect.Burn(transform, config);
+            if (length > 0f)
+            {
+                if (Time.time - lastDeathFireSfxTime > 0.1f)
+                {
+                    lastDeathFireSfxTime = Time.time;
+                    TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on");
+                }
+            }
+            else
+            {
+                length = rig.Play(CardClashRig.Die);
+            }
+
+            rig.DestroyWithCard(length);
+            return length;
         }
 
         private static BoardSlotView FindPlayerSlot(int index)

@@ -86,6 +86,7 @@ namespace TawanOS.GameFlow
                 case ResumeKind.Shop: return "กลับเข้าศาลที่ค้างไว้";
                 case ResumeKind.Meru: return "กลับเข้าเมรุที่ค้างไว้";
                 case ResumeKind.Temple: return "กลับเข้าวัดที่ค้างไว้";
+                case ResumeKind.Reward: return "กลับเข้ารับรางวัลที่ค้างไว้";
                 default: return "กลับไปที่แผนที่";
             }
         }

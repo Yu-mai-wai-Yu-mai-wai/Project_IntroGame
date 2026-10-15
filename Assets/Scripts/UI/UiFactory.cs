@@ -105,6 +105,7 @@ namespace TawanOS.UI
         /// </summary>
         public static void EnableThaiMarks(TMP_Text text)
         {
+            if (text == null) return;
             text.fontFeatures = new List<OTL_FeatureTag> { OTL_FeatureTag.kern, OTL_FeatureTag.mark, OTL_FeatureTag.mkmk };
         }
     }

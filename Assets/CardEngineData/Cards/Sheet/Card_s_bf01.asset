@@ -24,6 +24,7 @@ MonoBehaviour:
   customTypeText: "\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E14\u0E33"
   meritCost: 0
   corruptionGain: 4
+  shopPrice: 7
   baseValue: 0
   durability: 0
   familiarHealth: 3

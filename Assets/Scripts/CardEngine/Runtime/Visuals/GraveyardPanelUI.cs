@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using TawanOS.UI;
 
 namespace TawanOS.CardEngine
 {
@@ -359,6 +360,7 @@ namespace TawanOS.CardEngine
             t.color = Color.white;
             t.richText = true;
             t.raycastTarget = false;
+            UiFactory.EnableThaiMarks(t);
             return t;
         }
 

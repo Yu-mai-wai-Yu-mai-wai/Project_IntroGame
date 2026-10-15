@@ -13,7 +13,7 @@ namespace TawanOS.CardEngine
     {
         [InspectorName("อาคม")] Incantation,    // การ์ดอาคม: ส่งผลทันทีจากมือ
         [InspectorName("เครื่องราง")] Amulet,         // การ์ดเครื่องราง: วางลงช่องเครื่องราง ให้บัฟต่อเนื่อง
-        [InspectorName("บริวาร")] Familiar        // การ์ดบริวาร: วางลงสนาม มี HP ขวัญ และ ATK สะเทือนขวัญ
+        [InspectorName("บริวาร")] Familiar        // การ์ดบริวาร: วางลงสนาม มีค่าขวัญ และ ATK สะเทือนขวัญ
     }
 
     public enum TargetType
@@ -76,6 +76,6 @@ namespace TawanOS.CardEngine
         KhwanPhawa,     // ขวัญผวา (ลดพลังโจมตี)
         KhumPhai,       // คุ้มภัย (เกราะป้องกัน)
         MontSaThon,     // มนต์สะท้อน (สะท้อนดาเมจ)
-        BleedingCurse   // โดนของ (เสีย HP ทุกเทิร์น)
+        BleedingCurse   // โดนของ (เสียขวัญทุกเทิร์น)
     }
 }

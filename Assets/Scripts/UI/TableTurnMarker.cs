@@ -107,6 +107,7 @@ namespace TawanOS.UI
             word.rectTransform.sizeDelta = new Vector2(WordWidth, WordHeight);
             word.outlineWidth = 0.18f;
             word.outlineColor = new Color32(25, 8, 4, 255);
+            UiFactory.EnableThaiMarks(word);
 
             var shader = Resources.Load<Shader>(ArrowShader);
             arrows = new Transform[2];

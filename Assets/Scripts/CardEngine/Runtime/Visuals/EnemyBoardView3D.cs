@@ -92,7 +92,7 @@ namespace TawanOS.CardEngine
             if (!slots.TryGetValue(index, out var slot)) return;
 
             // The board is resynced as a whole; only touch slots whose card actually changed
-            if (views.TryGetValue(index, out var existing) && existing != null && existing.CardData == card) return;
+            if (views.TryGetValue(index, out var existing) && existing != null && !existing.IsDying && existing.CardData == card) return;
 
             RemoveView(index);
 
@@ -136,12 +136,12 @@ namespace TawanOS.CardEngine
             if (PendingFromHand.TryGetValue(card, out var fromHand))
             {
                 PendingFromHand.Remove(card);
-                if (fromHand != null) return fromHand;
+                if (fromHand != null && !fromHand.IsDying) return fromHand;
             }
 
             foreach (var pair in views)
             {
-                if (pair.Value != null && pair.Value.CardData == card)
+                if (pair.Value != null && !pair.Value.IsDying && pair.Value.CardData == card)
                 {
                     views.Remove(pair.Key);
                     return pair.Value;
@@ -155,14 +155,16 @@ namespace TawanOS.CardEngine
             RemoveView(index);
         }
 
-        private void RemoveView(int index)
+        public void RemoveView(int index)
         {
             if (!views.TryGetValue(index, out var view)) return;
             views.Remove(index);
             if (view == null) return;
 
-            view.transform.DOKill();
-            Destroy(view.gameObject);
+            if (view.IsDying) return;
+
+            slots.TryGetValue(index, out var slot);
+            view.PlayDeathAnimation(slot);
         }
     }
 }

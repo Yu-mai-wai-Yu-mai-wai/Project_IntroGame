@@ -81,7 +81,8 @@ namespace TawanOS.VFX
         {
             if (card == null || fx == null || fx.burnMaterial == null) return 0f;
             var go = new GameObject("CardBurn");
-            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, card.gameObject.scene);
+            if (card.gameObject.scene.IsValid())
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, card.gameObject.scene);
             go.AddComponent<CardBurnEffect>().Begin(card, fx, false, fx.burnDuration);
             return fx.burnDuration;
         }
@@ -95,7 +96,8 @@ namespace TawanOS.VFX
         {
             if (card == null || fx == null || fx.burnMaterial == null) return 0f;
             var go = new GameObject("CardReveal");
-            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, card.gameObject.scene);
+            if (card.gameObject.scene.IsValid())
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(go, card.gameObject.scene);
             go.AddComponent<CardBurnEffect>().Begin(card, fx, true, Mathf.Max(0.1f, seconds));
             return seconds;
         }

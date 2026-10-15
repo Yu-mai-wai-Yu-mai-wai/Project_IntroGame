@@ -126,13 +126,13 @@ namespace TawanOS.CardEngine
             if (card.cardType == CardType.Familiar)
             {
                 Section("ค่าบริวาร");
-                Prop("familiarHealth", "ขวัญ (HP)");
+                Prop("familiarHealth", "ขวัญ");
                 Prop("familiarDamage", "สะเทือนขวัญ (ATK)");
             }
             else if (card.cardType == CardType.Amulet)
             {
                 Section("ค่าเครื่องราง");
-                Prop("familiarHealth", "ขวัญ (HP)", "0 = ตีทำลายไม่ได้");
+                Prop("familiarHealth", "ขวัญ", "0 = ตีทำลายไม่ได้");
                 Prop("durability", "อายุขลัง", "จำนวนรอบก่อนหมดอายุ (0 = อยู่จนกว่าจะพัง)");
             }
 

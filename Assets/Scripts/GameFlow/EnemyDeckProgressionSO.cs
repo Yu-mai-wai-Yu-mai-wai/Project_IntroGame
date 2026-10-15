@@ -59,23 +59,53 @@ namespace TawanOS.GameFlow
         }
 
         /// <summary>The cards the enemy plays in this fight, or null to keep its own deck.</summary>
-        public List<CardDataSO> DeckFor(NodeType nodeType, int nodesPassed, EnemyProfileSO enemy)
+        public List<CardDataSO> DeckFor(NodeType nodeType, int nodesPassed, EnemyProfileSO enemy, int? playerUpgradedOverride = null)
         {
             if (!enabled || enemy == null || enemy.scriptedDeck || enemy.deck == null || enemy.deck.Count == 0) return null;
 
-            var steps = nodeType == NodeType.Boss ? boss : minor;
+            int deckSize = enemy.deck.Count;
+            bool isBoss = nodeType == NodeType.Boss || enemy.isBoss;
+            int ceiling = (!isBoss && nodesPassed < 6) ? 0 : Mathf.FloorToInt(deckSize / 3f);
 
-            Step best = null;
-            foreach (var step in steps)
+            int playerUpgradedCount = playerUpgradedOverride ?? CountPlayerUpgradedCards();
+            int targetUpgrades = Mathf.Min(ceiling, playerUpgradedCount + 1);
+
+            var result = new List<CardDataSO>(enemy.deck);
+            if (targetUpgrades <= 0) return result;
+
+            int swapped = 0;
+            for (int i = 0; i < result.Count && swapped < targetUpgrades; i++)
             {
-                if (step == null || step.preset == null || step.preset.cards.Count == 0) continue;
-                if (step.fromNodesPassed > nodesPassed) continue;
-                if (best == null || step.fromNodesPassed >= best.fromNodesPassed) best = step;
+                var card = result[i];
+                if (card != null && card.upgradedCard != null)
+                {
+                    result[i] = card.upgradedCard;
+                    swapped++;
+                }
             }
-            if (best == null) return null;
 
-            Debug.Log($"[EnemyDeckProgression] {enemy.enemyName} at {nodesPassed} nodes passed plays \"{best.preset.presetName}\" ({best.preset.cards.Count} cards)");
-            return new List<CardDataSO>(best.preset.cards);
+            Debug.Log($"[EnemyDeckProgression] {enemy.enemyName} at {nodesPassed} nodes passed (playerUpgraded={playerUpgradedCount}, ceiling={ceiling}) upgraded {swapped} cards");
+            return result;
+        }
+
+        public static int CountPlayerUpgradedCards()
+        {
+            var deck = RunState.Current != null && RunState.Current.HasDeck ? RunState.Current.Deck : null;
+            if (deck == null) return 0;
+            int count = 0;
+            foreach (var card in deck)
+            {
+                if (IsCardUpgraded(card)) count++;
+            }
+            return count;
+        }
+
+        public static bool IsCardUpgraded(CardDataSO card)
+        {
+            if (card == null) return false;
+            if (!string.IsNullOrEmpty(card.cardId) && card.cardId.EndsWith("_up")) return true;
+            if (!string.IsNullOrEmpty(card.name) && card.name.EndsWith("_up")) return true;
+            return false;
         }
     }
 }

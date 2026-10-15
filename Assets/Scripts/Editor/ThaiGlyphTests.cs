@@ -19,13 +19,12 @@ namespace TawanOS.EditorTools
         private const string EkkamaiVibeTtf = "Assets/Fonts/EkkamaiVibe-Regular.ttf";
         private const string RueangLaoSdf = "Assets/Fonts/MN-RueangLao SDF.asset";
         private const string RueangLaoOtf = "Assets/Fonts/MN Rueang Lao.otf";
-        private const string SarabunSdf = "Assets/Fonts/Sarabun-Regular SDF.asset";
-        private const string SarabunTtf = "Assets/Fonts/Sarabun-Regular.ttf";
 
         // Text that appears in the UI today (menu, map HUD/legend, shop, events share the Thai range test below).
         private static readonly string[] Samples =
         {
             "เริ่มเกมใหม่", "เล่นต่อ", "ออกจากเกม", "เส้นทางของหมอธรรม", "ขวัญ", "ธูป", "สำรับ",
+            "หมอกดำ", "กำลัง", "ผีบ้านผีเรือน",
             "สัญลักษณ์ (L)", "สัญลักษณ์และเส้นทางบนแผนที่", "โหมดสั้น 4 ชั้น", "เล่นเต็ม (7 ชั้น)",
             "ผู้ ปู ซื้อ ที่ ปี่ ก๊ ก๋ ก้ ก็ กั กิ กี กึ กื กุ กู เ แ โ ใ ไ ำ ์ ํ ๆ"
         };
@@ -40,7 +39,6 @@ namespace TawanOS.EditorTools
             int failures = 0;
             failures += CheckFont("EkkamaiVibe", EkkamaiVibeSdf, EkkamaiVibeTtf);
             failures += CheckFont("MN-RueangLao", RueangLaoSdf, RueangLaoOtf);
-            failures += CheckFont("Sarabun", SarabunSdf, SarabunTtf);
             failures += CheckLegendCorner();
 
             if (failures == 0) Debug.Log("[ThaiGlyphTests] PASS");
@@ -96,15 +94,12 @@ namespace TawanOS.EditorTools
                     root != null && root.anchorMin == Vector2.zero && root.anchorMax == Vector2.one
                     && root.offsetMin == Vector2.zero && root.offsetMax == Vector2.zero);
 
-                var toggle = legendGo.transform.Find("ToggleLegendButton") as RectTransform;
-                failures += Expect("Legend toggle button exists", toggle != null);
-                if (toggle != null)
-                {
-                    failures += Expect("Toggle anchored to top-right (1,1)", toggle.anchorMin == Vector2.one && toggle.anchorMax == Vector2.one);
-                    failures += Expect("Toggle pivot top-right and offset left of edge", toggle.pivot == Vector2.one && toggle.anchoredPosition.x < 0f);
-                }
-                var panel = legendGo.transform.Find("LegendPanel") as RectTransform;
-                failures += Expect("Legend panel anchored to top-right", panel != null && panel.anchorMin == Vector2.one && panel.pivot == Vector2.one);
+                // The legend panel and its top-right button are gone (Game Designer, 15 Oct): a node pop-up instead
+                failures += Expect("No legend toggle button", legendGo.transform.Find("ToggleLegendButton") == null);
+                failures += Expect("No legend panel", legendGo.transform.Find("LegendPanel") == null);
+                var popup = legendGo.transform.Find("NodePopup");
+                failures += Expect("Node pop-up exists and starts hidden",
+                    popup != null && popup.GetComponent<CanvasGroup>() != null && popup.GetComponent<CanvasGroup>().alpha == 0f);
             }
             finally
             {

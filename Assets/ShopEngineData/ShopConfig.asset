@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.ShopEngine.ShopConfigSO
   shrineName: "\u0E28\u0E32\u0E25\u0E15\u0E32\u0E22\u0E32\u0E22"
   guardianName: "\u0E40\u0E08\u0E49\u0E32\u0E17\u0E35\u0E48"
-  shrineImage: {fileID: 21300000, guid: f9108675019c3504c828b58314f0fee2, type: 3}
+  shrineImage: {fileID: 0}
   greetingLines:
   - "\u0E08\u0E38\u0E14\u0E18\u0E39\u0E1B\u0E1A\u0E2D\u0E01\u0E01\u0E25\u0E48\u0E32\u0E27\u0E01\u0E48\u0E2D\u0E19\u0E2A\u0E34
     \u0E41\u0E25\u0E49\u0E27\u0E04\u0E48\u0E2D\u0E22\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E02\u0E2D\u0E07"
@@ -34,8 +34,6 @@ MonoBehaviour:
     \u0E44\u0E21\u0E48\u0E43\u0E0A\u0E48\u0E02\u0E2D\u0E07\u0E43\u0E2B\u0E49\u0E40\u0E1B\u0E25\u0E48\u0E32"
   starterDeck: {fileID: 11400000, guid: 170a726a556f6664fb9d91877a8647cf, type: 2}
   cardsForSale: 5
-  cardBasePrice: 20
-  cardPricePerMerit: 8
   priceVariance: 0.15
   cardFaceTemplate: {fileID: 1901376002212059369, guid: d95839d994a10bd41a3bc1653dcced8c, type: 3}
   deckPileSprite: {fileID: 0}
@@ -47,29 +45,44 @@ MonoBehaviour:
     displayName: "\u0E15\u0E30\u0E01\u0E23\u0E38\u0E14\u0E42\u0E17\u0E19"
     description: "\u0E41\u0E1C\u0E48\u0E19\u0E42\u0E25\u0E2B\u0E30\u0E25\u0E07\u0E2D\u0E32\u0E04\u0E21
       \u0E1B\u0E49\u0E2D\u0E07\u0E01\u0E31\u0E19\u0E04\u0E38\u0E13\u0E44\u0E2A\u0E22"
-    icon: {fileID: 21300000, guid: 159329041247410f9cede9510666cdb8, type: 3}
+    icon: {fileID: 0}
     price: 70
   - relicId: pha_yan
     displayName: "\u0E1C\u0E49\u0E32\u0E22\u0E31\u0E19\u0E15\u0E4C\u0E41\u0E14\u0E07"
     description: "\u0E1C\u0E49\u0E32\u0E22\u0E31\u0E19\u0E15\u0E4C\u0E25\u0E07\u0E40\u0E25\u0E02\u0E22\u0E31\u0E19\u0E15\u0E4C
       \u0E04\u0E38\u0E49\u0E21\u0E01\u0E31\u0E19\u0E20\u0E39\u0E15\u0E1C\u0E35"
-    icon: {fileID: 21300000, guid: 159329041247410f9cede9510666cdb8, type: 3}
+    icon: {fileID: 0}
     price: 60
   - relicId: phra_khrueang
     displayName: "\u0E1E\u0E23\u0E30\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E40\u0E01\u0E48\u0E32"
     description: "\u0E1E\u0E23\u0E30\u0E40\u0E19\u0E37\u0E49\u0E2D\u0E1C\u0E07\u0E2D\u0E32\u0E22\u0E38\u0E19\u0E31\u0E1A\u0E23\u0E49\u0E2D\u0E22\u0E1B\u0E35
       \u0E40\u0E2A\u0E23\u0E34\u0E21\u0E1A\u0E38\u0E0D\u0E1A\u0E32\u0E23\u0E21\u0E35"
-    icon: {fileID: 21300000, guid: 159329041247410f9cede9510666cdb8, type: 3}
+    icon: {fileID: 0}
     price: 90
   - relicId: mai_khru
     displayName: "\u0E44\u0E21\u0E49\u0E04\u0E23\u0E39\u0E2B\u0E21\u0E2D\u0E18\u0E23\u0E23\u0E21"
     description: "\u0E44\u0E21\u0E49\u0E40\u0E17\u0E49\u0E32\u0E2A\u0E37\u0E1A\u0E17\u0E2D\u0E14\u0E08\u0E32\u0E01\u0E04\u0E23\u0E39\u0E1A\u0E32\u0E2D\u0E32\u0E08\u0E32\u0E23\u0E22\u0E4C"
-    icon: {fileID: 21300000, guid: 159329041247410f9cede9510666cdb8, type: 3}
+    icon: {fileID: 0}
     price: 80
   - relicId: nam_mon
     displayName: "\u0E19\u0E49\u0E33\u0E21\u0E19\u0E15\u0E4C\u0E43\u0E19\u0E1A\u0E32\u0E15\u0E23"
     description: "\u0E19\u0E49\u0E33\u0E21\u0E19\u0E15\u0E4C\u0E40\u0E22\u0E47\u0E19\u0E40\u0E09\u0E35\u0E22\u0E1A
       \u0E0A\u0E33\u0E23\u0E30\u0E2A\u0E34\u0E48\u0E07\u0E2D\u0E31\u0E1B\u0E21\u0E07\u0E04\u0E25"
-    icon: {fileID: 21300000, guid: 159329041247410f9cede9510666cdb8, type: 3}
+    icon: {fileID: 0}
     price: 50
   amuletsForSale: 0
+  blessings:
+  - kind: 0
+    displayName: "\u0E1E\u0E23\u0E02\u0E27\u0E31\u0E0D"
+    description: "\u0E02\u0E27\u0E31\u0E0D\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 +5"
+    icon: {fileID: 0}
+    amount: 5
+    price: 8
+    priceStep: 4
+  - kind: 1
+    displayName: "\u0E1E\u0E23\u0E01\u0E38\u0E28\u0E25"
+    description: "\u0E01\u0E38\u0E28\u0E25\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 +1"
+    icon: {fileID: 0}
+    amount: 1
+    price: 15
+    priceStep: 8

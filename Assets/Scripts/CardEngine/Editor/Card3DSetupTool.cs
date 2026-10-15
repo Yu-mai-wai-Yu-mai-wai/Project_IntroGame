@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using TMPro;
+using TawanOS.UI;
 
 namespace TawanOS.CardEngine
 {
@@ -98,10 +99,9 @@ namespace TawanOS.CardEngine
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.fontSize = 3f;
             tmp.color = Color.black;
-            TMP_FontAsset titleFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset")
-                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
-                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
+            TMP_FontAsset titleFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset");
             if (titleFont != null) tmp.font = titleFont;
+            UiFactory.EnableThaiMarks(tmp);
 
             var view = cardGo.AddComponent<CardView3D>();
             view.cardRenderer = renderer;

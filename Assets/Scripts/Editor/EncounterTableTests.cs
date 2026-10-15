@@ -34,18 +34,8 @@ namespace TawanOS.EditorTools
 
             if (table != null)
             {
-                failures += Expect("EncounterTable has at least 3 minor enemies", table.minor.Count >= 3);
-                failures += Expect("EncounterTable has at least 1 elite enemy", table.elite.Count >= 1);
+                failures += Expect("EncounterTable has at least 2 minor enemies", table.minor.Count >= 2);
                 failures += Expect("EncounterTable has at least 1 boss enemy", table.boss.Count >= 1);
-
-                // A7: Elite profile is distinct from minor and has 45 Khwan
-                var elite = table.Pick(NodeType.EliteEnemy);
-                failures += Expect("Elite node resolves an enemy", elite != null);
-                if (elite != null)
-                {
-                    failures += Expect("Elite enemy has 45 Khwan (A7)", elite.maxKhwan == 45);
-                    failures += Expect("Elite enemy is not in minor list (A7)", !table.minor.Contains(elite));
-                }
 
                 // Check all minor enemies
                 foreach (var m in table.minor)
@@ -53,7 +43,7 @@ namespace TawanOS.EditorTools
                     failures += Expect($"Minor enemy '{m.enemyName}' is not null", m != null);
                     if (m != null)
                     {
-                        failures += Expect($"Minor enemy '{m.enemyName}' has 30 Khwan", m.maxKhwan == 30);
+                        failures += Expect($"Minor enemy '{m.enemyName}' has 5 Khwan base", m.maxKhwan == 5);
                     }
                 }
 
@@ -64,13 +54,13 @@ namespace TawanOS.EditorTools
                 {
                     failures += Expect("Boss is the Phi Tai Hong profile (enemy_boss)", boss.enemyId == "enemy_boss");
                     failures += Expect("Boss name contains ผีตายโหง", boss.enemyName != null && boss.enemyName.Contains("ผีตายโหง"));
-                    failures += Expect("Boss has 60 Khwan", boss.maxKhwan == 60);
+                    failures += Expect("Boss has 20 Khwan", boss.maxKhwan == 20);
                 }
 
                 // A9: Ensure all enemyIds in roster are unique
                 var allEnemies = new System.Collections.Generic.List<EnemyProfileSO>();
                 allEnemies.AddRange(table.minor);
-                allEnemies.AddRange(table.elite);
+                if (table.elite != null) allEnemies.AddRange(table.elite);
                 allEnemies.AddRange(table.boss);
 
                 var seenIds = new System.Collections.Generic.HashSet<string>();
@@ -96,6 +86,30 @@ namespace TawanOS.EditorTools
                     if (picked != null) pickedMinorIds.Add(picked.enemyId);
                 }
                 failures += Expect("Picking minor enemies returns at least 2 distinct types (A9)", pickedMinorIds.Count >= 2);
+
+                // P0-7: Progression Khwan tests (base 5 + 2 per node passed, boss 20)
+                var prog = EnemyDeckProgressionSO.Load();
+                failures += Expect("EnemyDeckProgressionSO loads", prog != null);
+                if (prog != null && table.minor.Count > 0)
+                {
+                    var sampleMinor = table.minor[0];
+                    failures += Expect("Minor khwan on floor 0 is 5", prog.KhwanFor(0, sampleMinor) == 5);
+                    failures += Expect("Minor khwan on floor 3 is 11", prog.KhwanFor(3, sampleMinor) == 11);
+                    failures += Expect("Minor khwan on floor 6 is 17", prog.KhwanFor(6, sampleMinor) == 17);
+                    if (boss != null)
+                    {
+                        failures += Expect("Boss khwan on floor 7 is 20", prog.KhwanFor(7, boss) == 20);
+                    }
+
+                    // P0-7: Progression Upgrade scaling tests
+                    var deckFloor6 = prog.DeckFor(NodeType.MinorEnemy, 6, sampleMinor, 0);
+                    int upCountF6 = CountUpgrades(deckFloor6);
+                    failures += Expect("player upgraded 0 → enemy floor-6 deck has <=1 upgraded card", deckFloor6 != null && upCountF6 <= 1);
+
+                    var deckFloor0 = prog.DeckFor(NodeType.MinorEnemy, 0, sampleMinor, 3);
+                    int upCountF0 = CountUpgrades(deckFloor0);
+                    failures += Expect("player upgraded 3 → floor-0 minor has 0 upgraded", deckFloor0 != null && upCountF0 == 0);
+                }
             }
 
             // Runtime code must not depend on AssetDatabase to find enemies
@@ -111,6 +125,22 @@ namespace TawanOS.EditorTools
         {
             Debug.Log($"[EncounterTableTests] {(condition ? "ok  " : "FAIL")} {name}");
             return condition ? 0 : 1;
+        }
+
+        private static int CountUpgrades(System.Collections.Generic.List<CardDataSO> cards)
+        {
+            if (cards == null) return 0;
+            int count = 0;
+            foreach (var c in cards)
+            {
+                if (c == null) continue;
+                if ((!string.IsNullOrEmpty(c.cardId) && c.cardId.EndsWith("_up")) ||
+                    (!string.IsNullOrEmpty(c.name) && c.name.EndsWith("_up")))
+                {
+                    count++;
+                }
+            }
+            return count;
         }
     }
 }

@@ -651,6 +651,84 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 | อ. 20 ต.ค. | Build สุดท้ายขึ้น Drive (D6), ซ้อมนำเสนอ |
 | พ. 21 ต.ค. | นำเสนอผลงาน |
 
+## Phase P · แก้จาก Playtest รอบ 1 (เพิ่ม 15 ต.ค. 2569 สถานะ: **รอตะวันตอบ "Proceed"**)
+
+ที่มา: feedback 18 ข้อ + เสริม 13 ข้อจาก playtest 15 ต.ค., สแกนโค้ดทั้งโปรเจกต์, ตอบ Grill 2 รอบ (Q1-Q17, Q1-Q11)
+คนทำ: agy เขียนโค้ด, Claude Code รีวิวและรัน test ใน Unity, หนึ่ง ticket หนึ่ง commit
+กติกาเดิม: ทุก ticket มี **Done when** ตรวจได้, เริ่มจาก test ที่ fail ก่อนเมื่อเป็น logic, งาน UI ตรวจด้วยภาพหน้าจอ
+ข้อความที่ GD ยังไม่ส่ง (อีเวนต์, นิยามคีย์เวิร์ดที่ขาด, บทหน้าแพ้) ใส่ข้อความชั่วคราวที่ขึ้นต้นด้วย `[ชั่วคราว]` ใน asset เพื่อค้นหาแทนทีหลังได้
+
+### ข้อตัดสินจาก Grill (15 ต.ค.)
+| เรื่อง | ตัดสิน |
+|---|---|
+| ลำดับ | P0 เสร็จ 17 ต.ค. → P1 → P2 หลังนำเสนอ |
+| ศัตรูอัปเกรด | จำนวนการ์ด `_up` = min(เพดานตามชั้น, ที่ผู้เล่นอัปเกรดแล้ว + 1); เพดาน: ชั้น 1-6 = 0, ชั้น 7 และบอส = 1/3 ของสำรับ |
+| สำรับศัตรู | แต่ละตัวมีสำรับธีมของตัวเอง 12-15 ใบ (กระสือ มนต์ดำบุกเร็ว, พรายน้ำนอง ควบคุม, บอส ชุดของตัวเอง) |
+| ขวัญศัตรู | ฐาน 5 + 2 ต่อชั้น (5/11/17), บอส 20 |
+| เกราะคุ้มภัย | กันระเบิด (Detonate) ได้ ใช้ 1 stack; บทสวดส่งวิญญาณยังทะลุ |
+| วัด | เลือก 1: ฟื้นขวัญเต็ม หรือ ขวัญสูงสุด +3; ชั้นก่อนบอสเป็นวัดเสมอ (commit `fce6414`) |
+| เศรษฐกิจ | ธูปชนะ 6-10; พรขวัญสูงสุด +5 ราคา 8 แล้ว +4 ต่อครั้ง; พรกุศลสูงสุด +1 ราคา 15 แล้ว +8 ต่อครั้ง; นับทั้งรอบ; การ์ด 1-8 คงเดิม |
+| ศัตรูโชว์ | กุศล/มลทินแบบย่อข้างชื่อ; การ์ดขึ้นจอขวาเฉพาะอาคมและการ์ดที่มีความสามารถ |
+| คีย์เวิร์ด | ใส่เฉพาะคำที่การ์ดใช้จริง: ผวา ผีบังตา (ความหมายตามโค้ด) เกราะคุ้มภัย ชำระล้าง ยั่วยุ ผีข้ามหัว อัปมงคล สิริมงคล กุศล มลทิน คำสาปย้อน; ทำทั้ง tooltip (สี+ขีดเส้นใต้) และนิยามในวงเล็บในหน้าหนังสือ + หน้าอธิบายคีย์เวิร์ดในตำราไสยเวท |
+| ฟอนต์ | หัวข้อ + คำว่า ขวัญ/ธูป = RueangLao, เนื้อหา = EkkamaiVibe ไม่บังคับหนา; ฟอนต์อื่นไม่ใช้ (ดูข้อค้างด้านล่าง) |
+| แพ้ | ล็อก input → IMG_7920 + บท 2-3 บรรทัด → fade ดำ + overlay เลือด → สถิติ |
+| ชนะ | dad_khwan.mp4 → "ขวัญกลับคืนร่าง" → สถิติ |
+| เซฟ | เก็บเพิ่ม: เมรุใช้แล้ว, ของในร้าน, รางวัลค้าง; การต่อสู้ยังเริ่มใหม่ |
+| อีเวนต์ | ตัดวอดส์, หารตัวเลขอีก 4 อีเวนต์ราว 5 |
+
+**ข้อค้าง 1 ข้อ:** ตะวันตอบ Q10 ว่า "คง Charm-Bold" และ "ทั้งเกมใช้แค่ RueangLao กับ EkkamaiVibe" — default: ชื่อบนหน้าการ์ด 3D เปลี่ยนเป็น RueangLao, Sarabun/LiberationSans/Charm ออกทั้งหมด, ThaiGlyphTests ตรวจแค่ 2 ฟอนต์
+
+### P0 (เสร็จ 17 ต.ค.) [เสร็จสมบูรณ์ 100%]
+- [x] **P0-1 กองการ์ดศัตรูสีชมพูใน build** — หา material/shader ที่หายใน build (`Shader.Find`, Always Included Shaders) | Done when: build .exe เปิด CombatTestScene แล้วกองศัตรูไม่ชมพู (ภาพหน้าจอ)
+  - *สถานะ 15 ต.ค.:* ผูก BackCardMat (URP Lit) ให้ EnemyHandView3D ใน CombatTestScene, ปรับ DeckPileView3D และ EnemyHandView3D ให้ fallback เป็น URP Unlit แทน built-in default material, และเพิ่ม Universal Render Pipeline/Unlit ใน AlwaysIncludedShaders; Test: `Tools/TawanOS/Tests/Enemy Deck Material` PASS
+- [x] **P0-2 แพ้แล้วยังกดได้ + หน้าแพ้ใหม่** | Done when: test ยืนยันว่าหลังขวัญ = 0 คลิกการ์ดไม่มีผล; ลำดับคัตซีนตามตาราง
+  - *สถานะ 15 ต.ค.:* ปิด input gates ทั้งหมดเมื่อ IsCombatOver ใน CardPlayController3D, TurnPhaseController, CombatCameraRig3D, CardView3D, CardTargeting3D, CombatHUD พร้อมเพิ่มคัตซีนแพ้ GameOverScreen (IMG_7920.JPG, บทพูด [ชั่วคราว] 3 บรรทัด, procedural red blood overlay, ฟอนต์ RueangLao/EkkamaiVibe); Test: `Tools/TawanOS/Tests/Defeat Sequence` (`DefeatSequenceTests.cs`) PASS
+- [x] **P0-3 hover ค้างหลังปิดหนังสือ (ข้อ 2)** — sync hover ตอนปิดหนังสือ | Done when: ทดสอบมือ: ชี้ → คลิกขวา → ย้ายเมาส์ → ปิด แล้วการ์ดลงที่เดิม
+  - *สถานะ 15 ต.ค.:* CardView3D ตรวจการเปลี่ยนสถานะของ IgnoresMouse เมื่อหนังสือปิดแล้ว re-sync hover ทันทีหากเมาส์ไม่ได้อยู่บนการ์ด (รองรับทั้งการ์ดบนมือและบนสนาม); Test: `Tools/TawanOS/Tests/Card Hover Resync` (`CardHoverResyncTests.cs`) PASS
+- [x] **P0-4 คลิกขวาในร้านปิดเมนู (ข้อ 12)** — `ShopShrineView` เช็ก `CardDetailPanelUI.BlocksInput` | Done when: คลิกขวาการ์ดในร้านเปิดหนังสือ และร้านยังอยู่
+  - *สถานะ 15 ต.ค.:* ShopShrineView.Update ข้ามการปิดเมนูเมื่อ CardDetailPanelUI.BlocksInput เป็นจริง หรือคลิกขวาบน CardView3D หรือเปิดหนังสือในเฟรมเดียวกัน; Test: `Tools/TawanOS/Tests/Shop Right Click` (`ShopRightClickTests.cs`) PASS
+- [x] **P0-5 เกราะกันระเบิด (ข้อ 8)** | Done when: CombatEnd test ใหม่ "Detonate ใส่การ์ดที่มีเกราะ: เกราะลด 1 การ์ดรอด" fail ก่อนแล้วผ่าน
+- [x] **P0-6 การ์ดตายทุกทางมี animation เผา (ข้อ 14)** — รวมทาง `ClearSlot` / `RemoveView` ให้ผ่าน CardDeathFx | Done when: อาคมฆ่า, tick, ระเบิด, เครื่องรางหมดอายุ เห็นเผาทุกกรณี
+  - *สถานะ 15 ต.ค.:* BoardSlotView.ClearSlot และ EnemyBoardView3D.RemoveView ส่งการลบการ์ดผ่าน CardDeathFx.PlayBurnDeath และรอ destroy view หลังเอฟเฟกต์จบ พร้อม guard ไม่ให้เล่นซ้ำ; Test: `Tools/TawanOS/Tests/Card Death FX` (`CardDeathFxTests.cs`) PASS
+- [x] **P0-7 ศัตรูอัปเกรด + สำรับธีม + ขวัญ (ข้อ 18, เสริม 12)** | Done when: EncounterTableTests แก้ให้ตรงกฎใหม่และผ่าน; test ใหม่: ผู้เล่นอัปเกรด 0 ใบ ศัตรูชั้น 7 มี `_up` ≤ 1
+- [x] **P0-8 เศรษฐกิจ (ข้อ 17, เสริม 8, 11)** | Done when: test: ซื้อพรขวัญ 3 ครั้งราคา 8/12/16 และราคาจำข้ามการเข้าร้าน; ธูปชนะอยู่ใน 6-10
+  - *สถานะ 15 ต.ค.:* GameFlowManager ปรับ MinorEnemyIncense/EventFightIncense = (6, 10), ShopConfig.asset ปรับพรขวัญ (amount 5 base 8 step +4) และพรกุศล (amount 1 base 15 step +8), ShopBlessing เพิ่มฟิลด์ priceStep, RunState บันทึกและโหลด blessingPurchases ข้ามเซฟ; Test: `Tools/TawanOS/Tests/Shop Economy` (`ShopEconomyTests.cs`) PASS
+- [x] **P0-9 ช่องโหว่เซฟ** | Done when: test: ออก-เข้าเมรุใช้ซ้ำไม่ได้, ร้านของเดิม, รางวัลค้างกลับมา
+- [x] **P0-10 แถบขวัญหน้าแผนที่ไม่ลด (เสริม 4)** | Done when: ขวัญ 10/20 แถบเต็มครึ่ง
+  - *สถานะ 15 ต.ค.:* MapPlayerStatusUI กำหนด sprite สีขาวให้ hpBarFill เพื่อให้ Image.Type.Filled ทำงาน, คำนวณ fillAmount = currentHp / maxHp พร้อม sync live กับ RunState.Current.OnChanged; Test: `Tools/TawanOS/Tests/Map Khwan Bar` (`MapKhwanBarTests.cs`) PASS
+- [x] **P0-11 สระอำและฟอนต์ (ข้อ 6, 15, เสริม 10)** | Done when: ThaiGlyphTests ผ่าน; grep ไม่พบ Sarabun/LiberationSans/Charm ใน scene และ prefab ที่ใช้งาน
+  - *สถานะ 15 ต.ค.:* ยกเลิก forced bold บน EkkamaiVibe ใน CardBookPanel, แทนที่ Charm/Sarabun/LiberationSans ด้วย RueangLao (ชื่อการ์ด/หัวข้อ) และ EkkamaiVibe (เนื้อหา) ใน CardCube3DPrefab, Graveyard3D, CombatTestScene, StoryScene และ setup tools, เปิด UiFactory.EnableThaiMarks ทุกจุดสร้าง TMP, ThaiGlyphTests ตรวจเฉพาะ 2 ฟอนต์พร้อมคำทดสอบ หมอกดำ/สำรับ/กำลัง/ผีบ้านผีเรือน
+- [x] **P0-12 HP → ขวัญ (เสริม 9)** | Done when: grep ข้อความที่ผู้เล่นเห็นไม่พบ "HP"
+  - *สถานะ 15 ต.ค.:* เปลี่ยนข้อความที่ผู้เล่นเห็นทั้งหมดจาก "HP" เป็น "ขวัญ" ใน RunState (สรุปเซฟ), BoardSlotView (สเตตัสการ์ด), ShopViewUI, EventViewUI, EventManager (ผลลัพธ์/ค่าใช้จ่าย), EventEngineSetupTool, Event_WanderingShaman.asset, CardDataSO/EventPage tooltips, และ CardDataSOEditor/EventEffectDrawer/EventDataSOEditor
+- [x] **P0-13 ข้อความสอนเล่น (ข้อ 1)** | Done when: ข้อความใหม่ + แก้ "แต่ะเทิร์น"
+  - *สถานะ 15 ต.ค.:* แก้คำใบ้กระดานใน TutorialText.asset และ TutorialTextSO.cs เป็น "คลิกขวาหรือกด Esc เพื่อยกเลิกการ์ดที่เลือก (ก่อนวางลงสนาม) การ์ดที่วางแล้วเอาคืนไม่ได้" และแก้คำผิด "แต่ะเทิร์น" -> "แต่ละเทิร์น"; Test: `Tools/TawanOS/Tests/Tutorial Text` (`TutorialTextTests.cs`) PASS
+
+ผลรัน 15 ต.ค. (Claude Code ใน Editor): CombatEnd 8/8, EncounterTable, ShopEconomy, SaveExploit, Temple, EightFloorMap, RunKhwanSync, SetupGuard, EventCatalog 46/46 ผ่านทั้งหมด 0 error
+
+### P1 (18-19 ต.ค.) [เสร็จสมบูรณ์ 100%]
+- [x] **P1-1 คีย์เวิร์ด tooltip + หน้าในตำรา (ข้อ 3-4, เสริม 1)**
+  - *สถานะ 15 ต.ค.:* KeywordGlossarySO (11 คำสำคัญ) ใน Resources พร้อม WrapKeywords (<link="kw:term"><u><color>...), KeywordTooltipView สไตล์ MapTooltipView (RueangLao/EkkamaiVibe), KeywordLinkTrigger บน 3D card/ตำรา/รางวัล/ร้านค้า, เพิ่มบล็อกคำสำคัญในหน้าขวาตำราและการ์ดดีเทล, เพิ่มหน้า "คำสำคัญ" ในตำราไสยเวทพร้อมลิงก์สารบัญ; Test: `Tools/TawanOS/Tests/Keyword Glossary Tests` (`KeywordGlossaryTests.cs`) PASS (22/22)
+- [x] **P1-2 หน้าหนังสือ: ชื่อ+กุศล / ขวัญ+สะเทือนขวัญ (ข้อ 5)**
+  - *สถานะ 15 ต.ค.:* ปรับหน้าขวาของตำราและการ์ดดีเทล: บรรทัด 1 แสดงชื่อการ์ด (ฟอนต์ RueangLao) พร้อมค่าร่าย ("กุศล X" หรือ "มลทิน X"), บรรทัด 2 แสดง "ขวัญ X/Y" และ "สะเทือนขวัญ Z" บนบรรทัดเดียวกัน (ซ่อนในอาคม), บรรทัด 3 แสดงประเภทการ์ด, และส่วนล่างเริ่มด้วยความสามารถ; Test: `Tools/TawanOS/Tests/Card Book Layout` (`CardBookLayoutTests.cs`) PASS
+- [x] **P1-3 ปุ่มจบเทิร์นในกรอบขวัญ + ตกแต่งกรอบ (ข้อ 7, เสริม 3)**
+  - *สถานะ 15 ต.ค.:* เพิ่มปุ่มจบเทิร์นในกรอบขวัญของผู้เล่น (CombatStatusHUD), ตกแต่งขอบกรอบด้วย SoftEdgeImage และปุ่มด้วย UiSmokeButton, ข้อความปุ่มเปลี่ยนตามเฟส ("จบช่วงลงบริวาร" -> "จบเทิร์น") ผ่าน TurnPhaseController, ปุ่มปิดระหว่างเทิร์นศัตรูและเมื่อจบการต่อสู้; Test: `Tools/TawanOS/Tests/End Turn Button Tests` (`EndTurnButtonTests.cs`) PASS (14/14)
+- [x] **P1-4 วัดให้เลือก (ข้อ 9)** | Done when: TempleTests เพิ่มกรณีขวัญเต็มเลือก +3
+  - *สถานะ 15 ต.ค.:* TempleManager / TempleStageView เพิ่มตัวเลือก "ฟื้นขวัญเต็ม" และ "ขวัญสูงสุด +3" (ChangeMaxHp(3)), เมื่อขวัญเต็มปุ่มฟื้นขวัญปิดและแสดง "ขวัญเต็มอยู่แล้ว", แบ็กอัปและกู้คืน run_save.json ในการทดสอบ; Test: `Tools/TawanOS/Tests/Temple` (`TempleTests.cs`) PASS
+- [x] **P1-5 กุศล/มลทินศัตรู + การ์ดศัตรูขึ้นจอ (ข้อ 10, 13)**
+  - *สถานะ 15 ต.ค.:* แสดงแบดจ์กุศล/มลทินแบบย่อข้างชื่อศัตรู, นำการ์ดอาคมและการ์ดที่มีความสามารถของศัตรูขึ้นแสดงผลโชว์เคสด้านขวาของจอ; Test: `Tools/TawanOS/Tests/Enemy Info And Showcase` (`EnemyInfoAndShowcaseTests.cs`) PASS
+- [x] **P1-6 log ไม่สแปม + บอกสาเหตุเสียขวัญ (เสริม 7, Q9)**
+  - *สถานะ 15 ต.ค.:* PlayerNotice รองรับ dedupe ยืดเวลาแสดงผลเมื่อข้อความเดิมยังแสดงอยู่, จำกัดแสดงผลไม่เกิน 3 แถว, ปรับขนาดข้อความพอดีกล่อง, แจ้งเตือนทุกครั้งที่ผู้เล่นเสียขวัญพร้อมสาเหตุ ("−X ขวัญ <สาเหตุ>"); Test: `Tools/TawanOS/Tests/Combat Log` (`CombatLogTests.cs`) PASS
+- [x] **P1-7 อีเวนต์ (ข้อ 16)** | Done when: EventCatalog test: ไม่มีวอดส์ ทุกตัวเลือกมีข้อความผล ราคาไม่เกิน 15 ธูป
+  - *สถานะ 15 ต.ค.:* ลบอีเวนต์วอดส์ออกจาก EventCatalog, ปรับสเกลราคาและผลตอบแทนธูป (หาร ~5, ไม่เกิน 15, ขั้นต่ำ 2) และขวัญใน 4 อีเวนต์ (GhostGamble, SpiritHouse, WanderingShaman, WellVoice), ทุกตัวเลือกมีข้อความผลลัพธ์ครบถ้วน, แก้คำใบ้ GhostGamble ให้ตรงกับรางวัลการ์ด; Test: `Tools/TawanOS/Tests/Event Catalog` (`EventCatalogTests.cs`) PASS
+- [x] **P1-8 หน้าชนะ + ธูปเด่นขึ้น + ซ่อนช่องค่าว่างบนการ์ดอาคม (เสริม 8, 13)**
+  - *สถานะ 15 ต.ค.:* CardInstance ตั้ง maxKhwan = 0 สำหรับการ์ดประเภท Incantation (ไม่รับค่า default familiarHealth = 1 จาก asset), CardView3D และ CardBookPanel ปิด label พลังโจมตี/ขวัญบนการ์ดอาคมอย่างเคร่งครัด (!isSpell), RewardViewUI เน้นแสดงผลธูปที่ได้รับให้เด่นชัด (สเกล 1.5 -> 1.0 พร้อม OutBack ease), VictoryViewUI เพิ่มคัตซีน sequence dad_khwan.mp4 พร้อมข้อความ "ขวัญกลับคืนร่าง" และรองรับการกดข้าม (any key / click) พร้อม fallback สำหรับ batch mode; Test: `Tools/TawanOS/Tests/Victory And Map Visual` (`VictoryAndMapVisualTests.cs`) PASS
+- [x] **P1-9 แถบหน้าแผนที่ใหญ่ขึ้น + เอฟเฟกต์กระดาษ/หมอกกับ UI ที่ยังเป็นกล่อง (เสริม 4, 6)**
+  - *สถานะ 15 ต.ค.:* MapPlayerStatusUI ขยายขนาด RectTransform จาก 580x48 เป็น 660x56 ที่ตำแหน่ง (28, -18), ขยาย HpBarBg เป็น 130x22, DeckButton เป็น 186x38, เพิ่มขนาดตัวหนังสือ +2 ถึง +4, ใส่ SoftEdgeImage ขอบฟุ้งที่ Border และ Panel Background (0.04), ใส่ UiSmokeButton ให้ DeckButton สำรับ, MapLegendUI เพิ่ม EnsureUI พร้อมติด SoftEdgeImage ให้ NodePopup Border และ Background (0.06); Test: `Tools/TawanOS/Tests/Victory And Map Visual` (`VictoryAndMapVisualTests.cs`) PASS
+
+### P2 (หลัง 21 ต.ค.)
+- คำสถานะที่ยังไม่มีการ์ดใช้ (ไฟแตก, กรรมตามสนอง, ผีอำ, โดนของ, สมาธิ) ให้ตรงนิยาม GD
+- ศัตรูชนิดใหม่, เซฟกลางการต่อสู้, ตรวจ version ของไฟล์เซฟ
+
 ## ไม่อยู่ใน scope (ใส่รายงานส่วน Future Work)
 - อัปเกรดการ์ดที่เมรุ (ยังไม่มีการ์ดเวอร์ชันอัปเกรด)
 - จุดพักตอนเริ่มเกม ตาม Diagram (โหนดวัดทำแล้ว 11 ต.ค., D6)

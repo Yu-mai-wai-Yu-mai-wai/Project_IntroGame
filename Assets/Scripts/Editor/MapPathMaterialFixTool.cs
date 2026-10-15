@@ -5,7 +5,7 @@ namespace TawanOS.EditorTools
 {
     /// <summary>
     /// MapPathPrefab has no material assigned. In the Editor MapPathRenderer.EnsureValidMaterial fills it from
-    /// Assets/ProjectAsset/MapNavigate/String.mat through AssetDatabase, which does not exist in a player build,
+    /// Assets/Art/MapPaper/String.mat through AssetDatabase, which does not exist in a player build,
     /// so the sacred-thread paths could render without the right material there (plan task A1).
     /// This assigns the material in the prefab itself. Safe to run more than once.
     /// Batch: -executeMethod TawanOS.EditorTools.MapPathMaterialFixTool.Assign
@@ -13,7 +13,7 @@ namespace TawanOS.EditorTools
     public static class MapPathMaterialFixTool
     {
         private const string PrefabPath = "Assets/MapEngineData/Prefabs/MapPathPrefab.prefab";
-        private const string MaterialPath = "Assets/ProjectAsset/MapNavigate/String.mat";
+        private const string MaterialPath = "Assets/Art/MapPaper/String.mat";
 
         [MenuItem("Tools/TawanOS/Map Engine/Assign Thread Material To MapPathPrefab")]
         public static void AssignFromMenu()

@@ -29,6 +29,9 @@ namespace TawanOS.CardEngine
         /// <summary>Open (or closed this frame): clicks should not also reach the table, the map or other screens.</summary>
         public static bool BlocksInput => Instance != null && (Instance.isOpen || Time.frameCount <= Instance.closedFrame);
 
+        /// <summary>True during the frame the book opened.</summary>
+        public static bool JustOpened => Instance != null && Instance.openedFrame == Time.frameCount;
+
         /// <summary>False when the book's art is missing (Resources/CardBook); callers fall back to their old screens.</summary>
         public static bool Available => CardBookStyleSO.Load() is { } s && s.spread != null && s.page != null;
 
@@ -85,6 +88,7 @@ namespace TawanOS.CardEngine
         private readonly List<Entry> entries = new List<Entry>();
         private readonly List<Spread> spreads = new List<Spread>();
         private readonly int[] sectionStart = new int[Sections.Length]; // spread of each section's opening page (-1 = no cards)
+        private int glossarySpread = -1;                                // spread of the คำสำคัญ glossary page
         private int spread;                                             // index into spreads; 0 = contents
         private bool isOpen, busy, slidIn;
         private int openedFrame = -1, closedFrame = -1;
@@ -183,6 +187,8 @@ namespace TawanOS.CardEngine
             // Contents, then each section: its opening page followed by one spread per card
             spreads.Clear();
             spreads.Add(new Spread { section = -1, entry = -1 });
+            glossarySpread = spreads.Count;
+            spreads.Add(new Spread { section = -2, entry = -1 });
             for (int s = 0; s < Sections.Length; s++)
             {
                 sectionStart[s] = -1;
@@ -361,7 +367,11 @@ namespace TawanOS.CardEngine
             for (int i = page.childCount - 1; i >= 0; i--) Destroy(page.GetChild(i).gameObject);
 
             var s = spreads[spreadIndex];
-            if (s.section < 0)
+            if (s.section == -2)
+            {
+                if (leftSide) GlossaryLeftPage(page, spreadIndex); else GlossaryRightPage(page, spreadIndex);
+            }
+            else if (s.section < 0)
             {
                 if (leftSide) TitlePage(page); else ContentsPage(page);
             }
@@ -488,6 +498,67 @@ namespace TawanOS.CardEngine
                 y -= 0.075f;
                 if (s == 2) y -= 0.04f;
             }
+
+            if (glossarySpread > 0)
+            {
+                y -= 0.02f;
+                Rule(page, y + 0.04f, 0.15f, 0.85f);
+                var row = NewText("GlossaryRow", page, 28, TextAlignmentOptions.Left);
+                row.textWrappingMode = TextWrappingModes.NoWrap;
+                row.color = style.ink;
+                PlaceRow(row.rectTransform, y, 0.07f, 0.14f, 0.96f);
+                row.text = $"คำสำคัญ <size=70%>(อธิบายคำศัพท์)</size><pos=70%>หน้า {glossarySpread}";
+                row.raycastTarget = true;
+                var button = row.gameObject.AddComponent<Button>();
+                button.transition = Selectable.Transition.None;
+                button.onClick.AddListener(() => { if (ClickAllowed) TurnTo(glossarySpread); });
+                row.gameObject.AddComponent<CardBookHover>().ink = row;
+            }
+        }
+
+        private void GlossaryLeftPage(RectTransform page, int spreadIndex)
+        {
+            var title = NewText("Title", page, 56, TextAlignmentOptions.Center);
+            title.color = style.ink;
+            if (UIThemeSO.Current.titleFont != null) { title.font = UIThemeSO.Current.titleFont; title.fontStyle = FontStyles.Normal; }
+            Place(title.rectTransform, 0.88f, 0.98f);
+            title.text = "คำสำคัญ";
+            Rule(page, 0.87f, 0.2f, 0.8f);
+
+            ContentsLink(page);
+
+            var glossaryEntries = KeywordGlossarySO.Current.entries;
+            int mid = (glossaryEntries.Count + 1) / 2;
+            RenderGlossaryEntries(page, glossaryEntries, 0, mid, 0.82f);
+            PageNumber(page, spreadIndex);
+        }
+
+        private void GlossaryRightPage(RectTransform page, int spreadIndex)
+        {
+            ContentsLink(page);
+
+            var glossaryEntries = KeywordGlossarySO.Current.entries;
+            int mid = (glossaryEntries.Count + 1) / 2;
+            RenderGlossaryEntries(page, glossaryEntries, mid, glossaryEntries.Count, 0.88f);
+            PageNumber(page, spreadIndex);
+        }
+
+        private void RenderGlossaryEntries(RectTransform page, List<KeywordEntry> list, int start, int end, float topY)
+        {
+            float y = topY;
+            float rowHeight = 0.115f;
+            string accentHex = ColorUtility.ToHtmlStringRGB(UIThemeSO.Current != null ? UIThemeSO.Current.accent : new Color(0.9f, 0.6f, 0.3f));
+
+            for (int i = start; i < end && i < list.Count; i++)
+            {
+                var e = list[i];
+                var itemText = NewText("Item_" + i, page, 22, TextAlignmentOptions.TopLeft);
+                itemText.color = style.ink;
+                itemText.textWrappingMode = TextWrappingModes.Normal;
+                PlaceRow(itemText.rectTransform, y, rowHeight, 0.08f, 0.92f);
+                itemText.text = $"<size=28><color=#{accentHex}>• {e.term}</color></size>\n<color=#{ColorUtility.ToHtmlStringRGB(style.ink)}>{e.definition}</color>";
+                y -= (rowHeight + 0.015f);
+            }
         }
 
         private void ContentsRow(RectTransform page, int section, float y)
@@ -591,9 +662,11 @@ namespace TawanOS.CardEngine
             Color accent = SchoolInk(entry.card.magicSchool);
             string muted = ColorUtility.ToHtmlStringRGB(Color.Lerp(style.ink, new Color(0.72f, 0.64f, 0.46f), 0.3f)); // ink thinned a little toward the paper
 
+            var titleFont = UIThemeSO.Current.titleFont;
             var header = NewText("Header", page, 34, TextAlignmentOptions.TopLeft);
+            if (titleFont != null) header.font = titleFont;
             header.color = style.ink;
-            Place(header.rectTransform, 0.78f, 0.98f);
+            Place(header.rectTransform, 0.74f, 0.98f);
 
             var body = NewText("Body", page, 28, TextAlignmentOptions.TopLeft);
             body.color = style.ink;
@@ -601,7 +674,9 @@ namespace TawanOS.CardEngine
             body.enableAutoSizing = true;
             body.fontSizeMin = 18f;
             body.fontSizeMax = 30f;
-            Place(body.rectTransform, 0.03f, 0.74f);
+            Place(body.rectTransform, 0.03f, 0.70f);
+            if (body.GetComponent<KeywordLinkTrigger>() == null)
+                body.gameObject.AddComponent<KeywordLinkTrigger>();
 
             if (!entry.known)
             {
@@ -614,7 +689,7 @@ namespace TawanOS.CardEngine
                 body.text = CardDetailPanelUI.InfoBody(entry.card, accent, muted,
                     ColorUtility.ToHtmlStringRGB(style.ink), "1F5A2C", "7A1414", 1.1f);
             }
-            Rule(page, 0.76f, 0f, 1f);
+            Rule(page, 0.72f, 0f, 1f);
         }
 
         // The card picture, with cost, attack, khwan and the ability written on it (as on the 3D card)
@@ -646,9 +721,15 @@ namespace TawanOS.CardEngine
                 var ability = FaceText("Description", holder, CardFaceLayout.Description, 22);
                 ability.textWrappingMode = TextWrappingModes.Normal;
                 string format = card.descriptionFormat ?? "";
-                try { ability.text = string.Format(format, card.baseValue); } catch { ability.text = format; }
+                string desc = format;
+                try { desc = string.Format(format, card.baseValue); } catch {}
+                ability.text = KeywordGlossarySO.WrapKeywords(desc);
+                if (ability.GetComponent<KeywordLinkTrigger>() == null)
+                    ability.gameObject.AddComponent<KeywordLinkTrigger>();
             }
-            if (card.cardType == CardType.Familiar || card.maxKhwan > 0)
+            bool isSpell = card.cardType == CardType.Incantation;
+            bool hasKhwan = !isSpell && (card.cardType == CardType.Familiar || (card.cardType == CardType.Amulet && card.maxKhwan > 0));
+            if (hasKhwan)
             {
                 if (card.cardType == CardType.Familiar) FaceText("Attack", holder, CardFaceLayout.Attack, 32).text = card.familiarDamage.ToString();
                 FaceText("Khwan", holder, CardFaceLayout.Khwan, 32).text = card.familiarHealth.ToString();
@@ -882,7 +963,7 @@ namespace TawanOS.CardEngine
             t.alignment = align;
             t.richText = true;
             t.raycastTarget = false;
-            t.fontStyle = FontStyles.Bold; // ink on paper reads better heavy; the card face and titles set their own
+            t.fontStyle = FontStyles.Normal; // body text in EkkamaiVibe SDF is not forced bold
             UiFactory.EnableThaiMarks(t);
             return t;
         }

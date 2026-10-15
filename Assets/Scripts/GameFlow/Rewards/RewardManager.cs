@@ -54,8 +54,41 @@ namespace TawanOS.GameFlow
             }
 
             RunState.Current.EnsureDeck(config.starterDeck);
-            RollChoices(config.ChoicesFor(tier));
+
+            if (RunState.Current.HasPendingRewardCards)
+            {
+                RestoreSavedChoices();
+            }
+            else
+            {
+                RollChoices(config.ChoicesFor(tier));
+                SaveChoicesToRunState(incenseEarned, tier);
+            }
+
             if (view != null) view.Show(this, incenseEarned, tier);
+        }
+
+        private void RestoreSavedChoices()
+        {
+            choices.Clear();
+            var catalog = CardCatalogSO.Load();
+            if (catalog == null) return;
+            foreach (string id in RunState.Current.PendingReward.cardIds)
+            {
+                var card = catalog.cards.Find(c => c != null && c.cardId == id);
+                if (card != null) choices.Add(card);
+            }
+        }
+
+        private void SaveChoicesToRunState(int incenseEarned, RewardTier tier)
+        {
+            var ids = new List<string>();
+            foreach (var card in choices)
+            {
+                if (card != null) ids.Add(card.cardId);
+            }
+            RunState.Current.SetPendingReward(ids, incenseEarned, tier);
+            RunState.Current.SetResume(ResumeKind.Reward);
         }
 
         private void RollChoices(int count)
@@ -99,6 +132,8 @@ namespace TawanOS.GameFlow
 
         private void Finish()
         {
+            RunState.Current.ClearPendingReward();
+            RunState.Current.ClearResume();
             if (OnRewardFinished != null)
             {
                 OnRewardFinished.Invoke();

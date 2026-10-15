@@ -570,7 +570,7 @@ namespace TawanOS.CardEngine
 
             int damage = ApplyDamageStatusModifier(value, attackerIsPlayer: ownerIsPlayer);
             int before = ownerIsPlayer ? s.enemyKhwan : s.playerKhwan;
-            combat.TakeDamage(damage, toPlayer: !ownerIsPlayer);
+            combat.TakeDamage(damage, toPlayer: !ownerIsPlayer, cause: !ownerIsPlayer ? "ถูกดูดขวัญ" : null);
             OnDamageDealt?.Invoke(damage, !ownerIsPlayer);
             int drained = Mathf.Max(0, before - (ownerIsPlayer ? s.enemyKhwan : s.playerKhwan));
             if (drained <= 0 || combat.IsCombatOver) return;
@@ -841,9 +841,16 @@ namespace TawanOS.CardEngine
             var victim = CardAt(BoardOf(!ownerIsPlayer), index);
             if (victim == null || victim.IsDead) return;
 
-            if (source.IsDead)
+            var protect = victim.statuses.Find(s => s.type == CardStatusType.Protect && s.stacks > 0);
+            if (protect != null)
             {
-                Debug.Log($"[Ability] {source.cardNameThai} was destroyed and takes {victim.cardNameThai} with it");
+                protect.stacks--;
+                if (protect.stacks <= 0) victim.statuses.Remove(protect);
+                Debug.Log($"[Ability] {victim.cardNameThai}'s เกราะคุ้มภัย absorbs detonation from {source.cardNameThai}");
+                NotifyChanged(victim);
+            }
+            else
+            {
                 if (victim.maxKhwan > 0 || victim.cardType == CardType.Familiar)
                 {
                     DamageCard(victim, Mathf.Max(1, victim.familiarHealth), ignoreArmor: true, source, ownerIsPlayer);
@@ -853,12 +860,13 @@ namespace TawanOS.CardEngine
                     victim.pendingRemoval = true;
                     HandleDeath(victim, source, ownerIsPlayer);
                 }
-                return;
             }
 
-            DamageCard(victim, Mathf.Max(1, victim.familiarHealth), ignoreArmor: true, source, ownerIsPlayer);
-            source.pendingRemoval = true;
-            HandleDeath(source, victim, !ownerIsPlayer);
+            if (!source.IsDead)
+            {
+                source.pendingRemoval = true;
+                HandleDeath(source, victim, !ownerIsPlayer);
+            }
         }
 
         // ผ้ายันต์กลับด้าน: our card with อัปมงคล -> each becomes a random สิริมงคล; otherwise an enemy card's

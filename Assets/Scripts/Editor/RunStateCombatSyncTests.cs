@@ -29,7 +29,7 @@ namespace TawanOS.EditorTools
         {
             int failures = 0;
 
-            // 1. Run at 23/50 -> combat starts at 23/50
+            // 1. Run at 13/20 -> combat starts at 13/20
             var go = new GameObject("RunStateCombatSyncTests");
             try
             {
@@ -43,13 +43,13 @@ namespace TawanOS.EditorTools
                 }
 
                 run.SetCurrentHp(RunState.DefaultMaxHp);
-                run.TakeDamage(RunState.DefaultMaxHp - 23);
-                failures += Expect("Run HP is 23/50 before the fight", run.CurrentHp == 23 && run.MaxHp == 50);
+                run.TakeDamage(RunState.DefaultMaxHp - 13);
+                failures += Expect("Run HP is 13/20 before the fight", run.CurrentHp == 13 && run.MaxHp == RunState.DefaultMaxHp);
 
                 combat.SetStartingKhwan(run.CurrentHp, run.MaxHp);
                 Apply(combat);
-                failures += Expect("Combat starts at 23 Khwan (not full)", combat.State.playerKhwan == 23);
-                failures += Expect("Combat max Khwan follows the run (50)", combat.State.maxPlayerKhwan == 50);
+                failures += Expect("Combat starts at 13 Khwan (not full)", combat.State.playerKhwan == 13);
+                failures += Expect("Combat max Khwan follows the run (20)", combat.State.maxPlayerKhwan == RunState.DefaultMaxHp);
 
                 // 2. Combat ends at 17 -> run HP is 17
                 combat.State.playerKhwan = 17;
@@ -57,10 +57,10 @@ namespace TawanOS.EditorTools
                 failures += Expect("Run HP becomes 17 after the fight", run.CurrentHp == 17);
 
                 // 3. Healing then entering the next fight
-                run.Heal(10);
+                run.Heal(3);
                 combat.SetStartingKhwan(run.CurrentHp, run.MaxHp);
                 Apply(combat);
-                failures += Expect("After +10 heal the next combat starts at 27", combat.State.playerKhwan == 27);
+                failures += Expect("After +3 heal the next combat starts at 20", combat.State.playerKhwan == 20);
 
                 // 4. Never below 1, never above max
                 run.SetCurrentHp(0);

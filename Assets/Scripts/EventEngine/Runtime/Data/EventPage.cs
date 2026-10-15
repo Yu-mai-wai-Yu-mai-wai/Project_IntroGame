@@ -29,7 +29,7 @@ namespace TawanOS.EventEngine
         [Header("Requirements (choice is greyed out when not met)")]
         [FormerlySerializedAs("offeringCost")]
         [Min(0)] public int incenseCost;
-        [Tooltip("HP paid up front. The choice is disabled if it would bring HP to 0.")]
+        [Tooltip("ขวัญ paid up front. The choice is disabled if it would bring ขวัญ to 0.")]
         [Min(0)] public int hpCost;
 
         [Tooltip("One outcome is rolled by weight. A single entry means the choice is deterministic.")]

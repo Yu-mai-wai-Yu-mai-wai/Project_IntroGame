@@ -476,11 +476,11 @@ namespace TawanOS.CardEngine
             nextEnemyMove = currentEnemyProfile.moves[0];
         }
 
-        public void TakeDamage(int amount, bool toPlayer)
+        public void TakeDamage(int amount, bool toPlayer, string cause = null)
         {
             // The outcome is decided only after every part of this hit (reflect included) has landed
             BeginOutcomeBatch();
-            TakeDamageInternal(amount, toPlayer, allowReflect: true);
+            TakeDamageInternal(amount, toPlayer, allowReflect: true, cause: cause);
             EndOutcomeBatch();
         }
 
@@ -508,7 +508,7 @@ namespace TawanOS.CardEngine
             else if (state.playerKhwan <= 0) EndCombat(false);
         }
 
-        private void TakeDamageInternal(int amount, bool toPlayer, bool allowReflect)
+        private void TakeDamageInternal(int amount, bool toPlayer, bool allowReflect, string cause = null)
         {
             if (amount <= 0) return;
 
@@ -524,15 +524,22 @@ namespace TawanOS.CardEngine
                 int reflected = Mathf.RoundToInt(amount * 0.5f);
                 if (reflected > 0)
                 {
-                    TakeDamageInternal(reflected, !toPlayer, allowReflect: false);
+                    TakeDamageInternal(reflected, !toPlayer, allowReflect: false, cause: "มนต์สะท้อน");
                 }
             }
 
             if (toPlayer)
             {
+                int before = state.playerKhwan;
                 int remaining = AbsorbShield(amount, ref state.playerShield);
                 OnShieldChanged?.Invoke(state.playerShield, true);
                 state.playerKhwan = Mathf.Max(0, state.playerKhwan - remaining);
+                int lost = before - state.playerKhwan;
+                if (lost > 0)
+                {
+                    string causeStr = !string.IsNullOrEmpty(cause) ? $" {cause}" : "";
+                    TawanOS.UI.PlayerNotice.Show($"−{lost} ขวัญ{causeStr}", TawanOS.UI.NoticeKind.Warning);
+                }
             }
             else
             {
@@ -610,7 +617,7 @@ namespace TawanOS.CardEngine
             {
                 if (list[i].type == StatusEffectType.BleedingCurse)
                 {
-                    TakeDamageInternal(3, toPlayer: onPlayer, allowReflect: false);
+                    TakeDamageInternal(3, toPlayer: onPlayer, allowReflect: false, cause: "คำสาปเลือด");
                     if (currentPhase == CombatPhase.Defeat || currentPhase == CombatPhase.Victory)
                     {
                         return;

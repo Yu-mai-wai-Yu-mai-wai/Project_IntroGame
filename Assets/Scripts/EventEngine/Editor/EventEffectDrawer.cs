@@ -14,7 +14,7 @@ namespace TawanOS.EventEngine
             "— None —",
             "Heal",
             "Take Damage",
-            "Change Max HP",
+            "Change Max Khwan (ขวัญสูงสุด)",
             "Gain Incense",
             "Lose Incense",
             "Gain Relic",
@@ -78,9 +78,9 @@ namespace TawanOS.EventEngine
         {
             switch (effect.type)
             {
-                case EventEffectType.Heal: return $"+{effect.amount} HP";
-                case EventEffectType.TakeDamage: return $"-{effect.amount} HP";
-                case EventEffectType.ChangeMaxHp: return $"{(effect.amount >= 0 ? "+" : "")}{effect.amount} Max HP";
+                case EventEffectType.Heal: return $"+{effect.amount} ขวัญ";
+                case EventEffectType.TakeDamage: return $"-{effect.amount} ขวัญ";
+                case EventEffectType.ChangeMaxHp: return $"{(effect.amount >= 0 ? "+" : "")}{effect.amount} ขวัญสูงสุด";
                 case EventEffectType.GainIncense: return $"+{effect.amount} Incense";
                 case EventEffectType.LoseIncense: return $"-{effect.amount} Incense";
                 case EventEffectType.GainRelic: return $"Relic: {(string.IsNullOrEmpty(effect.relicId) ? "?" : effect.relicId)}";

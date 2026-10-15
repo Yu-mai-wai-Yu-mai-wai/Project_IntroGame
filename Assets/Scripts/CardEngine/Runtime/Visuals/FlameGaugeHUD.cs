@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
 using TawanOS.Settings;
+using TawanOS.UI;
 
 namespace TawanOS.CardEngine
 {
@@ -243,6 +244,7 @@ namespace TawanOS.CardEngine
             g.number.fontStyle = FontStyles.Bold;
             g.number.alignment = TextAlignmentOptions.Center;
             g.number.raycastTarget = false;
+            UiFactory.EnableThaiMarks(g.number);
             var numRt = g.number.rectTransform;
             numRt.anchorMin = numRt.anchorMax = new Vector2(0.5f, 0.5f);
             numRt.anchoredPosition = Vector2.zero;

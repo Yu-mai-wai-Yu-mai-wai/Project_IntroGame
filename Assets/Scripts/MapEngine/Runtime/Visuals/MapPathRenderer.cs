@@ -12,6 +12,11 @@ namespace TawanOS.MapEngine
         [SerializeField] private float surfaceLift = 0.02f;
         [Tooltip("Gap between a string end and the node centre (3D table). Icon half-width is 0.6.")]
         [SerializeField] private float nodeGap = 0.75f;
+        [Header("Hand-drawn wobble (3D table)")]
+        [Tooltip("How far the straight string strays sideways at most, in world units (its width is 0.07).")]
+        [SerializeField] private float wobble = 0.035f;
+        [Tooltip("How many slow sways along a string; small jitters ride on top of them.")]
+        [SerializeField] private float wobbleWaves = 2.5f;
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private MaterialPropertyBlock colorBlock;
@@ -39,7 +44,7 @@ namespace TawanOS.MapEngine
 #if UNITY_EDITOR
                 if (lineRenderer.sharedMaterial == null || lineRenderer.sharedMaterial.shader == null || lineRenderer.sharedMaterial.shader.name == "Hidden/InternalErrorShader")
                 {
-                    Material stringMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/ProjectAsset/MapNavigate/String.mat");
+                    Material stringMat = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Art/MapPaper/String.mat");
                     if (stringMat != null)
                     {
                         lineRenderer.sharedMaterial = stringMat;
@@ -88,22 +93,28 @@ namespace TawanOS.MapEngine
 
             if (isHorizontalPlane)
             {
-                // 3D table: flowchart-style S-curve. Both tangents run along the floor axis (X), so every string
-                // leaves and enters its node horizontally, and ends stop short of the icon like the Blender render.
+                // 3D table: a straight string from node to node, as if drawn by hand: it sways a little to either side
+                // and jitters slightly, most in the middle and not at all at its ends, which stop short of the icons
+                // (Game Designer, 15 Oct: straight instead of the S-curve). The same string always wobbles the same way.
                 float flatYTable = Mathf.Max(start.y, end.y) + surfaceLift;
-                float dx = end.x - start.x;
-                float trim = Mathf.Min(nodeGap, Mathf.Abs(dx) * 0.4f) * Mathf.Sign(dx);
-                Vector3 p0 = new Vector3(start.x + trim, flatYTable, start.z);
-                Vector3 p3 = new Vector3(end.x - trim, flatYTable, end.z);
-                Vector3 handle = new Vector3((p3.x - p0.x) * 0.5f, 0f, 0f);
-                Vector3 p1 = p0 + handle;
-                Vector3 p2 = p3 - handle;
+                Vector3 a = new Vector3(start.x, flatYTable, start.z);
+                Vector3 b = new Vector3(end.x, flatYTable, end.z);
+                Vector3 along = b - a;
+                float length = along.magnitude;
+                Vector3 dir = length > 0.0001f ? along / length : Vector3.right;
+                float trim = Mathf.Min(nodeGap, length * 0.4f);
+                Vector3 p0 = a + dir * trim;
+                Vector3 p1 = b - dir * trim;
+                Vector3 side = Vector3.Cross(Vector3.up, dir);
+                float seed = (sourcePos.x * 73 + sourcePos.y * 31 + targetPos.x * 17 + targetPos.y * 11) * 0.137f;
 
                 for (int i = 0; i < pointsCount; i++)
                 {
                     float t = i / (float)(pointsCount - 1);
-                    float u = 1f - t;
-                    lineRenderer.SetPosition(i, u * u * u * p0 + 3f * u * u * t * p1 + 3f * u * t * t * p2 + t * t * t * p3);
+                    float envelope = Mathf.Sin(t * Mathf.PI);
+                    float sway = (Mathf.PerlinNoise(seed, t * wobbleWaves) - 0.5f) * 2f;
+                    float jitter = (Mathf.PerlinNoise(seed + 41.3f, t * wobbleWaves * 6f) - 0.5f) * 2f * 0.35f;
+                    lineRenderer.SetPosition(i, Vector3.Lerp(p0, p1, t) + side * (sway + jitter) * wobble * envelope);
                 }
 
                 SetColor(biome != null ? biome.pathBaseColor : new Color(0.95f, 0.93f, 0.90f, 1f));

@@ -590,7 +590,7 @@ namespace TawanOS.MapEngine
 
         /// <summary>
         /// The 8-floor map (Game Designer, 11 Oct): start, 8 floors of 3,2,3,1,3,3,2,2 nodes, then the boss.
-        /// Floors 1, 4 and 7 (counted from 1) are all fights; every other floor rolls หมอกดำ, กองของเซ่น, ศาลตายาย,
+        /// Floors 1, 4 and 7 (counted from 1) are all fights; floor 8 (just before the boss) is all วัด; every other floor rolls หมอกดำ, กองของเซ่น, ศาลตายาย,
         /// เมรุ and วัด with the same chance, with no fixed nodes. The board has pedestals for 7 floors only, so
         /// MapManager places these nodes by floor (TableFloorX) instead of on pedestals.
         /// </summary>
@@ -618,11 +618,14 @@ namespace TawanOS.MapEngine
                         Connect(graph.floors[y][x], graph.floors[y + 1][next]);
             foreach (var node in graph.floors[floorsBeforeBoss - 1]) Connect(node, boss);
 
-            // Floor by floor, so a node can look at the types of the floor before it
+            // Floor by floor, so a node can look at the types of the floor before it.
+            // The last floor before the boss is all วัด, so every path heals before the boss (Game Designer, 15 Oct).
             for (int y = 0; y < floorsBeforeBoss; y++)
             {
                 if (Array.IndexOf(EightFloorCombatFloors, y) >= 0) continue;
-                foreach (var node in graph.floors[y]) node.type = RollNonCombatType(node, graph, config, random);
+                bool templeFloor = y == floorsBeforeBoss - 1;
+                foreach (var node in graph.floors[y])
+                    node.type = templeFloor ? NodeType.Temple : RollNonCombatType(node, graph, config, random);
             }
 
             foreach (var node in graph.GetAllNodes()) node.positionOffset = Vector2.zero;

@@ -408,10 +408,8 @@ namespace TawanOS.CardEngine
             view.cardBackgroundImage = bgImg;
             view.frameBorderImage = bgImg;
 
-            var titleFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset")
-                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
-            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
-                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var titleFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset");
+            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset");
 
             // 2. ชื่อการ์ด (Top-Left)
             GameObject titleGo = new GameObject("NameThaiText");
@@ -497,8 +495,7 @@ namespace TawanOS.CardEngine
 
         private static CombatHUD BuildCombatHUD(Transform canvasParent)
         {
-            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset")
-                ?? AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset");
 
             GameObject hudGo = new GameObject("CombatHUD");
             hudGo.transform.SetParent(canvasParent, false);

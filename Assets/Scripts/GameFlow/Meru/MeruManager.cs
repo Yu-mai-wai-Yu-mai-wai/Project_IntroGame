@@ -47,7 +47,7 @@ namespace TawanOS.GameFlow
 
         private void Begin()
         {
-            Used = false;
+            Used = RunState.Current.MeruUsed;
             RunState.Current.EnsureDeck(starterDeck);
             if (view != null) view.Show(this);
         }
@@ -75,11 +75,14 @@ namespace TawanOS.GameFlow
             if (!done) return;
 
             Used = true;
+            RunState.Current.SetMeruUsed(true);
             if (view != null) view.ShowResult(action, card);
         }
 
         public void Leave()
         {
+            RunState.Current.ClearMeruUsed();
+            RunState.Current.ClearResume();
             if (OnMeruFinished != null)
             {
                 OnMeruFinished.Invoke();
@@ -87,7 +90,7 @@ namespace TawanOS.GameFlow
             }
             // Scene opened on its own: start over (from outside the เมรุ) so designers can keep testing
             Debug.Log($"[MeruManager] Left the Meru (no GameFlow listener). Run deck: {Deck.Count} cards.");
-            UnityEngine.SceneManagement.SceneManager.LoadScene(gameObject.scene.name);
+            if (Application.isPlaying) UnityEngine.SceneManagement.SceneManager.LoadScene(gameObject.scene.name);
         }
     }
 }

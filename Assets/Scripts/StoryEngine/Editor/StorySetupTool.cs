@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.Video;
+using TawanOS.UI;
 
 namespace TawanOS.StoryEngine
 {
@@ -19,7 +20,7 @@ namespace TawanOS.StoryEngine
         private const string BaseFolder = "Assets/StoryEngineData";
         private const string IntroStoryPath = BaseFolder + "/Story_Intro.asset";
         private const string ScenePath = "Assets/Scenes/StoryScene.unity";
-        private const string IconFolder = "Assets/ProjectAsset/MapNavigate/";
+        private const string IconFolder = "Assets/Art/MapIcons/";
 
         private static readonly Color Gold = new Color(0.93f, 0.78f, 0.45f);
         private static readonly Color Parchment = new Color(0.96f, 0.92f, 0.82f);
@@ -100,8 +101,8 @@ namespace TawanOS.StoryEngine
 
         private static StoryPlayer BuildCanvas()
         {
-            var charm = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Charm-Bold SDF.asset");
-            var sarabun = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/Sarabun-Regular SDF.asset");
+            var titleFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/MN-RueangLao SDF.asset");
+            var bodyFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/EkkamaiVibe SDF.asset");
             var panelSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
 
             var canvasGo = new GameObject("StoryCanvas");
@@ -138,7 +139,7 @@ namespace TawanOS.StoryEngine
             var box = Img("TextBox", root, new Vector2(0.08f, 0.04f), new Vector2(0.92f, 0.27f), new Color(0.07f, 0.04f, 0.04f, 0.88f), panelSprite);
             box.raycastTarget = false;
             box.gameObject.AddComponent<Outline>().effectColor = new Color(Gold.r, Gold.g, Gold.b, 0.45f);
-            player.bodyText = Text("Body", box.transform, Vector2.zero, Vector2.one, sarabun, 38, Parchment, TextAlignmentOptions.TopLeft);
+            player.bodyText = Text("Body", box.transform, Vector2.zero, Vector2.one, bodyFont, 38, Parchment, TextAlignmentOptions.TopLeft);
             player.bodyText.margin = new Vector4(48, 36, 80, 28);
 
             var marker = Img("NextIndicator", box.transform, new Vector2(1f, 0f), new Vector2(1f, 0f), Gold, null);
@@ -151,11 +152,11 @@ namespace TawanOS.StoryEngine
             var plate = Img("SpeakerPlate", root, new Vector2(0.08f, 0.27f), new Vector2(0.3f, 0.335f), new Color(0.35f, 0.1f, 0.07f, 0.95f), panelSprite);
             plate.raycastTarget = false;
             player.speakerPlate = plate.gameObject;
-            player.speakerText = Text("Speaker", plate.transform, Vector2.zero, Vector2.one, charm, 40, Gold, TextAlignmentOptions.Center);
+            player.speakerText = Text("Speaker", plate.transform, Vector2.zero, Vector2.one, titleFont, 40, Gold, TextAlignmentOptions.Center);
 
             var skip = Img("SkipButton", root, new Vector2(0.86f, 0.92f), new Vector2(0.97f, 0.975f), new Color(0.2f, 0.12f, 0.09f, 0.8f), panelSprite);
             player.skipButton = skip.gameObject.AddComponent<Button>();
-            var skipLabel = Text("Label", skip.transform, Vector2.zero, Vector2.one, sarabun, 28, Parchment, TextAlignmentOptions.Center);
+            var skipLabel = Text("Label", skip.transform, Vector2.zero, Vector2.one, bodyFont, 28, Parchment, TextAlignmentOptions.Center);
             skipLabel.text = "ข้าม";
 
             return player;
@@ -230,6 +231,7 @@ namespace TawanOS.StoryEngine
             t.alignment = align;
             t.raycastTarget = false;
             t.text = string.Empty;
+            UiFactory.EnableThaiMarks(t);
             return t;
         }
     }

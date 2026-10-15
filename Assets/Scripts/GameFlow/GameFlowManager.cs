@@ -55,20 +55,16 @@ namespace TawanOS.GameFlow
         private int storyResumePage = -1;
         private System.Collections.Generic.List<CardDataSO> tutorialOpeningHand;
 
-        // TEST ONLY (ตีข้ามหัว clash animation): this card is added to the tutorial fight's deck and drawn as an
-        // extra opening card. Empty = off. Remove before the presentation.
-        private const string TutorialTestExtraCardId = "s_bf02"; // กระสือ, Overhead
-
         // Filled on victory, consumed when RewardScene loads
         private bool hasPendingReward;
         private int rewardIncense;
         private RewardTier rewardTier;
 
-        // Incense (ธูป) paid on victory, rolled per fight: [min, max] inclusive
-        private static readonly Vector2Int MinorEnemyIncense = new Vector2Int(15, 25);
-        private static readonly Vector2Int EliteEnemyIncense = new Vector2Int(35, 45);
-        private static readonly Vector2Int BossIncense = new Vector2Int(80, 100);
-        private static readonly Vector2Int EventFightIncense = new Vector2Int(15, 25);
+        // Incense (ธูป) paid on victory, rolled per fight: [min, max] inclusive. (Game Designer Grill, 15 Oct: 6-10)
+        private static readonly Vector2Int MinorEnemyIncense = new Vector2Int(6, 10);
+        private static readonly Vector2Int EliteEnemyIncense = new Vector2Int(3, 8);
+        private static readonly Vector2Int BossIncense = new Vector2Int(10, 15);
+        private static readonly Vector2Int EventFightIncense = new Vector2Int(6, 10);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Bootstrap()
@@ -153,6 +149,7 @@ namespace TawanOS.GameFlow
                 case ResumeKind.Shop: HandleStoreNodeEntered(); break;
                 case ResumeKind.Meru: HandleRestNodeEntered(); break;
                 case ResumeKind.Temple: HandleTempleNodeEntered(); break;
+                case ResumeKind.Reward: LoadRewardScene(); break;
                 default: SceneTransition.Load(MapSceneName); break;
             }
         }
@@ -195,10 +192,12 @@ namespace TawanOS.GameFlow
                 RewardManager.Instance.OnRewardFinished -= HandleRewardFinished;
                 RewardManager.Instance.OnRewardFinished += HandleRewardFinished;
 
-                if (hasPendingReward)
+                if (hasPendingReward || RunState.Current.HasPendingReward)
                 {
+                    int incense = hasPendingReward ? rewardIncense : (RunState.Current.PendingReward?.incenseEarned ?? 0);
+                    RewardTier tier = hasPendingReward ? rewardTier : (RunState.Current.PendingReward?.tier ?? RewardTier.Minor);
                     hasPendingReward = false;
-                    RewardManager.Instance.BeginReward(rewardIncense, rewardTier);
+                    RewardManager.Instance.BeginReward(incense, tier);
                 }
             }
 
@@ -268,7 +267,6 @@ namespace TawanOS.GameFlow
                 if (tutorialFightActive)
                 {
                     CardManager.Instance.fixedOpeningCards = tutorialOpeningHand;
-                    AddTutorialTestCard(CardManager.Instance);
                 }
             }
 
@@ -354,7 +352,8 @@ namespace TawanOS.GameFlow
 
         private void BeginCardReward(RewardTier tier)
         {
-            RunState.Current.ClearResume();
+            RunState.Current.SetResume(ResumeKind.Reward);
+            RunState.Current.SetPendingReward(null, 0, tier);
             hasPendingReward = true;
             rewardIncense = 0;
             rewardTier = tier;
@@ -400,6 +399,7 @@ namespace TawanOS.GameFlow
 
         private void HandleMeruFinished()
         {
+            RunState.Current.ClearMeruUsed();
             RunState.Current.ClearResume();
             if (Application.isPlaying) SceneTransition.Load(MapSceneName);
         }
@@ -409,7 +409,7 @@ namespace TawanOS.GameFlow
         {
             if (!Application.CanStreamedLevelBeLoaded(TempleSceneName))
             {
-                Debug.LogWarning("[GameFlowManager] TempleScene is not in Build Settings (run Tools > TawanOS > Temple > Setup Temple Scene) - the node does nothing.");
+                Debug.LogWarning("[GameFlowManager] TempleScene is not in Build Settings (File > Build Profiles) - the node does nothing.");
                 if (SceneManager.GetActiveScene().name != MapSceneName && Application.isPlaying) SceneTransition.Load(MapSceneName);
                 return;
             }
@@ -462,6 +462,7 @@ namespace TawanOS.GameFlow
 
         private void HandleShopClosed()
         {
+            RunState.Current.ClearShopStock();
             RunState.Current.ClearResume();
             if (Application.isPlaying) SceneTransition.Load(MapSceneName);
         }
@@ -527,6 +528,9 @@ namespace TawanOS.GameFlow
                 return;
             }
 
+            RunState.Current.SetResume(ResumeKind.Reward);
+            RunState.Current.SetPendingReward(null, reward, pendingRewardTier);
+
             hasPendingReward = true;
             rewardIncense = reward;
             rewardTier = pendingRewardTier;
@@ -537,6 +541,8 @@ namespace TawanOS.GameFlow
 
         private void HandleRewardFinished()
         {
+            RunState.Current.ClearPendingReward();
+            RunState.Current.ClearResume();
             if (Application.isPlaying) SceneTransition.Load(MapSceneName);
         }
 
@@ -562,27 +568,6 @@ namespace TawanOS.GameFlow
             runDeck.maxHandSize = source.maxHandSize;
             runDeck.startingCards = new System.Collections.Generic.List<CardDataSO>(run.Deck);
             cardManager.defaultDeckConfig = runDeck;
-        }
-
-        // TEST ONLY: see TutorialTestExtraCardId. Only the runtime deck copy and this fight's opening hand change.
-        private static void AddTutorialTestCard(CardManager cardManager)
-        {
-            if (string.IsNullOrEmpty(TutorialTestExtraCardId)) return;
-            var catalog = CardCatalogSO.Load();
-            var card = catalog != null ? catalog.cards.Find(c => c != null && c.cardId == TutorialTestExtraCardId) : null;
-            if (card == null || cardManager.defaultDeckConfig == null)
-            {
-                Debug.LogWarning($"[GameFlowManager] Tutorial test card {TutorialTestExtraCardId} not found - skipped.");
-                return;
-            }
-
-            cardManager.defaultDeckConfig.startingCards.Add(card);
-            var hand = new System.Collections.Generic.List<CardDataSO>();
-            if (cardManager.fixedOpeningCards != null) hand.AddRange(cardManager.fixedOpeningCards);
-            hand.Add(card);
-            cardManager.fixedOpeningCards = hand;
-            if (TurnPhaseController.Instance != null) TurnPhaseController.Instance.openingHandSize = hand.Count;
-            Debug.Log($"[GameFlowManager] TEST: {card.cardId} added to the tutorial opening hand.");
         }
 
         private System.Collections.IEnumerator ShowGameOverAfterDelay(GameOverSummary summary)

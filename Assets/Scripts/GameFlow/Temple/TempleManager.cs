@@ -12,14 +12,18 @@ namespace TawanOS.GameFlow
     {
         public static TempleManager Instance { get; private set; }
 
-        public TempleViewUI view;
+        [Tooltip("The 3D temple that runs the visit.")]
+        public TempleStageView stage;
 
         public event Action OnTempleFinished;
 
         // One blessing per visit
         public bool Used { get; private set; }
 
-        public bool CanPray => !Used && RunState.Current.CurrentHp < RunState.Current.MaxHp;
+        public bool CanHeal => !Used && RunState.Current.CurrentHp < RunState.Current.MaxHp;
+        public bool CanPray => CanHeal;
+        public bool CanRaiseMaxHp => !Used;
+        public bool CanPrayMaxHp => CanRaiseMaxHp;
 
         private void Awake()
         {
@@ -39,20 +43,32 @@ namespace TawanOS.GameFlow
         private void Begin()
         {
             Used = false;
-            if (view != null) view.Show(this);
+            if (stage != null) stage.Show(this);
         }
 
         /// <summary>Khwan back to full. Returns how much was healed (0 if nothing happened).</summary>
         public int Pray()
         {
-            if (!CanPray) return 0;
+            if (!CanHeal) return 0;
             var run = RunState.Current;
             int healed = run.MaxHp - run.CurrentHp;
             run.Heal(healed);
             Used = true;
-            if (view != null) view.ShowResult(healed);
             return healed;
         }
+
+        public int ChooseHeal() => Pray();
+
+        /// <summary>Raises Max Khwan by amount (default +3). Returns amount added (0 if already used).</summary>
+        public int ChooseMaxHp(int amount = 3)
+        {
+            if (!CanRaiseMaxHp) return 0;
+            RunState.Current.ChangeMaxHp(amount);
+            Used = true;
+            return amount;
+        }
+
+        public int PrayMaxHp(int amount = 3) => ChooseMaxHp(amount);
 
         public void Leave()
         {

@@ -43,14 +43,18 @@ namespace TawanOS.CardEngine
         [Tooltip("How far (in hand units) a card the enemy is weighing up is pulled out of the hand, toward the table.")]
         public float considerPull = 0.45f;
 
-        [Header("Incantation Showcase")]
+        [Header("Card Showcase")]
         [Tooltip("A cast incantation waits where the player's card waits while being played (same spot and size), for this long before it takes effect. Durations are divided by CombatManager's Enemy Play Speed.")]
         public float showcaseHoldTime = 1.6f;
         public float showcaseInDuration = 0.3f;
+        [Tooltip("A familiar or amulet with abilities holds in showcase for this long.")]
+        public float abilityCardHoldTime = 1.2f;
 
         [Header("Draw Pile")]
         public Vector2 pileCardSize = new Vector2(0.7f, 1f);
         public float thicknessPerCard = 0.02f;
+        [Tooltip("Card-back material for the enemy pile. Empty = borrows from player pile or URP Unlit.")]
+        public Material pileMaterial;
 
         private readonly List<CardView3D> views = new List<CardView3D>();
         private readonly List<CardView3D> newlyDrawn = new List<CardView3D>();
@@ -126,6 +130,14 @@ namespace TawanOS.CardEngine
             container.SetParent(transform, false);
             container.localScale = Vector3.one * handCardScale;
             AnchorToCamera();
+            if (pileMaterial == null)
+            {
+                var playerPile = FindFirstObjectByType<DeckPileView3D>();
+                if (playerPile != null && playerPile.pileMaterial != null)
+                {
+                    pileMaterial = playerPile.pileMaterial;
+                }
+            }
             BuildPile();
 
             var combat = CombatManager.Instance;
@@ -212,8 +224,24 @@ namespace TawanOS.CardEngine
 
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = "EnemyDeckPile3D";
-            Destroy(go.GetComponent<Collider>());
-            go.GetComponent<Renderer>().material.color = backColor;
+            var col = go.GetComponent<Collider>();
+            if (col != null)
+            {
+                if (Application.isPlaying) Destroy(col);
+                else DestroyImmediate(col);
+            }
+            var r = go.GetComponent<Renderer>();
+            if (pileMaterial != null)
+            {
+                r.sharedMaterial = pileMaterial;
+            }
+            else
+            {
+                var unlitShader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
+                var mat = new Material(unlitShader);
+                mat.color = backColor;
+                r.material = mat;
+            }
             pile = go.transform;
             pile.SetParent(transform, true);
             SetPileThickness(0f);
@@ -267,6 +295,13 @@ namespace TawanOS.CardEngine
             layoutDirty = true;
         }
 
+        public static bool ShouldShowcase(CardInstance card)
+        {
+            if (card == null) return false;
+            if (card.cardType == CardType.Incantation) return true;
+            return card.abilities != null && card.abilities.Count > 0;
+        }
+
         private void HandlePlayed(CardInstance card)
         {
             int idx = views.FindIndex(v => v != null && v.CardData == card);
@@ -283,15 +318,37 @@ namespace TawanOS.CardEngine
             t.SetParent(transform, worldPositionStays: true);
             t.DOKill();
 
+            bool showcase = ShouldShowcase(card);
+
             if (card.cardType != CardType.Incantation)
             {
                 // Amulet / Familiar: hand the physical card to the board view so it flies into its slot.
                 // If nothing adopts it (no board view), clean it up.
                 EnemyBoardView3D.PendingFromHand[card] = view;
-                DOVirtual.DelayedCall(2f, () =>
+                // Wait out the showcase first: at a slow enemy play speed it can run past a fixed 2-3 s
+                DOVirtual.DelayedCall(RevealTime(card) + 2f, () =>
                 {
                     if (EnemyBoardView3D.PendingFromHand.Remove(card) && view != null) Destroy(view.gameObject);
                 });
+
+                if (showcase && TryGetHeldPose(out var heldPos, out var heldRot, out var heldScale))
+                {
+                    if (enemyCards != null && enemyCards.PlayingTarget != null)
+                    {
+                        CardTargeting3D.Ensure().PointAt(enemyCards.PlayingTarget, RevealTime(card), enemy: true);
+                    }
+
+                    float speed = Speed;
+                    float showIn = showcaseInDuration / speed;
+                    float hold = abilityCardHoldTime / speed;
+
+                    var seq = DOTween.Sequence().SetTarget(t);
+                    seq.Append(t.DOMove(heldPos, showIn).SetEase(Ease.OutQuad))
+                       .Join(t.DORotateQuaternion(heldRot, showIn))
+                       .Join(t.DOScale(heldScale, showIn))
+                       .AppendInterval(hold);
+                }
+
                 layoutDirty = true;
                 return;
             }
@@ -303,20 +360,20 @@ namespace TawanOS.CardEngine
                 CardTargeting3D.Ensure().PointAt(enemyCards.PlayingTarget, RevealTime(card), enemy: true);
             }
 
-            float speed = Speed;
-            float fly = playFlyDuration / speed;
+            float speed2 = Speed;
+            float fly = playFlyDuration / speed2;
 
-            var seq = DOTween.Sequence().SetTarget(t);
-            if (TryGetHeldPose(out var heldPos, out var heldRot, out var heldScale))
+            var seq2 = DOTween.Sequence().SetTarget(t);
+            if (TryGetHeldPose(out var heldPos2, out var heldRot2, out var heldScale2))
             {
-                float showIn = showcaseInDuration / speed;
-                seq.Append(t.DOMove(heldPos, showIn).SetEase(Ease.OutQuad))
-                   .Join(t.DORotateQuaternion(heldRot, showIn))
-                   .Join(t.DOScale(heldScale, showIn))
-                   .AppendInterval(showcaseHoldTime / speed);
+                float showIn = showcaseInDuration / speed2;
+                seq2.Append(t.DOMove(heldPos2, showIn).SetEase(Ease.OutQuad))
+                   .Join(t.DORotateQuaternion(heldRot2, showIn))
+                   .Join(t.DOScale(heldScale2, showIn))
+                   .AppendInterval(showcaseHoldTime / speed2);
             }
             Vector3 grave = GraveyardView3D.Instance != null ? GraveyardView3D.Instance.DropPoint : tableCenter;
-            seq.Append(t.DOMove(grave, fly).SetEase(Ease.InCubic))
+            seq2.Append(t.DOMove(grave, fly).SetEase(Ease.InCubic))
                .Join(t.DORotateQuaternion(tableRotation, fly))
                .Join(t.DOScale(Vector3.zero, fly).SetEase(Ease.InQuad))
                .OnComplete(() => { if (view != null) Destroy(view.gameObject); });
@@ -326,11 +383,13 @@ namespace TawanOS.CardEngine
 
         private static float Speed => CombatManager.Instance != null ? CombatManager.Instance.EnemyPlaySpeed : 1f;
 
-        // How long EnemyCardPlayer waits before an incantation lands: until its showcase has been read
-        private float RevealTime(CardInstance card)
+        // How long EnemyCardPlayer waits before an incantation lands or ability card is showcased: until its showcase has been read
+        public float RevealTime(CardInstance card)
         {
-            if (card == null || card.cardType != CardType.Incantation || cardPrefab == null) return 0f;
-            return (showcaseInDuration + showcaseHoldTime) / Speed;
+            if (card == null || cardPrefab == null) return 0f;
+            if (!ShouldShowcase(card)) return 0f;
+            float hold = card.cardType == CardType.Incantation ? showcaseHoldTime : abilityCardHoldTime;
+            return (showcaseInDuration + hold) / Speed;
         }
 
         // Same spot, facing and size as a card the player is about to play (CardPlayController3D)

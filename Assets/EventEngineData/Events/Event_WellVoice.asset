@@ -28,7 +28,7 @@ MonoBehaviour:
     choices:
     - label: "\u0E14\u0E36\u0E07\u0E40\u0E18\u0E2D\u0E02\u0E36\u0E49\u0E19\u0E21\u0E32"
       hint: "\u0E40\u0E2A\u0E35\u0E48\u0E22\u0E07: \u0E2D\u0E32\u0E08\u0E44\u0E21\u0E48\u0E43\u0E0A\u0E48\u0E04\u0E19"
-      offeringCost: 0
+      incenseCost: 0
       hpCost: 0
       outcomes:
       - weight: 3
@@ -37,7 +37,7 @@ MonoBehaviour:
           \u0E01\u0E48\u0E2D\u0E19\u0E08\u0E30\u0E21\u0E2D\u0E1A\u0E1B\u0E34\u0E48\u0E19\u0E1B\u0E31\u0E01\u0E1C\u0E21\u0E40\u0E07\u0E34\u0E19\u0E43\u0E2B\u0E49\u0E41\u0E25\u0E49\u0E27\u0E2B\u0E32\u0E22\u0E44\u0E1B\u0E43\u0E19\u0E04\u0E27\u0E32\u0E21\u0E21\u0E37\u0E14"
         effects:
         - type: 4
-          amount: 40
+          amount: 8
           relicId: 
           enemy: {fileID: 0}
         nextPageId: 
@@ -50,9 +50,9 @@ MonoBehaviour:
           relicId: 
           enemy: {fileID: 11400000, guid: 0dcca0e7068694d4e8e84167d7894090, type: 2}
         nextPageId: 
-    - label: "\u0E42\u0E22\u0E19\u0E40\u0E04\u0E23\u0E37\u0E48\u0E2D\u0E07\u0E40\u0E0B\u0E48\u0E19\u0E25\u0E07\u0E44\u0E1B"
+    - label: "จุดธูปส่งวิญญาณ"
       hint: "\u0E1B\u0E25\u0E2D\u0E1A\u0E27\u0E34\u0E0D\u0E0D\u0E32\u0E13"
-      offeringCost: 10
+      incenseCost: 2
       hpCost: 0
       outcomes:
       - weight: 1
@@ -61,13 +61,13 @@ MonoBehaviour:
           \u0E04\u0E27\u0E32\u0E21\u0E2D\u0E48\u0E2D\u0E19\u0E25\u0E49\u0E32\u0E02\u0E2D\u0E07\u0E04\u0E38\u0E13\u0E2B\u0E32\u0E22\u0E44\u0E1B"
         effects:
         - type: 1
-          amount: 10
+          amount: 5
           relicId: 
           enemy: {fileID: 0}
         nextPageId: 
     - label: "\u0E1B\u0E34\u0E14\u0E1D\u0E32\u0E1A\u0E48\u0E2D\u0E43\u0E2B\u0E49\u0E41\u0E19\u0E48\u0E19"
       hint: 
-      offeringCost: 0
+      incenseCost: 0
       hpCost: 0
       outcomes:
       - weight: 1

@@ -22,7 +22,7 @@ namespace TawanOS.EventEngine
         private const string ScenePath = "Assets/Scenes/EventScene.unity";
         private const string MapConfigPath = "Assets/MapEngineData/Profiles/DefaultMapConfig.asset";
         private const string EventNodeProfilePath = "Assets/MapEngineData/Profiles/EventProfile.asset";
-        private const string EventIconPath = "Assets/MapEngineData/Icons/event-question.png";
+        private const string EventIconPath = "Assets/Art/MapIcons/หมอกดำ.png";
         private const string PraiEnemyPath = "Assets/CardEngineData/Enemies/PraiGhostProfile.asset";
 
         private static readonly Color Gold = new Color(0.93f, 0.78f, 0.45f);
@@ -127,15 +127,15 @@ namespace TawanOS.EventEngine
             e.pages.Add(Page("start",
                 "ริมทางมีศาลพระภูมิหลังเล็กตั้งเอียงอยู่ใต้ต้นไทร ธูปที่ปักไว้มอดดับไปนานแล้ว " +
                 "แต่พวงมาลัยบนหลังคากลับยังสดราวกับเพิ่งมีคนนำมาวาง\n\nลมเย็นพัดผ่าน... เหมือนมีใครกำลังรอคำตอบจากคุณ",
-                PaidChoice(30, 0, "จุดธูปถวาย", "เจ้าที่อาจตอบแทนน้ำใจ",
+                PaidChoice(6, 0, "จุดธูปถวาย", "เจ้าที่อาจตอบแทนน้ำใจ",
                     Outcome("ควันธูปลอยขึ้นตรง ความอบอุ่นแผ่ซ่านไปทั่วร่าง ในกระถางธูปมีพระเครื่ององค์เล็กวางอยู่",
-                        Effect(EventEffectType.Heal, 15), Effect(EventEffectType.GainIncense, 25))),
+                        Effect(EventEffectType.Heal, 6), Effect(EventEffectType.GainIncense, 5))),
                 Choice("ไหว้แล้วขอพร", "ผลลัพธ์ไม่แน่นอน",
-                    Outcome("เสียงกระดิ่งลมดังกังวาน จิตใจคุณสงบลง", 1, Effect(EventEffectType.Heal, 8)),
-                    Outcome("ศาลสั่นเบา ๆ ราวกับไม่พอใจ ความหนาวเย็นแทรกเข้ามาในกระดูก", 1, Effect(EventEffectType.TakeDamage, 6))),
+                    Outcome("เสียงกระดิ่งลมดังกังวาน จิตใจคุณสงบลง", 1, Effect(EventEffectType.Heal, 3)),
+                    Outcome("ศาลสั่นเบา ๆ ราวกับไม่พอใจ ความหนาวเย็นแทรกเข้ามาในกระดูก", 1, Effect(EventEffectType.TakeDamage, 3))),
                 Choice("หยิบธูปในกระถางไป", "ได้ธูป แต่...",
                     Outcome("คุณกวาดธูปที่ยังไม่จุดใส่ย่าม ขณะเดินจากมา ได้ยินเสียงหัวเราะแหบแห้งไล่หลัง",
-                        Effect(EventEffectType.GainIncense, 40), Effect(EventEffectType.ChangeMaxHp, -4))),
+                        Effect(EventEffectType.GainIncense, 8), Effect(EventEffectType.ChangeMaxHp, -2))),
                 Choice("เดินผ่านไป", null,
                     Outcome("คุณพนมมือไหว้เบา ๆ แล้วเดินต่อไปโดยไม่หันกลับไปมอง"))));
         }
@@ -154,12 +154,12 @@ namespace TawanOS.EventEngine
                     Outcome("\"ตามใจเอ็ง ทางข้างหน้ามันมืดนะ\" เสียงหัวเราะของเขาจางหายไปกับสายลม"))));
             e.pages.Add(Page("trade",
                 "\"ตะกรุดดอกนี้ลงอาคมด้วยเลือด ข้าจะแลกด้วยเลือดของเอ็ง... หรือถ้าเอ็งมีธูป ข้ามีน้ำมนต์ต่อชีวิตให้\"",
-                PaidChoice(0, 8, "แลกด้วยเลือด", "รับตะกรุด",
+                PaidChoice(0, 3, "แลกด้วยเลือด", "รับตะกรุด",
                     Outcome("ตาหมอกรีดปลายนิ้วคุณหยดลงบนตะกรุด ตัวอักษรขอมบนแผ่นโลหะเรืองแสงวาบ",
                         Effect(EventEffectType.CardReward, 0))),
-                PaidChoice(40, 0, "แลกด้วยธูป", "เพิ่ม HP สูงสุด",
+                PaidChoice(8, 0, "แลกด้วยธูป", "เพิ่มขวัญสูงสุด",
                     Outcome("น้ำมนต์เย็นเฉียบไหลผ่านลำคอ คุณรู้สึกแข็งแรงขึ้นกว่าเดิม",
-                        Effect(EventEffectType.ChangeMaxHp, 8))),
+                        Effect(EventEffectType.ChangeMaxHp, 3))),
                 Choice("ไม่แลกอะไร", null,
                     Outcome("\"ไม่เป็นไร วาสนาคนเราไม่เท่ากัน\" ตาหมอเก็บของลงย่ามอย่างเงียบ ๆ"))));
         }
@@ -174,12 +174,12 @@ namespace TawanOS.EventEngine
                 "\"ช่วยด้วย... ฉันตกลงมานานแล้ว ได้โปรด...\"",
                 Choice("ดึงเธอขึ้นมา", "เสี่ยง: อาจไม่ใช่คน",
                     Outcome("คุณหย่อนเชือกลงไป หญิงสาวปีนขึ้นมาพร้อมยิ้มขอบคุณ ก่อนจะมอบปิ่นปักผมเงินให้แล้วหายไปในความมืด", 3,
-                        Effect(EventEffectType.GainIncense, 40)),
+                        Effect(EventEffectType.GainIncense, 8)),
                     Outcome("มือที่คว้าเชือกขึ้นมาเย็นเฉียบและเปียกชุ่ม ใบหน้าซีดขาวโผล่พ้นปากบ่อพร้อมรอยยิ้มฉีกถึงใบหู!", 2,
                         new EventEffect { type = EventEffectType.StartCombat, enemy = prai })),
-                PaidChoice(10, 0, "จุดธูปส่งวิญญาณ", "ปลอบวิญญาณ",
+                PaidChoice(2, 0, "จุดธูปส่งวิญญาณ", "ปลอบวิญญาณ",
                     Outcome("เสียงร้องค่อย ๆ เงียบลง แทนที่ด้วยเสียงกระซิบขอบคุณ ความอ่อนล้าของคุณหายไป",
-                        Effect(EventEffectType.Heal, 10))),
+                        Effect(EventEffectType.Heal, 5))),
                 Choice("ปิดฝาบ่อให้แน่น", null,
                     Outcome("คุณลากแผ่นไม้มาทับปากบ่อ เสียงร้องกลายเป็นเสียงกรีดร้องโหยหวนก่อนจะเงียบไป"))));
         }
@@ -193,10 +193,10 @@ namespace TawanOS.EventEngine
             e.pages.Add(Page("start",
                 "ใต้ศาลาริมน้ำ เงาดำหลายตนนั่งล้อมวงไพ่อยู่ใต้แสงตะเกียงสีเขียว เจ้ามือที่ไม่มีใบหน้ากวักมือเรียกคุณ\n\n" +
                 "\"มาสิ... ลงสักตา ชนะเอาไปสองเท่า แพ้ก็แค่... เสียนิดหน่อย\"",
-                PaidChoice(20, 0, "ลงธูป 20 ดอก", "ชนะได้ 50 ดอก",
-                    Outcome("ไพ่ใบสุดท้ายพลิกออก เป็นของคุณ! เหล่าเงาดำส่งเสียงฮือฮา", 45, Effect(EventEffectType.GainIncense, 50)),
+                PaidChoice(4, 0, "ลงธูป 4 ดอก", "ชนะได้ 10 ดอก",
+                    Outcome("ไพ่ใบสุดท้ายพลิกออก เป็นของคุณ! เหล่าเงาดำส่งเสียงฮือฮา", 45, Effect(EventEffectType.GainIncense, 10)),
                     Outcome("เจ้ามือหัวเราะเสียงแหลม กวาดธูปของคุณไปจนหมดกอง", 55)),
-                PaidChoice(0, 10, "ลงด้วยลมหายใจ", "ชนะได้ของวิเศษ",
+                PaidChoice(0, 4, "ลงด้วยลมหายใจ", "ชนะได้การ์ด",
                     Outcome("เจ้ามือนิ่งไปครู่หนึ่ง ก่อนยื่นไพ่ใบหนึ่งให้คุณ \"เอาไป... มันเลือกเอ็งแล้ว\"", 1, Effect(EventEffectType.CardReward, 0)),
                     Outcome("คุณแพ้ ความหนาวเย็นดูดพลังออกจากร่างจนเข่าอ่อน", 1)),
                 Choice("ไม่เล่น", null,

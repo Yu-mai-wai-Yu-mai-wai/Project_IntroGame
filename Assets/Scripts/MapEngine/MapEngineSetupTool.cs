@@ -71,13 +71,15 @@ namespace TawanOS.MapEngine
             Color crimsonHover = new Color(0.5568f, 0.1490f, 0.0941f, 1f);
             Color crimsonVisited = new Color(0.1725f, 0.0784f, 0.0627f, 1f);
 
-            var enemyProfile = CreateOrGetProfile(baseFolder + "/Profiles/EnemyProfile.asset", NodeType.MinorEnemy, "Forest Shadow", "Vengeful spirits haunting the sacred path.", crimsonBase, "NarrowIcon.png");
-            var eliteProfile = CreateOrGetProfile(baseFolder + "/Profiles/EliteProfile.asset", NodeType.EliteEnemy, "Ancient Shrine Guardian", "A cursed guardian of the ancient ruins holding powerful relics.", crimsonBase, "BossIcon.png");
-            var restProfile = CreateOrGetProfile(baseFolder + "/Profiles/RestProfile.asset", NodeType.RestSite, "Spirit Lantern", "Consecrated sanctuary to light incense and soothe your soul.", crimsonBase, "TempleIcon.png");
-            var treasureProfile = CreateOrGetProfile(baseFolder + "/Profiles/TreasureProfile.asset", NodeType.Treasure, "Sacred Offering", "Ancient treasure chest left behind by past practitioners.", crimsonBase, "OfferingIcon.png");
-            var storeProfile = CreateOrGetProfile(baseFolder + "/Profiles/StoreProfile.asset", NodeType.Store, "Bodhi Tree Merchant", "An enigmatic merchant trading talismans and sacred offerings.", crimsonBase, "ShrineIcon.png");
-            var bossProfile = CreateOrGetProfile(baseFolder + "/Profiles/BossProfile.asset", NodeType.Boss, "The Sovereign Spirit", "The ancient overlord reigning over the temple grounds.", crimsonBase, "BossIcon.png");
-            var eventProfile = CreateOrGetProfile(baseFolder + "/Profiles/EventProfile.asset", NodeType.Event, "Unknown Omen", "A strange occurrence on the path. Your choices shape what you gain... or lose.", crimsonBase, "event-question.png");
+            // The seven node types on the map (Elite is no longer rolled; วัด took its place, Game Designer 11 Oct).
+            // Names and descriptions are MapLegendUI's, the same text the node pop-up shows.
+            var enemyProfile = CreateOrGetProfile(baseFolder + "/Profiles/EnemyProfile.asset", NodeType.MinorEnemy, crimsonBase, "ป่า.png");
+            var templeProfile = CreateOrGetProfile(baseFolder + "/Profiles/TempleProfile.asset", NodeType.Temple, crimsonBase, "วัด 1.png");
+            var restProfile = CreateOrGetProfile(baseFolder + "/Profiles/RestProfile.asset", NodeType.RestSite, crimsonBase, "เมรุ 1.png");
+            var treasureProfile = CreateOrGetProfile(baseFolder + "/Profiles/TreasureProfile.asset", NodeType.Treasure, crimsonBase, "กองของเซ่น.png");
+            var storeProfile = CreateOrGetProfile(baseFolder + "/Profiles/StoreProfile.asset", NodeType.Store, crimsonBase, "ศาลตายาย.png");
+            var bossProfile = CreateOrGetProfile(baseFolder + "/Profiles/BossProfile.asset", NodeType.Boss, crimsonBase, "BossIcon.png");
+            var eventProfile = CreateOrGetProfile(baseFolder + "/Profiles/EventProfile.asset", NodeType.Event, crimsonBase, "หมอกดำ.png");
 
             // 2. Create Biome Profile
             string biomePath = baseFolder + "/Profiles/DefaultBiome.asset";
@@ -116,7 +118,7 @@ namespace TawanOS.MapEngine
                 config.biomeProfile = biome;
 
                 config.nodeProfiles.Add(enemyProfile);
-                config.nodeProfiles.Add(eliteProfile);
+                config.nodeProfiles.Add(templeProfile);
                 config.nodeProfiles.Add(restProfile);
                 config.nodeProfiles.Add(treasureProfile);
                 config.nodeProfiles.Add(storeProfile);
@@ -130,7 +132,8 @@ namespace TawanOS.MapEngine
                 if (config.nodeProfiles == null) config.nodeProfiles = new List<NodeProfileSO>();
                 config.nodeProfiles.RemoveAll(p => p == null);
                 if (enemyProfile != null && !config.nodeProfiles.Contains(enemyProfile)) config.nodeProfiles.Add(enemyProfile);
-                if (eliteProfile != null && !config.nodeProfiles.Contains(eliteProfile)) config.nodeProfiles.Add(eliteProfile);
+                config.nodeProfiles.RemoveAll(p => p.type == NodeType.EliteEnemy);
+                if (templeProfile != null && !config.nodeProfiles.Contains(templeProfile)) config.nodeProfiles.Add(templeProfile);
                 if (restProfile != null && !config.nodeProfiles.Contains(restProfile)) config.nodeProfiles.Add(restProfile);
                 if (treasureProfile != null && !config.nodeProfiles.Contains(treasureProfile)) config.nodeProfiles.Add(treasureProfile);
                 if (storeProfile != null && !config.nodeProfiles.Contains(storeProfile)) config.nodeProfiles.Add(storeProfile);
@@ -374,8 +377,10 @@ namespace TawanOS.MapEngine
             Debug.Log($"[TawanOS MapEngine] Setup Complete! Test Scene saved at: {scenePath}");
         }
 
-        private static NodeProfileSO CreateOrGetProfile(string path, NodeType type, string title, string desc, Color color, string iconName = null)
+        private static NodeProfileSO CreateOrGetProfile(string path, NodeType type, Color color, string iconName = null)
         {
+            string title = MapLegendUI.GetNodeTitle(type);
+            string desc = MapLegendUI.GetNodeDescription(type);
             NodeProfileSO profile = AssetDatabase.LoadAssetAtPath<NodeProfileSO>(path);
             if (profile == null)
             {
@@ -400,26 +405,15 @@ namespace TawanOS.MapEngine
 
             if (!string.IsNullOrEmpty(iconName))
             {
-                string mapNavigateIconPath = $"Assets/ProjectAsset/MapNavigate/{iconName}";
-                Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(mapNavigateIconPath);
+                // The node icons in use (Game Designer, 15 Oct)
+                string iconPath = $"Assets/Art/MapIcons/{iconName}";
+                Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(iconPath);
                 if (sprite != null)
                 {
                     profile.icon = sprite;
                     EditorUtility.SetDirty(profile);
                 }
-                else
-                {
-                    string fallbackIconPath = $"Assets/MapEngineData/Icons/{iconName}";
-                    Texture2D tex = AssetDatabase.LoadAssetAtPath<Texture2D>(fallbackIconPath);
-                    if (tex != null)
-                    {
-                        Sprite fallbackSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
-                        fallbackSprite.name = iconName;
-                        AssetDatabase.AddObjectToAsset(fallbackSprite, profile);
-                        profile.icon = fallbackSprite;
-                        EditorUtility.SetDirty(profile);
-                    }
-                }
+                else Debug.LogWarning($"[MapEngineSetupTool] No icon at {iconPath}; {profile.name} keeps its icon.");
             }
 
             return profile;

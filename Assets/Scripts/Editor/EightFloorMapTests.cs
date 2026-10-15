@@ -10,7 +10,7 @@ namespace TawanOS.EditorTools
     /// <summary>
     /// The 8-floor map (Game Designer, 11 Oct): start, 8 floors of 3,2,3,1,3,3,2,2 nodes, boss on floor 8.
     /// Floors 1, 4, 7 (counted from 1) are fights only, the others never fights; the other five node types all
-    /// show up; every node has a way in and out; every node has a board position and the floors run from the start
+    /// show up; every path to the boss passes a วัด (Game Designer, 15 Oct); every node has a way in and out; every node has a board position and the floors run from the start
     /// end of the board to the boss end. A new run uses 8 floors.
     /// Menu: Tools/TawanOS/Tests/Eight Floor Map. Batch: -executeMethod TawanOS.EditorTools.EightFloorMapTests.Run
     /// </summary>
@@ -37,7 +37,7 @@ namespace TawanOS.EditorTools
 
             var generator = new MapGraphGenerator();
             var seen = new HashSet<NodeType>();
-            int badShape = 0, badCombat = 0, badLinks = 0, badBoard = 0, consecutive = 0;
+            int badShape = 0, badCombat = 0, badLinks = 0, badBoard = 0, consecutive = 0, noTempleBeforeBoss = 0;
             for (int seed = 1; seed <= Seeds; seed++)
             {
                 var graph = generator.GenerateMap(config, seed);
@@ -67,6 +67,7 @@ namespace TawanOS.EditorTools
                 if (boss.Count != 1 || boss[0].type != NodeType.Boss || boss[0].incomingConnections.Count != 2) badShape++;
                 if (!MapManager.TryGetTableNodeFbxName(boss[0].gridPosition, config.totalFloors, out _)) badBoard++;
                 if (graph.startNode == null || graph.startNode.outgoingConnections.Count != 3) badLinks++;
+                if (CanReachBossWithoutTemple(graph)) noTempleBeforeBoss++;
             }
 
             failures += Expect($"{Seeds} maps: floors 3,2,3,1,3,3,2,2 then one boss", badShape == 0);
@@ -74,6 +75,7 @@ namespace TawanOS.EditorTools
             failures += Expect("Every node has a way in and a way on to the next floor", badLinks == 0);
             failures += Expect("Every node has a place on the board", badBoard == 0);
             failures += Expect("เมรุ, ศาลตายาย, วัด never follow their own type", consecutive == 0);
+            failures += Expect("Every path to the boss passes a วัด", noTempleBeforeBoss == 0);
             foreach (var type in new[] { NodeType.Event, NodeType.Treasure, NodeType.Store, NodeType.RestSite, NodeType.Temple })
                 failures += Expect($"{type} shows up on the random floors", seen.Contains(type));
 
@@ -92,6 +94,27 @@ namespace TawanOS.EditorTools
                 && Mathf.Approximately(MapManager.TableFloorX(8, 8), MapManager.TableFloorX(7, 7)));
 
             Finish(failures, exitOnFinish);
+        }
+
+        // Walks from the start without stepping on a วัด; true if the boss can still be reached that way
+        private static bool CanReachBossWithoutTemple(MapGraphData graph)
+        {
+            if (graph.startNode == null) return true;
+            var seenPos = new HashSet<Vector2Int>();
+            var open = new Stack<NodeBlueprint>();
+            open.Push(graph.startNode);
+            while (open.Count > 0)
+            {
+                var node = open.Pop();
+                if (node.type == NodeType.Boss) return true;
+                foreach (var next in node.outgoingConnections)
+                {
+                    var child = graph.GetNode(next);
+                    if (child == null || child.type == NodeType.Temple || !seenPos.Add(next)) continue;
+                    open.Push(child);
+                }
+            }
+            return false;
         }
 
         private static void Finish(int failures, bool exitOnFinish)

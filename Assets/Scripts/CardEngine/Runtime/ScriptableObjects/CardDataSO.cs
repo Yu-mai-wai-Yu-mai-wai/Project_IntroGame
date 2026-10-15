@@ -26,12 +26,14 @@ namespace TawanOS.CardEngine
         [Header("Costs & Thresholds")]
         [Range(0, 6)] public int meritCost = 1;
         [Range(0, 9)] public int corruptionGain = 0;
+        [Tooltip("ราคาในศาลตายาย (ธูป) 0 = คิดจากค่าร่ายของการ์ด")]
+        [Range(0, 20)] public int shopPrice = 0;
 
         [Header("Primary Combat Values")]
         public int baseValue = 0;
         [Tooltip("อายุขลังของเครื่องราง (0 = อยู่บนสนามจนกว่าจะพัง)")]
         public int durability = 0;
-        [Tooltip("ขวัญ (HP) ของบริวาร / เครื่องราง (เครื่องราง 0 = ตีไม่ได้)")]
+        [Tooltip("ขวัญของบริวาร / เครื่องราง (เครื่องราง 0 = ตีไม่ได้)")]
         public int familiarHealth = 1;
         [Tooltip("สะเทือนขวัญ (ATK) ของบริวาร")]
         public int familiarDamage = 1;

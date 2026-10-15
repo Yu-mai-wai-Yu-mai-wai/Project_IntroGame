@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: EventProfile
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.NodeProfileSO
   type: 6
-  icon: {fileID: 21300000, guid: abfcb464deaa634449a4ce4595dd1597, type: 3}
+  icon: {fileID: 21300000, guid: 60d6867b5db00af4999a6b9b90cbbdab, type: 3}
   baseColor: {r: 0.3529, g: 0.0941, b: 0.0627, a: 1}
   hoverColor: {r: 0.52935, g: 0.14115, b: 0.094050005, a: 1}
   visitedColor: {r: 0.17645, g: 0.04705, b: 0.03135, a: 1}
