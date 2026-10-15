@@ -232,7 +232,7 @@ namespace TawanOS.ShopEngine
         {
             var run = RunState.Current;
             if (incenseText != null) incenseText.text = $"ธูป {run.Incense}";
-            if (hpText != null) hpText.text = $"ขวัญ {run.CurrentHp}/{run.MaxHp}";
+            if (hpText != null) hpText.text = $"ขวัญ {KhwanDisplay.Text(run.CurrentHp, run.MaxHp)}";
             if (deckText != null) deckText.text = $"สำรับ {run.Deck.Count} ใบ";
             // Prices turn red/gold as incense changes
             if (shop != null && isActiveAndEnabled) Refresh();

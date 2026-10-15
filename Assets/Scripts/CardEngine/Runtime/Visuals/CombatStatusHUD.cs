@@ -17,8 +17,8 @@ namespace TawanOS.CardEngine
     // Skipped when the scene already has an EnemyCombatView.
     public class CombatStatusHUD : MonoBehaviour
     {
-        private static readonly Color PlayerBar = new Color(0.30f, 0.75f, 0.45f);
-        private static readonly Color EnemyBar = new Color(0.85f, 0.25f, 0.25f);
+        private static readonly Color PlayerBar = KhwanDisplay.BarColour;
+        private static readonly Color EnemyBar = new Color(0.85f, 0.25f, 0.25f); // the enemy stays red (Game Designer, 15 Oct)
         private const float RefillDelay = 0.6f;  // the empty bar waits a moment as the cutscene begins
         private const float RefillTime = 1.3f;
         private static readonly Color Panel = new Color(0.05f, 0.04f, 0.03f, 0.75f);
@@ -29,6 +29,7 @@ namespace TawanOS.CardEngine
             public TMP_Text title;
             public TMP_Text detail;
             public RectTransform fill;
+            public RectTransform tempStrip; // ขวัญชั่วคราว over the fill (player only)
             public Button button;
             public TMP_Text buttonLabel;
         }
@@ -143,8 +144,9 @@ namespace TawanOS.CardEngine
 
             // Player
             string pShield = s.playerShield > 0 ? $"  |  เกราะ {s.playerShield}" : "";
-            player.detail.text = $"ขวัญ {s.playerKhwan} / {s.maxPlayerKhwan}{pShield}";
-            SetFill(player.fill, s.maxPlayerKhwan > 0 ? (float)s.playerKhwan / s.maxPlayerKhwan : 0f, ref lastPlayerRatio, player.root);
+            player.detail.text = $"ขวัญ {KhwanDisplay.Text(s.playerKhwan, s.maxPlayerKhwan, " / ")}{pShield}";
+            SetFill(player.fill, KhwanDisplay.Fill(s.playerKhwan, s.maxPlayerKhwan), ref lastPlayerRatio, player.root);
+            KhwanDisplay.SetTempStrip(player.tempStrip, s.playerKhwan, s.maxPlayerKhwan);
 
             var turns = TurnPhaseController.Instance;
             bool isCombatOver = combat.IsCombatOver;
@@ -283,6 +285,7 @@ namespace TawanOS.CardEngine
             var fillImg = fillGo.AddComponent<Image>();
             fillImg.color = PlayerBar;
             fillImg.raycastTarget = false;
+            p.tempStrip = KhwanDisplay.AddTempStrip(trackRt);
 
             // End Turn Button
             var btnGo = new GameObject("EndTurnButton", typeof(RectTransform));

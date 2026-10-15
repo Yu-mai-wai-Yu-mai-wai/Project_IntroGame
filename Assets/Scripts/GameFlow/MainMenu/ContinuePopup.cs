@@ -128,7 +128,7 @@ namespace TawanOS.GameFlow
             Place(title.rectTransform, new Vector2(0f, 240f), new Vector2(740f, 70f));
 
             Row(w, theme, 150f, "ตำแหน่ง", DescribePosition(s));
-            Row(w, theme, 80f, "ขวัญ", $"{s.currentHp}/{s.maxHp}");
+            Row(w, theme, 80f, "ขวัญ", TawanOS.UI.KhwanDisplay.Text(s.currentHp, s.maxHp));
             Row(w, theme, 10f, "ธูป", s.incense.ToString());
             Row(w, theme, -60f, "สำรับ", $"{s.deckCards} ใบ");
 

@@ -196,7 +196,7 @@ namespace TawanOS.GameFlow
                 var data = JsonConvert.DeserializeObject<RunSaveData>(File.ReadAllText(SavePath));
                 if (data == null) return null;
                 int cards = data.deckCardIds != null ? data.deckCardIds.Count : 0;
-                return $"ขวัญ {data.currentHp}/{data.maxHp}   •   ธูป {data.incense}   •   สำรับ {cards} ใบ";
+                return $"ขวัญ {TawanOS.UI.KhwanDisplay.Text(data.currentHp, data.maxHp)}   •   ธูป {data.incense}   •   สำรับ {cards} ใบ";
             }
             catch (System.Exception)
             {

@@ -196,7 +196,7 @@ namespace TawanOS.CardEngine
 
             if (playerKhwanText != null)
             {
-                playerKhwanText.text = $"ขวัญ: {state.playerKhwan} / {state.maxPlayerKhwan}";
+                playerKhwanText.text = $"ขวัญ: {TawanOS.UI.KhwanDisplay.Text(state.playerKhwan, state.maxPlayerKhwan, " / ")}";
             }
         }
 
