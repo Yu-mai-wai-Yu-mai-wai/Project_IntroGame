@@ -80,8 +80,13 @@ namespace TawanOS.VFX
         [Min(0f)] public float groupRadius = 0.2f;
 
         [Header("Slam: camera")]
-        [Min(0f)] public float cameraShake = 0.8f;
-        [Min(0f)] public float shakeTime = 0.6f;
+        [Tooltip("กล้องสั่นไปมาไกลแค่ไหนตอนทุบ (หน่วยโลก)")]
+        [Min(0f)] public float cameraShake = 1.6f;
+        [Tooltip("กล้องสั่นเอียงไปมากี่องศาตอนทุบ")]
+        [Min(0f)] public float slamTilt = 4f;
+        [Min(0f)] public float shakeTime = 0.8f;
+        [Tooltip("กล้องสั่นเอียงไปมากี่องศาตอนบอสคำราม")]
+        [Min(0f)] public float roarShake = 3f;
         [Tooltip("กล้องซูมเข้ากี่องศา (field of view) ตอนทุบ แล้วคืน")]
         [Min(0f)] public float fovKick = 6f;
 
@@ -170,7 +175,7 @@ namespace TawanOS.VFX
             if (!still && boss != null)
                 boss.DOShakePosition(roar, bossShake, 25, 90f, false, true).SetUpdate(true).SetId(this);
             if (moveCamera)
-                cam.transform.DOShakeRotation(roar, 1.2f, 18, 90f, true).SetUpdate(true).SetId(this);
+                cam.transform.DOShakeRotation(roar, roarShake, 18, 90f, true).SetUpdate(true).SetId(this);
             yield return new WaitForSecondsRealtime(roar);
 
             // Back to the table, fast, and the slam
@@ -261,6 +266,8 @@ namespace TawanOS.VFX
             if (cam == null) return;
             if (cameraShake > 0f)
                 cam.transform.DOShakePosition(shakeTime, cameraShake, 30, 90f, false, true).SetUpdate(true).SetId(this);
+            if (slamTilt > 0f)
+                cam.transform.DOShakeRotation(shakeTime, slamTilt, 25, 90f, true).SetUpdate(true).SetId(this);
             if (fovKick > 0f)
             {
                 DOTween.Sequence().SetId(this).SetTarget(cam).SetUpdate(true)

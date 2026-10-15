@@ -2850,8 +2850,10 @@ MonoBehaviour:
   jumpTime: 0.55
   maxTilt: 20
   groupRadius: 0.2
-  cameraShake: 0.8
-  shakeTime: 0.6
+  cameraShake: 1.6
+  slamTilt: 4
+  shakeTime: 0.8
+  roarShake: 3
   fovKick: 6
 --- !u!4 &659100293
 Transform:
