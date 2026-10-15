@@ -604,7 +604,7 @@ namespace TawanOS.CardEngine
 
                     case AbilityEffect.DestroyBelowKhwan:
                         float best = 0f;
-                        foreach (var c in foeCards) if (c.familiarHealth < a.value) best = Mathf.Max(best, 6f + c.familiarDamage);
+                        foreach (var c in foeCards) if (c.familiarHealth <= a.value) best = Mathf.Max(best, 6f + c.familiarDamage);
                         offense += best;
                         break;
 

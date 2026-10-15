@@ -40,7 +40,7 @@ namespace TawanOS.CardEngine
         [InspectorName("ให้เกราะ")] GrantArmor,             // เกราะ +value (ดูดซับดาเมจก่อนขวัญ)
         [InspectorName("เพิ่ม/ลด สะเทือนขวัญ")] BuffAttack,             // สะเทือนขวัญถาวร +value (ติดลบ = ลด)
         [InspectorName("ทำดาเมจ")] DamageCard,             // ทำดาเมจ value (ignoreArmor = ไม่สนเกราะ)
-        [InspectorName("ทำลายการ์ดที่ขวัญน้อยกว่า ค่า")] DestroyBelowKhwan,      // ทำลายการ์ดที่ขวัญน้อยกว่า value (ไม่สนเกราะ)
+        [InspectorName("ทำลายการ์ดที่ขวัญไม่เกิน ค่า")] DestroyBelowKhwan,      // ทำลายการ์ดที่ขวัญไม่เกิน value (ไม่สนเกราะ)
         [InspectorName("มอบสถานะ")] ApplyStatus,            // มอบสถานะ status จำนวน value หน่วย นาน duration เทิร์น
         [InspectorName("ล้างอัปมงคลล่าสุด")] CleanseLatest,          // ล้างสถานะอัปมงคลล่าสุด 1 หน่วย
         [InspectorName("ล้างอัปมงคลทั้งหมด")] CleanseAll,             // ล้างสถานะอัปมงคลทั้งหมด

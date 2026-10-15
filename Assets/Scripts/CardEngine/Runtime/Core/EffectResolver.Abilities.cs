@@ -391,7 +391,7 @@ namespace TawanOS.CardEngine
                     return true;
 
                 case AbilityEffect.DestroyBelowKhwan:
-                    if (!hasKhwan || c.familiarHealth >= a.value) return false;
+                    if (!hasKhwan || c.familiarHealth > a.value) return false;
                     score = c.familiarDamage;
                     return true;
 
@@ -608,7 +608,7 @@ namespace TawanOS.CardEngine
                     return;
 
                 case AbilityEffect.DestroyBelowKhwan:
-                    if (target.familiarHealth < a.value) DamageCard(target, target.familiarHealth, ignoreArmor: true, source, ownerIsPlayer);
+                    if (target.familiarHealth <= a.value) DamageCard(target, target.familiarHealth, ignoreArmor: true, source, ownerIsPlayer);
                     return;
 
                 case AbilityEffect.ApplyStatus:
