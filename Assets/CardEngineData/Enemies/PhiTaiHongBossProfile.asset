@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyId: enemy_boss
   enemyName: "\u0E1C\u0E35\u0E15\u0E32\u0E22\u0E42\u0E2B\u0E07 (\u0E1A\u0E2D\u0E2A\u0E43\u0E2B\u0E0D\u0E48)"
   portrait: {fileID: 0}
-  maxKhwan: 3
+  maxKhwan: 10
   deck:
   - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
   - {fileID: 11400000, guid: 904986997b8348699a37abc9397be673, type: 2}

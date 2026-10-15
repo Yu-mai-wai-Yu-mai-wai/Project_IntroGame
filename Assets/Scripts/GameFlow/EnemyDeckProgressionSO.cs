@@ -11,7 +11,7 @@ namespace TawanOS.GameFlow
     /// from N nodes passed (the fight's map floor, 0 = the first node) the enemy plays that preset's cards instead
     /// of its own deck. The last step whose number is reached wins. Enemies without a card deck (moveset only) and
     /// the scripted tutorial bot are left as they are. Their khwan grows the same way: khwanPerNode for every node
-    /// passed, up to khwanCap. Loaded from Resources/EnemyDeckProgression; create it with
+    /// passed, up to khwanCap (not the boss: its khwan is its profile's, per phase). Loaded from Resources/EnemyDeckProgression; create it with
     /// Tools/TawanOS/Game Flow/Create Enemy Deck Presets.
     /// </summary>
     [CreateAssetMenu(fileName = "EnemyDeckProgression", menuName = "TawanOS/Game Flow/Enemy Deck Progression")]
@@ -46,7 +46,8 @@ namespace TawanOS.GameFlow
         /// <summary>The enemy's max khwan for this fight, or null to keep its profile's.</summary>
         public int? KhwanFor(int nodesPassed, EnemyProfileSO enemy)
         {
-            if (!enabled || !scaleKhwan || enemy == null || enemy.scriptedDeck) return null;
+            // A boss keeps its profile's khwan: each of its phases has a bar of that size (15 Oct)
+            if (!enabled || !scaleKhwan || enemy == null || enemy.scriptedDeck || enemy.isBoss) return null;
             int grown = Mathf.Min(enemy.maxKhwan + khwanPerNode * Mathf.Max(0, nodesPassed), khwanCap);
             return Mathf.Max(enemy.maxKhwan, grown);
         }
