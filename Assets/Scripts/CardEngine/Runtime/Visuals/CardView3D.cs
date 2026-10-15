@@ -455,6 +455,8 @@ namespace TawanOS.CardEngine
         private void OnMouseEnter()
         {
             if (IgnoresMouse) return;
+            // Only a real mouse-over sounds; Hover() is also called to resync after the card book closes
+            if (!isHovered) TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_card_hover");
             Hover();
         }
 
