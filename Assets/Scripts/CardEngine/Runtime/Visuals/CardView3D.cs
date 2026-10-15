@@ -64,6 +64,10 @@ namespace TawanOS.CardEngine
         // Face text laid out like the card design: cost top-left, name + type top-right,
         // attack / Khwan in the middle band, ability text in the bottom box. nameLabel is the name.
         private TMP_Text costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel;
+
+        // The statuses on a card in play, one coloured tag each, in a row over the picture (CardStatusTags refreshes them)
+        private TMP_Text statusLabel;
+        private string shownStatuses = "";
         private Color faceTextColor = Color.white; // the face's normal text colour (khwanLabel goes back to it when healed)
 
         public Vector3 BaseScale => baseLocalScale;
@@ -146,7 +150,7 @@ namespace TawanOS.CardEngine
             if (backFace != null) backFace.sortingOrder = FrameOrder;
             if (artworkFace != null) artworkFace.sortingOrder = ArtworkOrder;
             if (emberFace != null) emberFace.sortingOrder = EmberOrder;
-            foreach (var label in new[] { nameLabel, costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel })
+            foreach (var label in new[] { nameLabel, costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel, statusLabel })
             {
                 var textRenderer = label != null ? label.GetComponent<Renderer>() : null;
                 if (textRenderer != null) textRenderer.sortingOrder = TextOrder;
@@ -332,6 +336,7 @@ namespace TawanOS.CardEngine
                 khwanLabel.text = CardData.familiarHealth.ToString();
                 khwanLabel.color = CardData.familiarHealth < CardData.maxKhwan ? khwanDamagedColor : faceTextColor;
             }
+            RefreshStatusTags();
             if (descriptionLabel != null)
             {
                 descriptionLabel.text = KeywordGlossarySO.WrapKeywords(Description(CardData));
@@ -366,6 +371,7 @@ namespace TawanOS.CardEngine
             if (attackLabel == null) attackLabel = CloneLabel("AttackLabel");
             if (khwanLabel == null) khwanLabel = CloneLabel("KhwanLabel");
             if (descriptionLabel == null) descriptionLabel = CloneLabel("DescriptionLabel");
+            if (statusLabel == null) statusLabel = CloneLabel("StatusLabel");
 
             // Text sizes come from the Card Data (Face Text Sizes)
             var src = CardData.source;
@@ -376,6 +382,18 @@ namespace TawanOS.CardEngine
             PlaceLabel(khwanLabel, CardFaceLayout.Khwan, 1.2f, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Stat));
             PlaceLabel(descriptionLabel, CardFaceLayout.Description, 0.4f, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Description), fixedBox: true);
             descriptionLabel.textWrappingMode = TextWrappingModes.Normal;
+            // The tags wrap onto more rows upwards over the picture when there are many
+            PlaceLabel(statusLabel, CardFaceLayout.Statuses, 0.6f, 1f, fixedBox: true);
+            statusLabel.textWrappingMode = TextWrappingModes.Normal;
+            statusLabel.alignment = TextAlignmentOptions.Bottom;
+            statusLabel.enableAutoSizing = false;
+            statusLabel.fontSize = 0.6f;
+            statusLabel.color = Color.white;
+            statusLabel.raycastTarget = false;
+            CardFaceLayout.MakeReadable(statusLabel);
+            statusLabel.outlineWidth = 0.12f;
+            shownStatuses = "?"; // not a real tag list: the next refresh applies the current one
+            if (Application.isPlaying && GetComponent<CardStatusTags>() == null) gameObject.AddComponent<CardStatusTags>();
 
             bool onArt = FaceBackground() != null || ArtCarriesFrame;
             Color main = onArt ? textOnArt : (CardData.magicSchool == MagicSchool.WhiteMagic ? textOnPlainWhite : textOnPlainBlack);
@@ -504,6 +522,64 @@ namespace TawanOS.CardEngine
                 ResyncHover();
             }
             wasIgnoringMouse = ignoring;
+        }
+
+        // ---------------------------------------------------------------- status tags
+
+        // One tag per status: its name, ×stacks when more than one, and a colour of its own. A status an aura gives
+        // (it lasts while that card stays) is drawn paler. The full list with turns left is in the card book.
+        // Cheap when nothing changed: a short string compare, and nothing at all for a card without statuses.
+        public void RefreshStatusTags()
+        {
+            if (statusLabel == null || CardData == null) return;
+            if (CardData.statuses.Count == 0 && shownStatuses.Length == 0) return;
+
+            var b = new System.Text.StringBuilder();
+            foreach (var s in CardData.statuses)
+            {
+                if (s == null || s.stacks <= 0) continue;
+                if (b.Length > 0) b.Append(' ');
+                string alpha = s.fromAura ? "B3" : "FF";
+                b.Append("<mark=#").Append(StatusColour(s.type)).Append(alpha).Append("> ")
+                 .Append(StatusName(s.type));
+                if (s.stacks > 1) b.Append(" ×").Append(s.stacks);
+                b.Append(" </mark>");
+            }
+            string text = b.ToString();
+            bool show = text.Length > 0 && faceVisible;
+            if (text == shownStatuses && statusLabel.gameObject.activeSelf == show) return;
+
+            shownStatuses = text;
+            statusLabel.text = text;
+            statusLabel.gameObject.SetActive(show);
+        }
+
+        // A colour per status, so two tags never look alike: อัปมงคล in dark, cold or bloody tones, สิริมงคล in gold,
+        // teal and green
+        private static string StatusColour(CardStatusType type)
+        {
+            switch (type)
+            {
+                case CardStatusType.Phawa: return "6B2C91";     // ผวา: purple
+                case CardStatusType.Blinded: return "3D3D3D";   // ผีบังตา: grey-black
+                case CardStatusType.PhiAm: return "24365E";     // ผีอำ: night blue
+                case CardStatusType.DoneKhong: return "2E5A36"; // โดนของ: sickly green
+                case CardStatusType.FireBreak: return "B04A12"; // ไฟแตก: burnt orange
+                case CardStatusType.Karma: return "7A1C2C";     // กรรมตามสนอง: maroon
+                case CardStatusType.Taunt: return "8C6A14";     // ยั่วยุ: gold
+                case CardStatusType.Might: return "A82828";     // ฮึกเหิม: red
+                case CardStatusType.Protect: return "1B6F8A";   // เกราะคุ้มภัย: teal
+                case CardStatusType.Vital: return "357A35";     // ฟื้นขวัญ: green
+                default: return "555555";
+            }
+        }
+
+        // The status's Thai name, as the Inspector shows it ([InspectorName] on CardStatusType)
+        private static string StatusName(CardStatusType type)
+        {
+            var field = typeof(CardStatusType).GetField(type.ToString());
+            var attr = field != null ? (InspectorNameAttribute)System.Attribute.GetCustomAttribute(field, typeof(InspectorNameAttribute)) : null;
+            return attr != null ? attr.displayName : type.ToString();
         }
 
         public void ResyncHover()
