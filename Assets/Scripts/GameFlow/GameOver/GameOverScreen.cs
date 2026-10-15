@@ -165,26 +165,7 @@ namespace TawanOS.GameFlow
             screen.cutsceneGroup.blocksRaycasts = false;
             screen.cutsceneGroup.interactable = false;
 
-            // Character Art
-            var charHolderGo = new GameObject("CharacterHolder", typeof(RectTransform));
-            charHolderGo.transform.SetParent(cutsceneGo.transform, false);
-            var charHolderRect = charHolderGo.GetComponent<RectTransform>();
-            Place(charHolderRect, 0.25f, 0.75f, 0.30f, 0.90f);
-
-            var charArt = LoadCharacterArt();
-            var charImgGo = new GameObject("CharacterImage", typeof(RectTransform), typeof(Image), typeof(AspectRatioFitter));
-            charImgGo.transform.SetParent(charHolderGo.transform, false);
-            UiFactory.Stretch(charImgGo.GetComponent<RectTransform>(), 0f);
-            screen.characterImage = charImgGo.GetComponent<Image>();
-            screen.characterImage.sprite = charArt;
-            screen.characterImage.preserveAspect = true;
-
-            var fitter = charImgGo.GetComponent<AspectRatioFitter>();
-            fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
-            if (charArt != null && charArt.rect.height > 0f)
-            {
-                fitter.aspectRatio = charArt.rect.width / charArt.rect.height;
-            }
+            // Character art removed for now (Tawan, 15 Oct): the cutscene is the dialogue only
 
             // Dialogue Panel
             var dialoguePanelGo = new GameObject("DialoguePanel", typeof(RectTransform), typeof(Image));
@@ -309,7 +290,7 @@ namespace TawanOS.GameFlow
                 StopCoroutine(sequenceCoroutine);
                 sequenceCoroutine = null;
             }
-            if (cutsceneGroup != null) cutsceneGroup.alpha = 1f;
+            if (cutsceneGroup != null) cutsceneGroup.alpha = 0f;
             if (dialogueText != null) dialogueText.text = DefeatDialogueLines[DefeatDialogueLines.Length - 1];
             if (bloodOverlay != null) bloodOverlay.color = new Color(0.6f, 0.04f, 0.04f, 0.95f);
             if (statsGroup != null)

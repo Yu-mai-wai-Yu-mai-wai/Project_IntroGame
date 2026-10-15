@@ -105,7 +105,7 @@ namespace TawanOS.EditorTools
 
                 var screen = GameOverScreen.Show(summary);
                 failures += Expect("GameOverScreen instance created", screen != null && GameOverScreen.Instance == screen);
-                failures += Expect("Character image exists and has sprite assigned", screen.characterImage != null && screen.characterImage.sprite != null);
+                failures += Expect("No character art on the defeat screen (dialogue only)", screen.characterImage == null);
                 failures += Expect("Blood overlay image exists and has procedural sprite assigned", screen.bloodOverlay != null && screen.bloodOverlay.sprite != null);
 
                 // Check dialogue lines start with [ชั่วคราว]
