@@ -85,18 +85,20 @@ namespace TawanOS.CardEngine
             var profile = combat.currentEnemyProfile;
 
             // Enemy
-            enemy.title.text = profile != null ? profile.enemyName : "ศัตรู";
+            var theme = UIThemeSO.Current;
+            string enemyName = profile != null ? profile.enemyName : "ศัตรู";
+            string compactStats = $"  <size=75%><color=#E0D6B8>กุศล {s.enemyMerit}/{s.maxMerit} · มลทิน {s.enemyCorruption}/{s.enemyCorruptionThreshold}</color></size>";
+            enemy.title.text = $"{enemyName}{compactStats}";
             string handInfo = combat.EnemyCards.Active
-                ? $"  |  การ์ดในมือ {combat.EnemyCards.Hand.Count}  |  กุศล {s.enemyMerit} / {s.maxMerit}"
+                ? $"  |  การ์ดในมือ {combat.EnemyCards.Hand.Count}"
                 : "";
             string shield = s.enemyShield > 0 ? $"  |  เกราะ {s.enemyShield}" : "";
-            enemy.detail.text = $"ขวัญ {s.enemyKhwan} / {s.maxEnemyKhwan}{shield}  |  {combat.EnemyAIStateName}{handInfo}";
+            string khwanWord = theme != null && theme.titleFont != null ? $"<font=\"{theme.titleFont.name}\">ขวัญ</font>" : "ขวัญ";
+            enemy.detail.text = $"{khwanWord} {s.enemyKhwan} / {s.maxEnemyKhwan}{shield}  |  {combat.EnemyAIStateName}{handInfo}";
             SetFill(enemy.fill, s.maxEnemyKhwan > 0 ? (float)s.enemyKhwan / s.maxEnemyKhwan : 0f, s.enemyKhwan, ref lastEnemyKhwan);
 
             // Player
             string pShield = s.playerShield > 0 ? $"  |  เกราะ {s.playerShield}" : "";
-            var theme = UIThemeSO.Current;
-            string khwanWord = theme != null && theme.titleFont != null ? $"<font=\"{theme.titleFont.name}\">ขวัญ</font>" : "ขวัญ";
             player.detail.text = $"{khwanWord} {s.playerKhwan} / {s.maxPlayerKhwan}{pShield}";
             SetFill(player.fill, s.maxPlayerKhwan > 0 ? (float)s.playerKhwan / s.maxPlayerKhwan : 0f, s.playerKhwan, ref lastPlayerKhwan);
 
@@ -176,6 +178,8 @@ namespace TawanOS.CardEngine
             actionRt.pivot = new Vector2(0.5f, 1f);
             actionRt.anchoredPosition = new Vector2(0, -4);
             actionRt.sizeDelta = new Vector2(0, 36);
+            var theme = UIThemeSO.Current;
+            if (theme != null && theme.bodyFont != null) actionText.font = theme.bodyFont;
 
             // Left, clear of the hand, under flame rings
             player = BuildPlayerPanel(canvasGo.transform);
@@ -290,10 +294,17 @@ namespace TawanOS.CardEngine
             bg.color = Panel;
             bg.raycastTarget = false;
 
-            p.title = MakeText(rootGo.transform, "Title", titleSize, FontStyles.Bold, Color.white,
+            var soft = rootGo.AddComponent<SoftEdgeImage>();
+            soft.SetSides(0.08f, 0.08f, 0.08f, 0.08f);
+
+            var theme = UIThemeSO.Current;
+            p.title = MakeText(rootGo.transform, "Title", titleSize, FontStyles.Normal, Color.white,
                 new Vector2(0, 0.62f), new Vector2(1, 1), new Vector2(16, 0), new Vector2(-16, -4));
+            if (theme != null && theme.titleFont != null) p.title.font = theme.titleFont;
+
             p.detail = MakeText(rootGo.transform, "Detail", detailSize, FontStyles.Normal, new Color(0.9f, 0.9f, 0.9f),
                 new Vector2(0, 0.28f), new Vector2(1, 0.62f), new Vector2(16, 0), new Vector2(-16, 0));
+            if (theme != null && theme.bodyFont != null) p.detail.font = theme.bodyFont;
 
             var trackGo = new GameObject("BarTrack", typeof(RectTransform));
             trackGo.transform.SetParent(rootGo.transform, false);

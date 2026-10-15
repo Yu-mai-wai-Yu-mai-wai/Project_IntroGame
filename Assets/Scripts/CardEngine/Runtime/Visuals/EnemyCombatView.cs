@@ -94,7 +94,11 @@ namespace TawanOS.CardEngine
 
             if (profile != null)
             {
-                if (nameText != null) nameText.text = profile.enemyName;
+                if (nameText != null)
+                {
+                    string stats = state != null ? $"  <size=75%><color=#E0D6B8>กุศล {state.enemyMerit}/{state.maxMerit} · มลทิน {state.enemyCorruption}/{state.enemyCorruptionThreshold}</color></size>" : "";
+                    nameText.text = $"{profile.enemyName}{stats}";
+                }
                 if (portraitImage != null && profile.portrait != null)
                 {
                     portraitImage.sprite = profile.portrait;
