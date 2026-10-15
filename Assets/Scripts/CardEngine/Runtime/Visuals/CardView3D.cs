@@ -557,7 +557,8 @@ namespace TawanOS.CardEngine
 
         // ---------------------------------------------------------------- status symbols
 
-        // A picture per status that tells what it does at a glance (StatusSymbols): sizes and places are fractions of
+        // A picture per status the cards give (ผวา, ผีบังตา, ยั่วยุ, เกราะคุ้มภัย; ผ้ายันต์กลับด้าน only swaps among these)
+        // that tells what it does at a glance (StatusSymbols): sizes and places are fractions of
         // the face (the cube's local -0.5..0.5 square), sizes of the face's height so the pictures stay square
         private readonly System.Collections.Generic.Dictionary<string, SpriteRenderer> symbols =
             new System.Collections.Generic.Dictionary<string, SpriteRenderer>();
@@ -577,18 +578,9 @@ namespace TawanOS.CardEngine
             var desc = CardFaceLayout.Description;
             Symbol("BlindCross", Has(CardStatusType.Blinded), StatusSymbols.Cross, desc.center, desc.size.y * 1.15f, desc.size.y * 1.15f,
                 new Color(0.9f, 0.1f, 0.1f, 0.9f), 0f, stretch: true, widthFraction: desc.size.x * 0.75f);
-            // ผีอำ: it cannot strike, so its attack is crossed out
-            var atk = CardFaceLayout.Attack;
-            Symbol("NoStrike", Has(CardStatusType.PhiAm), StatusSymbols.Cross, atk.center, 0.11f, 0.11f, new Color(0.9f, 0.1f, 0.1f, 0.95f), 0f);
-            // ผวา / ฮึกเหิม: an arrow beside the attack, down or up
-            Symbol("AttackDown", Has(CardStatusType.Phawa), StatusSymbols.Arrow, atk.center + new Vector2(-0.14f, 0f), 0.09f, 0.09f,
-                Color.Lerp(Tint(CardStatusType.Phawa), Color.white, 0.25f), 180f);
-            Symbol("AttackUp", Has(CardStatusType.Might), StatusSymbols.Arrow, atk.center + new Vector2(-0.14f, Has(CardStatusType.Phawa) ? 0.09f : 0f),
-                0.09f, 0.09f, Color.Lerp(Tint(CardStatusType.Might), Color.white, 0.2f), 0f);
-            // ฟื้นขวัญ: a plus beside the Khwan
-            var khwan = CardFaceLayout.Khwan;
-            Symbol("KhwanPlus", Has(CardStatusType.Vital), StatusSymbols.Plus, khwan.center + new Vector2(0.14f, 0f), 0.08f, 0.08f,
-                Color.Lerp(Tint(CardStatusType.Vital), Color.white, 0.25f), 0f);
+            // ผวา: an arrow down beside the attack
+            Symbol("AttackDown", Has(CardStatusType.Phawa), StatusSymbols.Arrow, CardFaceLayout.Attack.center + new Vector2(-0.14f, 0f),
+                0.09f, 0.09f, Color.Lerp(Tint(CardStatusType.Phawa), Color.white, 0.25f), 180f);
         }
 
         // height: a fraction of the face's height. A square picture keeps its shape (its width follows the card's aspect);
@@ -622,22 +614,15 @@ namespace TawanOS.CardEngine
             t.localScale = new Vector3(x, height, 1f);
         }
 
-        // A colour per status, so two tags never look alike: อัปมงคล in dark, cold or bloody tones, สิริมงคล in gold,
-        // teal and green
+        // A colour per status the cards give: อัปมงคล dark, สิริมงคล gold and teal
         private static string StatusColour(CardStatusType type)
         {
             switch (type)
             {
                 case CardStatusType.Phawa: return "6B2C91";     // ผวา: purple
                 case CardStatusType.Blinded: return "3D3D3D";   // ผีบังตา: grey-black
-                case CardStatusType.PhiAm: return "24365E";     // ผีอำ: night blue
-                case CardStatusType.DoneKhong: return "2E5A36"; // โดนของ: sickly green
-                case CardStatusType.FireBreak: return "B04A12"; // ไฟแตก: burnt orange
-                case CardStatusType.Karma: return "7A1C2C";     // กรรมตามสนอง: maroon
                 case CardStatusType.Taunt: return "8C6A14";     // ยั่วยุ: gold
-                case CardStatusType.Might: return "A82828";     // ฮึกเหิม: red
                 case CardStatusType.Protect: return "1B6F8A";   // เกราะคุ้มภัย: teal
-                case CardStatusType.Vital: return "357A35";     // ฟื้นขวัญ: green
                 default: return "555555";
             }
         }

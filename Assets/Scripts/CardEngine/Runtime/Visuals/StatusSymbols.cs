@@ -3,17 +3,16 @@ using UnityEngine;
 namespace TawanOS.CardEngine
 {
     // The pictures that show a card's statuses at a glance (CardView3D): a shield for เกราะคุ้มภัย, a cross over the
-    // ability text for ผีบังตา, a glowing frame for ยั่วยุ, arrows by the attack for ผวา / ฮึกเหิม. Drawn once in code
+    // ability text for ผีบังตา, a glowing frame for ยั่วยุ, an arrow down by the attack for ผวา. Drawn once in code
     // (no art files): white shapes with a black edge, tinted per status by the SpriteRenderer, so they read on any art.
     public static class StatusSymbols
     {
         private const int Size = 128;
-        private static Sprite shield, cross, frame, arrow, plus;
+        private static Sprite shield, cross, frame, arrow;
 
         public static Sprite Shield => shield != null ? shield : shield = Make(ShieldShape, 0.06f);
         public static Sprite Cross => cross != null ? cross : cross = Make(CrossShape, 0.05f);
         public static Sprite Arrow => arrow != null ? arrow : arrow = Make(ArrowShape, 0.07f);
-        public static Sprite Plus => plus != null ? plus : plus = Make(PlusShape, 0.07f);
         public static Sprite Frame => frame != null ? frame : frame = MakeFrame();
 
         // Signed distance-like test per shape: > 0 inside. `edge` is how wide the black rim is (in 0..1 of the picture).
@@ -60,20 +59,13 @@ namespace TawanOS.CardEngine
             return Mathf.Min(0.11f - Mathf.Min(a, b), reach);
         }
 
-        // An arrow pointing up (flipped for down): a shaft and a triangular head
+        // An arrow pointing up (turned over for down): a shaft and a triangular head
         private static float ArrowShape(float x, float y)
         {
             float cx = Mathf.Abs(x - 0.5f);
             float shaft = Mathf.Min(0.11f - cx, Mathf.Min(y - 0.06f, 0.62f - y));
             float head = Mathf.Min(0.94f - y - cx * 1.1f, y - 0.5f);
             return Mathf.Max(shaft, Mathf.Min(head, 0.4f - cx));
-        }
-
-        private static float PlusShape(float x, float y)
-        {
-            float cx = Mathf.Abs(x - 0.5f), cy = Mathf.Abs(y - 0.5f);
-            float bar = Mathf.Max(Mathf.Min(0.12f - cx, 0.42f - cy), Mathf.Min(0.12f - cy, 0.42f - cx));
-            return bar;
         }
 
         // A glowing border along the picture's edge, soft on the inside (stretched over the whole card)
