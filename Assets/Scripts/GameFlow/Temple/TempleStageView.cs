@@ -13,7 +13,7 @@ namespace TawanOS.GameFlow
     /// altar, with a กราบไหว้ button and the khwan bar at the bottom middle of the screen. Bowing dips the view, the
     /// candles and the gold light on the empty dais (where the Buddha image will stand) flare, gold sparks of merit
     /// rise from the player, and the bar fills up to its new value; then the screen fades and the run goes on.
-    /// Healing itself is <see cref="TempleManager.Pray"/>. Placed by Tools/TawanOS/Temple/Setup Temple Stage.
+    /// Healing itself is <see cref="TempleManager.Pray"/>. Placed by Tools/TawanOS/Temple/Setup Temple Scene.
     /// </summary>
     public class TempleStageView : MonoBehaviour
     {
@@ -150,6 +150,11 @@ namespace TawanOS.GameFlow
         {
             var theme = UIThemeSO.Current;
             var canvas = UiFactory.CreateOverlayCanvas("TempleCanvas", 10, transform);
+            // An overlay canvas from UiFactory takes no clicks (no raycaster, and its CanvasGroup lets them through);
+            // the กราบไหว้ button needs both
+            if (canvas.GetComponent<GraphicRaycaster>() == null) canvas.gameObject.AddComponent<GraphicRaycaster>();
+            var group = canvas.GetComponent<CanvasGroup>();
+            if (group != null) group.blocksRaycasts = group.interactable = true;
             var root = canvas.transform;
 
             // Khwan bar, bottom middle

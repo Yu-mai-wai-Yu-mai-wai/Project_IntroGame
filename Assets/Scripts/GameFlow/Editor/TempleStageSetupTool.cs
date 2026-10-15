@@ -8,12 +8,13 @@ using UnityEngine.SceneManagement;
 namespace TawanOS.GameFlow
 {
     /// <summary>
-    /// Turns TempleScene into the วัด as a 3D place (Game Designer, 15 Oct), built from models already in the project:
+    /// Builds TempleScene, the วัด as a 3D place (Game Designer, 15 Oct), from models already in the project, and
+    /// adds it to Build Settings (creating the scene with its camera and TempleManager if it does not exist yet):
     /// the เมรุ building without its spire, furnace, door and cart becomes an old temple in the night forest; the
     /// doorway is walled up behind an empty dais (where a Buddha image will stand, lit gold for now) and an altar
     /// table holds candles from the combat table and the incense pot and vases from the ศาลตายาย. The camera kneels
-    /// in front of the altar and a <see cref="TempleStageView"/> runs the visit; the old flat screen is removed.
-    /// Safe to run again: the stage is rebuilt.
+    /// in front of the altar and a <see cref="TempleStageView"/> runs the visit. Running it again rebuilds the stage
+    /// (anything dressed by hand on it is lost), so the menu asks first.
     /// </summary>
     public static class TempleStageSetupTool
     {
@@ -30,7 +31,7 @@ namespace TawanOS.GameFlow
         private static readonly Quaternion ModelRotation = Quaternion.Euler(0f, -173.677f, 0f);
         private static readonly string[] RemovedParts = { "Furnace", "FurnaceLower", "InteriorFurnace", "Door", "DoorFrame", "Cart", "Lock" };
 
-        [MenuItem("Tools/TawanOS/Temple/Setup Temple Stage")]
+        [MenuItem("Tools/TawanOS/Temple/Setup Temple Scene")]
         private static void SetupMenu()
         {
             if (Application.isPlaying)
@@ -38,6 +39,7 @@ namespace TawanOS.GameFlow
                 EditorUtility.DisplayDialog("Cannot Setup in Play Mode", "Please exit Play Mode before running the Setup Tool.", "OK");
                 return;
             }
+            if (!TawanOS.EditorTools.SetupGuard.Confirm("Setup Temple Scene")) return;
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             Setup();
         }
@@ -59,20 +61,33 @@ namespace TawanOS.GameFlow
                 return false;
             }
 
-            Scene scene = SceneManager.GetActiveScene().path == ScenePath
-                ? SceneManager.GetActiveScene()
-                : EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-            var manager = Object.FindFirstObjectByType<TempleManager>(FindObjectsInactive.Include);
-            var mainCamera = scene.GetRootGameObjects().Select(g => g.GetComponent<Camera>()).FirstOrDefault(c => c != null);
-            if (manager == null || mainCamera == null)
+            Scene scene;
+            if (SceneManager.GetActiveScene().path == ScenePath) scene = SceneManager.GetActiveScene();
+            else if (System.IO.File.Exists(ScenePath)) scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            else
             {
-                Debug.LogError($"[TempleStageSetupTool] {ScenePath} needs its TempleManager and Main Camera - run Setup Temple Scene first.");
-                return false;
+                scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                EditorSceneManager.SaveScene(scene, ScenePath);
             }
 
+            // What every scene of this kind has: a main camera, an event system and the manager
+            var mainCamera = scene.GetRootGameObjects().Select(g => g.GetComponent<Camera>()).FirstOrDefault(c => c != null);
+            if (mainCamera == null)
+            {
+                var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
+                mainCamera = camGo.AddComponent<Camera>();
+            }
+            if (Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
+            {
+                var es = new GameObject("EventSystem");
+                es.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                es.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+            }
+            var manager = Object.FindFirstObjectByType<TempleManager>(FindObjectsInactive.Include);
+            if (manager == null) manager = new GameObject("TempleManager").AddComponent<TempleManager>();
+
             foreach (var g in scene.GetRootGameObjects())
-                if (g.name == StageName || g.name == BuildingName || g.GetComponent<TempleViewUI>() != null) Object.DestroyImmediate(g);
-            manager.view = null;
+                if (g.name == StageName || g.name == BuildingName) Object.DestroyImmediate(g);
 
             // The building
             var building = (GameObject)PrefabUtility.InstantiatePrefab(meruModel, scene);
@@ -149,6 +164,12 @@ namespace TawanOS.GameFlow
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
+            var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+            if (!scenes.Exists(s => s.path == ScenePath))
+            {
+                scenes.Add(new EditorBuildSettingsScene(ScenePath, true));
+                EditorBuildSettings.scenes = scenes.ToArray();
+            }
             Debug.Log($"[TempleStageSetupTool] Temple stage ready in {ScenePath}.");
             return true;
         }

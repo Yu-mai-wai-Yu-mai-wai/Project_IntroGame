@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e36d0cebf40b1c459622c04865cdc4b, type: 3}
   m_Name: DefaultMapConfig
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.MapEngine.MapConfigSO
-  seed: 909152
+  seed: 500870
   useRandomSeed: 1
   totalFloors: 8
   mapWidth: 3
@@ -42,7 +42,6 @@ MonoBehaviour:
   biomeProfile: {fileID: 11400000, guid: 49a547a2cab912a44a5fe3c2c0148ecd, type: 2}
   nodeProfiles:
   - {fileID: 11400000, guid: e44e44e5443545e4e96291440c93bf7c, type: 2}
-  - {fileID: 11400000, guid: e4d462b80d1cb334d941d1885be0be2e, type: 2}
   - {fileID: 11400000, guid: 76f045cf0cb3a29499faa75fbf5c134d, type: 2}
   - {fileID: 11400000, guid: a45b477c838e2314e83a3093acdd85ad, type: 2}
   - {fileID: 11400000, guid: 5812a3ff709248840b87370bb6513d4f, type: 2}

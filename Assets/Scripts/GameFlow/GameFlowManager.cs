@@ -409,7 +409,7 @@ namespace TawanOS.GameFlow
         {
             if (!Application.CanStreamedLevelBeLoaded(TempleSceneName))
             {
-                Debug.LogWarning("[GameFlowManager] TempleScene is not in Build Settings (run Tools > TawanOS > Temple > Setup Temple Scene) - the node does nothing.");
+                Debug.LogWarning("[GameFlowManager] TempleScene is not in Build Settings (File > Build Profiles) - the node does nothing.");
                 if (SceneManager.GetActiveScene().name != MapSceneName && Application.isPlaying) SceneTransition.Load(MapSceneName);
                 return;
             }
