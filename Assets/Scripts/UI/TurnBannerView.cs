@@ -6,7 +6,7 @@ using TawanOS.CardEngine;
 namespace TawanOS.UI
 {
     /// <summary>
-    /// The combat scene's "press C again" hint, shown while the camera is in the top view (plan task G3). The turn
+    /// The combat scene's "press C again" hint, shown while the player has the C top view open (plan task G3). The turn
     /// banner that used to sit top left (turn number, whose turn, phase, what to do) is gone: the turn is now shown
     /// on the table by TableTurnMarker (Game Designer, 13 Oct). Created automatically in any scene that has a
     /// TurnPhaseController.
@@ -69,9 +69,10 @@ namespace TawanOS.UI
         private void Update()
         {
             // The board-only top view hides the whole UI, but this hint must stay visible there because that is
-            // exactly where the player needs it (plan task G3)
+            // exactly where the player needs it (plan task G3). Only the view the player opened with C: the clash
+            // and a held card also use the top view, but C does nothing there
             var rig = CombatCameraRig3D.Instance;
-            bool inTopView = rig != null && rig.IsTopView && !combatOver;
+            bool inTopView = rig != null && rig.IsBoardOnlyView && !combatOver;
             if (topViewRoot.activeSelf != inTopView) topViewRoot.SetActive(inTopView);
             if (inTopView) topViewText.text = $"มุมบน · กด {rig.toggleKey} อีกครั้งเพื่อกลับมุมปกติ";
         }
