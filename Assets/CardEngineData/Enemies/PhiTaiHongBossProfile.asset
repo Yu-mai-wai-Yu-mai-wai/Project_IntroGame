@@ -88,5 +88,14 @@ MonoBehaviour:
   initialAIState: 
   isBoss: 1
   phase2Profile: {fileID: 11400000, guid: 1602597215fa593418d07241f585beb3, type: 2}
-  phase2AtKhwanRatio: 0.5
+  phase2AtKhwanRatio: 0
   cardEachTurn: {fileID: 0}
+  lines:
+    combatStart: []
+    playCard: []
+    hurt: []
+    playerHurt: []
+    lowKhwan: []
+    phaseChange: []
+    enemyWins: []
+    enemyLoses: []

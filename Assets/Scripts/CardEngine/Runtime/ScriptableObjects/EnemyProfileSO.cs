@@ -89,8 +89,8 @@ namespace TawanOS.CardEngine
         [Header("Boss Settings")]
         public bool isBoss = false;
         public EnemyProfileSO phase2Profile;
-        [Tooltip("ศัตรูเข้าเฟสถัดไป (phase2Profile) เมื่อขวัญเหลือไม่เกินสัดส่วนนี้ของขวัญสูงสุด (0.5 = ครึ่งหนึ่ง) ขวัญไม่เติมใหม่ และการโจมตีที่ทำให้ขวัญหมดก่อนเข้าเฟสจะเหลือขวัญ 1")]
-        [Range(0f, 1f)] public float phase2AtKhwanRatio = 0.5f;
+        [Tooltip("ศัตรูเข้าเฟสถัดไป (phase2Profile) เมื่อขวัญเหลือไม่เกินสัดส่วนนี้ของขวัญสูงสุด (0 = เมื่อหลอดแรกหมด) เฟสใหม่ได้หลอดขวัญเต็มของตัวเอง (maxKhwan ของ phase2Profile)")]
+        [Range(0f, 1f)] public float phase2AtKhwanRatio = 0f;
         [Tooltip("การ์ดที่ถูกสร้างขึ้นมือทุกครั้งที่เริ่มเทิร์นของศัตรู และตอนเข้าเฟสนี้ (ต้องมีเด็คการ์ด)")]
         public CardDataSO cardEachTurn;
 

@@ -94,6 +94,7 @@ namespace TawanOS.UI
         private void HandlePhase(int phase, EnemyProfileSO profile)
         {
             spokenFor = profile;
+            saidLow = false; // a new khwan bar: it can cry out again when that one runs low
             Say(EnemyLines.Moment.PhaseChange, important: true);
         }
 

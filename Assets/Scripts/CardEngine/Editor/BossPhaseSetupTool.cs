@@ -155,8 +155,9 @@ namespace TawanOS.CardEngine
         }
 
         // Batch: -executeMethod TawanOS.CardEngine.BossPhaseSetupTool.SetupPhase2Rules
-        // Phase 2 starts when the boss is down to half its khwan. It used to get a คาถาดูดขวัญ in its hand every turn;
-        // that was taken out (14 Oct), so this clears cardEachTurn. The card asset is still made when missing.
+        // The boss has two khwan bars: phase 2 starts when the first runs out, with a full bar of its own (15 Oct;
+        // it used to start at half the one bar). It used to get a คาถาดูดขวัญ in its hand every turn; that was taken
+        // out (14 Oct), so this clears cardEachTurn. The card asset is still made when missing.
         public static void SetupPhase2Rules()
         {
             var boss = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(BossPath);
@@ -196,12 +197,12 @@ namespace TawanOS.CardEngine
                 drain.enemyOnly = true; // the boss's own card: never in the pit, rewards, shop or card book
                 EditorUtility.SetDirty(drain);
             }
-            boss.phase2AtKhwanRatio = 0.5f;
+            boss.phase2AtKhwanRatio = 0f;
             phase2.cardEachTurn = null;
             EditorUtility.SetDirty(boss);
             EditorUtility.SetDirty(phase2);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[BossPhaseSetupTool] Phase 2 at {boss.phase2AtKhwanRatio:P0} khwan; no card in hand each turn.");
+            Debug.Log($"[BossPhaseSetupTool] Phase 2 when the first bar runs out, with {phase2.maxKhwan} khwan of its own; no card in hand each turn.");
         }
 
         // The status the first form's curse move inflicts, so the second form curses the same way

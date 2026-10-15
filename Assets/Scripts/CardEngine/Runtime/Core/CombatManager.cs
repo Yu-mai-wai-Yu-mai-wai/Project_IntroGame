@@ -751,8 +751,10 @@ namespace TawanOS.CardEngine
         }
 
         // The enemy's khwan fell to its phase line (or ran out): if its profile has a next phase it becomes that
-        // profile and the fight goes on. Its khwan is not refilled (a blow that emptied it leaves it at 1); its
-        // shield, statuses and corruption are cleared and its board stays. False when there is no next phase.
+        // profile and the fight goes on with a khwan bar of its own, full (a boss has one bar per phase; the
+        // run's khwan scaling carries over: the new bar is the old one's max plus the difference between the two
+        // profiles' maxKhwan). Its shield, statuses and corruption are cleared and its board stays. False when
+        // there is no next phase.
         private bool TryAdvanceEnemyPhase()
         {
             var next = currentEnemyProfile != null ? currentEnemyProfile.phase2Profile : null;
@@ -761,7 +763,8 @@ namespace TawanOS.CardEngine
             var previous = currentEnemyProfile;
             currentEnemyProfile = next;
             EnemyPhase++;
-            state.enemyKhwan = Mathf.Max(1, state.enemyKhwan);
+            state.maxEnemyKhwan = Mathf.Max(1, state.maxEnemyKhwan + next.maxKhwan - previous.maxKhwan);
+            state.enemyKhwan = state.maxEnemyKhwan;
             state.enemyShield = 0;
             state.enemyStatuses.Clear();
             state.enemyPurify = 0;
@@ -799,7 +802,7 @@ namespace TawanOS.CardEngine
             // A combat ends exactly once; later calls (a second killing blow in the same resolution) are ignored
             if (IsCombatOver) return;
 
-            // A boss with another phase is not beaten yet: it enters that phase with 1 khwan left, and the fight
+            // A boss with another phase is not beaten yet: it enters that phase with a full bar, and the fight
             // goes on unless the player fell at the same moment
             if (state.enemyKhwan <= 0 && TryAdvanceEnemyPhase())
             {
