@@ -104,7 +104,7 @@ namespace TawanOS.EditorTools
 
             // 5. The shop sells cards only: no heal (the วัด does it), no card removal (the เมรุ does it)
             var shopType = typeof(TawanOS.ShopEngine.ShopManager);
-            failures += Expect("ShopManager has no blessing (heal) left", shopType.GetMethod("BuyBlessing") == null);
+            failures += Expect("Shop blessings raise max khwan/กุศล only, no heal", !System.Enum.GetNames(typeof(TawanOS.ShopEngine.ShopBlessingKind)).Any(n => n.Contains("Heal")));
             failures += Expect("ShopManager has no card removal left", shopType.GetMethod("BeginRemoval") == null && shopType.GetMethod("RemoveCard") == null);
 
             Debug.Log(failures == 0 ? "[TempleTests] PASS" : $"[TempleTests] FAIL: {failures} check(s) failed");

@@ -72,8 +72,8 @@ namespace TawanOS.ShopEngine
         [Header("Blessings (shown on the amulet shelf)")]
         public List<ShopBlessing> blessings = new List<ShopBlessing>
         {
-            new ShopBlessing { kind = ShopBlessingKind.MaxKhwan, displayName = "พรขวัญ", description = "ขวัญสูงสุด +3", amount = 3, price = 25 },
-            new ShopBlessing { kind = ShopBlessingKind.MaxMerit, displayName = "พรกุศล", description = "กุศลสูงสุด +1", amount = 1, price = 70 },
+            new ShopBlessing { kind = ShopBlessingKind.MaxKhwan, displayName = "พรขวัญ", description = "ขวัญสูงสุด +3", amount = 3, price = 10 },
+            new ShopBlessing { kind = ShopBlessingKind.MaxMerit, displayName = "พรกุศล", description = "กุศลสูงสุด +1", amount = 1, price = 20 },
         };
 
         // No services (Game Designer, 11 Oct): the shop sells cards only. Khwan is healed at the วัด node,

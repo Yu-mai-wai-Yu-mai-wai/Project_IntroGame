@@ -71,3 +71,16 @@ MonoBehaviour:
     icon: {fileID: 0}
     price: 50
   amuletsForSale: 0
+  blessings:
+  - kind: 0
+    displayName: "\u0E1E\u0E23\u0E02\u0E27\u0E31\u0E0D"
+    description: "\u0E02\u0E27\u0E31\u0E0D\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 +3"
+    icon: {fileID: 0}
+    amount: 3
+    price: 10
+  - kind: 1
+    displayName: "\u0E1E\u0E23\u0E01\u0E38\u0E28\u0E25"
+    description: "\u0E01\u0E38\u0E28\u0E25\u0E2A\u0E39\u0E07\u0E2A\u0E38\u0E14 +1"
+    icon: {fileID: 0}
+    amount: 1
+    price: 20
