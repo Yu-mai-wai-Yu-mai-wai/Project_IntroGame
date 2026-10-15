@@ -152,7 +152,7 @@ namespace TawanOS.ShopEngine
                 layout.padding = new RectOffset(40, 40, 0, 0); // room for the smoke to spill past the sides
                 layout.childAlignment = TextAnchor.MiddleLeft;
                 layout.childControlWidth = layout.childControlHeight = true;
-                layout.childForceExpandWidth = true;
+                layout.childForceExpandWidth = false; // each button keeps its own width (padding left and right of the text)
                 layout.childForceExpandHeight = false;
             }
             if (blessingColumn != null) blessingColumn.SetAsLastSibling();
@@ -184,7 +184,9 @@ namespace TawanOS.ShopEngine
         {
             var theme = UIThemeSO.Current;
             var rect = UiFactory.CreateRect($"Blessing{index}", blessingColumn);
-            rect.gameObject.AddComponent<LayoutElement>().preferredHeight = 140f; // padding above and below the two lines
+            var size = rect.gameObject.AddComponent<LayoutElement>();
+            size.preferredHeight = 140f; // padding above and below the two lines
+            size.minWidth = size.preferredWidth = 340f; // padding left and right of the text; min so the narrow shelf cannot squeeze it
             var panel = rect.gameObject.AddComponent<Image>();
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = panel;
