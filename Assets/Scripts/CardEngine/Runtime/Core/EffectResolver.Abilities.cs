@@ -157,10 +157,11 @@ namespace TawanOS.CardEngine
             return card != null && !card.summonedThisRound && EffectiveAttack(card) > 0 && !HasCardStatus(card, CardStatusType.PhiAm);
         }
 
-        // Base crit plus every CritChanceBonus (ผ้ายันต์มหาอุด) on the attacker's side of the board
+        // Base crit plus every CritChanceBonus (ผ้ายันต์มหาอุด) on the attacker's side of the board, for any card that
+        // strikes: a familiar, or an amulet that has สะเทือนขวัญ
         public float CritChancePercent(CardInstance attacker, bool fromPlayer)
         {
-            if (attacker == null || attacker.cardType != CardType.Familiar) return 0f;
+            if (!IsStrikerType(attacker)) return 0f;
 
             float chance = BaseCritPercent;
             foreach (var c in BoardOf(fromPlayer))
@@ -437,12 +438,16 @@ namespace TawanOS.CardEngine
 
                 case AbilityEffect.ApplyStatus:
                     if (!hasKhwan) return false;
-                    // ผวา and ผีบังตา only act on a card that strikes
-                    if ((a.status == CardStatusType.Phawa || a.status == CardStatusType.Blinded) && c.cardType != CardType.Familiar) return false;
+                    // ผวา lowers สะเทือนขวัญ and its card says บริวาร; ผีบังตา switches off a card's abilities, so it takes an
+                    // amulet too (ตุ๊กตาคุณไสย, ตะกรุดดำ, หุ่นพยนต์ live on their abilities)
+                    if (a.status == CardStatusType.Phawa && c.cardType != CardType.Familiar) return false;
                     if (HasCardStatus(c, a.status)) score -= 50f;
-                    score += CardStatus.IsDebuff(a.status)
-                        ? c.familiarDamage * 2f + c.familiarHealth * 0.1f   // hinder the most dangerous card
-                        : c.familiarHealth;                                 // taunt/blessing on the sturdiest card
+                    if (a.status == CardStatusType.Blinded)
+                        score += c.familiarDamage * 2f + (c.abilities != null ? c.abilities.Count * 3f : 0f); // the card with most to lose
+                    else
+                        score += CardStatus.IsDebuff(a.status)
+                            ? c.familiarDamage * 2f + c.familiarHealth * 0.1f   // hinder the most dangerous card
+                            : c.familiarHealth;                                 // taunt/blessing on the sturdiest card
                     return true;
 
                 default:
