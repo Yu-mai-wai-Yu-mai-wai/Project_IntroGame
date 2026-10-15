@@ -7,8 +7,8 @@ using UnityEngine;
 namespace TawanOS.EditorTools
 {
     /// <summary>
-    /// วัด node and the map without Elite (Game Designer, 11 Oct): the 7-floor map never rolls Elite, rolls วัด on
-    /// some runs but never two in a row, the temple heals to full once per visit, the legend and the map config
+    /// วัด node and the map without Elite (Game Designer, 11 Oct): the 7-floor map never rolls Elite, always has วัด
+    /// on the floor before the boss (15 Oct) but never two in a row, the temple heals to full once per visit, the legend and the map config
     /// know the temple, and the shop no longer heals or removes cards.
     /// Menu: Tools/TawanOS/Tests/Temple. Batch: -executeMethod TawanOS.EditorTools.TempleTests.Run
     /// </summary>
@@ -51,8 +51,8 @@ namespace TawanOS.EditorTools
                 }
                 Debug.Log($"[TempleTests] {Seeds} maps: {temples} temples, {mapsWithTemple} maps with a temple, {elites} elites");
                 failures += Expect("No Elite node on any map", elites == 0);
-                failures += Expect("Temples are rolled on some maps", mapsWithTemple > 0);
-                failures += Expect("Not every map is forced to have a temple", mapsWithTemple < Seeds);
+                // Every map now has วัด on the floor before the boss (Game Designer, 15 Oct; was "not forced")
+                failures += Expect("Every map has a temple", mapsWithTemple == Seeds);
                 failures += Expect("A temple never leads straight into another temple", templeChains == 0);
 
                 var profile = config.GetProfileForType(NodeType.Temple);
