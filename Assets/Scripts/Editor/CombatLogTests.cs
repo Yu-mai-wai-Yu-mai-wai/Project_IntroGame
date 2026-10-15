@@ -106,14 +106,14 @@ namespace TawanOS.EditorTools
                 resolver.TriggerCurseBackfire(toPlayer: true);
                 failures += Expect("Curse backfire produces '−5 ขวัญ คำสาปย้อน'", lastNoticeMsg == "−5 ขวัญ คำสาปย้อน");
                 failures += Expect("Player khwan dropped to 5", combat.State.playerKhwan == 5);
-                Object.DestroyImmediate(resolverGo);
+                UnityEngine.Object.DestroyImmediate(resolverGo);
 
                 PlayerNotice.OnNotice -= onNotice;
             }
             finally
             {
-                if (testHostGo != null) Object.DestroyImmediate(testHostGo);
-                if (combatGo != null) Object.DestroyImmediate(combatGo);
+                if (testHostGo != null) UnityEngine.Object.DestroyImmediate(testHostGo);
+                if (combatGo != null) UnityEngine.Object.DestroyImmediate(combatGo);
 
                 RunState.EndRun();
                 if (backupSave != null)
