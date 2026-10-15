@@ -683,16 +683,18 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 - [ ] **P0-2 แพ้แล้วยังกดได้ + หน้าแพ้ใหม่** | Done when: test ยืนยันว่าหลังขวัญ = 0 คลิกการ์ดไม่มีผล; ลำดับคัตซีนตามตาราง
 - [ ] **P0-3 hover ค้างหลังปิดหนังสือ (ข้อ 2)** — sync hover ตอนปิดหนังสือ | Done when: ทดสอบมือ: ชี้ → คลิกขวา → ย้ายเมาส์ → ปิด แล้วการ์ดลงที่เดิม
 - [ ] **P0-4 คลิกขวาในร้านปิดเมนู (ข้อ 12)** — `ShopShrineView` เช็ก `CardDetailPanelUI.BlocksInput` | Done when: คลิกขวาการ์ดในร้านเปิดหนังสือ และร้านยังอยู่
-- [ ] **P0-5 เกราะกันระเบิด (ข้อ 8)** | Done when: CombatEnd test ใหม่ "Detonate ใส่การ์ดที่มีเกราะ: เกราะลด 1 การ์ดรอด" fail ก่อนแล้วผ่าน
+- [x] **P0-5 เกราะกันระเบิด (ข้อ 8)** | Done when: CombatEnd test ใหม่ "Detonate ใส่การ์ดที่มีเกราะ: เกราะลด 1 การ์ดรอด" fail ก่อนแล้วผ่าน
 - [ ] **P0-6 การ์ดตายทุกทางมี animation เผา (ข้อ 14)** — รวมทาง `ClearSlot` / `RemoveView` ให้ผ่าน CardDeathFx | Done when: อาคมฆ่า, tick, ระเบิด, เครื่องรางหมดอายุ เห็นเผาทุกกรณี
-- [ ] **P0-7 ศัตรูอัปเกรด + สำรับธีม + ขวัญ (ข้อ 18, เสริม 12)** | Done when: EncounterTableTests แก้ให้ตรงกฎใหม่และผ่าน; test ใหม่: ผู้เล่นอัปเกรด 0 ใบ ศัตรูชั้น 7 มี `_up` ≤ 1
-- [ ] **P0-8 เศรษฐกิจ (ข้อ 17, เสริม 8, 11)** | Done when: test: ซื้อพรขวัญ 3 ครั้งราคา 8/12/16 และราคาจำข้ามการเข้าร้าน; ธูปชนะอยู่ใน 6-10
+- [x] **P0-7 ศัตรูอัปเกรด + สำรับธีม + ขวัญ (ข้อ 18, เสริม 12)** | Done when: EncounterTableTests แก้ให้ตรงกฎใหม่และผ่าน; test ใหม่: ผู้เล่นอัปเกรด 0 ใบ ศัตรูชั้น 7 มี `_up` ≤ 1
+- [x] **P0-8 เศรษฐกิจ (ข้อ 17, เสริม 8, 11)** | Done when: test: ซื้อพรขวัญ 3 ครั้งราคา 8/12/16 และราคาจำข้ามการเข้าร้าน; ธูปชนะอยู่ใน 6-10
   - *สถานะ 15 ต.ค.:* GameFlowManager ปรับ MinorEnemyIncense/EventFightIncense = (6, 10), ShopConfig.asset ปรับพรขวัญ (amount 5 base 8 step +4) และพรกุศล (amount 1 base 15 step +8), ShopBlessing เพิ่มฟิลด์ priceStep, RunState บันทึกและโหลด blessingPurchases ข้ามเซฟ; Test: `Tools/TawanOS/Tests/Shop Economy` (`ShopEconomyTests.cs`) PASS
-- [ ] **P0-9 ช่องโหว่เซฟ** | Done when: test: ออก-เข้าเมรุใช้ซ้ำไม่ได้, ร้านของเดิม, รางวัลค้างกลับมา
+- [x] **P0-9 ช่องโหว่เซฟ** | Done when: test: ออก-เข้าเมรุใช้ซ้ำไม่ได้, ร้านของเดิม, รางวัลค้างกลับมา
 - [ ] **P0-10 แถบขวัญหน้าแผนที่ไม่ลด (เสริม 4)** | Done when: ขวัญ 10/20 แถบเต็มครึ่ง
 - [ ] **P0-11 สระอำและฟอนต์ (ข้อ 6, 15, เสริม 10)** | Done when: ThaiGlyphTests ผ่าน; grep ไม่พบ Sarabun/LiberationSans/Charm ใน scene และ prefab ที่ใช้งาน
 - [ ] **P0-12 HP → ขวัญ (เสริม 9)** | Done when: grep ข้อความที่ผู้เล่นเห็นไม่พบ "HP"
 - [ ] **P0-13 ข้อความสอนเล่น (ข้อ 1)** | Done when: ข้อความใหม่ + แก้ "แต่ะเทิร์น"
+
+ผลรัน 15 ต.ค. (Claude Code ใน Editor): CombatEnd 8/8, EncounterTable, ShopEconomy, SaveExploit, Temple, EightFloorMap, RunKhwanSync, SetupGuard, EventCatalog 46/46 ผ่านทั้งหมด 0 error
 
 ### P1 (18-19 ต.ค.)
 - [ ] **P1-1 คีย์เวิร์ด tooltip + หน้าในตำรา (ข้อ 3-4, เสริม 1)**
