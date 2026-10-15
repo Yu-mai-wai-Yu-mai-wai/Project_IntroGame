@@ -674,17 +674,19 @@ namespace TawanOS.CardEngine
         // ---------------------------------------------------------------- damage / death
 
         // Damage to a card on the board: เกราะคุ้มภัย blocks the whole hit (one stack per hit), then armor soaks it
-        // (both skipped when armor is ignored), Khwan takes the rest.
+        // (both skipped when armor is ignored), Khwan takes the rest. หุ่นพยนต์ sends the whole hit back either way.
         // Dead cards stay on the board until RemoveDeadFamiliars so slots do not shift mid-clash.
         public int DamageCard(CardInstance target, int amount, bool ignoreArmor, CardInstance source, bool sourceIsPlayer)
         {
             if (target == null || target.IsDead || amount <= 0) return 0;
+            int incoming = amount;
 
             if (!ignoreArmor)
             {
                 if (ProtectBlocks(target, source))
                 {
                     Debug.Log($"[Ability] {target.cardNameThai}'s เกราะคุ้มภัย blocks {amount} damage");
+                    Reflect(target, source, incoming, sourceIsPlayer);
                     return 0;
                 }
 
@@ -702,13 +704,19 @@ namespace TawanOS.CardEngine
 
             if (target.IsDead) HandleDeath(target, source, sourceIsPlayer);
 
-            // หุ่นพยนต์: the hit comes back on the attacker (no source, so two reflectors cannot loop)
-            if (amount > 0 && source != null && source != target && (source.cardType == CardType.Familiar || source.maxKhwan > 0)
+            Reflect(target, source, incoming, sourceIsPlayer);
+            return amount;
+        }
+
+        // หุ่นพยนต์: the hit that came in goes back on the attacker in full, also when เกราะคุ้มภัย or armor stopped it
+        // (no source, so two reflectors cannot loop)
+        private void Reflect(CardInstance target, CardInstance source, int incoming, bool sourceIsPlayer)
+        {
+            if (incoming > 0 && source != null && source != target && (source.cardType == CardType.Familiar || source.maxKhwan > 0)
                 && HasKeyword(target, AbilityEffect.ReflectDamage))
             {
-                DamageCard(source, amount, ignoreArmor: true, source: null, sourceIsPlayer: !sourceIsPlayer);
+                DamageCard(source, incoming, ignoreArmor: true, source: null, sourceIsPlayer: !sourceIsPlayer);
             }
-            return amount;
         }
 
         private void HandleDeath(CardInstance dead, CardInstance killer, bool killerIsPlayer)
