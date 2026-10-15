@@ -15,7 +15,8 @@ namespace TawanOS.VFX
     /// cutscene: the fight freezes (time scale 0, no input), black bars close in, the camera pushes in on the boss,
     /// which shakes and roars under its new name, then the camera pulls back and the boss slams the table: the camera
     /// shakes and everything on the table jumps up and lands again. Meanwhile its khwan bar (CombatStatusHUD) empties
-    /// and fills up again. The props include the board slots, so the cards in play jump with them; props standing
+    /// and fills up again. The scene's main light strobes red through the roar and the slam, and the room stays lit red
+    /// (the light and the ambient, breathing slowly) for the rest of the fight. The props include the board slots, so the cards in play jump with them; props standing
     /// together (a candle and its flame) jump as one. Everything runs in real time. Reduce Motion keeps the bars and
     /// the title only. Placed in CombatTestScene by Tools/TawanOS/Combat Scene/Add Boss Phase Cutscene, which also
     /// fills the boss and the props.
@@ -52,6 +53,19 @@ namespace TawanOS.VFX
         [Min(0f)] public float barHeight = 120f;
         [Range(0f, 1f)] public float darken = 0.35f;
 
+        [Header("Red light")]
+        [Tooltip("ไฟหลักของฉาก (Directional) ที่กะพริบแดงตอนบอสคืนร่าง และค้างเป็นสีแดงหลังจากนั้น Add Boss Phase Cutscene เติมให้")]
+        public Light sceneLight;
+        public Color redColor = new Color(1f, 0.1f, 0.06f);
+        [Tooltip("ความสว่างตอนไฟกะพริบ")]
+        [Min(0f)] public float strobeIntensity = 2.5f;
+        [Tooltip("ความสว่างไฟแดงที่ค้างไว้หลัง cutscene")]
+        [Min(0f)] public float redIntensity = 0.7f;
+        [Tooltip("แสงรอบฉาก (ambient) หลัง cutscene")]
+        public Color redAmbient = new Color(0.2f, 0.03f, 0.03f);
+        [Tooltip("ไฟแดงหลัง cutscene สว่างขึ้นลง ± สัดส่วนนี้")]
+        [Range(0f, 1f)] public float breathe = 0.25f;
+
         [Header("Slam: props")]
         [Tooltip("ของบนโต๊ะที่เด้งตอนทุบ (เทียน ลูกปัด กองการ์ด ช่องวางการ์ด) Add Boss Phase Cutscene เติมให้")]
         public List<Transform> props = new List<Transform>();
@@ -76,6 +90,7 @@ namespace TawanOS.VFX
         private RectTransform topBar, bottomBar;
         private Image shade, flash;
         private TextMeshProUGUI titleText;
+        private bool redLit; // the room is lit red: Update keeps the light breathing
 
         private void Start()
         {
@@ -92,6 +107,12 @@ namespace TawanOS.VFX
                 Playing = false;
                 Time.timeScale = 1f;
             }
+        }
+
+        private void Update()
+        {
+            if (!redLit || sceneLight == null || GameSettings.ReduceMotion) return;
+            sceneLight.intensity = redIntensity * (1f + breathe * Mathf.Sin(Time.unscaledTime * 1.7f));
         }
 
         private void HandlePhase(int phase, EnemyProfileSO profile)
@@ -145,6 +166,7 @@ namespace TawanOS.VFX
             // The roar: the boss shakes, a red flash, its new name
             ShowTitle(string.Format(title, bossName));
             Flash(0.55f);
+            if (!still) StartCoroutine(Strobe(roar + pullBack + 0.35f));
             if (!still && boss != null)
                 boss.DOShakePosition(roar, bossShake, 25, 90f, false, true).SetUpdate(true).SetId(this);
             if (moveCamera)
@@ -172,8 +194,9 @@ namespace TawanOS.VFX
             }
             yield return new WaitForSecondsRealtime(settle);
 
-            // Bars out, the fight goes on
+            // Bars out, the room stays red, the fight goes on
             Bars(false);
+            LightRed();
             titleText.DOKill();
             titleText.DOFade(0f, barsTime).SetUpdate(true);
             yield return new WaitForSecondsRealtime(barsTime);
@@ -189,6 +212,36 @@ namespace TawanOS.VFX
             while (PauseMenu.IsPaused) yield return null;
             Time.timeScale = 1f;
             Playing = false;
+        }
+
+        // The main light flickers between a hard red flash and near dark
+        private IEnumerator Strobe(float seconds)
+        {
+            if (sceneLight == null) yield break;
+            redLit = false;
+            sceneLight.color = redColor;
+            float end = Time.realtimeSinceStartup + seconds;
+            bool on = true;
+            while (Time.realtimeSinceStartup < end)
+            {
+                sceneLight.intensity = on ? strobeIntensity * Random.Range(0.7f, 1f) : redIntensity * 0.15f;
+                yield return new WaitForSecondsRealtime(on ? Random.Range(0.05f, 0.12f) : Random.Range(0.04f, 0.1f));
+                on = !on;
+            }
+            sceneLight.intensity = strobeIntensity;
+        }
+
+        // The light and the ambient settle on red; Update keeps the light breathing from then on
+        private void LightRed()
+        {
+            if (sceneLight != null)
+            {
+                sceneLight.DOKill();
+                sceneLight.DOColor(redColor, barsTime).SetUpdate(true);
+                sceneLight.DOIntensity(redIntensity, barsTime * 2f).SetUpdate(true).OnComplete(() => redLit = true);
+            }
+            Color from = RenderSettings.ambientLight;
+            DOTween.To(() => 0f, t => RenderSettings.ambientLight = Color.Lerp(from, redAmbient, t), 1f, barsTime * 2f).SetUpdate(true).SetId(this);
         }
 
         // A little above the middle of the boss's body: its face and chest

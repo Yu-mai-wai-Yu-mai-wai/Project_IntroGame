@@ -10,7 +10,7 @@ using UnityEngine.SceneManagement;
 namespace TawanOS.EditorTools
 {
     // Puts a BossPhaseCutscene (the boss's comeback when it changes phase) in CombatTestScene and fills its boss (the
-    // dressing's Scarecrow) and its props: the dressing's things standing on the table top (candles, beads, decks,
+    // dressing's Scarecrow), its scene light (the directional one) and its props: the dressing's things standing on the table top (candles, beads, decks,
     // slot outlines), every board slot, so the cards in play jump too, the draw pile and the graveyard. Running it
     // again refills the boss and the props and keeps the other values. The scene is
     // opened additively when it is not open, saved and closed again, so the scene open in the editor is untouched.
@@ -77,6 +77,16 @@ namespace TawanOS.EditorTools
             fx.gameObject.name = ObjectName;
             fx.boss = dressing.transform.Find(BossName);
             if (fx.boss == null) Debug.LogWarning($"[BossPhaseCutsceneSetupTool] {DressingName}/{BossName} not found: set the boss in the Inspector.");
+            // The scene's main (directional) light turns red
+            fx.sceneLight = null;
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                foreach (var light in root.GetComponentsInChildren<Light>(true))
+                {
+                    if (fx.sceneLight == null && light.type == LightType.Directional) fx.sceneLight = light;
+                }
+            }
+            if (fx.sceneLight == null) Debug.LogWarning("[BossPhaseCutsceneSetupTool] No directional light in the scene: set the scene light in the Inspector.");
             var top = tableRenderer.bounds;
             fx.props = new List<Transform>();
             foreach (Transform child in dressing.transform)
@@ -98,7 +108,7 @@ namespace TawanOS.EditorTools
             }
             EditorUtility.SetDirty(fx);
             EditorSceneManager.MarkSceneDirty(scene);
-            Debug.Log($"<color=green>[BossPhaseCutsceneSetupTool] BossPhaseCutscene in {scene.name}: boss {(fx.boss != null ? fx.boss.name : "none")}, {dressingProps} table props and {fx.props.Count - dressingProps} board objects.</color>");
+            Debug.Log($"<color=green>[BossPhaseCutsceneSetupTool] BossPhaseCutscene in {scene.name}: boss {(fx.boss != null ? fx.boss.name : "none")}, light {(fx.sceneLight != null ? fx.sceneLight.name : "none")}, {dressingProps} table props and {fx.props.Count - dressingProps} board objects.</color>");
             return true;
         }
 

@@ -2750,6 +2750,12 @@ MonoBehaviour:
   settle: 0.9
   barHeight: 120
   darken: 0.35
+  sceneLight: {fileID: 202345595}
+  redColor: {r: 1, g: 0.1, b: 0.06, a: 1}
+  strobeIntensity: 2.5
+  redIntensity: 0.7
+  redAmbient: {r: 0.2, g: 0.03, b: 0.03, a: 1}
+  breathe: 0.25
   props:
   - {fileID: 507071883}
   - {fileID: 507071882}
