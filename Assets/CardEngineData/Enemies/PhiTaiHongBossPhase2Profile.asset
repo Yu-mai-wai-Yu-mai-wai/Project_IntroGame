@@ -61,7 +61,7 @@ MonoBehaviour:
   isBoss: 1
   phase2Profile: {fileID: 0}
   phase2AtKhwanRatio: 0.5
-  cardEachTurn: {fileID: 0}
+  cardEachTurn: {fileID: 11400000, guid: c6c2aafe55fbb1941a6496d5602f9a71, type: 2}
   lines:
     combatStart: []
     playCard: []
