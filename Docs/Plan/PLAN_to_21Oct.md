@@ -91,7 +91,7 @@
 - ไม่มีการ์ดใบไหนตั้ง `upgradedCard` เลย (0/42) ปุ่ม "อัพเกรด" จึงถูกปิดพร้อมข้อความ "ไม่มีการ์ดที่อัพเกรดได้" อยู่แล้ว (`MeruViewUI.ShowChoice`) ไม่ต้องแก้โค้ด แค่บันทึกใน Future Work จนกว่าทีม Design จะทำการ์ดอัปเกรด
 - **Done when:** เข้าโหนดเมรุแล้วเปิดฉาก เผาการ์ดได้ จำนวนการ์ดในเด็คลด กลับแผนที่ได้
 
-### [~] A5 อีเวนต์หมอกดำครบ — ตรวจ 10 ต.ค.: `Events/EventCatalog.asset` (ตัวที่ EventScene ใช้) มี 5 อีเวนต์ + `offeringEvent`, ชื่อไฟล์ `Event_Wods` และ title "วอดส์" ถูกแล้ว, ไม่มี `Event_New`, โหนดชื่อ "หมอกดำ" แล้ว ค้าง: เล่นโหนดหมอกดำ 5 ครั้งไม่ซ้ำ, ลบ `EventEngineData/EventCatalog.asset` ที่ไม่มีอะไรอ้าง (ถามตะวันก่อน) *(12 ต.ค.: `offeringEvent` ไม่ถูกใช้แล้ว เพราะกองของเซ่นย้ายไปเป็นฉาก 3D ตาม A14 asset ยังเก็บไว้ ไม่ได้ลบ)*
+### [~] A5 อีเวนต์หมอกดำครบ — **15 ต.ค. (Game Designer): ยังใส่อีเวนต์ไม่ครบ** (ตัดวอดส์แล้ว เหลือ 4) — ตรวจ 10 ต.ค.: `Events/EventCatalog.asset` (ตัวที่ EventScene ใช้) มี 5 อีเวนต์ + `offeringEvent`, ชื่อไฟล์ `Event_Wods` และ title "วอดส์" ถูกแล้ว, ไม่มี `Event_New`, โหนดชื่อ "หมอกดำ" แล้ว ค้าง: เล่นโหนดหมอกดำ 5 ครั้งไม่ซ้ำ, ลบ `EventEngineData/EventCatalog.asset` ที่ไม่มีอะไรอ้าง (ถามตะวันก่อน) *(12 ต.ค.: `offeringEvent` ไม่ถูกใช้แล้ว เพราะกองของเซ่นย้ายไปเป็นฉาก 3D ตาม A14 asset ยังเก็บไว้ ไม่ได้ลบ)*
 - `EventCatalog.asset` อ้างแค่ `what` (วอดส์) ให้ใส่ `Event_GhostGamble`, `Event_SpiritHouse`, `Event_WanderingShaman`, `Event_WellVoice` และ `what` ผ่าน editor script (ห้ามรัน `SetupEventScene` ซ้ำ เพราะจะสร้างฉากใหม่ทับ)
 - แก้ชื่อ `what.asset` เป็น `Event_Wods.asset` และ title "วอดส์่" เป็น "วอดส์" (มีวรรณยุกต์เกิน)
 - ลบ `Event_New.asset` (placeholder) ถ้าไม่มีอะไรอ้างถึง
@@ -128,7 +128,7 @@
 - แก้ตัวทดสอบ commit `31eb65e`: `AutomatedCombatFlowTest` เริ่มจาก run ใหม่ (ล้าง save), คลิกเฉพาะโหนดต่อสู้, ใช้งบเวลาจริง 240 วินาทีแทนงบเฟรม
 - **Done when:** compile ผ่าน, smoke test PASS, `git status` หลังรันไม่มีไฟล์แผนที่/scene เปลี่ยน (ตรวจแล้ว: เหลือเฉพาะไฟล์ font ที่ Unity แก้เอง รอ F1)
 
-### [~] A9 ศัตรูทั่วไปตัวที่ 3 + แก้ id ซ้ำ — **15 ต.ค.: ตัด `GraveGhostProfile` ออก minor เหลือ 2 (Prai, NewEnemy)** ตรวจ 10 ต.ค.: `enemyId` ไม่ซ้ำแล้ว (6 ตัว), `EncounterTable` มี minor 3 (Prai, NewEnemy, GraveGhost) / elite 1 / boss 1 ค้าง: `maxKhwan` ยังเป็น 1 (รอคืนค่า 30/60), เล่นแผนที่ 1 รอบเจอศัตรูทั่วไป ≥ 2 แบบ
+### [x] A9 ศัตรูทั่วไปตัวที่ 3 + แก้ id ซ้ำ — **15 ต.ค. (Game Designer): เสร็จ** ศัตรูทั่วไป 2 แบบ + บอสพอ ขวัญศัตรูตาม P0-7 (5/11/17 บอส 20) แทน 30/45/60 — **15 ต.ค.: ตัด `GraveGhostProfile` ออก minor เหลือ 2 (Prai, NewEnemy)** ตรวจ 10 ต.ค.: `enemyId` ไม่ซ้ำแล้ว (6 ตัว), `EncounterTable` มี minor 3 (Prai, NewEnemy, GraveGhost) / elite 1 / boss 1 ค้าง: `maxKhwan` ยังเป็น 1 (รอคืนค่า 30/60), เล่นแผนที่ 1 รอบเจอศัตรูทั่วไป ≥ 2 แบบ
 - ปัญหา: roster ตอนนี้มีศัตรูทั่วไปจริงตัวเดียว `NewEnemyProfile` ใช้ `enemyId: enemy_prai` ซ้ำกับ `PraiGhostProfile` และเด็คเริ่มต้นเหมือนกัน
 - ขั้นต่ำที่ต้องมีใน build (PM ตัดสิน): ศัตรูทั่วไป 3 แบบ, Elite 1, Boss 1
 - ทำ: แก้ `NewEnemyProfile` ให้ `enemyId` ไม่ซ้ำ และสร้างศัตรูทั่วไปให้ครบ 3 แบบจากการ์ดที่มีอยู่ (เด็คต่างกัน ชื่อ/ภาพต่างกัน `maxKhwan: 30`) ตัวเลขการ์ดและเด็คเป็นของทีม Game Design ฝั่ง Dev ใส่ค่าเริ่มต้นให้เล่นได้ แล้วส่งให้ทีม Game Design ปรับ
@@ -165,7 +165,7 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - **Done when:** นับไฟล์ได้ตามตาราง, Console ไม่มี Error ตอน import, ไม่มีไฟล์เดี่ยวเกิน 100 MB (ข้อจำกัด GitHub; ไฟล์ใหญ่สุดคือ `amb_event.wav` 17.6 MB), `git status` ไม่มี `.meta` ที่ขาด
 - หมายเหตุ: ถ้า `amb_event.wav` ทำให้ build ใหญ่เกินไป ให้แปลงเป็น mp3 ชื่อเดิมก่อน (ไม่เปลี่ยน key)
 
-### [~] B1 AudioManager (ข้อ Sound) — โค้ดเสร็จ 6 ต.ค. ค้าง: Mixer, hover SFX, ฟังจริง
+### [x] B1 AudioManager (ข้อ Sound) **ตรวจ 15 ต.ค. (Claude Code): เสร็จ** `Assets/MainMixer.mixer` expose MasterVol/BgmVol/SfxVol แล้ว, SFX ผูกครบ 14 key (รวม `sfx_card_hover` ใน CardView3D), AudioLibraryTests PASS ~~ — โค้ดเสร็จ 6 ต.ค. ค้าง: Mixer, hover SFX, ฟังจริง~~
 - **เสร็จ:** `AudioLibrarySO`, `AudioManager`, `AudioDirector`, tool `Build Audio Library` (23 key), `AudioLibraryTests` PASS (Red→Green) ผูกเพลงตามฉากและ SFX จาก event เดิมโดยไม่แก้ logic
 - **ค้าง/ต่างจากสเปก:** (1) ไม่มี `MainMixer.mixer` ใช้ volume ต่อ AudioSource แทน (Unity ไม่มี API สร้าง mixer + exposed parameter) (2) `sfx_card_hover` ยังไม่ผูก ต้องเพิ่ม event ใน `CardPlayController3D` (3) ยังไม่ได้ฟังจริงใน Play mode
 - ไฟล์เสียงต้องอยู่ที่ `Assets/Audio/BGM/`, `Assets/Audio/Ambience/`, `Assets/Audio/SFX/` (ทำ B0 ก่อน ถ้ายังไม่มีให้หยุดแล้วแจ้ง PM)
@@ -196,7 +196,7 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
   | ศัตรูตาย, ชนะ | `sfx_scream` |
 - **Done when:** EditMode test `AudioLibraryTests` ยืนยันว่า key ทุกตัวในสองตารางนี้หาเจอ
 
-### [~] B2 Settings + PlayerPrefs (ข้อ Player Preferences) — โค้ดเสร็จ 6 ต.ค. ค้าง: ฟังและดูใน Play mode, ต่อกับ Pause (B3)
+### [x] B2 Settings + PlayerPrefs (ข้อ Player Preferences) **ตรวจ 15 ต.ค. (Claude Code): เสร็จ** SettingsTests PASS ~~ — โค้ดเสร็จ 6 ต.ค. ค้าง: ฟังและดูใน Play mode, ต่อกับ Pause (B3)~~
 - **เสร็จ:** `SettingsPanelUI` (สร้างด้วยโค้ด ใช้ซ้ำใน Pause ได้ด้วย `SettingsPanelUI.Create(parent)`), `GameSettings` (fullscreen), ปุ่ม "ตั้งค่า" ใน MainMenu, `SettingsPanelTests` PASS (Red→Green: slider บันทึก PlayerPrefs, เปิดใหม่ค่ายังอยู่, toggle เต็มจอบันทึก, ปุ่ม >= 44 px)
 - **ต่างจากสเปก:** ใช้ volume ต่อ AudioSource ไม่ใช่ `SetFloat` บน mixer (MainMixer มีแค่กลุ่ม Master ยังไม่มี exposed parameter)
 - `AudioManager.SetVolume(channel, 0..1)` แปลง dB (`v <= 0.0001 ? -80 : Mathf.Log10(v) * 20`) บันทึก PlayerPrefs key `vol_master`, `vol_bgm`, `vol_sfx` และโหลดตอนเริ่ม
@@ -204,7 +204,7 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - เพิ่มปุ่ม "ตั้งค่า" ใน `MainMenuUI`
 - **Done when:** EditMode test ตั้ง volume → อ่านจาก PlayerPrefs ได้ค่าเดิม; ปิดเปิดเกมแล้วค่า slider ยังอยู่
 
-### [~] B3 Pause, Game Over, Victory (ข้อ UI/UX) — โค้ดเสร็จ 7 ต.ค. ค้าง: ตะวันกดเล่นจริงใน Play mode
+### [x] B3 Pause, Game Over, Victory (ข้อ UI/UX) **ตรวจ 15 ต.ค. (Claude Code): เสร็จ** หน้าแพ้/ชนะทำใน P0-2 และ P1-8 ~~ — โค้ดเสร็จ 7 ต.ค. ค้าง: ตะวันกดเล่นจริงใน Play mode~~
 - **เสร็จ:** `PauseMenu` (Esc หยุดเกมทุกฉากยกเว้น MainMenu/Victory/IntroStory; ไม่ชนกับ Esc ของการลากการ์ด/เล็ง/แผงการ์ด/สุสาน/Settings; ปุ่ม เล่นต่อ, ตั้งค่า, กลับเมนูหลัก), `GameOverScreen` (ข้อความ + สรุป run + ปุ่ม เริ่มใหม่/เมนูหลัก ไม่ปิดเอง) แทน `GoToMainMenuAfterDelay`, `PauseMenuTests` PASS (Red→Green) ปุ่มสูง >= 44 px ที่ 1080p
 - **ยังไม่ได้ทำใน B3:** ภาพตัวละครบนหน้า Game Over (B9), หน้า Victory ใช้ของ A3 เดิม
 - Pause: prefab overlay สร้างโดย `PauseMenu` ที่ auto-create แบบ `GameFlowManager` ทำงานทุกฉากยกเว้น MainMenu กด `Esc` (Input System) → `Time.timeScale = 0` ปุ่ม: เล่นต่อ, ตั้งค่า, กลับเมนูหลัก (save ไว้ก่อนออก)
@@ -220,7 +220,7 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - แทน `SceneManager.LoadScene(` ทุกจุดใน `GameFlowManager`, `MainMenuUI`, Event/Shop/Reward/Meru ด้วย `SceneLoader.Load(name)`
 - **Done when:** `grep -rn "SceneManager.LoadScene(" Assets/Scripts --include=*.cs` เหลือแค่ใน SceneLoader และ Editor scripts
 
-### [ ] B5 Particle / VFX
+### [x] B5 Particle / VFX **ตรวจ 15 ต.ค. (Claude Code): เสร็จ** ใช้ VFX Graph 7 ไฟล์ใน `Assets/Art/VFX/` (CardLand ขาว/ดำ ตอนวางการ์ด, FaceHit ขาว/ดำ ตอนตีเข้าตัว, DrawPit/DrawPitSmoke/PitCardTrail) + ParticleSystem (ไฟเมรุ, ประกายบุญที่วัด, เมนูหลัก, บทสอน) แทน prefab 5 ตัวด้านล่าง ยังไม่มี: ควันธูป, เปลวเทียน, แสงคำสาปย้อน (ของเสริม)
 - prefab ใน `Assets/VFX/` (ParticleSystem built-in) สร้างจาก editor script:
   - `VFX_IncenseSmoke` บนโต๊ะ CombatTestScene และในฉากศาล
   - `VFX_CandleFlame` บนเทียน (`CandleMat`)
@@ -229,7 +229,7 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
   - `VFX_BurnCard` ตอนเผาการ์ดที่เมรุ
 - **Done when:** prefab 5 ตัวมีอยู่และถูกใช้ในฉาก/โค้ดจริง
 
-### [ ] B6 Animator Controller (ข้อ Animation)
+### [x] B6 Animator Controller (ข้อ Animation) **ตรวจ 15 ต.ค. (Claude Code): เสร็จ** ใช้ `Assets/Resources/CardClash/CardClash.controller` (18 state, 27 transition, 9 parameter: windUp/charge/impact/hit/die/crit ฯลฯ) ขับท่าบริวารปะทะใน BoardClashView3D แทน EnemyPresence.controller
 - DOTween อย่างเดียวไม่นับ ต้องเป็น Animator Controller ที่มี state + transition
 - `Assets/Animation/EnemyPresence.controller`: `Idle` → `Attack` → `Hit` → `Death` ด้วย trigger `attack`, `hit`, `die` clip สร้างจาก transform (ขยับ/สั่น/จาง) ไม่ต้องมี rig
 - `EnemyAnimatorDriver.cs` subscribe `CombatManager.OnEnemyAction`, ศัตรูโดนดาเมจ, `OnCombatEnded`
@@ -245,7 +245,7 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - MenuItem `Tools/TawanOS/Card Engine/Bind Card Art` + `BindFromCli()`
 - **Done when:** log `bound=29 placeholder=13 orphan=0`, การ์ดทั้ง 42 ใบมีภาพที่ไม่ใช่ null, รันซ้ำแล้วผลเท่าเดิม (idempotent) และลองใส่ภาพทดสอบ 1 ใบแล้ว `placeholder=12`
 
-### [ ] B8 Story intro + ภาพตัวละคร
+### [x] B8 Story intro + ภาพตัวละคร **15 ต.ค. (Game Designer): เสร็จ** ใช้ StoryScene ตอนเริ่มเกมใหม่ (ไม่ได้เป็นฉากแรกของ build ตามสเปกเดิม)
 - ใช้ภาพจาก `Assets/Art/Story/` (13 รูป), `Assets/Video/` (2 วิดีโอ ไม่มีเสียงในตัว ใช้เสียง BGM แทน), `Assets/Art/Characters/` (2 รูป) ค่า default ตาม D7, D9
 - **ตำแหน่ง (PM ตัดสิน 6 ต.ค.):** เล่นตอนเปิดเกม **ก่อนเข้า Main Menu** ทุกครั้งที่เปิดเกม ข้ามได้ทันที ไม่เกี่ยวกับ "เริ่มใหม่/เล่นต่อ"
 - `TawanOS.GameFlow.IntroStoryDataSO`: list ของ step, แต่ละ step เป็นภาพหรือวิดีโอ + ข้อความบรรยาย (ว่างได้) เก็บที่ `Assets/GameFlowData/IntroStory.asset` เพื่อให้ทีมสลับลำดับได้โดยไม่แตะโค้ด
@@ -256,7 +256,7 @@ B0 ต้องทำก่อน B1, B7, B8 B1 → B2 ต้องทำตา�
 - เสียง: วิดีโอไม่มีเสียงในตัว ใช้ `bgm_title` เล่นต่อเนื่องจาก intro เข้า Main Menu (ผ่าน B1) ถ้ายังไม่มี B1 ให้เงียบ
 - **Done when:** batch test เปิดเกมแล้ว active scene เป็น `IntroStoryScene`, จำลองกดข้ามแล้วไป `MainMenu`, "เริ่มใหม่" และ "เล่นต่อ" ทำงานเหมือนเดิม (`RunState.HasSave` ไม่เปลี่ยนจาก intro), `grep` ไม่พบโค้ดที่ผูกกับ build index 0, จำนวน step ใน asset = 13 ภาพ + 2 วิดีโอ
 
-### [ ] B9 ภาพตัวละครในหน้า Game Over / Victory
+### [x] B9 ภาพตัวละครในหน้า Game Over / Victory **15 ต.ค. (Game Designer): เสร็จ** หน้าแพ้เหลือบทพูดไม่มีภาพตัวละคร (P0-2 `08da136`), หน้าชนะใช้วิดีโอ dad_khwan (P1-8)
 - ใช้ `Assets/Art/Characters/IMG_7920.JPG` (ชีทตัวละครเต็มตัว) ในหน้า Game Over และ Victory จาก B3 ตัดเฉพาะตัวละครด้านซ้าย (ไม่เอา silhouette) ด้วย Sprite import setting หรือ `RectTransform` mask ไม่แก้ไฟล์ต้นฉบับ
 - **Done when:** ทั้งสองหน้าแสดงภาพตัวละครโดยไม่ยืดสัดส่วน และ Console ไม่มี warning เรื่อง texture
 
@@ -590,20 +590,20 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 - [x] **A12 โหนดวัด (เพิ่ม 11 ต.ค., D6):** `NodeType.Temple`, `TempleScene` + `TempleManager`/`TempleViewUI` (กราบพระ = ขวัญเต็ม), `TempleProfile` ไอคอน `วัด.png`, legend แถววัดแทน Elite, คำอธิบายเมรุแก้เป็น "...หรือสวดชุบขวัญให้การ์ดแกร่งขึ้น (อัปเกรดการ์ด)", เอาบริการของเจ้าที่ (ขอพร, ถอนคำสาป) ออกจากศาลตายายทั้งโค้ดและฉาก (`Tools/TawanOS/Shop Engine/Remove Shop Services`) สร้างวัดด้วย `Tools/TawanOS/Temple/*` *DoD:* `TempleTests` PASS (300 แผนที่: Elite 0, มีวัด 77% ของแผนที่, วัดไม่ต่อวัด, ฟื้นเต็มครั้งเดียว), `MapUITests`, `PlayerFeedbackTests`, `AutomatedRunFlowTest` PASS, เล่นจริง: เข้าวัด → กราบพระ 18→50 → เดินทางต่อกลับแผนที่
 - [x] **A13 แผนที่ 8 ชั้น (เพิ่ม 11 ต.ค., D21):** `RunState.DefaultTotalFloors = 8`, `MapGraphGenerator.GenerateEightFloorTableMap` (ชั้นต่อสู้ 1/4/7, ชั้นอื่นสุ่ม 5 ชนิดเท่ากัน เมรุ/ศาล/วัดไม่ต่อชนิดเดียวกัน), แท่นในโมเดลมีพอแค่ 7 ชั้น จึงวางโหนดตามชั้นด้วย `TableFloorX` (แถว Z ยืมจากแท่น) กระดานยาวเท่าเดิม เซฟเก่า 7 ชั้นยังเล่นต่อได้ด้วยแผนที่เดิม *DoD:* `EightFloorMapTests` PASS (300 แผนที่), `TempleTests`, `MapUITests`, `PlayerFeedbackTests`, `AutomatedRunFlowTest` PASS, ภาพมุมบนเห็น 8 ชั้น + บอส ระยะเท่ากัน
 - [x] **A14 ฉากกองของเซ่น (เพิ่ม 12 ต.ค., Game Designer):** `OfferingScene` ฉาก 3D ป่าจากโมเดลศาลตายาย (ซ่อนตัวศาล) มีกองการ์ดคว่ำ 14 ใบซ้อนกัน แถบ "คลิกที่กองการ์ดเพื่อหยิบของเซ่น" ชี้แล้วไฟสว่าง คลิก (หรือ Enter/Space) การ์ดใบบนลอยขึ้น แล้วไปหน้ารับการ์ดที่มี 1 ใบ (`offeringChoices = 1`) เรื่องเล่าและตัวเลือกเดิมเอาออก (ไม่มีจุดธูปฟื้นขวัญ ไม่มีเดินผ่าน) การ์ดจากอีเวนต์หมอกดำแยกเป็น `RewardTier.EventCard` ยังให้เลือก 3 ใบเหมือนเดิม สร้างด้วย `Tools/TawanOS/Offering/Setup Offering Scene` *DoD:* เล่นจริงจาก GameFlowManager: โหนดกองของเซ่น → ฉาก → คลิก → หน้ารับการ์ด 1 ใบ → รับ (สำรับ 8→9) → กลับแผนที่, `AutomatedRunFlowTest` PASS, `EventCatalogTests` 46/46 *(12 ต.ค.: กล้องยกสูงขึ้นและถอยห่างจากกอง)*
-- [~] **A9 ศัตรูทั่วไป 3 แบบ:** แก้ enemyId ซ้ำ roster minor 3 / elite 1 / boss 1 *(10 ต.ค.: id ไม่ซ้ำ roster ครบแล้ว เหลือ maxKhwan)*
+- [x] **A9 ศัตรูทั่วไป 3 แบบ:** *(15 ต.ค.: เสร็จ ศัตรูทั่วไป 2 แบบ + บอส ขวัญตาม P0-7)* แก้ enemyId ซ้ำ roster minor 3 / elite 1 / boss 1 *(10 ต.ค.: id ไม่ซ้ำ roster ครบแล้ว เหลือ maxKhwan)*
   *หมายเหตุ:* ก่อน A7/A9 ต้องคืนค่า maxKhwan (ปัจจุบันเป็น 1 จาก commit 88b21ba) เป็น 30/45/60 เพื่อให้ EncounterTableTests ผ่านครบ *(ตรวจ 10 ต.ค.: ยังเป็น 1 อยู่ 5 profile)*
 
 ### ชุดที่ 3: เสียง, Settings, Pause (ตามที่ตะวันกำหนด)
-- [ ] **B1/B2/B3:** ยึด Pause/Settings ของ Hundredz (อยู่ใน TestMergeV4 แล้ว) แต่เพิ่ม AudioMixer จริง ครอบทุกช่อง: MainMixer มี group Master/BGM/SFX/Ambience และ exposed parameter MasterVol, BgmVol, SfxVol, AmbVol ให้ slider ของ Hundredz สั่งผ่านมิกเซอร์แทนการตั้ง volume ต่อ AudioSource (ตอนนี้ยังไม่มี mixer ตามแผน B1) ค่าเริ่มต้นเพลง 0.5 ที่ตัดสินไว้ต้องคงอยู่
+- [x] **B1/B2/B3:** *(15 ต.ค.: เสร็จ ดู B1–B3 ด้านบน)* ยึด Pause/Settings ของ Hundredz (อยู่ใน TestMergeV4 แล้ว) แต่เพิ่ม AudioMixer จริง ครอบทุกช่อง: MainMixer มี group Master/BGM/SFX/Ambience และ exposed parameter MasterVol, BgmVol, SfxVol, AmbVol ให้ slider ของ Hundredz สั่งผ่านมิกเซอร์แทนการตั้ง volume ต่อ AudioSource (ตอนนี้ยังไม่มี mixer ตามแผน B1) ค่าเริ่มต้นเพลง 0.5 ที่ตัดสินไว้ต้องคงอยู่
   *DoD:* test ตั้ง slider → SetFloat บน mixer → อ่านจาก PlayerPrefs ได้ค่าเดิม, ทุกเสียงทั้ง BGM, Ambience, SFX ผ่าน mixer, AudioLibraryTests และ SettingsTests ยัง PASS
   *ค้างจากเดิม:* hover SFX ใน CardPlayController3D
-- [ ] **B9 Game Over / Victory (ตามที่ตะวันอธิบาย):**
+- [x] **B9 Game Over / Victory (ตามที่ตะวันอธิบาย):** *(15 ต.ค.: เสร็จ ดู B9 ด้านบน)*
   - Game Over: ภาพตัวละคร fade เป็นมืด แล้วข้อความ Game Over ขึ้น ตามด้วยสรุป run และปุ่ม "เริ่มใหม่"/"เมนูหลัก"
   - Victory: ภาพ "พ่อขวัญ" ลืมตาตื่น แล้วขึ้น Victory ตาม D19
   *DoD:* ทั้งสองหน้าเล่นลำดับ fade ได้, ไม่ยืดสัดส่วนภาพ, ข้ามด้วยคลิกได้, ไม่มี warning เรื่อง texture
 - [x] **B4 Loading:** ตามเดิม SceneLoader fade + progress แทน SceneManager.LoadScene ทุกจุด *(10 ต.ค.: ทำเป็น `SceneTransition` fade มืด-สว่างระหว่างฉาก ไม่มีแถบ progress, 12 ต.ค.: จอดำค้างจนโหลดเสร็จ มุมขวาล่างขึ้น "กำลังโหลด" จุดวิ่ง . .. ... ทดสอบใน Play mode แล้ว)*
-- [ ] **B5 Particle:** ทำเสริมจาก GotDev (เผาการ์ดที่ทำแล้ว) ที่เหลือ: ควันธูป, เปลวเทียน, ลงการ์ด (ทอง/แดง), มลทินแตก
-- [ ] **B6 Animator:** ตามเดิม EnemyPresence.controller 4 state (รวมกับ F10)
+- [x] **B5 Particle:** *(15 ต.ค.: เสร็จด้วย VFX Graph + ParticleSystem ดู B5 ด้านบน)* ทำเสริมจาก GotDev (เผาการ์ดที่ทำแล้ว) ที่เหลือ: ควันธูป, เปลวเทียน, ลงการ์ด (ทอง/แดง), มลทินแตก
+- [x] **B6 Animator:** *(15 ต.ค.: เสร็จด้วย CardClash.controller ดู B6 ด้านบน)* ตามเดิม EnemyPresence.controller 4 state (รวมกับ F10)
 
 ### ชุดที่ 4: Phase F (ปรับตามแผนใหม่)
 - [ ] **F2** UI/UX mockup + screenshot ทุกฉาก (นราธรเซ็นรับ)
@@ -666,7 +666,7 @@ Phase นี้แตะมากกว่า 3 ไฟล์และแตะ s
 | สำรับศัตรู | แต่ละตัวมีสำรับธีมของตัวเอง 12-15 ใบ (กระสือ มนต์ดำบุกเร็ว, พรายน้ำนอง ควบคุม, บอส ชุดของตัวเอง) |
 | ขวัญศัตรู | ฐาน 5 + 2 ต่อชั้น (5/11/17), บอส 20 |
 | เกราะคุ้มภัย | กันระเบิด (Detonate) ได้ ใช้ 1 stack; บทสวดส่งวิญญาณยังทะลุ |
-| วัด | เลือก 1: ฟื้นขวัญเต็ม หรือ ขวัญสูงสุด +3; ชั้นก่อนบอสเป็นวัดเสมอ (commit `fce6414`) |
+| วัด | ~~เลือก 1: ฟื้นขวัญเต็ม หรือ ขวัญสูงสุด +3~~ **15 ต.ค. (Game Designer): ไหว้อย่างเดียว** ขวัญไม่เต็ม = ฟื้นเต็ม, ขวัญเต็ม = ขวัญชั่วคราว +5 (เกินขวัญสูงสุดได้ ซ้อนได้ หายก่อนเมื่อโดนดาเมจ) (commit `827f170`); ชั้นก่อนบอสเป็นวัดเสมอ (commit `fce6414`) |
 | เศรษฐกิจ | ธูปชนะ 6-10; พรขวัญสูงสุด +5 ราคา 8 แล้ว +4 ต่อครั้ง; พรกุศลสูงสุด +1 ราคา 15 แล้ว +8 ต่อครั้ง; นับทั้งรอบ; การ์ด 1-8 คงเดิม |
 | ศัตรูโชว์ | กุศล/มลทินแบบย่อข้างชื่อ; การ์ดขึ้นจอขวาเฉพาะอาคมและการ์ดที่มีความสามารถ |
 | คีย์เวิร์ด | ใส่เฉพาะคำที่การ์ดใช้จริง: ผวา ผีบังตา (ความหมายตามโค้ด) เกราะคุ้มภัย ชำระล้าง ยั่วยุ ผีข้ามหัว อัปมงคล สิริมงคล กุศล มลทิน คำสาปย้อน; ทำทั้ง tooltip (สี+ขีดเส้นใต้) และนิยามในวงเล็บในหน้าหนังสือ + หน้าอธิบายคีย์เวิร์ดในตำราไสยเวท |
