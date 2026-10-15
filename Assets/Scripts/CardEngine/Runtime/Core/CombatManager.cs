@@ -88,6 +88,7 @@ namespace TawanOS.CardEngine
         // so CombatTestScene and the smoke test keep starting at full Khwan.
         private int? startingPlayerKhwan;
         private int? startingMaxPlayerKhwan;
+        private int? startingPlayerMaxMerit;
 
         /// <summary>Sets the Khwan the player enters the next StartCombat with (current out of max).</summary>
         public void SetStartingKhwan(int current, int max)
@@ -96,10 +97,17 @@ namespace TawanOS.CardEngine
             startingPlayerKhwan = Mathf.Clamp(current, 1, startingMaxPlayerKhwan.Value);
         }
 
+        /// <summary>Sets the player's max Merit for the next StartCombat (the run's, raised at ศาลตายาย). The enemy keeps maxMerit.</summary>
+        public void SetPlayerMaxMerit(int max)
+        {
+            startingPlayerMaxMerit = Mathf.Max(1, max);
+        }
+
         private void ApplyPlayerStartingKhwan()
         {
             if (startingMaxPlayerKhwan.HasValue) state.maxPlayerKhwan = startingMaxPlayerKhwan.Value;
             state.playerKhwan = startingPlayerKhwan ?? state.maxPlayerKhwan;
+            state.playerMaxMerit = startingPlayerMaxMerit ?? state.maxMerit;
         }
 
         public void StartCombat(EnemyProfileSO enemyProfile)
@@ -615,18 +623,21 @@ namespace TawanOS.CardEngine
             }
         }
 
-        // Merit scaling: turn 1 = firstTurnMerit (2), then +1 every turn, capped at maxMerit.
+        // Merit scaling: turn 1 = firstTurnMerit (2), then +1 every turn, capped at maxMerit
+        // (the player's cap is playerMaxMerit, which ศาลตายาย can raise).
         // Unspent Merit does not carry over; it is refilled to the turn's value.
         // The enemy follows exactly the same rule, and is refilled at the same moment as the player.
-        public int MeritForTurn(int turn)
+        public int MeritForTurn(int turn) => MeritForTurn(turn, state.maxMerit);
+
+        private int MeritForTurn(int turn, int cap)
         {
-            return Mathf.Clamp(firstTurnMerit + Mathf.Max(0, turn - 1), 0, state.maxMerit);
+            return Mathf.Clamp(firstTurnMerit + Mathf.Max(0, turn - 1), 0, cap);
         }
 
         public void RefillMeritForTurn(int turn)
         {
-            state.currentMerit = MeritForTurn(turn);
-            OnMeritChanged?.Invoke(state.currentMerit, state.maxMerit);
+            state.currentMerit = MeritForTurn(turn, state.playerMaxMerit);
+            OnMeritChanged?.Invoke(state.currentMerit, state.playerMaxMerit);
 
             state.enemyMerit = MeritForTurn(turn);
             OnEnemyMeritChanged?.Invoke(state.enemyMerit, state.maxMerit);
@@ -654,8 +665,8 @@ namespace TawanOS.CardEngine
 
         public void AddMerit(int amount)
         {
-            state.currentMerit = Mathf.Clamp(state.currentMerit + amount, 0, state.maxMerit);
-            OnMeritChanged?.Invoke(state.currentMerit, state.maxMerit);
+            state.currentMerit = Mathf.Clamp(state.currentMerit + amount, 0, state.playerMaxMerit);
+            OnMeritChanged?.Invoke(state.currentMerit, state.playerMaxMerit);
         }
 
         public bool SpendMerit(int amount)
@@ -663,7 +674,7 @@ namespace TawanOS.CardEngine
             if (state.currentMerit >= amount)
             {
                 state.currentMerit -= amount;
-                OnMeritChanged?.Invoke(state.currentMerit, state.maxMerit);
+                OnMeritChanged?.Invoke(state.currentMerit, state.playerMaxMerit);
                 return true;
             }
             return false;

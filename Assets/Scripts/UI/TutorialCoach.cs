@@ -157,7 +157,7 @@ namespace TawanOS.UI
                     Add("hand", Target.Hand, words.hand, ("boardCards", boardCards), ("incantations", incantations));
                     Add("board", Target.PlayerBoard, words.board);
                     int first = combat != null ? combat.FirstTurnMerit : 2;
-                    int max = combat != null ? combat.State.maxMerit : 6;
+                    int max = combat != null ? combat.State.playerMaxMerit : 6;
                     Add("merit", Target.Merit, words.merit, ("first", first), ("max", max));
                     break;
 

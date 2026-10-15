@@ -22,7 +22,8 @@ namespace TawanOS.CardEngine
         public int playerKhwan;
         public int maxPlayerKhwan;
         public int currentMerit;
-        public int maxMerit;
+        public int maxMerit;          // the enemy's cap, and the player's default
+        public int playerMaxMerit;    // raised by ศาลตายาย's blessing (RunState.MaxMerit)
         public int currentCorruption;
         public int corruptionThreshold;
         public int enemyKhwan;
@@ -58,6 +59,7 @@ namespace TawanOS.CardEngine
             maxPlayerKhwan = 50;
             currentMerit = 1;
             maxMerit = 6;
+            playerMaxMerit = 6;
             currentCorruption = 0;
             corruptionThreshold = 7;
             enemyKhwan = 30;

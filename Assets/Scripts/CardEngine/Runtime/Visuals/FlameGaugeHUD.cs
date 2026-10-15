@@ -71,7 +71,7 @@ namespace TawanOS.CardEngine
             combat.OnMeritChanged += HandleMeritChanged;
             combat.OnCorruptionChanged += HandleCorruptionChanged;
             combat.OnCurseBackfireTriggered += HandleBackfire;
-            Refresh(merit, combat.CurrentMerit, combat.State.maxMerit, animate: false);
+            Refresh(merit, combat.CurrentMerit, combat.State.playerMaxMerit, animate: false);
             Refresh(corruption, combat.CurrentCorruption, combat.State.corruptionThreshold, animate: false);
         }
 

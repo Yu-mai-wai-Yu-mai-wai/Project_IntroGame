@@ -16,6 +16,20 @@ namespace TawanOS.ShopEngine
         [Min(0)] public int price = 60;
     }
 
+    public enum ShopBlessingKind { MaxKhwan, MaxMerit }
+
+    /// <summary>A blessing from the guardian spirit: raises the run's max khwan or max กุศล. Fixed price, once per visit.</summary>
+    [Serializable]
+    public class ShopBlessing
+    {
+        public ShopBlessingKind kind;
+        public string displayName;
+        [TextArea(2, 4)] public string description;
+        public Sprite icon;
+        [Min(1)] public int amount = 1;
+        [Min(0)] public int price = 50;
+    }
+
     /// <summary>
     /// Tuning for the spirit-house shop (ศาลตายาย): what is for sale, prices in incense (ธูป)
     /// and what the guardian spirit says.
@@ -54,6 +68,13 @@ namespace TawanOS.ShopEngine
         [Header("Amulets")]
         public List<ShopAmulet> amulets = new List<ShopAmulet>();
         [Min(0)] public int amuletsForSale = 3;
+
+        [Header("Blessings (shown on the amulet shelf)")]
+        public List<ShopBlessing> blessings = new List<ShopBlessing>
+        {
+            new ShopBlessing { kind = ShopBlessingKind.MaxKhwan, displayName = "พรขวัญ", description = "ขวัญสูงสุด +3", amount = 3, price = 25 },
+            new ShopBlessing { kind = ShopBlessingKind.MaxMerit, displayName = "พรกุศล", description = "กุศลสูงสุด +1", amount = 1, price = 70 },
+        };
 
         // No services (Game Designer, 11 Oct): the shop sells cards only. Khwan is healed at the วัด node,
         // and cards leave the deck at the เมรุ.

@@ -6,11 +6,12 @@ using UnityEngine;
 
 namespace TawanOS.ShopEngine
 {
-    /// <summary>One slot on the shrine's shelf: a card or an amulet with its incense price.</summary>
+    /// <summary>One slot on the shrine's shelf: a card, an amulet or a blessing with its incense price.</summary>
     public class ShopOffer
     {
         public CardDataSO card;
         public ShopAmulet amulet;
+        public ShopBlessing blessing;
         public int price;
         public bool sold;
     }
@@ -31,10 +32,12 @@ namespace TawanOS.ShopEngine
 
         public IReadOnlyList<ShopOffer> CardOffers => cardOffers;
         public IReadOnlyList<ShopOffer> AmuletOffers => amuletOffers;
+        public IReadOnlyList<ShopOffer> BlessingOffers => blessingOffers;
 
 
         private readonly List<ShopOffer> cardOffers = new List<ShopOffer>();
         private readonly List<ShopOffer> amuletOffers = new List<ShopOffer>();
+        private readonly List<ShopOffer> blessingOffers = new List<ShopOffer>();
 
         private void Awake()
         {
@@ -72,6 +75,7 @@ namespace TawanOS.ShopEngine
         {
             cardOffers.Clear();
             amuletOffers.Clear();
+            blessingOffers.Clear();
 
             var catalog = CardCatalogSO.Load();
             if (catalog != null)
@@ -86,6 +90,10 @@ namespace TawanOS.ShopEngine
 
             foreach (var amulet in PickDistinct(config.amulets, config.amuletsForSale))
                 amuletOffers.Add(new ShopOffer { amulet = amulet, price = config.Vary(amulet.price) });
+
+            // Every visit offers each blessing once, at its fixed price
+            foreach (var blessing in config.blessings)
+                if (blessing != null) blessingOffers.Add(new ShopOffer { blessing = blessing, price = blessing.price });
         }
 
         private static List<T> PickDistinct<T>(List<T> source, int count) where T : class
@@ -115,6 +123,22 @@ namespace TawanOS.ShopEngine
             if (!TryPay(offer)) return;
             RunState.Current.AddRelic(offer.amulet.relicId);
             Thank($"ได้รับ \"{offer.amulet.displayName}\"");
+        }
+
+        public void BuyBlessing(ShopOffer offer)
+        {
+            if (!TryPay(offer)) return;
+            var blessing = offer.blessing;
+            if (blessing.kind == ShopBlessingKind.MaxMerit)
+            {
+                RunState.Current.ChangeMaxMerit(blessing.amount);
+                Thank($"กุศลสูงสุด +{blessing.amount} (เป็น {RunState.Current.MaxMerit})");
+            }
+            else
+            {
+                RunState.Current.ChangeMaxHp(blessing.amount);
+                Thank($"ขวัญสูงสุด +{blessing.amount} (เป็น {RunState.Current.MaxHp})");
+            }
         }
 
         public void Leave()

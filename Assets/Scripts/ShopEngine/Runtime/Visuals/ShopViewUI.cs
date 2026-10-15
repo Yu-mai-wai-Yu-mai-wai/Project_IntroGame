@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using DG.Tweening;
 using TawanOS.CardEngine;
 using TawanOS.GameFlow;
+using TawanOS.UI;
+using TawanOS.VFX;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +11,8 @@ using UnityEngine.UI;
 namespace TawanOS.ShopEngine
 {
     /// <summary>
-    /// Spirit-house shop screen: the shrine and its guardian on the left, shelves of cards and amulets on the right.
+    /// Spirit-house shop screen: the shrine and its guardian on the left, shelves of cards and amulets (and the
+    /// guardian's blessings: max khwan, max กุศล) on the right.
     /// No services (heal, card removal) since 11 Oct: those belong to the วัด and the เมรุ.
     /// </summary>
     public class ShopViewUI : MonoBehaviour
@@ -37,6 +40,11 @@ namespace TawanOS.ShopEngine
         private readonly Dictionary<RectTransform, List<ShopItemView>> shelfItems = new Dictionary<RectTransform, List<ShopItemView>>();
         private readonly Dictionary<RectTransform, int> shelfUsed = new Dictionary<RectTransform, int>();
         private ShopCardShelf cardShelf; // real card faces, when the config has a card template
+
+        // Blessings are smoke buttons like the main menu's, side by side on the amulet shelf
+        private RectTransform blessingColumn;
+        private readonly List<Button> blessingButtons = new List<Button>();
+        private readonly List<ShopOffer> blessingTargets = new List<ShopOffer>();
 
         private void Awake()
         {
@@ -125,8 +133,75 @@ namespace TawanOS.ShopEngine
                     () => shop.BuyAmulet(o));
             }
 
+            RefreshBlessings(run);
+
             HideUnused(cardRow);
             HideUnused(amuletRow);
+        }
+
+        // Blessings share the amulet shelf (the shop sells no amulets at the moment)
+        private void RefreshBlessings(RunState run)
+        {
+            if (amuletRow == null) return;
+            var offers = shop.BlessingOffers;
+            if (blessingColumn == null && offers.Count > 0)
+            {
+                blessingColumn = UiFactory.CreateRect("Blessings", amuletRow);
+                var layout = blessingColumn.gameObject.AddComponent<HorizontalLayoutGroup>();
+                layout.spacing = 70f;
+                layout.padding = new RectOffset(40, 40, 0, 0); // room for the smoke to spill past the sides
+                layout.childAlignment = TextAnchor.MiddleLeft;
+                layout.childControlWidth = layout.childControlHeight = true;
+                layout.childForceExpandWidth = false; // each button keeps its own width (padding left and right of the text)
+                layout.childForceExpandHeight = false;
+            }
+            if (blessingColumn != null) blessingColumn.SetAsLastSibling();
+
+            for (int i = 0; i < offers.Count; i++)
+            {
+                if (i >= blessingButtons.Count)
+                {
+                    blessingButtons.Add(CreateBlessingButton(i));
+                    blessingTargets.Add(null);
+                }
+                var offer = offers[i];
+                var button = blessingButtons[i];
+                blessingTargets[i] = offer;
+                button.gameObject.SetActive(true);
+                // Sold: greyed smoke. Unaffordable stays clickable so the guardian can tell the player off
+                button.interactable = !offer.sold;
+                var b = offer.blessing;
+                // Price on its own line, gold like the card prices (red when the player cannot pay)
+                string price = $"<color={(run.CanAfford(offer.price) ? "#FAD680" : "#E6665A")}>{PriceLabel(offer.price)}</color>";
+                button.GetComponentInChildren<TextMeshProUGUI>(true).text = offer.sold
+                    ? "ถวายแล้ว"
+                    : $"{b.description}\n{price}";
+            }
+            for (int i = offers.Count; i < blessingButtons.Count; i++) blessingButtons[i].gameObject.SetActive(false);
+        }
+
+        private Button CreateBlessingButton(int index)
+        {
+            var theme = UIThemeSO.Current;
+            var rect = UiFactory.CreateRect($"Blessing{index}", blessingColumn);
+            var size = rect.gameObject.AddComponent<LayoutElement>();
+            size.preferredHeight = 140f; // padding above and below the two lines
+            size.minWidth = size.preferredWidth = 340f; // padding left and right of the text; min so the narrow shelf cannot squeeze it
+            var panel = rect.gameObject.AddComponent<Image>();
+            var button = rect.gameObject.AddComponent<Button>();
+            button.targetGraphic = panel;
+            var label = UiFactory.CreateText(rect, "Label", string.Empty, 30f, Color.white, TextAlignmentOptions.Center, theme.bodyFont);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            UiFactory.Stretch(label.rectTransform, 0f);
+            rect.gameObject.AddComponent<UiSmokeButton>(); // after the label, which it colours
+            button.onClick.AddListener(() =>
+            {
+                if (shop == null || blessingTargets[index] == null) return;
+                rect.DOKill(true);
+                rect.DOPunchScale(Vector3.one * 0.06f, 0.25f, 8, 0.8f);
+                shop.BuyBlessing(blessingTargets[index]);
+            });
+            return button;
         }
 
         private ShopItemView Spawn(RectTransform row)
