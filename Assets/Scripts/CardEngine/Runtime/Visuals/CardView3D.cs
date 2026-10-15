@@ -441,8 +441,9 @@ namespace TawanOS.CardEngine
         private bool isDying;
         public bool IsDying => isDying;
 
-        // Enemy's cards (disabled views), held cards, and dying cards never react to the mouse
-        public bool IgnoresMouse => !enabled || isHeld || isDying || CardTargeting3D.BlocksInput
+        // Board cards, the enemy's cards (disabled views), held cards and dying cards never react to the mouse.
+        // A hovered board card lifts off its collider and loops enter/exit (jitter), and its DOKill stops the clash tweens.
+        public bool IgnoresMouse => !enabled || isPlacedOnBoard || isHeld || isDying || CardTargeting3D.BlocksInput
             || CombatCameraRig3D.BlocksInput;
 
         private void OnMouseEnter()
@@ -575,6 +576,9 @@ namespace TawanOS.CardEngine
             isHovered = false;
             // Black smoke or streaks of light from under the card as it lands
             TawanOS.VFX.CardLandVfx.Play(transform, CardData.magicSchool == MagicSchool.BlackMagic);
+
+            // The card has been committed to the board; it no longer hovers like a hand card
+            enabled = false;
         }
 
         private static float lastDeathFireSfxTime = -1f;
