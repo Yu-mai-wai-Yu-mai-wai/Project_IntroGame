@@ -4,6 +4,7 @@ using TMPro;
 using DG.Tweening;
 using TawanOS.Settings;
 using TawanOS.UI;
+using TawanOS.VFX;
 
 namespace TawanOS.CardEngine
 {
@@ -24,6 +25,8 @@ namespace TawanOS.CardEngine
             public TMP_Text title;
             public TMP_Text detail;
             public RectTransform fill;
+            public Button button;
+            public TMP_Text buttonLabel;
         }
 
         private BarPanel enemy;
@@ -92,8 +95,34 @@ namespace TawanOS.CardEngine
 
             // Player
             string pShield = s.playerShield > 0 ? $"  |  เกราะ {s.playerShield}" : "";
-            player.detail.text = $"{s.playerKhwan} / {s.maxPlayerKhwan}{pShield}";   // the title already says ขวัญ
+            var theme = UIThemeSO.Current;
+            string khwanWord = theme != null && theme.titleFont != null ? $"<font=\"{theme.titleFont.name}\">ขวัญ</font>" : "ขวัญ";
+            player.detail.text = $"{khwanWord} {s.playerKhwan} / {s.maxPlayerKhwan}{pShield}";
             SetFill(player.fill, s.maxPlayerKhwan > 0 ? (float)s.playerKhwan / s.maxPlayerKhwan : 0f, s.playerKhwan, ref lastPlayerKhwan);
+
+            var turns = TurnPhaseController.Instance;
+            bool isCombatOver = combat.IsCombatOver;
+            bool isPlayerTurn = !isCombatOver;
+            string btnText = "จบเทิร์น";
+
+            if (turns != null && turns.isActiveAndEnabled)
+            {
+                isPlayerTurn = !isCombatOver && (turns.CurrentPhase == TurnPhase.PlayerBoard || turns.CurrentPhase == TurnPhase.PlayerSpell);
+                btnText = turns.CurrentPhase == TurnPhase.PlayerBoard ? "จบช่วงลงบริวาร" : "จบเทิร์น";
+            }
+            else
+            {
+                isPlayerTurn = !isCombatOver && (combat.State.currentPhase == CombatPhase.PlayerTurn);
+            }
+
+            if (player.button != null)
+            {
+                player.button.interactable = isPlayerTurn;
+            }
+            if (player.buttonLabel != null)
+            {
+                player.buttonLabel.text = btnText;
+            }
         }
 
         private void SetFill(RectTransform fill, float t, int value, ref int last)
@@ -128,6 +157,7 @@ namespace TawanOS.CardEngine
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920, 1080);
             scaler.matchWidthOrHeight = 0.5f;
+            canvasGo.AddComponent<GraphicRaycaster>();
 
             enemy = BuildPanel(canvasGo.transform, "EnemyPanel", new Vector2(0.5f, 1f), new Vector2(0, -30),
                 new Vector2(760, 120), EnemyBar, titleSize: 32, detailSize: 24);
@@ -147,10 +177,101 @@ namespace TawanOS.CardEngine
             actionRt.anchoredPosition = new Vector2(0, -4);
             actionRt.sizeDelta = new Vector2(0, 36);
 
-            // Left, 336 px above the bottom: clear of the hand, and under the flame rings as they stand by default
-            player = BuildPanel(canvasGo.transform, "PlayerPanel", Vector2.zero, new Vector2(40, 246),
-                new Vector2(360, 90), PlayerBar, titleSize: 26, detailSize: 22);
-            player.title.text = "ขวัญ";
+            // Left, clear of the hand, under flame rings
+            player = BuildPlayerPanel(canvasGo.transform);
+        }
+
+        private BarPanel BuildPlayerPanel(Transform parent)
+        {
+            var p = new BarPanel();
+            var theme = UIThemeSO.Current;
+
+            var rootGo = new GameObject("PlayerPanel", typeof(RectTransform));
+            rootGo.transform.SetParent(parent, false);
+            p.root = (RectTransform)rootGo.transform;
+            p.root.anchorMin = p.root.anchorMax = Vector2.zero;
+            p.root.pivot = Vector2.zero;
+            p.root.anchoredPosition = new Vector2(40, 220);
+            p.root.sizeDelta = new Vector2(360, 120);
+
+            var bg = rootGo.AddComponent<Image>();
+            bg.color = Panel;
+            bg.raycastTarget = false;
+
+            var soft = rootGo.AddComponent<SoftEdgeImage>();
+            soft.SetSides(0.08f, 0.08f, 0.08f, 0.08f);
+
+            // Title: Player name
+            p.title = MakeText(rootGo.transform, "PlayerName", 24, FontStyles.Normal, theme != null ? theme.accent : Color.white,
+                new Vector2(0, 0.68f), new Vector2(0.45f, 0.98f), new Vector2(16, 0), Vector2.zero);
+            if (theme != null && theme.titleFont != null) p.title.font = theme.titleFont;
+            p.title.text = "ผู้เล่น";
+
+            // Detail: Khwan numbers
+            p.detail = MakeText(rootGo.transform, "KhwanDetail", 20, FontStyles.Normal, theme != null ? theme.text : new Color(0.9f, 0.9f, 0.9f),
+                new Vector2(0.35f, 0.68f), new Vector2(1f, 0.98f), Vector2.zero, new Vector2(-16, 0));
+            p.detail.alignment = TextAlignmentOptions.Right;
+            if (theme != null && theme.bodyFont != null) p.detail.font = theme.bodyFont;
+
+            // Khwan Bar Track
+            var trackGo = new GameObject("BarTrack", typeof(RectTransform));
+            trackGo.transform.SetParent(rootGo.transform, false);
+            var trackRt = (RectTransform)trackGo.transform;
+            trackRt.anchorMin = new Vector2(0, 0.44f);
+            trackRt.anchorMax = new Vector2(1, 0.62f);
+            trackRt.offsetMin = new Vector2(16, 0);
+            trackRt.offsetMax = new Vector2(-16, 0);
+            var track = trackGo.AddComponent<Image>();
+            track.color = new Color(0.12f, 0.10f, 0.10f, 0.9f);
+            track.raycastTarget = false;
+
+            // Khwan Bar Fill
+            var fillGo = new GameObject("BarFill", typeof(RectTransform));
+            fillGo.transform.SetParent(trackGo.transform, false);
+            p.fill = (RectTransform)fillGo.transform;
+            p.fill.anchorMin = Vector2.zero;
+            p.fill.anchorMax = new Vector2(1f, 1f);
+            p.fill.offsetMin = p.fill.offsetMax = Vector2.zero;
+            var fillImg = fillGo.AddComponent<Image>();
+            fillImg.color = PlayerBar;
+            fillImg.raycastTarget = false;
+
+            // End Turn Button
+            var btnGo = new GameObject("EndTurnButton", typeof(RectTransform));
+            btnGo.transform.SetParent(rootGo.transform, false);
+            var btnRt = (RectTransform)btnGo.transform;
+            btnRt.anchorMin = new Vector2(0, 0.06f);
+            btnRt.anchorMax = new Vector2(1, 0.38f);
+            btnRt.offsetMin = new Vector2(16, 0);
+            btnRt.offsetMax = new Vector2(-16, 0);
+
+            var btnImg = btnGo.AddComponent<Image>();
+            btnImg.color = Color.white;
+            p.button = btnGo.AddComponent<Button>();
+            p.button.targetGraphic = btnImg;
+
+            var smokeBtn = btnGo.AddComponent<UiSmokeButton>();
+
+            p.buttonLabel = MakeText(btnGo.transform, "Label", 20, FontStyles.Normal, Color.white,
+                Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            p.buttonLabel.alignment = TextAlignmentOptions.Center;
+            if (theme != null && theme.titleFont != null) p.buttonLabel.font = theme.titleFont;
+            p.buttonLabel.text = "จบช่วงลงบริวาร";
+
+            p.button.onClick.AddListener(() =>
+            {
+                var turns = TurnPhaseController.Instance;
+                if (turns != null && turns.isActiveAndEnabled)
+                {
+                    turns.RequestEndTurn();
+                }
+                else if (CombatManager.Instance != null && !CombatManager.Instance.IsCombatOver)
+                {
+                    CombatManager.Instance.EndPlayerTurn();
+                }
+            });
+
+            return p;
         }
 
         private BarPanel BuildPanel(Transform parent, string name, Vector2 anchor, Vector2 pos, Vector2 size,

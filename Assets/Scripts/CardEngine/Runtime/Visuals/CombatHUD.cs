@@ -81,6 +81,12 @@ namespace TawanOS.CardEngine
 
         private void OnEndTurnClicked()
         {
+            var turns = TurnPhaseController.Instance;
+            if (turns != null && turns.isActiveAndEnabled)
+            {
+                turns.RequestEndTurn();
+                return;
+            }
             if (CombatManager.Instance != null && !CombatManager.Instance.IsCombatOver)
             {
                 CombatManager.Instance.EndPlayerTurn();
@@ -99,7 +105,23 @@ namespace TawanOS.CardEngine
 
             if (endTurnButton != null)
             {
-                endTurnButton.interactable = (phase == CombatPhase.PlayerTurn);
+                var turns = TurnPhaseController.Instance;
+                bool isCombatOver = CombatManager.Instance != null && CombatManager.Instance.IsCombatOver;
+                bool isPlayerTurn = !isCombatOver;
+                if (turns != null && turns.isActiveAndEnabled)
+                {
+                    isPlayerTurn = !isCombatOver && (turns.CurrentPhase == TurnPhase.PlayerBoard || turns.CurrentPhase == TurnPhase.PlayerSpell);
+                    var label = endTurnButton.GetComponentInChildren<TMP_Text>();
+                    if (label != null)
+                    {
+                        label.text = turns.CurrentPhase == TurnPhase.PlayerBoard ? "จบช่วงลงบริวาร" : "จบเทิร์น";
+                    }
+                }
+                else
+                {
+                    isPlayerTurn = !isCombatOver && (phase == CombatPhase.PlayerTurn);
+                }
+                endTurnButton.interactable = isPlayerTurn;
             }
 
             if (turnText != null && CombatManager.Instance != null)
