@@ -163,8 +163,8 @@ namespace TawanOS.GameFlow
             chosen = busy = false;
             if (resultPanel != null) resultPanel.SetActive(false);
 
-            canBurn = meru.Deck.Count > 1;
-            canUpgrade = meru.AnyUpgradable();
+            canBurn = !meru.Used && meru.Deck.Count > 1;
+            canUpgrade = !meru.Used && meru.AnyUpgradable();
             FillColumn(burnColumn, burnViews, MeruAction.Burn);
             FillColumn(upgradeColumn, upgradeViews, MeruAction.Upgrade);
             RefreshSelection();
@@ -177,8 +177,8 @@ namespace TawanOS.GameFlow
                 SetGroup(column.panelGroup, false, instant: true);
                 ApplyColumn(column);
             }
-            SetStrip(burnColumn, canBurn, "นำการ์ด 1 ใบออกจากสำรับไปตลอดกาล", "สำรับเหลือใบเดียว เผาไม่ได้");
-            SetStrip(upgradeColumn, canUpgrade, "ชำระการ์ด 1 ใบในไฟให้แกร่งขึ้น", "ไม่มีการ์ดที่อัพเกรดได้");
+            SetStrip(burnColumn, canBurn, "นำการ์ด 1 ใบออกจากสำรับไปตลอดกาล", meru.Used ? "ใช้เตาเผาในรอบนี้ไปแล้ว" : "สำรับเหลือใบเดียว เผาไม่ได้");
+            SetStrip(upgradeColumn, canUpgrade, "ชำระการ์ด 1 ใบในไฟให้แกร่งขึ้น", meru.Used ? "ใช้เตาเผาในรอบนี้ไปแล้ว" : "ไม่มีการ์ดที่อัพเกรดได้");
             if (leaveButton != null) leaveButton.gameObject.SetActive(false);
             group.blocksRaycasts = group.interactable = true;
 

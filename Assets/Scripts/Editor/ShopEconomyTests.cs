@@ -92,7 +92,8 @@ namespace TawanOS.EditorTools
                 if (offer1 != null) shop.BuyBlessing(offer1);
                 failures += Expect("After buy 1: times bought is 1", run.GetBlessingPurchases(ShopBlessingKind.MaxKhwan) == 1);
 
-                // Second visit / buy 2
+                // Second visit / buy 2 (leaving the shop clears its saved stock, P0-9)
+                run.ClearShopStock();
                 rollStockMethod.Invoke(shop, null);
                 var offer2 = shop.BlessingOffers.FirstOrDefault(o => o.blessing.kind == ShopBlessingKind.MaxKhwan);
                 failures += Expect("Visit 2: MaxKhwan price is 12 (8 + 4)", offer2 != null && offer2.price == 12);
@@ -100,6 +101,7 @@ namespace TawanOS.EditorTools
                 failures += Expect("After buy 2: times bought is 2", run.GetBlessingPurchases(ShopBlessingKind.MaxKhwan) == 2);
 
                 // Third visit / buy 3
+                run.ClearShopStock();
                 rollStockMethod.Invoke(shop, null);
                 var offer3 = shop.BlessingOffers.FirstOrDefault(o => o.blessing.kind == ShopBlessingKind.MaxKhwan);
                 failures += Expect("Visit 3: MaxKhwan price is 16 (8 + 8)", offer3 != null && offer3.price == 16);
@@ -117,6 +119,7 @@ namespace TawanOS.EditorTools
                     RunState.Current.GetBlessingPurchases(ShopBlessingKind.MaxKhwan) == 3);
 
                 // Next visit should offer at 20 (8 + 4*3)
+                RunState.Current.ClearShopStock();
                 rollStockMethod.Invoke(shop, null);
                 var offer4 = shop.BlessingOffers.FirstOrDefault(o => o.blessing.kind == ShopBlessingKind.MaxKhwan);
                 failures += Expect("Visit 4 after reload: MaxKhwan price is 20", offer4 != null && offer4.price == 20);
@@ -128,12 +131,9 @@ namespace TawanOS.EditorTools
             finally
             {
                 Object.DestroyImmediate(go);
+                // Leave RunState non-persistent so later tests do not mistake it for a real save
                 RunState.EndRun();
-                if (backupSave != null)
-                {
-                    File.WriteAllText(SavePath, backupSave);
-                    RunState.LoadSavedRun();
-                }
+                if (backupSave != null) File.WriteAllText(SavePath, backupSave);
             }
 
             Debug.Log(failures == 0 ? "[ShopEconomyTests] PASS" : $"[ShopEconomyTests] FAIL: {failures} check(s) failed");

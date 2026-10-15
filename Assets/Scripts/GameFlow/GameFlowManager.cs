@@ -149,6 +149,7 @@ namespace TawanOS.GameFlow
                 case ResumeKind.Shop: HandleStoreNodeEntered(); break;
                 case ResumeKind.Meru: HandleRestNodeEntered(); break;
                 case ResumeKind.Temple: HandleTempleNodeEntered(); break;
+                case ResumeKind.Reward: LoadRewardScene(); break;
                 default: SceneTransition.Load(MapSceneName); break;
             }
         }
@@ -191,10 +192,12 @@ namespace TawanOS.GameFlow
                 RewardManager.Instance.OnRewardFinished -= HandleRewardFinished;
                 RewardManager.Instance.OnRewardFinished += HandleRewardFinished;
 
-                if (hasPendingReward)
+                if (hasPendingReward || RunState.Current.HasPendingReward)
                 {
+                    int incense = hasPendingReward ? rewardIncense : (RunState.Current.PendingReward?.incenseEarned ?? 0);
+                    RewardTier tier = hasPendingReward ? rewardTier : (RunState.Current.PendingReward?.tier ?? RewardTier.Minor);
                     hasPendingReward = false;
-                    RewardManager.Instance.BeginReward(rewardIncense, rewardTier);
+                    RewardManager.Instance.BeginReward(incense, tier);
                 }
             }
 
@@ -349,7 +352,8 @@ namespace TawanOS.GameFlow
 
         private void BeginCardReward(RewardTier tier)
         {
-            RunState.Current.ClearResume();
+            RunState.Current.SetResume(ResumeKind.Reward);
+            RunState.Current.SetPendingReward(null, 0, tier);
             hasPendingReward = true;
             rewardIncense = 0;
             rewardTier = tier;
@@ -395,6 +399,7 @@ namespace TawanOS.GameFlow
 
         private void HandleMeruFinished()
         {
+            RunState.Current.ClearMeruUsed();
             RunState.Current.ClearResume();
             if (Application.isPlaying) SceneTransition.Load(MapSceneName);
         }
@@ -457,6 +462,7 @@ namespace TawanOS.GameFlow
 
         private void HandleShopClosed()
         {
+            RunState.Current.ClearShopStock();
             RunState.Current.ClearResume();
             if (Application.isPlaying) SceneTransition.Load(MapSceneName);
         }
@@ -522,6 +528,9 @@ namespace TawanOS.GameFlow
                 return;
             }
 
+            RunState.Current.SetResume(ResumeKind.Reward);
+            RunState.Current.SetPendingReward(null, reward, pendingRewardTier);
+
             hasPendingReward = true;
             rewardIncense = reward;
             rewardTier = pendingRewardTier;
@@ -532,6 +541,8 @@ namespace TawanOS.GameFlow
 
         private void HandleRewardFinished()
         {
+            RunState.Current.ClearPendingReward();
+            RunState.Current.ClearResume();
             if (Application.isPlaying) SceneTransition.Load(MapSceneName);
         }
 
