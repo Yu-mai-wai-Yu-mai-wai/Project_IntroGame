@@ -398,11 +398,13 @@ namespace TawanOS.CardEngine
         }
 
         // The way a card in this slot faces: toward the slot across from it
-        private Vector3 FacingOf(BoardSlotView slot)
+        public Vector3 FacingOf(BoardSlotView slot)
         {
             if (slot == null) return Vector3.forward;
             var across = slot.side == BoardSlotView.SlotSide.Player ? enemySlots : playerSlots;
-            return across.TryGetValue(slot.slotIndex, out var other) ? Direction(slot.transform.position, other.transform.position) : Vector3.forward;
+            return across.TryGetValue(slot.slotIndex, out var other) 
+                ? Direction(slot.transform.position, other.transform.position) 
+                : (slot.side == BoardSlotView.SlotSide.Player ? Vector3.forward : Vector3.back);
         }
 
         // Familiars whose Khwan hit 0 burn away (or play Die) once the cards are back on their slots, then are removed
@@ -411,25 +413,16 @@ namespace TawanOS.CardEngine
             if (died.Count == 0) yield break;
 
             float longest = 0f;
-            bool burning = false;
             foreach (var card in died)
             {
                 var view = FindView(card);
-                if (view == null) continue;
+                if (view == null || view.IsDying) continue;
 
                 var slot = view.GetComponentInParent<BoardSlotView>();
-                view.transform.DOKill();
-                var rig = new CardClashRig(view.transform, slot != null ? slot.transform : view.transform.parent, FacingOf(slot));
-                // The card burns away (CardDeathFx); without the burn set up it plays the Die clip
-                float length = CardBurnEffect.Burn(view.transform, CardDeathFxConfigSO.Load());
-                burning |= length > 0f;
-                if (length <= 0f) length = rig.Play(CardClashRig.Die);
-                rig.DestroyWithCard(length);
+                float length = view.PlayDeathAnimation(slot);
                 longest = Mathf.Max(longest, length);
             }
             died.Clear();
-            // One fire sound for the whole burn, however many cards catch fire (as on the reward screen)
-            if (burning) TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on");
             if (longest > 0f) yield return new WaitForSeconds(longest);
         }
     }

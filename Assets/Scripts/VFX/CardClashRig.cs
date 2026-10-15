@@ -102,8 +102,11 @@ namespace TawanOS.VFX
             // the clips' sideways moves picked up a forward part and their up/forward moves were squashed
             // and stretched.
             Mover = new GameObject("ClashMover").transform;
-            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(Mover.gameObject, slot.gameObject.scene);
-            Mover.position = card.position;
+            if (slot != null && slot.gameObject.scene.IsValid())
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(Mover.gameObject, slot.gameObject.scene);
+            else if (card != null && card.gameObject.scene.IsValid())
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(Mover.gameObject, card.gameObject.scene);
+            Mover.position = card != null ? card.position : Vector3.zero;
             Mover.rotation = Quaternion.identity;
             Home = Mover.localPosition;
 
@@ -262,7 +265,9 @@ namespace TawanOS.VFX
         // Leaves the card in the rig and removes both after `delay` (a card that died)
         public void DestroyWithCard(float delay)
         {
-            if (Mover != null) Object.Destroy(Mover.gameObject, delay);
+            if (Mover == null) return;
+            if (Application.isPlaying) Object.Destroy(Mover.gameObject, delay);
+            else Object.DestroyImmediate(Mover.gameObject);
         }
     }
 }
