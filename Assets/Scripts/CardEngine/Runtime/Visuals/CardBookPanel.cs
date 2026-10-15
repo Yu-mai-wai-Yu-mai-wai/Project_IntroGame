@@ -547,7 +547,8 @@ namespace TawanOS.CardEngine
         {
             float y = topY;
             float rowHeight = 0.115f;
-            string accentHex = ColorUtility.ToHtmlStringRGB(UIThemeSO.Current != null ? UIThemeSO.Current.accent : new Color(0.9f, 0.6f, 0.3f));
+            // Book ink, not the theme accent: the light accent vanished on the yellowed paper (Game Designer, 15 Oct)
+            string accentHex = ColorUtility.ToHtmlStringRGB(style.blackMagicInk);
 
             for (int i = start; i < end && i < list.Count; i++)
             {
