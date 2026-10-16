@@ -166,6 +166,16 @@ namespace TawanOS.CardEngine
             if (player.button != null)
             {
                 player.button.interactable = isPlayerTurn;
+
+                // A card waiting where the player's held card goes (picked from the hand, or the enemy's card on
+                // show) sits on the button's spot: the button fades out of its way until it is gone
+                bool cardThere = (CardPlayController3D.Instance != null && CardPlayController3D.Instance.IsHoldingAny)
+                    || Time.time < EnemyHandView3D.ShowcaseUntil;
+                var group = player.button.GetComponent<CanvasGroup>();
+                if (group == null) group = player.button.gameObject.AddComponent<CanvasGroup>();
+                float alpha = Mathf.MoveTowards(group.alpha, cardThere ? 0f : 1f, Time.unscaledDeltaTime * 6f);
+                group.alpha = alpha;
+                group.blocksRaycasts = alpha > 0.5f;
             }
             if (player.buttonLabel != null)
             {

@@ -10,6 +10,10 @@ namespace TawanOS.CardEngine
     // Bootstraps itself and reuses the player's card prefab and fan layout settings.
     public class EnemyHandView3D : MonoBehaviour
     {
+        /// <summary>Until when (Time.time) an enemy card is shown where the player's held card waits; the end-turn
+        /// button (CombatStatusHUD) steps aside until then</summary>
+        public static float ShowcaseUntil { get; private set; }
+
         [Tooltip("Auto-found from the scene's HandLayoutController3D when empty.")]
         public CardView3D cardPrefab;
         [Tooltip("Off = the enemy's hand is shown as face-down card backs.")]
@@ -342,6 +346,7 @@ namespace TawanOS.CardEngine
                     float showIn = showcaseInDuration / speed;
                     float hold = abilityCardHoldTime / speed;
 
+                    ShowcaseUntil = Mathf.Max(ShowcaseUntil, Time.time + showIn + hold);
                     var seq = DOTween.Sequence().SetTarget(t);
                     seq.Append(t.DOMove(heldPos, showIn).SetEase(Ease.OutQuad))
                        .Join(t.DORotateQuaternion(heldRot, showIn))
@@ -367,6 +372,7 @@ namespace TawanOS.CardEngine
             if (TryGetHeldPose(out var heldPos2, out var heldRot2, out var heldScale2))
             {
                 float showIn = showcaseInDuration / speed2;
+                ShowcaseUntil = Mathf.Max(ShowcaseUntil, Time.time + showIn + showcaseHoldTime / speed2 + fly * 0.5f);
                 seq2.Append(t.DOMove(heldPos2, showIn).SetEase(Ease.OutQuad))
                    .Join(t.DORotateQuaternion(heldRot2, showIn))
                    .Join(t.DOScale(heldScale2, showIn))

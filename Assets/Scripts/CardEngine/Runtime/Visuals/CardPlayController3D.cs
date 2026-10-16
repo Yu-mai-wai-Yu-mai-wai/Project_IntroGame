@@ -74,6 +74,7 @@ namespace TawanOS.CardEngine
         }
 
         public bool IsHolding(CardView3D view) => held != null && held == view;
+        public bool IsHoldingAny => held != null;
 
         // ---------------------------------------------------------------- select / release
 
