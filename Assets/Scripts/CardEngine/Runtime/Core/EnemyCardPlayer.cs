@@ -645,12 +645,6 @@ namespace TawanOS.CardEngine
                         utility += 3f * a.value;
                         break;
 
-                    case AbilityEffect.DrainKhwan:
-                        // Damage to the player and the same back to itself: worth more the more it is missing
-                        offense += 3f * a.value;
-                        if (s.enemyKhwan < s.maxEnemyKhwan) defense += 1.5f * Mathf.Min(a.value, s.maxEnemyKhwan - s.enemyKhwan);
-                        break;
-
                     case AbilityEffect.SummonToBoard:
                         utility += 7f; // a free familiar on the board
                         break;

@@ -177,16 +177,16 @@ namespace TawanOS.CardEngine
                 drain.cardId = "boss_drain";
                 drain.cardNameThai = "คาถาดูดขวัญ";
                 drain.cardNameEng = "Soul Drain";
-                drain.descriptionFormat = "ดูดขวัญผู้เล่น 3 แล้วฟื้นขวัญตัวเองเท่าที่ดูดได้";
+                drain.descriptionFormat = "ทำดาเมจ 3 หน่วย ใส่บริวารหรือเครื่องราง 1 ใบ";
                 drain.magicSchool = MagicSchool.BlackMagic;
                 drain.cardType = CardType.Incantation;
-                drain.targetType = TargetType.NoTarget;
+                drain.targetType = TargetType.SingleEnemy;
                 drain.customTypeText = "อาคม • มนต์ดำ";
                 drain.meritCost = 0;
                 drain.corruptionGain = 0;
                 drain.abilities = new List<CardAbility>
                 {
-                    new CardAbility { trigger = AbilityTrigger.OnPlay, effect = AbilityEffect.DrainKhwan, target = AbilityTarget.Self, value = 3 },
+                    new CardAbility { trigger = AbilityTrigger.OnPlay, effect = AbilityEffect.DamageCard, target = AbilityTarget.EnemyCard, value = 3 },
                 };
                 AssetDatabase.CreateAsset(drain, DrainCardPath);
                 Debug.Log($"<color=green>[BossPhaseSetupTool] {DrainCardPath} created.</color>");

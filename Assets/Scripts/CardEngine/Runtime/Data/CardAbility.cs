@@ -68,8 +68,7 @@ namespace TawanOS.CardEngine
         [InspectorName("เพิ่มมลทินสูงสุด")] RaiseCorruptionCap,     // เพิ่มมลทินสูงสุดของเจ้าของ +value (ตลอดการต่อสู้)
         [InspectorName("สะท้อนดาเมจ")] ReflectDamage,          // Passive: สะท้อนดาเมจที่ตีเข้ามาใส่ผู้โจมตีเท่ากัน
         [InspectorName("เพิ่มอัตราคริ (ค่า x 0.1%)")] CritChanceBonus,        // Passive: บริวารฝั่งเราได้อัตราคริเพิ่ม value หน่วยละ 0.1% (25 = 2.5%)
-        [InspectorName("สุ่มบริวารมนต์ดำลงสนาม")] SummonToBoard,          // สร้างบริวารมนต์ดำแบบสุ่มบนช่องว่างของฝั่งเรา (ตีไม่ได้ในรอบนี้)
-        [InspectorName("ดูดขวัญ (ผู้เล่นฝั่งตรงข้าม)")] DrainKhwan            // ทำดาเมจ value ใส่ผู้เล่นฝั่งตรงข้าม แล้วฟื้นขวัญเจ้าของเท่าที่ขวัญเขาลดจริง
+        [InspectorName("สุ่มบริวารมนต์ดำลงสนาม")] SummonToBoard           // สร้างบริวารมนต์ดำแบบสุ่มบนช่องว่างของฝั่งเรา (ตีไม่ได้ในรอบนี้)
     }
 
     [Serializable]

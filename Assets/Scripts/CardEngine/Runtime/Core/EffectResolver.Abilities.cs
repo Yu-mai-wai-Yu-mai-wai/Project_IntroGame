@@ -587,9 +587,6 @@ namespace TawanOS.CardEngine
                     FlipOmens(source, ownerIsPlayer, explicitTarget as CardInstance);
                     return;
 
-                case AbilityEffect.DrainKhwan:
-                    DrainKhwan(a.value, ownerIsPlayer);
-                    return;
             }
 
             var targets = ResolveTargets(a, source, ownerIsPlayer, other, explicitTarget);
@@ -599,26 +596,6 @@ namespace TawanOS.CardEngine
                 Debug.Log($"[Ability] {source?.cardNameThai} -> {target.cardNameThai}: {a.effect} {a.value}");
                 ApplyToCard(a, target, source, ownerIsPlayer);
             }
-        }
-
-        // ดูดขวัญ: hits the opposing player for `value` (shield and damage statuses apply as usual), then the owner
-        // gets back as much khwan as the opponent actually lost, up to its max
-        private void DrainKhwan(int value, bool ownerIsPlayer)
-        {
-            var combat = CombatManager.Instance;
-            if (combat == null || combat.State == null || value <= 0) return;
-            var s = combat.State;
-
-            int damage = ApplyDamageStatusModifier(value, attackerIsPlayer: ownerIsPlayer);
-            int before = ownerIsPlayer ? s.enemyKhwan : s.playerKhwan;
-            combat.TakeDamage(damage, toPlayer: !ownerIsPlayer, cause: !ownerIsPlayer ? "ถูกดูดขวัญ" : null);
-            OnDamageDealt?.Invoke(damage, !ownerIsPlayer);
-            int drained = Mathf.Max(0, before - (ownerIsPlayer ? s.enemyKhwan : s.playerKhwan));
-            if (drained <= 0 || combat.IsCombatOver) return;
-
-            if (ownerIsPlayer) s.playerKhwan = Mathf.Max(s.playerKhwan, Mathf.Min(s.maxPlayerKhwan, s.playerKhwan + drained)); // keeps ขวัญชั่วคราว
-            else s.enemyKhwan = Mathf.Min(s.maxEnemyKhwan, s.enemyKhwan + drained);
-            Debug.Log($"[Ability] ดูดขวัญ: {(ownerIsPlayer ? "player" : "enemy")} drains {drained} khwan.");
         }
 
         private void ApplyToCard(CardAbility a, CardInstance target, CardInstance source, bool ownerIsPlayer)
