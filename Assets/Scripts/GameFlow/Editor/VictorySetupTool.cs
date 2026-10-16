@@ -93,6 +93,7 @@ namespace TawanOS.GameFlow
 
             // Background
             CreateImage("Background", root, Vector2.zero, Vector2.one, DarkBg);
+            view.forestBackground = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/MainMenu/Tree.PNG");
 
             // Ember glow at top/bottom
             CreateImage("AuraGlow", root, new Vector2(0f, 0.4f), new Vector2(1f, 1f), new Color(Crimson.r, Crimson.g, Crimson.b, 0.25f));

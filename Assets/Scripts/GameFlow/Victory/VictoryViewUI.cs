@@ -25,6 +25,10 @@ namespace TawanOS.GameFlow
         public TextMeshProUGUI mainMenuButtonLabel;
         public CanvasGroup contentGroup;
 
+        [Header("Background")]
+        [Tooltip("Forest picture behind the whole screen; the plain dark colour stays when empty.")]
+        public Sprite forestBackground;
+
         [Header("Cutscene Sequence (P1-8)")]
         public CanvasGroup cutsceneGroup;
         public RawImage cutsceneVideoImage;
@@ -41,10 +45,27 @@ namespace TawanOS.GameFlow
 
         private void Awake()
         {
+            ApplyForestBackground();
+
             if (mainMenuButton != null)
             {
                 mainMenuButton.onClick.AddListener(OnMainMenuClicked);
             }
+        }
+
+        // The scene's full-screen "Background" image shows the forest picture instead of a flat colour; the red
+        // "AuraGlow" band above it is kept so the text panel still reads against the picture
+        private void ApplyForestBackground()
+        {
+            if (forestBackground == null) return;
+            var bg = transform.Find("Background");
+            var image = bg != null ? bg.GetComponent<Image>() : null;
+            if (image == null) return;
+
+            image.sprite = forestBackground;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = false;
+            image.color = Color.white;
         }
 
         private void Start()

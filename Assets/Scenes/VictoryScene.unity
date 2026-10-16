@@ -876,6 +876,11 @@ MonoBehaviour:
   mainMenuButton: {fileID: 1591454129}
   mainMenuButtonLabel: {fileID: 68094434}
   contentGroup: {fileID: 2054358015}
+  forestBackground: {fileID: 21300000, guid: 90187e2253de926408e31febc1ca6c31, type: 3}
+  cutsceneGroup: {fileID: 0}
+  cutsceneVideoImage: {fileID: 0}
+  cutsceneVideoPlayer: {fileID: 0}
+  cutsceneCaptionText: {fileID: 0}
 --- !u!114 &1433702327
 MonoBehaviour:
   m_ObjectHideFlags: 0
