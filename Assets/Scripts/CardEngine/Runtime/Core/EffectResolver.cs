@@ -55,6 +55,10 @@ namespace TawanOS.CardEngine
                     if (placed) RunOnPlayAbilities(card, target, casterIsPlayer);
                     break;
             }
+
+            // A card can die from the play itself, not only from abilities: an aura in play takes it to 0 Khwan as it
+            // lands (ผ้าประเจียดดำ on a 1-Khwan familiar). It leaves the board now, not at the next clash.
+            RemoveDeadFamiliars();
         }
 
         private void RunOnPlayAbilities(CardInstance card, object target, bool casterIsPlayer)
