@@ -37,6 +37,7 @@ namespace TawanOS.CardEngine
         private BarPanel enemy;
         private BarPanel player;
         private TMP_Text actionText;
+        private TMP_Text controlHint; // "กด Space ... / คลิกขวา ..." under the end-turn button
         private CombatManager combat;
         private float lastEnemyRatio = -1f;
         private float lastPlayerRatio = -1f;
@@ -139,7 +140,7 @@ namespace TawanOS.CardEngine
             string shield = s.enemyShield > 0 ? $"  |  เกราะ {s.enemyShield}" : "";
             // While the bar refills the number counts up with it
             int shownKhwan = refilling ? Mathf.RoundToInt(enemy.fill.anchorMax.x * s.maxEnemyKhwan) : s.enemyKhwan;
-            enemy.detail.text = $"ขวัญ {shownKhwan} / {s.maxEnemyKhwan}{shield}  |  {combat.EnemyAIStateName}{handInfo}";
+            enemy.detail.text = $"ขวัญ {shownKhwan} / {s.maxEnemyKhwan}{shield}{handInfo}";
             if (!refilling) SetFill(enemy.fill, s.maxEnemyKhwan > 0 ? (float)s.enemyKhwan / s.maxEnemyKhwan : 0f, ref lastEnemyRatio, enemy.root);
 
             // Player
@@ -181,6 +182,12 @@ namespace TawanOS.CardEngine
             {
                 player.buttonLabel.text = btnText;
             }
+            if (controlHint != null) controlHint.text = ControlHintText(btnText);
+        }
+
+        private static string ControlHintText(string endAction)
+        {
+            return $"กด Space เพื่อ{endAction}\nคลิกขวาที่การ์ดเพื่อดูรายละเอียด";
         }
 
         private void SetFill(RectTransform fill, float t, ref float last, RectTransform shakeRoot)
@@ -321,6 +328,13 @@ namespace TawanOS.CardEngine
             p.buttonLabel.alignment = TextAlignmentOptions.Center;
             if (theme != null && theme.titleFont != null) p.buttonLabel.font = theme.titleFont;
             p.buttonLabel.text = "จบช่วงลงบริวาร";
+
+            // Key hints under the button; a child of it so they fade out with it when a card waits on its spot
+            controlHint = MakeText(btnGo.transform, "ControlHint", 20, FontStyles.Normal, new Color(0.78f, 0.74f, 0.70f, 0.85f),
+                Vector2.zero, new Vector2(1f, 0f), new Vector2(-20f, -66f), new Vector2(20f, -8f));
+            controlHint.alignment = TextAlignmentOptions.Top;
+            if (theme != null && theme.bodyFont != null) controlHint.font = theme.bodyFont;
+            controlHint.text = ControlHintText("จบเทิร์น");
 
             p.button.onClick.AddListener(() =>
             {

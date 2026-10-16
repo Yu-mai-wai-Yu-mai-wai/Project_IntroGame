@@ -60,7 +60,7 @@ namespace TawanOS.CardEngine
             entries.Add(new KeywordEntry("เกราะคุ้มภัย", "กันความเสียหายทั้งก้อนได้ 1 ครั้งต่อ stack รวมถึงการระเบิด"));
             entries.Add(new KeywordEntry("ชำระล้าง", "เมื่อได้รับมลทิน จะป้องกันมลทินนั้น 1 หน่วยต่อ 1 stack"));
             entries.Add(new KeywordEntry("ยั่วยุ", "[ชั่วคราว] ศัตรูต้องโจมตีการ์ดใบนี้ก่อน"));
-            entries.Add(new KeywordEntry("ผีข้ามหัว", "[ชั่วคราว] โจมตีข้ามการ์ดบนกระดานเข้าใส่ผู้เล่นหรือศัตรูโดยตรง (ยกเว้นมีตัวดักจับ)"));
+            entries.Add(new KeywordEntry("ตีข้ามหัว","[ชั่วคราว] โจมตีข้ามการ์ดบนกระดานเข้าใส่ผู้เล่นหรือศัตรูโดยตรง (ยกเว้นมีตัวดักจับ)"));
             entries.Add(new KeywordEntry("อัปมงคล", "[ชั่วคราว] สถานะทางลบของการ์ด (ผวา, ผีบังตา)"));
             entries.Add(new KeywordEntry("สิริมงคล", "[ชั่วคราว] สถานะทางบวกของการ์ด (เกราะคุ้มภัย, ยั่วยุ)"));
             entries.Add(new KeywordEntry("กุศล", "[ชั่วคราว] ทรัพยากรสำหรับใช้ร่ายการ์ดสายขาว"));
@@ -92,7 +92,7 @@ namespace TawanOS.CardEngine
         {
             "เกราะคุ้มภัย",
             "คำสาปย้อน",
-            "ผีข้ามหัว",
+            "ตีข้ามหัว",
             "สิริมงคล",
             "ชำระล้าง",
             "ผีบังตา",
@@ -167,7 +167,7 @@ namespace TawanOS.CardEngine
                             found.Add(statusName);
                     }
                     if (a.effect == AbilityEffect.Taunt && !found.Contains("ยั่วยุ")) found.Add("ยั่วยุ");
-                    if (a.effect == AbilityEffect.Overhead && !found.Contains("ผีข้ามหัว")) found.Add("ผีข้ามหัว");
+                    if (a.effect == AbilityEffect.Overhead && !found.Contains("ตีข้ามหัว")) found.Add("ตีข้ามหัว");
                     if (a.effect == AbilityEffect.CleanseAll && !found.Contains("ชำระล้าง")) found.Add("ชำระล้าง");
                     if (a.effect == AbilityEffect.FlipOmens)
                     {
