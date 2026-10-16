@@ -620,7 +620,7 @@ namespace TawanOS.CardEngine
         }
 
         // The เกราะคุ้มภัย shield: its place and size on the face
-        private static readonly Vector2 ShieldCenter = new Vector2(0f, 0.2f);
+        private static readonly Vector2 ShieldCenter = new Vector2(0f, 0.12f);
         private const float ShieldSize = 0.3f;
 
         public void ResyncHover()
