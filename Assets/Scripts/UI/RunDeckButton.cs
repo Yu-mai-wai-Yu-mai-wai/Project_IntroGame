@@ -9,8 +9,8 @@ using UnityEngine.UI;
 namespace TawanOS.UI
 {
     /// <summary>
-    /// A "สำรับ (N)" button in the top-left corner of every screen of a run except the map (which has its own, in its
-    /// status bar): the fight, หมอกดำ, ศาลตายาย, the temple, เมรุ, กองของเซ่น and the reward screen. It opens the
+    /// A "สำรับ (N)" button in the top-left corner of the screens of a run outside a fight, except the map (which has its own, in its
+    /// status bar): หมอกดำ, ศาลตายาย, the temple, เมรุ, กองของเซ่น and the reward screen. It opens the
     /// same deck screen as the map's (DeckViewerPanelUI). Created by itself at start and kept across scenes; it hides
     /// while the deck screen, the pause menu or the settings are open.
     /// </summary>
@@ -20,7 +20,6 @@ namespace TawanOS.UI
         // in that corner, so there it sits at the end of their row, as on the map.
         private static readonly Dictionary<string, Vector2> Places = new Dictionary<string, Vector2>
         {
-            { "CombatTestScene", new Vector2(24f, 24f) },
             { "EventScene", new Vector2(440f, 28f) },
             { "ShopScene", new Vector2(24f, 24f) },
             { "TempleScene", new Vector2(24f, 24f) },
