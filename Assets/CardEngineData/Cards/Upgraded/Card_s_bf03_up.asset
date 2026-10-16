@@ -18,13 +18,15 @@ MonoBehaviour:
   cardNameEng: Headless Ghost+
   descriptionFormat: "\u0E44\u0E14\u0E49\u0E23\u0E31\u0E1A\u0E01\u0E32\u0E23\u0E4C\u0E14
     \"\u0E2B\u0E31\u0E27\u0E01\u0E30\u0E42\u0E2B\u0E25\u0E01\u0E2D\u0E32\u0E16\u0E23\u0E23\u0E1E\u0E4C\"
-    1 \u0E43\u0E1A"
+    \n1 \u0E43\u0E1A"
   magicSchool: 1
   cardType: 2
   targetType: 0
   customTypeText: "\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E14\u0E33"
+  bossOnly: 0
   meritCost: 0
   corruptionGain: 3
+  shopPrice: 0
   baseValue: 0
   durability: 0
   familiarHealth: 4
