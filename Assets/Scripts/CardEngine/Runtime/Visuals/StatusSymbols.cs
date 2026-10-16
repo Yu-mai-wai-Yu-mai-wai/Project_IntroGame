@@ -3,19 +3,45 @@ using UnityEngine;
 namespace TawanOS.CardEngine
 {
     // The pictures that show a card's statuses at a glance (CardView3D): a shield for เกราะคุ้มภัย, a cross over the
-    // ability text for ผีบังตา, a glowing frame for ยั่วยุ, an arrow down by the attack for ผวา. Drawn once in code
+    // ability text for ผีบังตา, a glowing frame for ยั่วยุ, sinking smoke for ผวา. Drawn once in code
     // (no art files): white shapes with a black edge, tinted per status by the SpriteRenderer, so they read on any art.
     public static class StatusSymbols
     {
         private const int Size = 128;
-        private static Sprite shield, cross, frame, arrow;
+        private static Sprite shield, cross, frame;
 
         public static Sprite Shield => shield != null ? shield : shield = Make(ShieldShape, 0.06f);
         public static Sprite Cross => cross != null ? cross : cross = Make(CrossShape, 0.05f);
-        public static Sprite Arrow => arrow != null ? arrow : arrow = Make(ArrowShape, 0.07f);
         public static Sprite Frame => frame != null ? frame : frame = MakeFrame();
         public static Sprite ShieldGlow => shieldGlow != null ? shieldGlow : shieldGlow = MakeShieldGlow();
         private static Sprite shieldGlow;
+        public static Sprite Smoke => smoke != null ? smoke : smoke = MakeSmoke();
+        private static Sprite smoke;
+
+        // A soft wisp of smoke for ผวา (PhawaSmoke): a band that snakes from side to side, thickest in the middle and
+        // fading out at both ends, with a little grain so it does not look like a tube
+        private static Sprite MakeSmoke()
+        {
+            var tex = new Texture2D(Size, Size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "StatusSmoke" };
+            var px = new Color32[Size * Size];
+            for (int j = 0; j < Size; j++)
+            {
+                for (int i = 0; i < Size; i++)
+                {
+                    float x = (i + 0.5f) / Size, y = (j + 0.5f) / Size;
+                    float centre = 0.5f + Mathf.Sin(y * 7f) * 0.09f + Mathf.Sin(y * 19f + 1.3f) * 0.025f;
+                    float halfWidth = 0.12f + 0.2f * Mathf.Sin(y * Mathf.PI);
+                    float across = Mathf.Clamp01(1f - Mathf.Abs(x - centre) / halfWidth);
+                    float along = Mathf.Sin(y * Mathf.PI);
+                    float grain = 0.75f + 0.25f * Mathf.PerlinNoise(x * 9f, y * 14f);
+                    float a = across * across * along * grain;
+                    px[j * Size + i] = new Color32(255, 255, 255, (byte)(255f * Mathf.Clamp01(a)));
+                }
+            }
+            tex.SetPixels32(px);
+            tex.Apply(false, true);
+            return Sprite.Create(tex, new Rect(0, 0, Size, Size), new Vector2(0.5f, 0.5f), Size);
+        }
 
         // A soft halo the shape of the shield, which sits at 1 / ShieldGlowMargin of the picture so the halo has room to fade
         private const float ShieldGlowMargin = 1.4f;
@@ -81,15 +107,6 @@ namespace TawanOS.CardEngine
             float b = Mathf.Abs((x - 0.5f) + (y - 0.5f)) * 0.7071f;
             float reach = 0.46f - Mathf.Max(Mathf.Abs(x - 0.5f), Mathf.Abs(y - 0.5f));
             return Mathf.Min(0.11f - Mathf.Min(a, b), reach);
-        }
-
-        // An arrow pointing up (turned over for down): a shaft and a triangular head
-        private static float ArrowShape(float x, float y)
-        {
-            float cx = Mathf.Abs(x - 0.5f);
-            float shaft = Mathf.Min(0.11f - cx, Mathf.Min(y - 0.06f, 0.62f - y));
-            float head = Mathf.Min(0.94f - y - cx * 1.1f, y - 0.5f);
-            return Mathf.Max(shaft, Mathf.Min(head, 0.4f - cx));
         }
 
         // A glowing border along the picture's edge, soft on the inside (stretched over the whole card)

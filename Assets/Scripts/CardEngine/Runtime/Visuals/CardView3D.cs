@@ -65,8 +65,7 @@ namespace TawanOS.CardEngine
         // attack / Khwan in the middle band, ability text in the bottom box. nameLabel is the name.
         private TMP_Text costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel;
 
-        // The statuses on a card in play, one coloured tag each, in a row over the picture (CardStatusTags refreshes them)
-        private TMP_Text statusLabel;
+        // The statuses on a card in play are shown as symbols (CardStatusTags refreshes them): the set last drawn
         private string shownStatuses = "";
         private Color faceTextColor = Color.white; // the face's normal text colour (khwanLabel goes back to it when healed)
 
@@ -150,7 +149,7 @@ namespace TawanOS.CardEngine
             if (backFace != null) backFace.sortingOrder = FrameOrder;
             if (artworkFace != null) artworkFace.sortingOrder = ArtworkOrder;
             if (emberFace != null) emberFace.sortingOrder = EmberOrder;
-            foreach (var label in new[] { nameLabel, costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel, statusLabel })
+            foreach (var label in new[] { nameLabel, costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel })
             {
                 var textRenderer = label != null ? label.GetComponent<Renderer>() : null;
                 if (textRenderer != null) textRenderer.sortingOrder = TextOrder;
@@ -371,7 +370,6 @@ namespace TawanOS.CardEngine
             if (attackLabel == null) attackLabel = CloneLabel("AttackLabel");
             if (khwanLabel == null) khwanLabel = CloneLabel("KhwanLabel");
             if (descriptionLabel == null) descriptionLabel = CloneLabel("DescriptionLabel");
-            if (statusLabel == null) statusLabel = CloneLabel("StatusLabel");
 
             // Text sizes come from the Card Data (Face Text Sizes)
             var src = CardData.source;
@@ -382,16 +380,10 @@ namespace TawanOS.CardEngine
             PlaceLabel(khwanLabel, CardFaceLayout.Khwan, 1.2f, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Stat));
             PlaceLabel(descriptionLabel, CardFaceLayout.Description, 0.4f, CardFaceLayout.FontScale(src, CardFaceLayout.Text.Description), fixedBox: true);
             descriptionLabel.textWrappingMode = TextWrappingModes.Normal;
-            // The tags wrap onto more rows upwards over the picture when there are many
-            PlaceLabel(statusLabel, CardFaceLayout.Statuses, 0.6f, 1f, fixedBox: true);
-            statusLabel.textWrappingMode = TextWrappingModes.Normal;
-            statusLabel.alignment = TextAlignmentOptions.Bottom;
-            statusLabel.enableAutoSizing = false;
-            statusLabel.fontSize = 0.6f;
-            statusLabel.color = Color.white;
-            statusLabel.raycastTarget = false;
-            CardFaceLayout.MakeReadable(statusLabel, 0.12f);
-            shownStatuses = "?"; // not a real tag list: the next refresh applies the current one
+            // Statuses are symbols now; a row of text tags an older version saved into a scene stays hidden
+            var oldTags = nameLabel.transform.parent != null ? nameLabel.transform.parent.Find("StatusLabel") : null;
+            if (oldTags != null) oldTags.gameObject.SetActive(false);
+            shownStatuses = "?"; // not a real status set: the next refresh applies the current one
             if (Application.isPlaying && GetComponent<CardStatusTags>() == null) gameObject.AddComponent<CardStatusTags>();
 
             bool onArt = FaceBackground() != null || ArtCarriesFrame;
@@ -523,38 +515,29 @@ namespace TawanOS.CardEngine
             wasIgnoringMouse = ignoring;
         }
 
-        // ---------------------------------------------------------------- status tags
+        // ---------------------------------------------------------------- status symbols
 
-        // One tag per status: its name, ×stacks when more than one, and a colour of its own. A status an aura gives
-        // (it lasts while that card stays) is drawn paler. The full list with turns left is in the card book.
-        // Cheap when nothing changed: a short string compare, and nothing at all for a card without statuses.
+        // Redraws the symbols when the card's statuses, their stacks or the face change. The full list with turns left
+        // is in the card book. Cheap when nothing changed: a short string compare, and nothing at all for a card
+        // without statuses.
         public void RefreshStatusTags()
         {
-            if (statusLabel == null || CardData == null) return;
+            if (CardData == null || nameLabel == null) return;
             if (CardData.statuses.Count == 0 && shownStatuses.Length == 0) return;
 
             var b = new System.Text.StringBuilder();
             foreach (var s in CardData.statuses)
             {
                 if (s == null || s.stacks <= 0) continue;
-                if (b.Length > 0) b.Append(' ');
-                string alpha = s.fromAura ? "B3" : "FF";
-                b.Append("<mark=#").Append(StatusColour(s.type)).Append(alpha).Append(">\u00A0")
-                 .Append(StatusName(s.type));
-                if (s.stacks > 1) b.Append("\u00A0×").Append(s.stacks);
-                b.Append("\u00A0</mark>");
+                b.Append((int)s.type).Append('x').Append(s.stacks).Append(' ');
             }
-            string text = b.ToString();
-            bool show = text.Length > 0 && faceVisible;
-            if (text == shownStatuses && statusLabel.gameObject.activeSelf == show) return;
+            if (b.Length > 0 && !faceVisible) b.Append("hidden");
+            string key = b.ToString();
+            if (key == shownStatuses) return;
 
-            shownStatuses = text;
-            statusLabel.text = text;
-            statusLabel.gameObject.SetActive(show);
+            shownStatuses = key;
             ApplyStatusSymbols();
         }
-
-        // ---------------------------------------------------------------- status symbols
 
         // A picture per status the cards give (ผวา, ผีบังตา, ยั่วยุ, เกราะคุ้มภัย; ผ้ายันต์กลับด้าน only swaps among these)
         // that tells what it does at a glance (StatusSymbols): sizes and places are fractions of
@@ -565,7 +548,6 @@ namespace TawanOS.CardEngine
         private void ApplyStatusSymbols()
         {
             bool Has(CardStatusType t) => faceVisible && CardData.statuses.Exists(x => x != null && x.type == t && x.stacks > 0);
-            Color Tint(CardStatusType t) => ColorUtility.TryParseHtmlString("#" + StatusColour(t), out var c) ? c : Color.white;
 
             // เกราะคุ้มภัย: a see-through shield in the middle of the picture, with a halo behind it and a ring that
             // flashes out from it (ShieldShimmer makes them pulse)
@@ -587,10 +569,24 @@ namespace TawanOS.CardEngine
             var desc = CardFaceLayout.Description;
             Symbol("BlindCross", Has(CardStatusType.Blinded), StatusSymbols.Cross, desc.center, desc.size.y * 1.15f, desc.size.y * 1.15f,
                 new Color(0.9f, 0.1f, 0.1f, 0.9f), 0f, stretch: true, widthFraction: desc.size.x * 0.75f);
-            // ผวา: an arrow down beside the attack
-            Symbol("AttackDown", Has(CardStatusType.Phawa), StatusSymbols.Arrow, CardFaceLayout.Attack.center + new Vector2(-0.14f, 0f),
-                0.09f, 0.09f, Color.Lerp(Tint(CardStatusType.Phawa), Color.white, 0.25f), 180f);
+            // ผวา: wisps of purple smoke sinking down the picture, more of them the more stacks (PhawaSmoke)
+            var phawa = faceVisible ? CardData.statuses.Find(x => x != null && x.type == CardStatusType.Phawa && x.stacks > 0) : null;
+            if (phawa != null && phawaSmoke == null)
+            {
+                var go = new GameObject("StatusPhawaSmoke");
+                go.transform.SetParent(transform, false);
+                phawaSmoke = go.AddComponent<PhawaSmoke>();
+                phawaSmoke.faceZ = FaceZ - 0.003f;
+                phawaSmoke.sortingOrder = SymbolOrder;
+            }
+            if (phawaSmoke != null)
+            {
+                phawaSmoke.gameObject.SetActive(phawa != null);
+                if (phawa != null) phawaSmoke.SetStacks(phawa.stacks);
+            }
         }
+
+        private PhawaSmoke phawaSmoke;
 
         // height: a fraction of the face's height. A square picture keeps its shape (its width follows the card's aspect);
         // stretch spreads it over widthFraction of the face's width (or as wide as it is high in face units)
@@ -626,27 +622,6 @@ namespace TawanOS.CardEngine
         // The เกราะคุ้มภัย shield: its place and size on the face
         private static readonly Vector2 ShieldCenter = new Vector2(0f, 0.2f);
         private const float ShieldSize = 0.3f;
-
-        // A colour per status the cards give: อัปมงคล dark, สิริมงคล gold and teal
-        private static string StatusColour(CardStatusType type)
-        {
-            switch (type)
-            {
-                case CardStatusType.Phawa: return "6B2C91";     // ผวา: purple
-                case CardStatusType.Blinded: return "3D3D3D";   // ผีบังตา: grey-black
-                case CardStatusType.Taunt: return "8C6A14";     // ยั่วยุ: gold
-                case CardStatusType.Protect: return "1B6F8A";   // เกราะคุ้มภัย: teal
-                default: return "555555";
-            }
-        }
-
-        // The status's Thai name, as the Inspector shows it ([InspectorName] on CardStatusType)
-        private static string StatusName(CardStatusType type)
-        {
-            var field = typeof(CardStatusType).GetField(type.ToString());
-            var attr = field != null ? (InspectorNameAttribute)System.Attribute.GetCustomAttribute(field, typeof(InspectorNameAttribute)) : null;
-            return attr != null ? attr.displayName : type.ToString();
-        }
 
         public void ResyncHover()
         {
