@@ -204,6 +204,7 @@ namespace TawanOS.GameFlow
             screen.summaryText = UiFactory.CreateText(statsGo.transform, "Summary", summary.ToText(),
                 theme.bodySize * 1.2f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
             Place(screen.summaryText.rectTransform, 0.25f, 0.75f, 0.42f, 0.64f);
+            PlaytestCaptureBanner.Add(statsGo.transform); // appears with the stats
 
             // Buttons (Font: EkkamaiVibe)
             screen.restartButton = UiFactory.CreateButton(statsGo.transform, "RestartButton", "เริ่มใหม่", theme,
