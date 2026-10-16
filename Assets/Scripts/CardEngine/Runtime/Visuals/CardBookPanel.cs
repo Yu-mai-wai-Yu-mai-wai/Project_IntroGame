@@ -528,7 +528,7 @@ namespace TawanOS.CardEngine
             ContentsLink(page);
 
             var glossaryEntries = KeywordGlossarySO.Current.entries;
-            int mid = (glossaryEntries.Count + 1) / 2;
+            int mid = glossaryEntries.Count / 2; // the left page has the title too, so it takes the smaller half
             RenderGlossaryEntries(page, glossaryEntries, 0, mid, 0.82f);
             PageNumber(page, spreadIndex);
         }
@@ -538,27 +538,51 @@ namespace TawanOS.CardEngine
             ContentsLink(page);
 
             var glossaryEntries = KeywordGlossarySO.Current.entries;
-            int mid = (glossaryEntries.Count + 1) / 2;
+            int mid = glossaryEntries.Count / 2;
             RenderGlossaryEntries(page, glossaryEntries, mid, glossaryEntries.Count, 0.88f);
             PageNumber(page, spreadIndex);
         }
 
+        // Each entry is as tall as its text (a long definition takes more lines) with a gap under it, stacked from topY
+        // down to just above the page number. If they do not all fit, the whole page's text gets smaller until they do.
         private void RenderGlossaryEntries(RectTransform page, List<KeywordEntry> list, int start, int end, float topY)
         {
-            float y = topY;
-            float rowHeight = 0.115f;
+            const float BottomY = 0.1f, Gap = 0.022f, X0 = 0.08f, X1 = 0.92f, BodySize = 22f, MinSize = 15f;
             // Book ink, not the theme accent: the light accent vanished on the yellowed paper (Game Designer, 15 Oct)
             string accentHex = ColorUtility.ToHtmlStringRGB(style.blackMagicInk);
+            string inkHex = ColorUtility.ToHtmlStringRGB(style.ink);
 
+            var items = new List<TMP_Text>();
             for (int i = start; i < end && i < list.Count; i++)
             {
                 var e = list[i];
-                var itemText = NewText("Item_" + i, page, 22, TextAlignmentOptions.TopLeft);
+                var itemText = NewText("Item_" + i, page, BodySize, TextAlignmentOptions.TopLeft);
                 itemText.color = style.ink;
                 itemText.textWrappingMode = TextWrappingModes.Normal;
-                PlaceRow(itemText.rectTransform, y, rowHeight, 0.08f, 0.92f);
-                itemText.text = $"<size=28><color=#{accentHex}>• {e.term}</color></size>\n<color=#{ColorUtility.ToHtmlStringRGB(style.ink)}>{e.definition}</color>";
-                y -= (rowHeight + 0.015f);
+                itemText.text = $"<size=127%><color=#{accentHex}>• {e.term}</color></size>\n<color=#{inkHex}>{e.definition}</color>";
+                items.Add(itemText);
+            }
+            if (items.Count == 0) return;
+
+            float pageHeight = page.rect.height, width = page.rect.width * (X1 - X0);
+            var heights = new float[items.Count];
+            for (float size = BodySize; ; size = Mathf.Max(MinSize, size * 0.92f))
+            {
+                float total = -Gap;
+                for (int k = 0; k < items.Count; k++)
+                {
+                    items[k].fontSize = size;
+                    heights[k] = pageHeight > 0f ? items[k].GetPreferredValues(items[k].text, width, 0f).y / pageHeight : 0.115f;
+                    total += heights[k] + Gap;
+                }
+                if (total <= topY - BottomY || size <= MinSize) break;
+            }
+
+            float y = topY;
+            for (int k = 0; k < items.Count; k++)
+            {
+                PlaceRow(items[k].rectTransform, y, heights[k] + 0.01f, X0, X1);
+                y -= heights[k] + Gap;
             }
         }
 
