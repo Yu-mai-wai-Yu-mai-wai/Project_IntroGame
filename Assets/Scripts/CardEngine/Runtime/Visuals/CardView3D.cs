@@ -390,8 +390,7 @@ namespace TawanOS.CardEngine
             statusLabel.fontSize = 0.6f;
             statusLabel.color = Color.white;
             statusLabel.raycastTarget = false;
-            CardFaceLayout.MakeReadable(statusLabel);
-            statusLabel.outlineWidth = 0.12f;
+            CardFaceLayout.MakeReadable(statusLabel, 0.12f);
             shownStatuses = "?"; // not a real tag list: the next refresh applies the current one
             if (Application.isPlaying && GetComponent<CardStatusTags>() == null) gameObject.AddComponent<CardStatusTags>();
 

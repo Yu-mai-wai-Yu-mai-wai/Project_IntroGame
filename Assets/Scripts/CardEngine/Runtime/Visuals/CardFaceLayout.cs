@@ -60,36 +60,38 @@ namespace TawanOS.CardEngine
         public static readonly Box Artwork = new Box(0f, 0f, 1f, 1f);                      // the picture fills the whole face; the frame is see-through and drawn over it
         public static readonly Box Statuses = new Box(-0.04f, -0.01f, 0.62f, 0.07f);          // status tags over the picture's lower edge, just above the attack / Khwan badges
 
-        // Text now sits on the full-face artwork, so every face label gets a dark outline to stay readable on bright art
-        public static void MakeReadable(TMP_Text text)
+        // Text now sits on the full-face artwork, so every face label gets a dark outline to stay readable on bright art.
+        // Set a label's outline only through here: outlineWidth outside Play Mode copies (and leaks) its material.
+        public static void MakeReadable(TMP_Text text, float width = 0.22f)
         {
             if (text == null) return;
             if (Application.isPlaying)
             {
-                text.outlineWidth = 0.22f;
+                text.outlineWidth = width;
                 text.outlineColor = new Color32(0, 0, 0, 255);
             }
             else
             {
                 // Edit-mode preview: outlineWidth would make TextMeshPro copy the label's material on every refresh
                 // (and leak it into the scene), so the labels share one outlined copy of the font's material instead
-                var shared = EditModeOutline(text.font);
+                var shared = EditModeOutline(text.font, width);
                 if (shared != null && text.fontSharedMaterial != shared) text.fontSharedMaterial = shared;
             }
             PlaceThaiMarks(text);
         }
 
-        private static readonly Dictionary<Material, Material> editModeOutlines = new Dictionary<Material, Material>();
+        // One outlined copy per font material and outline width
+        private static readonly Dictionary<(Material, float), Material> editModeOutlines = new Dictionary<(Material, float), Material>();
 
-        private static Material EditModeOutline(TMP_FontAsset font)
+        private static Material EditModeOutline(TMP_FontAsset font, float width)
         {
             if (font == null || font.material == null) return null;
-            if (editModeOutlines.TryGetValue(font.material, out var m) && m != null) return m;
+            if (editModeOutlines.TryGetValue((font.material, width), out var m) && m != null) return m;
             m = new Material(font.material) { name = font.material.name + " (Outline Preview)", hideFlags = HideFlags.DontSave };
             m.EnableKeyword(ShaderUtilities.Keyword_Outline);
-            m.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.22f);
+            m.SetFloat(ShaderUtilities.ID_OutlineWidth, width);
             m.SetColor(ShaderUtilities.ID_OutlineColor, Color.black);
-            editModeOutlines[font.material] = m;
+            editModeOutlines[(font.material, width)] = m;
             return m;
         }
 
