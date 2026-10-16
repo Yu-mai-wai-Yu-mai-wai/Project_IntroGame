@@ -346,7 +346,10 @@ namespace TawanOS.CardEngine
                 label.enableAutoSizing = true;
                 label.fontSizeMin = 0.05f;
                 label.fontSizeMax = Mathf.Max(8f, px) / card.height * 10f;
-                CardFaceLayout.MakeReadable(label);
+                // The game's dark outline (CardFaceLayout.MakeReadable), but through one material this preview owns:
+                // setting outlineWidth on a label makes TextMeshPro copy its material on every repaint in edit mode
+                label.fontSharedMaterial = OutlineMaterial(font);
+                CardFaceLayout.PlaceThaiMarks(label);
                 label.ForceMeshUpdate(); // the preview camera does not drive TextMeshPro's own update
             }
             for (int i = pendingTexts.Count; i < textLabels.Count; i++) textLabels[i].gameObject.SetActive(false);
@@ -373,8 +376,23 @@ namespace TawanOS.CardEngine
             return l;
         }
 
+        private Material outlineMaterial;
+
+        private Material OutlineMaterial(TMPro.TMP_FontAsset font)
+        {
+            if (outlineMaterial != null && outlineMaterial.mainTexture == font.material.mainTexture) return outlineMaterial;
+            if (outlineMaterial != null) DestroyImmediate(outlineMaterial);
+            outlineMaterial = new Material(font.material) { name = "PreviewTextOutline", hideFlags = HideFlags.HideAndDontSave };
+            outlineMaterial.EnableKeyword(TMPro.ShaderUtilities.Keyword_Outline);
+            outlineMaterial.SetFloat(TMPro.ShaderUtilities.ID_OutlineWidth, 0.22f);
+            outlineMaterial.SetColor(TMPro.ShaderUtilities.ID_OutlineColor, Color.black);
+            return outlineMaterial;
+        }
+
         private void OnDisable()
         {
+            if (outlineMaterial != null) DestroyImmediate(outlineMaterial);
+            outlineMaterial = null;
             if (textRenderer != null)
             {
                 textRenderer.Cleanup();
