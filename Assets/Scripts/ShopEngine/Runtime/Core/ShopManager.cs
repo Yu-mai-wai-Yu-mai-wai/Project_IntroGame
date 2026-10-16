@@ -86,8 +86,9 @@ namespace TawanOS.ShopEngine
             var catalog = CardCatalogSO.Load();
             if (catalog != null)
             {
-                var cards = config.cardTypeOdds != null ? config.cardTypeOdds.Pick(catalog.BaseCards(), config.cardsForSale)
-                    : PickDistinct(catalog.BaseCards(), config.cardsForSale);
+                var forSale = catalog.BaseCards().FindAll(c => !c.bossOnly); // boss-only cards (ผีปอบ) are not sold
+                var cards = config.cardTypeOdds != null ? config.cardTypeOdds.Pick(forSale, config.cardsForSale)
+                    : PickDistinct(forSale, config.cardsForSale);
                 foreach (var card in cards)
                     cardOffers.Add(new ShopOffer { card = card, price = config.RollCardPrice(card) });
             }

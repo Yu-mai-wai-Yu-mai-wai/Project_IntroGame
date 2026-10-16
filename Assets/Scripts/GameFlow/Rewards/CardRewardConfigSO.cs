@@ -58,11 +58,12 @@ namespace TawanOS.GameFlow
             };
         }
 
+        // Boss-only cards (ผีปอบ) are never a reward; the player can still draw them from the pit
         public List<CardDataSO> GetPool()
         {
-            if (cardPool != null && cardPool.Exists(c => c != null)) return cardPool.FindAll(c => c != null);
+            if (cardPool != null && cardPool.Exists(c => c != null)) return cardPool.FindAll(c => c != null && !c.bossOnly);
             var catalog = CardCatalogSO.Load();
-            return catalog != null ? catalog.BaseCards() : new List<CardDataSO>();
+            return catalog != null ? catalog.BaseCards().FindAll(c => !c.bossOnly) : new List<CardDataSO>();
         }
     }
 }

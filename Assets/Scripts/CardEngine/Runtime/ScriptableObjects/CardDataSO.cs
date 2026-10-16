@@ -22,6 +22,8 @@ namespace TawanOS.CardEngine
         public TargetType targetType = TargetType.SingleEnemy;
         [Tooltip("ข้อความประเภทบนการ์ด เช่น 'บริวาร • มนต์ดำ' (เว้นว่าง = สร้างจากประเภทและสายอัตโนมัติ)")]
         public string customTypeText = "";
+        [Tooltip("เฉพาะบอส: ศัตรูที่ไม่ใช่บอสไม่ใช้การ์ดนี้ และผู้เล่นไม่ได้การ์ดนี้จากรางวัล ของเซ่น หมอกดำ หรือศาลตายาย (ยังสุ่มได้จากกองจั่ว)")]
+        public bool bossOnly;
 
         [Header("Costs & Thresholds")]
         [Range(0, 6)] public int meritCost = 1;

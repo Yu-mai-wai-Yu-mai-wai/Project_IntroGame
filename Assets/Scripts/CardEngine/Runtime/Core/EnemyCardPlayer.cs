@@ -60,7 +60,8 @@ namespace TawanOS.CardEngine
             var cards = deckOverride != null && deckOverride.Count > 0 ? deckOverride : profile.deck;
             foreach (var template in cards)
             {
-                if (template != null) drawPile.Add(new CardInstance(template));
+                // A boss-only card (ผีปอบ) stays out of any other enemy's deck
+                if (template != null && (profile.isBoss || !template.bossOnly)) drawPile.Add(new CardInstance(template));
             }
             scriptTurn = 0;
             if (!Scripted) Shuffle(drawPile);

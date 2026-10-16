@@ -31,6 +31,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60a7338b3591472cb1c95622807a5661, type: 2}
   - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
   - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
+  - {fileID: 11400000, guid: 1affc8bd5a564ff8838b52bae88a0373, type: 2}
+  - {fileID: 11400000, guid: 1affc8bd5a564ff8838b52bae88a0373, type: 2}
   startingHandSize: 3
   drawPerTurn: 1
   maxHandSize: 10
