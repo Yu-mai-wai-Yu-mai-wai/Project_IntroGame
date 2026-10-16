@@ -22,10 +22,11 @@ namespace TawanOS.EventEngine
         // The text's left and right edges as the scene lays them out (the right one leaves room for the cost)
         private float textLeft = float.NaN, textRightWithCost;
         private LayoutElement layoutElement;
-        private float minHeight;
+        private float minHeight, labelMaxSize, hintMaxSize;
 
         private const float TextRightNoCost = -24f; // a choice with no cost lets its text run almost to the edge
-        private const float PadY = 18f, HintGap = 2f;
+        private const float HintSplit = 0.34f;      // the hint takes the bottom third of the button, the label the rest
+        private const float LabelMinSize = 15f, HintMinSize = 13f;
 
         public bool Interactable => button != null && button.interactable;
 
@@ -42,6 +43,8 @@ namespace TawanOS.EventEngine
             textRightWithCost = labelText.rectTransform.offsetMax.x;
             layoutElement = GetComponent<LayoutElement>();
             minHeight = layoutElement != null ? layoutElement.minHeight : 92f;
+            labelMaxSize = labelText.fontSize;
+            hintMaxSize = hintText != null ? hintText.fontSize : 22f;
         }
 
         public void Setup(int index, EventViewUI.ChoiceOption option)
@@ -68,42 +71,49 @@ namespace TawanOS.EventEngine
             FitToText(!string.IsNullOrEmpty(option.costText), !string.IsNullOrEmpty(option.hint));
         }
 
-        // A long label wraps onto more lines: the button grows to hold them (and the hint under them) instead of the
-        // text spilling over the next choice. A short one stays the scene's height, its text centred as before.
+        // Every choice keeps the scene's height. A choice with no cost lets its text use the cost's room too, one with no
+        // hint lets its label use the hint's; and a label that is still too long shrinks its letters (down to
+        // LabelMinSize, over two lines) instead of spilling over the next choice.
         private void FitToText(bool hasCost, bool hasHint)
         {
             CacheLayout();
             if (labelText == null) return;
 
             float right = hasCost ? textRightWithCost : TextRightNoCost;
-            float width = ((RectTransform)transform).rect.width;
-            if (width <= 0f && transform.parent is RectTransform parent) width = parent.rect.width;
-            float textWidth = Mathf.Max(50f, width - textLeft + right);
-
-            float labelH = labelText.GetPreferredValues(labelText.text, textWidth, 0f).y;
-            float hintH = hasHint && hintText != null ? hintText.GetPreferredValues(hintText.text, textWidth, 0f).y : 0f;
-            float content = labelH + (hintH > 0f ? HintGap + hintH : 0f);
-            float height = Mathf.Max(minHeight, content + PadY * 2f);
-            float top = (height - content) * 0.5f;
-
-            Place(labelText.rectTransform, right, top, labelH);
-            if (hintText != null && hintH > 0f) Place(hintText.rectTransform, right, top + labelH + HintGap, hintH);
+            Place(labelText.rectTransform, right, hasHint ? HintSplit : 0f, 1f, hasHint ? 12f : 7f);
+            labelText.alignment = hasHint ? TextAlignmentOptions.BottomLeft : TextAlignmentOptions.MidlineLeft;
+            ShrinkToFit(labelText, labelMaxSize, LabelMinSize);
+            if (hintText != null)
+            {
+                Place(hintText.rectTransform, right, 0f, HintSplit, 3f);
+                ShrinkToFit(hintText, hintMaxSize, HintMinSize);
+            }
 
             if (layoutElement != null)
             {
-                layoutElement.minHeight = height;
-                layoutElement.preferredHeight = height;
+                layoutElement.minHeight = minHeight;
+                layoutElement.preferredHeight = minHeight;
             }
         }
 
-        // Pins a text to the top of the button, `fromTop` down and `height` tall, between the left edge and `right`
-        private void Place(RectTransform rt, float right, float fromTop, float height)
+        // Spans a text across the button between the left edge and `right`, from `bottom` to `top` of its height.
+        // `topGap` keeps Thai vowels and tone marks inside the button: TextMeshPro's auto-size does not count them.
+        private void Place(RectTransform rt, float right, float bottom, float top, float topGap)
         {
-            rt.anchorMin = new Vector2(0f, 1f);
-            rt.anchorMax = new Vector2(1f, 1f);
-            rt.pivot = new Vector2(0.5f, 1f);
-            rt.offsetMin = new Vector2(textLeft, -fromTop - height);
-            rt.offsetMax = new Vector2(right, -fromTop);
+            rt.anchorMin = new Vector2(0f, bottom);
+            rt.anchorMax = new Vector2(1f, top);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.offsetMin = new Vector2(textLeft, 3f);
+            rt.offsetMax = new Vector2(right, -topGap);
+        }
+
+        private static void ShrinkToFit(TMP_Text text, float max, float min)
+        {
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.enableAutoSizing = true;
+            text.fontSizeMax = max;
+            text.fontSizeMin = min;
+            text.overflowMode = TextOverflowModes.Ellipsis;
         }
 
         public void Select()
