@@ -21,11 +21,12 @@ namespace TawanOS.GameFlow
         public int deckSize;
         public int totalFloors;
         public int maxHp;
+        public float playSeconds;
 
         public string ToText()
         {
             string by = string.IsNullOrEmpty(enemyName) ? "ศัตรู" : enemyName;
-            return $"พ่ายแพ้ต่อ {by}\n\nธูปที่สะสม {incense}   •   สำรับ {deckSize} ใบ\nขวัญสูงสุด {maxHp}";
+            return $"พ่ายแพ้ต่อ {by}\n\nธูปที่สะสม {incense}   •   สำรับ {deckSize} ใบ\nขวัญสูงสุด {maxHp}   •   เวลาที่ใช้ {RunState.FormatPlayTime(playSeconds)}";
         }
     }
 

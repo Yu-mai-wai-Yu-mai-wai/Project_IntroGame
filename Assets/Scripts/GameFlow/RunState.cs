@@ -78,6 +78,28 @@ namespace TawanOS.GameFlow
         public bool HasDeck => deckInitialized;
         public int CardRemovalsBought { get; private set; }
 
+        /// <summary>Seconds played in this run, from New Game (RunTimer counts them; shown when the run ends)</summary>
+        public float PlaySeconds { get; private set; }
+
+        public void AddPlayTime(float seconds)
+        {
+            if (seconds > 0f) PlaySeconds += seconds;
+        }
+
+        /// <summary>Writes the save now (RunTimer, so the time played is kept when the game is closed)</summary>
+        public void SavePlayTime()
+        {
+            if (IsPersistent) Save();
+        }
+
+        /// <summary>"12:34" or, past an hour, "1:02:03"</summary>
+        public static string FormatPlayTime(float seconds)
+        {
+            int total = Mathf.Max(0, Mathf.FloorToInt(seconds));
+            int h = total / 3600, m = total / 60 % 60, s = total % 60;
+            return h > 0 ? $"{h}:{m:00}:{s:00}" : $"{m:00}:{s:00}";
+        }
+
         public ResumeKind Resume { get; private set; }
         public NodeType ResumeNodeType { get; private set; }
         public int ResumeFloor { get; private set; }
@@ -275,6 +297,7 @@ namespace TawanOS.GameFlow
             Incense = DefaultIncense;
             TotalFloors = DefaultTotalFloors;
             CardRemovalsBought = 0;
+            PlaySeconds = 0f;
             relicIds.Clear();
             seenEventIds.Clear();
             deck.Clear();
@@ -483,6 +506,7 @@ namespace TawanOS.GameFlow
                 incense = Incense,
                 totalFloors = TotalFloors,
                 cardRemovalsBought = CardRemovalsBought,
+                playSeconds = PlaySeconds,
                 deckInitialized = deckInitialized,
                 deckCardIds = deck.ConvertAll(c => c.cardId),
                 relicIds = new List<string>(relicIds),
@@ -513,6 +537,7 @@ namespace TawanOS.GameFlow
             Incense = Mathf.Max(0, data.incense);
             TotalFloors = data.totalFloors > 0 ? data.totalFloors : DefaultTotalFloors;
             CardRemovalsBought = data.cardRemovalsBought;
+            PlaySeconds = Mathf.Max(0f, data.playSeconds); // saves from before the timer have 0
 
             relicIds.Clear();
             if (data.relicIds != null) relicIds.AddRange(data.relicIds);
@@ -558,6 +583,7 @@ namespace TawanOS.GameFlow
             public int incense;
             public int totalFloors;
             public int cardRemovalsBought;
+            public float playSeconds;
             public bool deckInitialized;
             public List<string> deckCardIds;
             public List<string> relicIds;

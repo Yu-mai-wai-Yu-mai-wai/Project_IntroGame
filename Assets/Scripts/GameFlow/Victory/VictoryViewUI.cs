@@ -201,7 +201,7 @@ namespace TawanOS.GameFlow
 
             if (statsText != null)
             {
-                statsText.text = $"ขวัญคงเหลือ: {TawanOS.UI.KhwanDisplay.Text(khwan, maxKhwan)}   •   ธูปสะสม: {incense}   •   สำรับการ์ด: {deckCount} ใบ";
+                statsText.text = $"ขวัญคงเหลือ: {TawanOS.UI.KhwanDisplay.Text(khwan, maxKhwan)}   •   ธูปสะสม: {incense}   •   สำรับการ์ด: {deckCount} ใบ   •   เวลาที่ใช้: {RunState.FormatPlayTime(run != null ? run.PlaySeconds : 0f)}";
                 if (theme != null && theme.bodyFont != null) statsText.font = theme.bodyFont;
             }
 

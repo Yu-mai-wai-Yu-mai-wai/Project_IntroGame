@@ -495,7 +495,8 @@ namespace TawanOS.GameFlow
                     incense = run.Incense,
                     deckSize = run.Deck.Count,
                     totalFloors = run.TotalFloors,
-                    maxHp = run.MaxHp
+                    maxHp = run.MaxHp,
+                    playSeconds = run.PlaySeconds
                 };
                 RunState.EndRun();
                 new MapSaveManager().ClearSavedMap();
