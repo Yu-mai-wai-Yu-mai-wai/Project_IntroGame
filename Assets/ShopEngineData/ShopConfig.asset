@@ -34,6 +34,10 @@ MonoBehaviour:
     \u0E44\u0E21\u0E48\u0E43\u0E0A\u0E48\u0E02\u0E2D\u0E07\u0E43\u0E2B\u0E49\u0E40\u0E1B\u0E25\u0E48\u0E32"
   starterDeck: {fileID: 11400000, guid: 170a726a556f6664fb9d91877a8647cf, type: 2}
   cardsForSale: 5
+  cardTypeOdds:
+    familiar: 40
+    amulet: 30
+    incantation: 30
   priceVariance: 0.15
   cardFaceTemplate: {fileID: 1901376002212059369, guid: d95839d994a10bd41a3bc1653dcced8c, type: 3}
   deckPileSprite: {fileID: 0}

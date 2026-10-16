@@ -86,7 +86,9 @@ namespace TawanOS.ShopEngine
             var catalog = CardCatalogSO.Load();
             if (catalog != null)
             {
-                foreach (var card in PickDistinct(catalog.BaseCards(), config.cardsForSale))
+                var cards = config.cardTypeOdds != null ? config.cardTypeOdds.Pick(catalog.BaseCards(), config.cardsForSale)
+                    : PickDistinct(catalog.BaseCards(), config.cardsForSale);
+                foreach (var card in cards)
                     cardOffers.Add(new ShopOffer { card = card, price = config.RollCardPrice(card) });
             }
             else

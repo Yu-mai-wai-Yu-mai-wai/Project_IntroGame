@@ -53,6 +53,8 @@ namespace TawanOS.ShopEngine
         [Tooltip("Seeds the run deck if the player reaches the shop before any combat.")]
         public DeckConfigSO starterDeck;
         [Min(0)] public int cardsForSale = 5;
+        [Tooltip("Each card for sale has its type rolled by these weights (บริวาร / เครื่องราง / อาคม).")]
+        public TawanOS.GameFlow.CardTypeOdds cardTypeOdds = new TawanOS.GameFlow.CardTypeOdds();
         // Card prices are set per card (CardDataSO.shopPrice) and never vary
         [Tooltip("How far an amulet's price may vary each visit, either way.")]
         [Range(0f, 0.5f)] public float priceVariance = 0.15f;

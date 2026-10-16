@@ -19,5 +19,9 @@ MonoBehaviour:
   bossChoices: 4
   offeringChoices: 1
   eventChoices: 3
+  nonCombatOdds:
+    familiar: 40
+    amulet: 30
+    incantation: 30
   allowSkip: 0
   skipIncense: 10

@@ -61,7 +61,7 @@ namespace TawanOS.GameFlow
             }
             else
             {
-                RollChoices(config.ChoicesFor(tier));
+                RollChoices(config.ChoicesFor(tier), tier);
                 SaveChoicesToRunState(incenseEarned, tier);
             }
 
@@ -91,10 +91,17 @@ namespace TawanOS.GameFlow
             RunState.Current.SetResume(ResumeKind.Reward);
         }
 
-        private void RollChoices(int count)
+        // Outside a fight each card's type is rolled by the config's odds (familiars most likely); after a fight every
+        // card in the pool is as likely as the next
+        private void RollChoices(int count, RewardTier tier)
         {
             choices.Clear();
             var pool = config.GetPool();
+            if (CardRewardConfigSO.IsNonCombat(tier) && config.nonCombatOdds != null)
+            {
+                choices.AddRange(config.nonCombatOdds.Pick(pool, count));
+                return;
+            }
             while (choices.Count < count && pool.Count > 0)
             {
                 int i = UnityEngine.Random.Range(0, pool.Count);
