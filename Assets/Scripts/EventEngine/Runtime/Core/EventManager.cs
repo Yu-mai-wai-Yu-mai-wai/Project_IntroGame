@@ -123,7 +123,8 @@ namespace TawanOS.EventEngine
                 options.Add(new EventViewUI.ChoiceOption
                 {
                     label = choice.label,
-                    hint = choice.hint,
+                    // No hint under the label: the player chooses without being told the outcome (EventChoice.hint stays
+                    // in the data, unused)
                     costText = BuildCostText(choice),
                     interactable = CanChoose(choice),
                     onSelected = () => HandleChoice(page, index),
@@ -184,7 +185,6 @@ namespace TawanOS.EventEngine
                 new EventViewUI.ChoiceOption
                 {
                     label = fight ? "เข้าสู่การต่อสู้" : pendingCardReward ? "เลือกของเซ่น" : "จากไป",
-                    hint = fight ? pendingCombatEnemy.enemyName : pendingCardReward ? "รับการ์ด 1 ใบ" : null,
                     interactable = true,
                     onSelected = fight ? (Action)FinishWithCombat : pendingCardReward ? (Action)FinishWithCardReward : FinishEvent,
                 }
