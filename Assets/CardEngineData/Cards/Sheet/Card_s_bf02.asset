@@ -16,7 +16,7 @@ MonoBehaviour:
   enemyOnly: 0
   cardNameThai: "\u0E01\u0E23\u0E30\u0E2A\u0E37\u0E2D"
   cardNameEng: Krasue
-  descriptionFormat: "\u0E1C\u0E35\u0E02\u0E49\u0E32\u0E21\u0E2B\u0E31\u0E27"
+  descriptionFormat: "\u0E15\u0E35\u0E02\u0E49\u0E32\u0E21\u0E2B\u0E31\u0E27"
   magicSchool: 1
   cardType: 2
   targetType: 0

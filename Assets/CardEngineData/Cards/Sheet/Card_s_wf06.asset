@@ -16,7 +16,7 @@ MonoBehaviour:
   enemyOnly: 0
   cardNameThai: "\u0E1C\u0E35\u0E1F\u0E49\u0E32"
   cardNameEng: Sky Spirit
-  descriptionFormat: "\u0E1C\u0E35\u0E02\u0E49\u0E32\u0E21\u0E2B\u0E31\u0E27"
+  descriptionFormat: "\u0E15\u0E35\u0E02\u0E49\u0E32\u0E21\u0E2B\u0E31\u0E27"
   magicSchool: 0
   cardType: 2
   targetType: 0

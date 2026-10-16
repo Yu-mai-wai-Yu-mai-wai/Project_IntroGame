@@ -21,12 +21,13 @@ MonoBehaviour:
   cardType: 2
   targetType: 0
   customTypeText: "\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E02\u0E32\u0E27"
-  meritCost: 4
+  meritCost: 3
   corruptionGain: 0
+  shopPrice: 0
   baseValue: 0
   durability: 0
   familiarHealth: 4
-  familiarDamage: 3
+  familiarDamage: 4
   fontSizeAll: 1
   nameFontSize: 1
   typeFontSize: 1
