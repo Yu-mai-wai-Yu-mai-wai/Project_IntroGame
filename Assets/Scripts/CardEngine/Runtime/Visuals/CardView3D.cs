@@ -568,9 +568,19 @@ namespace TawanOS.CardEngine
             bool Has(CardStatusType t) => faceVisible && CardData.statuses.Exists(x => x != null && x.type == t && x.stacks > 0);
             Color Tint(CardStatusType t) => ColorUtility.TryParseHtmlString("#" + StatusColour(t), out var c) ? c : Color.white;
 
-            // เกราะคุ้มภัย: a shield at the top right of the picture, clear of the tags
-            Symbol("Shield", Has(CardStatusType.Protect), StatusSymbols.Shield, new Vector2(0.33f, 0.215f), 0.15f, 0.15f,
-                Color.Lerp(Tint(CardStatusType.Protect), new Color(0.45f, 0.9f, 1f), 0.5f), 0f);
+            // เกราะคุ้มภัย: a see-through shield in the middle of the picture, with a halo behind it and a ring that
+            // flashes out from it (ShieldShimmer makes them pulse)
+            bool prot = Has(CardStatusType.Protect);
+            Symbol("ShieldRipple", prot, StatusSymbols.ShieldGlow, ShieldCenter, ShieldSize * ShieldShimmer.GlowScale, 0f, Color.clear, 0f, order: SymbolOrder);
+            Symbol("ShieldGlow", prot, StatusSymbols.ShieldGlow, ShieldCenter, ShieldSize * ShieldShimmer.GlowScale, 0f, Color.clear, 0f, order: SymbolOrder);
+            Symbol("Shield", prot, StatusSymbols.Shield, ShieldCenter, ShieldSize, ShieldSize, ShieldShimmer.Base, 0f, order: SymbolOrder + 1);
+            if (prot && symbols["Shield"].GetComponent<ShieldShimmer>() == null)
+            {
+                var shimmer = symbols["Shield"].gameObject.AddComponent<ShieldShimmer>();
+                shimmer.shield = symbols["Shield"];
+                shimmer.glow = symbols["ShieldGlow"];
+                shimmer.ripple = symbols["ShieldRipple"];
+            }
             // ยั่วยุ: the whole card glows gold at its edge
             Symbol("TauntFrame", Has(CardStatusType.Taunt), StatusSymbols.Frame, Vector2.zero, 1.03f, 1.02f,
                 new Color(1f, 0.78f, 0.2f, 0.95f), 0f, stretch: true);
@@ -586,7 +596,7 @@ namespace TawanOS.CardEngine
         // height: a fraction of the face's height. A square picture keeps its shape (its width follows the card's aspect);
         // stretch spreads it over widthFraction of the face's width (or as wide as it is high in face units)
         private void Symbol(string name, bool on, Sprite sprite, Vector2 center, float height, float width, Color tint, float angle,
-            bool stretch = false, float widthFraction = -1f)
+            bool stretch = false, float widthFraction = -1f, int order = SymbolOrder)
         {
             symbols.TryGetValue(name, out var sr);
             if (!on)
@@ -599,7 +609,7 @@ namespace TawanOS.CardEngine
                 var go = new GameObject("Status" + name);
                 go.transform.SetParent(transform, false);
                 sr = go.AddComponent<SpriteRenderer>();
-                sr.sortingOrder = SymbolOrder;
+                sr.sortingOrder = order;
                 symbols[name] = sr;
             }
             sr.sprite = sprite;
@@ -613,6 +623,10 @@ namespace TawanOS.CardEngine
             t.localRotation = Quaternion.Euler(0f, 0f, angle);
             t.localScale = new Vector3(x, height, 1f);
         }
+
+        // The เกราะคุ้มภัย shield: its place and size on the face
+        private static readonly Vector2 ShieldCenter = new Vector2(0f, 0.2f);
+        private const float ShieldSize = 0.3f;
 
         // A colour per status the cards give: อัปมงคล dark, สิริมงคล gold and teal
         private static string StatusColour(CardStatusType type)

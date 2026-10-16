@@ -14,6 +14,30 @@ namespace TawanOS.CardEngine
         public static Sprite Cross => cross != null ? cross : cross = Make(CrossShape, 0.05f);
         public static Sprite Arrow => arrow != null ? arrow : arrow = Make(ArrowShape, 0.07f);
         public static Sprite Frame => frame != null ? frame : frame = MakeFrame();
+        public static Sprite ShieldGlow => shieldGlow != null ? shieldGlow : shieldGlow = MakeShieldGlow();
+        private static Sprite shieldGlow;
+
+        // A soft halo the shape of the shield, which sits at 1 / ShieldGlowMargin of the picture so the halo has room to fade
+        private const float ShieldGlowMargin = 1.4f;
+
+        private static Sprite MakeShieldGlow()
+        {
+            var tex = new Texture2D(Size, Size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "StatusShieldGlow" };
+            var px = new Color32[Size * Size];
+            for (int j = 0; j < Size; j++)
+            {
+                for (int i = 0; i < Size; i++)
+                {
+                    float x = 0.5f + ((i + 0.5f) / Size - 0.5f) * ShieldGlowMargin;
+                    float y = 0.5f + ((j + 0.5f) / Size - 0.5f) * ShieldGlowMargin;
+                    float a = Mathf.Clamp01(1f + ShieldShape(x, y) / 0.14f);
+                    px[j * Size + i] = new Color32(255, 255, 255, (byte)(255f * a * a));
+                }
+            }
+            tex.SetPixels32(px);
+            tex.Apply(false, true);
+            return Sprite.Create(tex, new Rect(0, 0, Size, Size), new Vector2(0.5f, 0.5f), Size);
+        }
 
         // Signed distance-like test per shape: > 0 inside. `edge` is how wide the black rim is (in 0..1 of the picture).
         private delegate float Shape(float x, float y);
