@@ -9,12 +9,12 @@ namespace TawanOS.EditorTools
     /// <summary>
     /// Windows player build (plan task A0). Batch mode:
     /// Unity.exe -batchmode -nographics -quit -projectPath ... -executeMethod TawanOS.EditorTools.BuildScript.BuildWindows -logFile build.log
-    /// Builds the scenes that are enabled in Build Settings into Build/Windows/KhwanEuyKhwanMa.exe and
+    /// Builds the scenes that are enabled in Build Settings into Build/Windows/There, there, my dear.exe and
     /// exits with code 1 if the build did not succeed. Build/ is git-ignored.
     /// </summary>
     public static class BuildScript
     {
-        public const string OutputExe = "Build/Windows/KhwanEuyKhwanMa.exe";
+        public const string OutputExe = "Build/Windows/There, there, my dear.exe";
 
         // Scenes that must never ship: SampleScene is the unused Unity template scene
         private const string SampleScenePath = "Assets/Scenes/SampleScene.unity";
