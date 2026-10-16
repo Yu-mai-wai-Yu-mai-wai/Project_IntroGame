@@ -302,6 +302,9 @@ namespace TawanOS.CardEngine
             p.button.targetGraphic = btnImg;
 
             var smokeBtn = btnGo.AddComponent<UiSmokeButton>();
+            // Dimmer than the other smoke buttons: it stays on screen the whole fight (hover still lights it up)
+            smokeBtn.normalColor = new Color(0.55f, 0.48f, 0.58f, 0.4f);
+            smokeBtn.labelNormalColor = new Color(0.82f, 0.78f, 0.74f);
 
             p.buttonLabel = MakeText(btnGo.transform, "Label", 24, FontStyles.Normal, Color.white,
                 Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
