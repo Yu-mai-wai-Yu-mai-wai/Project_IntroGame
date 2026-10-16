@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace TawanOS.CardEngine
 {
-    // StatusFxTestScene (Tools/TawanOS/Test/Status FX Test Scene): a row of cards, each with one status the cards give,
-    // and a last card with all of them, so every status symbol and its effect can be looked at side by side.
+    // StatusFxTestScene (Tools/TawanOS/Test/Status FX Test Scene): cards on the combat table's player row, each with one
+    // status the cards give and a last card with all of them, so every status icon can be looked at as in a fight.
     // Buttons under each card turn its statuses on and off. Test only: not in the build's scene list.
     public class StatusFxShowcase : MonoBehaviour
     {
@@ -60,15 +60,16 @@ namespace TawanOS.CardEngine
             if (cam == null || slots == null) return;
             float scale = Screen.height / 1080f;
             var title = new GUIStyle(GUI.skin.label) { fontSize = Mathf.RoundToInt(30 * scale), alignment = TextAnchor.MiddleCenter, fontStyle = FontStyle.Bold };
-            var button = new GUIStyle(GUI.skin.button) { fontSize = Mathf.RoundToInt(20 * scale) };
-            float w = 190f * scale, h = 40f * scale;
+            var button = new GUIStyle(GUI.skin.button) { fontSize = Mathf.RoundToInt(18 * scale) };
+            float w = 170f * scale, h = 36f * scale;
 
             foreach (var s in slots)
             {
                 if (s.card == null || s.card.CardData == null) continue;
-                var top = cam.WorldToScreenPoint(s.card.transform.position + Vector3.up * (s.card.transform.lossyScale.y * 0.5f + 0.15f));
-                var bottom = cam.WorldToScreenPoint(s.card.transform.position - Vector3.up * (s.card.transform.lossyScale.y * 0.5f + 0.1f));
-                GUI.Label(new Rect(top.x - w, Screen.height - top.y - h * 1.6f, w * 2f, h * 1.4f), s.title, title);
+                // The card's own top and bottom edges (it may stand up or lie on the table)
+                var top = cam.WorldToScreenPoint(s.card.transform.TransformPoint(new Vector3(0f, 0.56f, 0f)));
+                var bottom = cam.WorldToScreenPoint(s.card.transform.TransformPoint(new Vector3(0f, -0.56f, 0f)));
+                GUI.Label(new Rect(top.x - w, Screen.height - top.y - h * 1.4f, w * 2f, h * 1.4f), s.title, title);
 
                 float y = Screen.height - bottom.y;
                 foreach (var type in Shown)
