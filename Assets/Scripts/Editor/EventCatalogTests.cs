@@ -8,7 +8,7 @@ using UnityEngine;
 namespace TawanOS.EditorTools
 {
     /// <summary>
-    /// Automated EditMode verification test for Plan Task P1-7 (อีเวนต์หมอกดำ 4 เรื่อง, ปรับ balance ธูปและขวัญ).
+    /// Automated EditMode verification of the หมอกดำ event pool (whatever events the catalog holds: ids, result texts, costs, rolling).
     /// Menu: Tools > TawanOS > Tests > Event Catalog
     /// Command line: -executeMethod TawanOS.EditorTools.EventCatalogTests.Run
     /// </summary>
@@ -40,7 +40,7 @@ namespace TawanOS.EditorTools
                 }
             }
 
-            // 1. Catalog exists and has 4 events (Wods removed)
+            // 1. Catalog exists and has events
             var catalog = AssetDatabase.LoadAssetAtPath<EventCatalogSO>(CatalogPath);
             Check("EventCatalog.asset exists", catalog != null);
             if (catalog == null)
@@ -49,16 +49,10 @@ namespace TawanOS.EditorTools
                 return;
             }
 
-            Check($"Catalog has exactly 4 events (found {catalog.events.Count})", catalog.events.Count == 4);
+            int eventCount = catalog.events.Count;
+            Check($"Catalog has events (found {eventCount})", eventCount > 0);
 
-            // 2. Offering event is valid
-            Check("Catalog has offeringEvent assigned", catalog.offeringEvent != null);
-            if (catalog.offeringEvent != null)
-            {
-                Check("Offering event id is 'offering_pile'", catalog.offeringEvent.eventId == "offering_pile");
-            }
-
-            // 3. All 4 events are valid, have distinct eventIds, and repeatable is false
+            // 2. Every event is valid, has a distinct eventId, and repeatable is false
             var seenIds = new HashSet<string>();
             foreach (var evt in catalog.events)
             {
@@ -71,10 +65,6 @@ namespace TawanOS.EditorTools
                 Check($"Event '{evt.name}' has minFloor == 0", evt.minFloor == 0);
             }
 
-            // 4. No Wods event in catalog
-            var wodsEvent = catalog.events.Find(e => e != null && (e.eventId == "wods" || e.name.Contains("Wods")));
-            Check("Event_Wods does NOT exist in catalog", wodsEvent == null);
-
             // 5. Check Map Node Profile title is 'หมอกดำ'
             var eventProfile = AssetDatabase.LoadAssetAtPath<NodeProfileSO>(EventProfilePath);
             Check("EventProfile.asset exists", eventProfile != null);
@@ -83,12 +73,7 @@ namespace TawanOS.EditorTools
                 Check("EventProfile title is 'หมอกดำ'", eventProfile.title == "หมอกดำ");
             }
 
-            // Collect all events including offeringEvent
             var allEvents = new List<EventDataSO>(catalog.events);
-            if (catalog.offeringEvent != null && !allEvents.Contains(catalog.offeringEvent))
-            {
-                allEvents.Add(catalog.offeringEvent);
-            }
 
             // 6. Every choice has non-empty result text
             foreach (var evt in allEvents)
@@ -139,10 +124,10 @@ namespace TawanOS.EditorTools
                     cardChoice != null && cardChoice.hint != null && !cardChoice.hint.Contains("ของวิเศษ") && cardChoice.hint.Contains("การ์ด"));
             }
 
-            // 9. Test PickRandom: Rolling 4 times sequentially with seen tracking yields 4 distinct events
+            // 9. Test PickRandom: rolling once per event with seen tracking yields every event once
             var simulationSeen = new HashSet<string>();
             var rolledEvents = new List<EventDataSO>();
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < eventCount; i++)
             {
                 var rolled = catalog.PickRandom(0, simulationSeen);
                 Check($"Roll {i + 1} returned a valid event", rolled != null);
@@ -154,9 +139,9 @@ namespace TawanOS.EditorTools
                 }
             }
 
-            Check("All 4 distinct events were rolled across 4 picks", simulationSeen.Count == 4);
+            Check($"All {eventCount} distinct events were rolled across {eventCount} picks", simulationSeen.Count == eventCount);
 
-            // 10. Roll 5th time with all 4 seen -> should fall back and still return an event safely
+            // 10. One more roll with every event seen -> should fall back and still return an event safely
             var fallbackRolled = catalog.PickRandom(0, simulationSeen);
             Check("PickRandom falls back safely when all events are seen", fallbackRolled != null);
 

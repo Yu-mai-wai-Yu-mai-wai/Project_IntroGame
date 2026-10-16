@@ -31,11 +31,11 @@ namespace TawanOS.EventEngine
 
         public static bool Add()
         {
-            var catalog = AssetDatabase.LoadAssetAtPath<EventCatalogSO>(EventCatalogSetupTool.CatalogPath);
+            var catalog = AssetDatabase.LoadAssetAtPath<EventCatalogSO>(EventDataSOEditor.CatalogPath);
             var krasue = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(KrasuePath);
             if (catalog == null || krasue == null)
             {
-                Debug.LogError($"[StoryTabEventsTool] Missing the catalog ({EventCatalogSetupTool.CatalogPath}) or an enemy profile.");
+                Debug.LogError($"[StoryTabEventsTool] Missing the catalog ({EventDataSOEditor.CatalogPath}) or an enemy profile.");
                 return false;
             }
             // A first picture, the one วอดส์ shows (the team gives each event its own afterwards)

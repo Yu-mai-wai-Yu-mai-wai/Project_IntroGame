@@ -8,9 +8,6 @@ namespace TawanOS.EventEngine
     {
         public List<EventDataSO> events = new List<EventDataSO>();
 
-        [Tooltip("กองของเซ่น: the story played on the map's offering-pile (Treasure) nodes. Not part of the random pool above.")]
-        public EventDataSO offeringEvent;
-
         /// <summary>Random event not yet seen this run (repeatables always qualify). Falls back to any event.</summary>
         public EventDataSO PickRandom(int floor, IReadOnlyCollection<string> seenEventIds)
         {

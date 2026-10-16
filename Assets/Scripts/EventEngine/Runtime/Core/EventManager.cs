@@ -85,17 +85,6 @@ namespace TawanOS.EventEngine
             BeginEvent(evt);
         }
 
-        // กองของเซ่น (the map's offering-pile node): its own story, not rolled from the random pool
-        public void BeginOfferingEvent()
-        {
-            if (catalog != null && catalog.offeringEvent != null) BeginEvent(catalog.offeringEvent);
-            else
-            {
-                Debug.LogError("[EventManager] EventCatalog has no Offering Event - playing a random event instead.");
-                BeginRandomEvent(int.MaxValue);
-            }
-        }
-
         public void BeginEvent(EventDataSO evt)
         {
             hasBegun = true;
