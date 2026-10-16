@@ -564,6 +564,37 @@ namespace TawanOS.CardEngine
             }
         }
 
+        // The status whose icon is under the mouse, or null. The mouse ray meets the face's plane and the hit is tested
+        // against each icon's square; the card must also be the first thing the ray hits (not under another card) and
+        // the mouse must not be over the UI.
+        public CardStatus StatusUnderPointer() => StatusAt(Input.mousePosition, checkUi: true);
+
+        public CardStatus StatusAt(Vector2 screenPosition, bool checkUi = false)
+        {
+            if (CardData == null || !faceVisible) return null;
+            var cam = Camera.main;
+            if (cam == null) return null;
+
+            CardStatusType? hit = null;
+            var ray = cam.ScreenPointToRay(screenPosition);
+            var plane = new Plane(transform.forward, transform.TransformPoint(new Vector3(0f, 0f, FaceZ)));
+            if (!plane.Raycast(ray, out float enter)) return null;
+            Vector3 local = transform.InverseTransformPoint(ray.GetPoint(enter));
+            foreach (var type in IconOrder)
+            {
+                if (!symbols.TryGetValue(type.ToString(), out var sr) || sr == null || !sr.gameObject.activeSelf) continue;
+                var p = sr.transform.localPosition;
+                var s = sr.transform.localScale;
+                if (Mathf.Abs(local.x - p.x) <= s.x * 0.5f && Mathf.Abs(local.y - p.y) <= s.y * 0.5f) { hit = type; break; }
+            }
+            if (hit == null) return null;
+
+            var events = UnityEngine.EventSystems.EventSystem.current;
+            if (checkUi && events != null && events.IsPointerOverGameObject()) return null;
+            if (!IsPointerOverCard(screenPosition)) return null;
+            return CardData.statuses.Find(x => x != null && x.type == hit.Value && x.stacks > 0);
+        }
+
         // height: a fraction of the face's height. The square icon keeps its shape (its width follows the card's aspect).
         private void Symbol(string name, bool on, Sprite sprite, Vector2 center, float height)
         {
@@ -602,13 +633,15 @@ namespace TawanOS.CardEngine
             }
         }
 
-        public bool IsPointerOverCard()
+        public bool IsPointerOverCard() => IsPointerOverCard(Input.mousePosition);
+
+        public bool IsPointerOverCard(Vector2 screenPosition)
         {
             var cam = Camera.main;
             if (cam == null) cam = FindFirstObjectByType<Camera>();
             if (cam == null) return false;
 
-            var hits = Physics.RaycastAll(cam.ScreenPointToRay(Input.mousePosition), 200f);
+            var hits = Physics.RaycastAll(cam.ScreenPointToRay(screenPosition), 200f);
             if (hits == null || hits.Length == 0) return false;
             System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
             return hits[0].collider.GetComponentInParent<CardView3D>() == this;

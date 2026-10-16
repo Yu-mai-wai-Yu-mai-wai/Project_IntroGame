@@ -38,7 +38,8 @@ namespace TawanOS.CardEngine
         private static void Set(CardView3D card, CardStatusType type, bool on)
         {
             card.CardData.statuses.RemoveAll(x => x != null && x.type == type);
-            if (on) card.CardData.statuses.Add(new CardStatus(type, type == CardStatusType.Phawa ? 2 : 1, 99));
+            // As the cards give them: เกราะคุ้มภัย until it blocks a hit, the others for a few turns
+            if (on) card.CardData.statuses.Add(new CardStatus(type, type == CardStatusType.Phawa ? 2 : 1, type == CardStatusType.Protect ? 99 : 2));
         }
 
         private static string Name(CardStatusType type)
