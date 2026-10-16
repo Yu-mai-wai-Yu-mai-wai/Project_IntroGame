@@ -539,59 +539,33 @@ namespace TawanOS.CardEngine
             ApplyStatusSymbols();
         }
 
-        // A picture per status the cards give (ผวา, ผีบังตา, ยั่วยุ, เกราะคุ้มภัย; ผ้ายันต์กลับด้าน only swaps among these)
-        // that tells what it does at a glance (StatusSymbols): sizes and places are fractions of
-        // the face (the cube's local -0.5..0.5 square), sizes of the face's height so the pictures stay square
+        // An icon per status the cards give (ผวา, ผีบังตา, ยั่วยุ, เกราะคุ้มภัย; ผ้ายันต์กลับด้าน only swaps among these),
+        // in a row from the face's bottom-right corner leftwards (StatusSymbols). Places are fractions of the face
+        // (the cube's local -0.5..0.5 square), sizes of the face's height so the icons stay round.
         private readonly System.Collections.Generic.Dictionary<string, SpriteRenderer> symbols =
             new System.Collections.Generic.Dictionary<string, SpriteRenderer>();
 
+        private static readonly CardStatusType[] IconOrder =
+            { CardStatusType.Protect, CardStatusType.Taunt, CardStatusType.Blinded, CardStatusType.Phawa };
+        private static readonly Vector2 IconCorner = new Vector2(0.35f, -0.4f);  // the right-most icon's centre
+        private const float IconSize = 0.1f, IconGap = 0.012f;
+
         private void ApplyStatusSymbols()
         {
-            bool Has(CardStatusType t) => faceVisible && CardData.statuses.Exists(x => x != null && x.type == t && x.stacks > 0);
-
-            // เกราะคุ้มภัย: a see-through shield in the middle of the picture, with a halo behind it and a ring that
-            // flashes out from it (ShieldShimmer makes them pulse)
-            bool prot = Has(CardStatusType.Protect);
-            Symbol("ShieldRipple", prot, StatusSymbols.ShieldGlow, ShieldCenter, ShieldSize * ShieldShimmer.GlowScale, 0f, Color.clear, 0f, order: SymbolOrder);
-            Symbol("ShieldGlow", prot, StatusSymbols.ShieldGlow, ShieldCenter, ShieldSize * ShieldShimmer.GlowScale, 0f, Color.clear, 0f, order: SymbolOrder);
-            Symbol("Shield", prot, StatusSymbols.Shield, ShieldCenter, ShieldSize, ShieldSize, ShieldShimmer.Base, 0f, order: SymbolOrder + 1);
-            if (prot && symbols["Shield"].GetComponent<ShieldShimmer>() == null)
+            float faceAspect = baseLocalScale.y != 0f ? baseLocalScale.x / baseLocalScale.y : 0.716f;
+            float step = (IconSize + IconGap) / faceAspect; // one icon's width plus the gap, in face widths
+            int shown = 0;
+            foreach (var type in IconOrder)
             {
-                var shimmer = symbols["Shield"].gameObject.AddComponent<ShieldShimmer>();
-                shimmer.shield = symbols["Shield"];
-                shimmer.glow = symbols["ShieldGlow"];
-                shimmer.ripple = symbols["ShieldRipple"];
-            }
-            // ยั่วยุ: the whole card glows in the UI accent at its edge
-            Symbol("TauntFrame", Has(CardStatusType.Taunt), StatusSymbols.Frame, Vector2.zero, 1.03f, 1.02f,
-                new Color(0.94f, 0.68f, 0.48f, 0.95f), 0f, stretch: true);
-            // ผีบังตา: its ability text is crossed out
-            var desc = CardFaceLayout.Description;
-            Symbol("BlindCross", Has(CardStatusType.Blinded), StatusSymbols.Cross, desc.center, desc.size.y * 1.15f, desc.size.y * 1.15f,
-                new Color(0.66f, 0.13f, 0.13f, 0.9f), 0f, stretch: true, widthFraction: desc.size.x * 0.75f);
-            // ผวา: wisps of grey smoke sinking down the picture, more of them the more stacks (PhawaSmoke)
-            var phawa = faceVisible ? CardData.statuses.Find(x => x != null && x.type == CardStatusType.Phawa && x.stacks > 0) : null;
-            if (phawa != null && phawaSmoke == null)
-            {
-                var go = new GameObject("StatusPhawaSmoke");
-                go.transform.SetParent(transform, false);
-                phawaSmoke = go.AddComponent<PhawaSmoke>();
-                phawaSmoke.faceZ = FaceZ - 0.003f;
-                phawaSmoke.sortingOrder = SymbolOrder;
-            }
-            if (phawaSmoke != null)
-            {
-                phawaSmoke.gameObject.SetActive(phawa != null);
-                if (phawa != null) phawaSmoke.SetStacks(phawa.stacks);
+                bool on = faceVisible && CardData.statuses.Exists(x => x != null && x.type == type && x.stacks > 0);
+                var center = IconCorner - new Vector2(step * shown, 0f);
+                Symbol(type.ToString(), on, StatusSymbols.For(type), center, IconSize);
+                if (on) shown++;
             }
         }
 
-        private PhawaSmoke phawaSmoke;
-
-        // height: a fraction of the face's height. A square picture keeps its shape (its width follows the card's aspect);
-        // stretch spreads it over widthFraction of the face's width (or as wide as it is high in face units)
-        private void Symbol(string name, bool on, Sprite sprite, Vector2 center, float height, float width, Color tint, float angle,
-            bool stretch = false, float widthFraction = -1f, int order = SymbolOrder)
+        // height: a fraction of the face's height. The square icon keeps its shape (its width follows the card's aspect).
+        private void Symbol(string name, bool on, Sprite sprite, Vector2 center, float height)
         {
             symbols.TryGetValue(name, out var sr);
             if (!on)
@@ -604,24 +578,18 @@ namespace TawanOS.CardEngine
                 var go = new GameObject("Status" + name);
                 go.transform.SetParent(transform, false);
                 sr = go.AddComponent<SpriteRenderer>();
-                sr.sortingOrder = order;
+                sr.sortingOrder = SymbolOrder;
                 symbols[name] = sr;
             }
             sr.sprite = sprite;
-            sr.color = tint;
             sr.gameObject.SetActive(true);
 
             float faceAspect = baseLocalScale.y != 0f ? baseLocalScale.x / baseLocalScale.y : 0.716f;
-            float x = stretch ? (widthFraction > 0f ? widthFraction : width) : height / faceAspect;
             var t = sr.transform;
             t.localPosition = new Vector3(center.x, center.y, FaceZ - 0.003f);
-            t.localRotation = Quaternion.Euler(0f, 0f, angle);
-            t.localScale = new Vector3(x, height, 1f);
+            t.localRotation = Quaternion.identity;
+            t.localScale = new Vector3(height / faceAspect, height, 1f);
         }
-
-        // The เกราะคุ้มภัย shield: its place and size on the face
-        private static readonly Vector2 ShieldCenter = new Vector2(0f, 0.12f);
-        private const float ShieldSize = 0.3f;
 
         public void ResyncHover()
         {

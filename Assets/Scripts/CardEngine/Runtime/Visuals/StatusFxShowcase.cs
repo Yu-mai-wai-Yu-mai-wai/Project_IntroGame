@@ -18,7 +18,7 @@ namespace TawanOS.CardEngine
 
         public Slot[] slots;
 
-        private static readonly CardStatusType[] Shown = { CardStatusType.Protect, CardStatusType.Blinded, CardStatusType.Phawa };
+        private static readonly CardStatusType[] Shown = { CardStatusType.Protect, CardStatusType.Taunt, CardStatusType.Blinded, CardStatusType.Phawa };
 
         // CardView3D binds its Card Data in Start; the statuses go on after that
         private IEnumerator Start()
@@ -46,6 +46,7 @@ namespace TawanOS.CardEngine
             switch (type)
             {
                 case CardStatusType.Protect: return "เกราะคุ้มภัย";
+                case CardStatusType.Taunt: return "ยั่วยุ";
                 case CardStatusType.Blinded: return "ผีบังตา";
                 case CardStatusType.Phawa: return "ผวา";
                 default: return type.ToString();
