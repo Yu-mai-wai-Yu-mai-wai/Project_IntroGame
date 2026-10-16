@@ -83,6 +83,7 @@ namespace TawanOS.EventEngine
                 return;
             }
 
+            if (choiceGroup != null && !choiceGroup.interactable) return;
             for (int i = 0; i < choiceButtons.Count && i < 9; i++)
             {
                 if (choiceButtons[i].gameObject.activeSelf && Input.GetKeyDown(KeyCode.Alpha1 + i))
@@ -141,7 +142,8 @@ namespace TawanOS.EventEngine
             SetEffectSummary(effectSummary);
 
             pendingOptions = options;
-            HideChoices();
+            // The choices take their place (hidden) before the text types, so the text's box is final from the start
+            LayoutChoices();
 
             if (typingRoutine != null) StopCoroutine(typingRoutine);
             typingRoutine = StartCoroutine(TypeBody(body ?? string.Empty));
@@ -165,6 +167,7 @@ namespace TawanOS.EventEngine
             isTyping = true;
             bodyText.text = body;
             bodyText.maxVisibleCharacters = 0;
+            FitBodyText();
             bodyText.ForceMeshUpdate();
             int total = bodyText.textInfo.characterCount;
 
@@ -193,22 +196,20 @@ namespace TawanOS.EventEngine
             ShowChoices();
         }
 
-        private void HideChoices()
+        // Builds the page's choices, invisible and not clickable until the text has finished typing. Each one is as
+        // tall as its text needs (EventChoiceButton), so the list's height is known before the text lays out.
+        private void LayoutChoices()
         {
-            foreach (var b in choiceButtons) b.gameObject.SetActive(false);
             if (choiceGroup != null)
             {
                 choiceGroup.DOKill();
                 choiceGroup.alpha = 0f;
                 choiceGroup.interactable = false;
+                choiceGroup.blocksRaycasts = false;
             }
-        }
 
-        private void ShowChoices()
-        {
-            if (pendingOptions == null) return;
-
-            while (choiceButtons.Count < pendingOptions.Count)
+            int count = pendingOptions != null ? pendingOptions.Count : 0;
+            while (choiceButtons.Count < count)
             {
                 var b = Instantiate(choiceTemplate, choiceContainer);
                 choiceButtons.Add(b);
@@ -216,16 +217,34 @@ namespace TawanOS.EventEngine
 
             for (int i = 0; i < choiceButtons.Count; i++)
             {
-                bool used = i < pendingOptions.Count;
+                bool used = i < count;
                 choiceButtons[i].gameObject.SetActive(used);
                 if (used) choiceButtons[i].Setup(i, pendingOptions[i]);
             }
+        }
 
-            if (choiceGroup != null)
-            {
-                choiceGroup.interactable = true;
-                choiceGroup.DOFade(1f, 0.25f);
-            }
+        private void ShowChoices()
+        {
+            if (pendingOptions == null || choiceGroup == null) return;
+            choiceGroup.interactable = true;
+            choiceGroup.blocksRaycasts = true;
+            choiceGroup.DOFade(1f, 0.25f);
+        }
+
+        // The text's box is what the choices leave of the panel: a long story shrinks its letters to fit the box
+        // instead of running down over the choices. The scene's font size is the largest it gets.
+        private float bodyMaxSize = -1f;
+        private const float BodyMinSize = 20f;
+
+        private void FitBodyText()
+        {
+            if (bodyText == null) return;
+            if (bodyMaxSize < 0f) bodyMaxSize = bodyText.fontSize;
+            var panel = bodyText.transform.parent != null ? bodyText.transform.parent.parent as RectTransform : null;
+            if (panel != null) LayoutRebuilder.ForceRebuildLayoutImmediate(panel);
+            bodyText.enableAutoSizing = true;
+            bodyText.fontSizeMin = BodyMinSize;
+            bodyText.fontSizeMax = bodyMaxSize;
         }
 
         private void RefreshRunStatus()
