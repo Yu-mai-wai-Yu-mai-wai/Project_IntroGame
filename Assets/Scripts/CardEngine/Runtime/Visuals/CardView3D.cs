@@ -533,11 +533,24 @@ namespace TawanOS.CardEngine
             }
             if (b.Length > 0 && !faceVisible) b.Append("hidden");
             string key = b.ToString();
-            if (key == shownStatuses) return;
+            // The icons are also redrawn when the card's shape on screen changes (it was moved onto a board slot)
+            bool reshaped = key.Length > 0 && Mathf.Abs(WorldFaceAspect() - iconAspect) > 0.01f;
+            if (key == shownStatuses && !reshaped) return;
 
             shownStatuses = key;
             ApplyStatusSymbols();
         }
+
+        // The face's real width over its height in the world. On a board slot the card's own scale is set to make up
+        // for the slot's (BoardSlotView.FitCardScale), so the card's local scale alone does not give its shape.
+        private float WorldFaceAspect()
+        {
+            float w = transform.TransformVector(Vector3.right).magnitude;
+            float h = transform.TransformVector(Vector3.up).magnitude;
+            return h > 0f ? w / h : 0.716f;
+        }
+
+        private float iconAspect = -1f; // the face shape the icons were last laid out for
 
         // An icon per status the cards give (ผวา, ผีบังตา, ยั่วยุ, เกราะคุ้มภัย; ผ้ายันต์กลับด้าน only swaps among these),
         // in a row from the face's bottom-right corner leftwards (StatusSymbols). Places are fractions of the face
@@ -552,14 +565,14 @@ namespace TawanOS.CardEngine
 
         private void ApplyStatusSymbols()
         {
-            float faceAspect = baseLocalScale.y != 0f ? baseLocalScale.x / baseLocalScale.y : 0.716f;
+            float faceAspect = iconAspect = WorldFaceAspect();
             float step = (IconSize + IconGap) / faceAspect; // one icon's width plus the gap, in face widths
             int shown = 0;
             foreach (var type in IconOrder)
             {
                 bool on = faceVisible && CardData.statuses.Exists(x => x != null && x.type == type && x.stacks > 0);
                 var center = IconCorner - new Vector2(step * shown, 0f);
-                Symbol(type.ToString(), on, StatusSymbols.For(type), center, IconSize);
+                Symbol(type.ToString(), on, StatusSymbols.For(type), center, IconSize, faceAspect);
                 if (on) shown++;
             }
         }
@@ -596,7 +609,7 @@ namespace TawanOS.CardEngine
         }
 
         // height: a fraction of the face's height. The square icon keeps its shape (its width follows the card's aspect).
-        private void Symbol(string name, bool on, Sprite sprite, Vector2 center, float height)
+        private void Symbol(string name, bool on, Sprite sprite, Vector2 center, float height, float faceAspect)
         {
             symbols.TryGetValue(name, out var sr);
             if (!on)
@@ -615,7 +628,6 @@ namespace TawanOS.CardEngine
             sr.sprite = sprite;
             sr.gameObject.SetActive(true);
 
-            float faceAspect = baseLocalScale.y != 0f ? baseLocalScale.x / baseLocalScale.y : 0.716f;
             var t = sr.transform;
             t.localPosition = new Vector3(center.x, center.y, FaceZ - 0.003f);
             t.localRotation = Quaternion.identity;
