@@ -242,7 +242,7 @@ namespace TawanOS.CardEngine
             p.root.anchorMin = p.root.anchorMax = Vector2.zero;
             p.root.pivot = Vector2.zero;
             p.root.anchoredPosition = new Vector2(40, 220);
-            p.root.sizeDelta = new Vector2(360, 120);
+            p.root.sizeDelta = new Vector2(360, 76); // name and Khwan bar; the end-turn button sits on the right
 
             var bg = rootGo.AddComponent<Image>();
             bg.color = Panel;
@@ -253,13 +253,13 @@ namespace TawanOS.CardEngine
 
             // Title: Player name
             p.title = MakeText(rootGo.transform, "PlayerName", 24, FontStyles.Normal, theme != null ? theme.accent : Color.white,
-                new Vector2(0, 0.68f), new Vector2(0.45f, 0.98f), new Vector2(16, 0), Vector2.zero);
+                new Vector2(0, 0.5f), new Vector2(0.45f, 0.98f), new Vector2(16, 0), Vector2.zero);
             if (theme != null && theme.titleFont != null) p.title.font = theme.titleFont;
             p.title.text = "ผู้เล่น";
 
             // Detail: Khwan numbers
             p.detail = MakeText(rootGo.transform, "KhwanDetail", 20, FontStyles.Normal, theme != null ? theme.text : new Color(0.9f, 0.9f, 0.9f),
-                new Vector2(0.35f, 0.68f), new Vector2(1f, 0.98f), Vector2.zero, new Vector2(-16, 0));
+                new Vector2(0.35f, 0.5f), new Vector2(1f, 0.98f), Vector2.zero, new Vector2(-16, 0));
             p.detail.alignment = TextAlignmentOptions.Right;
             if (theme != null && theme.bodyFont != null) p.detail.font = theme.bodyFont;
 
@@ -267,8 +267,8 @@ namespace TawanOS.CardEngine
             var trackGo = new GameObject("BarTrack", typeof(RectTransform));
             trackGo.transform.SetParent(rootGo.transform, false);
             var trackRt = (RectTransform)trackGo.transform;
-            trackRt.anchorMin = new Vector2(0, 0.44f);
-            trackRt.anchorMax = new Vector2(1, 0.62f);
+            trackRt.anchorMin = new Vector2(0, 0.14f);
+            trackRt.anchorMax = new Vector2(1, 0.42f);
             trackRt.offsetMin = new Vector2(16, 0);
             trackRt.offsetMax = new Vector2(-16, 0);
             var track = trackGo.AddComponent<Image>();
@@ -287,14 +287,14 @@ namespace TawanOS.CardEngine
             fillImg.raycastTarget = false;
             p.tempStrip = KhwanDisplay.AddTempStrip(trackRt);
 
-            // End Turn Button
+            // End Turn Button: on its own at the middle of the screen's right edge, clear of the hand and the piles
             var btnGo = new GameObject("EndTurnButton", typeof(RectTransform));
-            btnGo.transform.SetParent(rootGo.transform, false);
+            btnGo.transform.SetParent(parent, false);
             var btnRt = (RectTransform)btnGo.transform;
-            btnRt.anchorMin = new Vector2(0, 0.06f);
-            btnRt.anchorMax = new Vector2(1, 0.38f);
-            btnRt.offsetMin = new Vector2(16, 0);
-            btnRt.offsetMax = new Vector2(-16, 0);
+            btnRt.anchorMin = btnRt.anchorMax = new Vector2(1f, 0.5f);
+            btnRt.pivot = new Vector2(1f, 0.5f);
+            btnRt.anchoredPosition = new Vector2(-40f, 0f);
+            btnRt.sizeDelta = new Vector2(300f, 64f);
 
             var btnImg = btnGo.AddComponent<Image>();
             btnImg.color = Color.white;
@@ -303,7 +303,7 @@ namespace TawanOS.CardEngine
 
             var smokeBtn = btnGo.AddComponent<UiSmokeButton>();
 
-            p.buttonLabel = MakeText(btnGo.transform, "Label", 20, FontStyles.Normal, Color.white,
+            p.buttonLabel = MakeText(btnGo.transform, "Label", 24, FontStyles.Normal, Color.white,
                 Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             p.buttonLabel.alignment = TextAlignmentOptions.Center;
             if (theme != null && theme.titleFont != null) p.buttonLabel.font = theme.titleFont;
