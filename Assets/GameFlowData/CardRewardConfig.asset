@@ -19,7 +19,7 @@ MonoBehaviour:
   bossChoices: 4
   offeringChoices: 1
   eventChoices: 3
-  nonCombatOdds:
+  cardTypeOdds:
     familiar: 40
     amulet: 30
     incantation: 30

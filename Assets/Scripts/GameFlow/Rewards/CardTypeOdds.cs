@@ -6,7 +6,7 @@ using UnityEngine;
 namespace TawanOS.GameFlow
 {
     /// <summary>
-    /// How likely each card type is when a card is drawn at random outside a fight (กองของเซ่น, a หมอกดำ card
+    /// How likely each card type is when a card is drawn at random (a reward after a fight, กองของเซ่น, a หมอกดำ card
     /// reward, ศาลตายาย's stock). Each pick first rolls a type by these weights, then a card of that type; a type with
     /// no cards left drops out of the roll. The defaults are the Game Designer's 40 / 30 / 30 (บริวาร / เครื่องราง / อาคม).
     /// </summary>

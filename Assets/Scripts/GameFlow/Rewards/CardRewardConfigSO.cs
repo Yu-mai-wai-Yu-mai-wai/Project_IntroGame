@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TawanOS.CardEngine;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace TawanOS.GameFlow
 {
@@ -35,12 +36,9 @@ namespace TawanOS.GameFlow
         [Tooltip("A หมอกดำ event's card reward")]
         [Min(1)] public int eventChoices = 3;
 
-        [Header("Card types outside a fight")]
-        [Tooltip("กองของเซ่น and หมอกดำ card rewards roll each card's type by these weights (fight rewards stay even).")]
-        public CardTypeOdds nonCombatOdds = new CardTypeOdds();
-
-        /// <summary>A reward that is not for winning a fight (กองของเซ่น, a หมอกดำ event)</summary>
-        public static bool IsNonCombat(RewardTier tier) => tier == RewardTier.Offering || tier == RewardTier.EventCard;
+        [Header("Card types")]
+        [Tooltip("Every card reward (after a fight, กองของเซ่น, หมอกดำ) rolls each card's type by these weights.")]
+        [FormerlySerializedAs("nonCombatOdds")] public CardTypeOdds cardTypeOdds = new CardTypeOdds();
 
         [Header("Skip")]
         [Tooltip("Off (Game Designer 10 Oct): the player must take one of the cards.")]
