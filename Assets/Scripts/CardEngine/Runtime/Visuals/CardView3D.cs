@@ -562,14 +562,14 @@ namespace TawanOS.CardEngine
                 shimmer.glow = symbols["ShieldGlow"];
                 shimmer.ripple = symbols["ShieldRipple"];
             }
-            // ยั่วยุ: the whole card glows gold at its edge
+            // ยั่วยุ: the whole card glows in the UI accent at its edge
             Symbol("TauntFrame", Has(CardStatusType.Taunt), StatusSymbols.Frame, Vector2.zero, 1.03f, 1.02f,
-                new Color(1f, 0.78f, 0.2f, 0.95f), 0f, stretch: true);
+                new Color(0.94f, 0.68f, 0.48f, 0.95f), 0f, stretch: true);
             // ผีบังตา: its ability text is crossed out
             var desc = CardFaceLayout.Description;
             Symbol("BlindCross", Has(CardStatusType.Blinded), StatusSymbols.Cross, desc.center, desc.size.y * 1.15f, desc.size.y * 1.15f,
-                new Color(0.9f, 0.1f, 0.1f, 0.9f), 0f, stretch: true, widthFraction: desc.size.x * 0.75f);
-            // ผวา: wisps of purple smoke sinking down the picture, more of them the more stacks (PhawaSmoke)
+                new Color(0.66f, 0.13f, 0.13f, 0.9f), 0f, stretch: true, widthFraction: desc.size.x * 0.75f);
+            // ผวา: wisps of grey smoke sinking down the picture, more of them the more stacks (PhawaSmoke)
             var phawa = faceVisible ? CardData.statuses.Find(x => x != null && x.type == CardStatusType.Phawa && x.stacks > 0) : null;
             if (phawa != null && phawaSmoke == null)
             {

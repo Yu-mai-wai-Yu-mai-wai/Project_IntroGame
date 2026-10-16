@@ -7,8 +7,8 @@ namespace TawanOS.CardEngine
     // with it, and a ring flashes out from it and fades. Cards are offset in time so they do not flash together.
     public class ShieldShimmer : MonoBehaviour
     {
-        public static readonly Color Base = new Color(0.45f, 0.85f, 1f);
-        public static readonly Color Flash = new Color(0.85f, 0.98f, 1f);
+        public static readonly Color Base = new Color(0.97f, 0.7f, 0.36f);   // the UI theme's accent (#F0AD7B) pushed towards gold
+        public static readonly Color Flash = new Color(1f, 0.92f, 0.8f);
         public const float GlowScale = 1.4f;
 
         public SpriteRenderer shield, glow, ripple;

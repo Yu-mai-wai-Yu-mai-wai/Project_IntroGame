@@ -3,12 +3,12 @@ using UnityEngine;
 
 namespace TawanOS.CardEngine
 {
-    // ผวา on a card (CardView3D adds it): wisps of pale purple smoke that waver as they sink down the picture and fade,
+    // ผวา on a card (CardView3D adds it): wisps of pale grey smoke that waver as they sink down the picture and fade,
     // like the card's nerve draining away. More stacks, more wisps. It runs on its own because a card on the board
     // turns its CardView3D off. Positions are fractions of the card face (the cube's local -0.5..0.5 square).
     public class PhawaSmoke : MonoBehaviour
     {
-        private static readonly Color Tint = new Color(0.78f, 0.6f, 1f);
+        private static readonly Color Tint = new Color(0.78f, 0.7f, 0.72f); // ghostly grey with a touch of the theme's crimson
         private const float Top = 0.36f, Bottom = -0.1f; // from the top of the picture down past the attack badge
         private const float Period = 2.4f;               // seconds for one wisp to sink all the way
         private const float Width = 0.26f, Height = 0.3f;
