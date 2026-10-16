@@ -787,11 +787,29 @@ namespace TawanOS.CardEngine
             return card != null && BoardOf(onPlayerSide).Contains(card) ? card.boardSlot : -1;
         }
 
-        private List<CardInstance> CollectStrikeTargets(CardInstance attacker, CardInstance primary, bool fromPlayer)
+        // faceHits: how many times the strike also lands on the opposing player's Khwan. A multi-striker (ควายธนู)
+        // covers the three columns in front of it: a card there is hit, an empty column (on the board) sends that hit
+        // to the opposing Khwan. A taunt elsewhere pulls the strike onto itself and the cards beside it instead.
+        private List<CardInstance> CollectStrikeTargets(CardInstance attacker, CardInstance primary, bool fromPlayer, out int faceHits)
         {
+            faceHits = 0;
             var targets = new List<CardInstance>();
             int hits = Mathf.Max(1, KeywordValue(attacker, AbilityEffect.MultiStrike));
             var defenders = BoardOf(!fromPlayer);
+
+            if (hits > 1 && TryFindCard(attacker, out _, out int ownCol)
+                && (primary == null || (defenders.Contains(primary) && primary.boardSlot == ownCol)))
+            {
+                for (int d = -1; d <= 1 && targets.Count + faceHits < hits; d++)
+                {
+                    int c = ownCol + d;
+                    if (c < 0 || c >= MaxBoardSlots) continue;
+                    var ahead = CardAt(defenders, c);
+                    if (IsStrikeable(ahead)) targets.Add(ahead);
+                    else faceHits++;
+                }
+                return targets;
+            }
 
             if (primary != null)
             {

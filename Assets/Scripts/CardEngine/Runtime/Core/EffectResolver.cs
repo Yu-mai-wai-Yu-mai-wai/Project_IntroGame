@@ -318,13 +318,15 @@ namespace TawanOS.CardEngine
                 Debug.Log($"[Clash] {attacker.cardNameThai} lands a critical hit ({attack})");
             }
 
-            var targets = CollectStrikeTargets(attacker, targetFamiliar, fromPlayer);
-            if (targets.Count == 0)
+            var targets = CollectStrikeTargets(attacker, targetFamiliar, fromPlayer, out int faceHits);
+            if (targets.Count == 0 && faceHits == 0)
             {
                 HitOpposingPlayer(attacker, attack, fromPlayer);
             }
             else
             {
+                // ควายธนู: each empty column in front of it is a hit on the opposing Khwan
+                for (int i = 0; i < faceHits; i++) HitOpposingPlayer(attacker, attack, fromPlayer);
                 foreach (var t in targets)
                 {
                     Debug.Log($"[Clash] {attacker.cardNameThai} hits {t.cardNameThai} for {attack}");
