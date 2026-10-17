@@ -93,6 +93,8 @@ namespace TawanOS.CardEngine
         [Range(0f, 1f)] public float phase2AtKhwanRatio = 0f;
         [Tooltip("การ์ดที่ถูกสร้างขึ้นมือทุกครั้งที่เริ่มเทิร์นของศัตรู และตอนเข้าเฟสนี้ (ต้องมีเด็คการ์ด)")]
         public CardDataSO cardEachTurn;
+        [Tooltip("บริวารที่ศัตรูวางลงกระดานทันทีตอนเข้าเฟสนี้ (บอสเฟส 2: ผีตายโหง+) ไม่วางถ้ากระดานเต็ม และตีไม่ได้ในรอบที่โผล่มา")]
+        public CardDataSO cardOnPhaseStart;
 
         [Header("Speech")]
         [Tooltip("สิ่งที่ผีพูดระหว่างสู้ (EnemySpeech) ช่องที่เว้นว่างใช้บทกลาง")]

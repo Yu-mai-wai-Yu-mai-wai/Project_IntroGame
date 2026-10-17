@@ -258,7 +258,7 @@ namespace TawanOS.CardEngine
 
             yield return enemyCards.DrawForTurn(draw);
 
-            // A phase with its own card (บอสเฟส 2: คาถาดูดขวัญ) makes one in its hand every turn
+            // A phase with its own card (cardEachTurn) makes one in its hand every turn
             if (currentEnemyProfile != null && enemyCards.CreateInHand(currentEnemyProfile.cardEachTurn))
                 yield return new WaitForSeconds(ConjureTime);
         }
@@ -793,6 +793,8 @@ namespace TawanOS.CardEngine
 
             // The phase's own card appears in its hand right away, as it will at the start of each of its turns
             enemyCards.CreateInHand(next.cardEachTurn);
+            // and its own familiar lands on the board (บอสเฟส 2: ผีตายโหง+)
+            EffectResolver.Instance?.SummonCardToBoard(next.cardOnPhaseStart, isPlayer: false);
             return true;
         }
 

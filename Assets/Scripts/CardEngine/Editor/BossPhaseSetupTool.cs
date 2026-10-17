@@ -145,65 +145,59 @@ namespace TawanOS.CardEngine
             EditorUtility.SetDirty(to);
         }
 
-        private const string BossCardFolder = "Assets/CardEngineData/Cards/Boss";
-        private const string DrainCardPath = BossCardFolder + "/Card_boss_drain.asset";
-
         [MenuItem("Tools/TawanOS/Card Engine/Setup Boss Phase 2 Rules")]
         private static void SetupPhase2Rules_Menu()
         {
             SetupPhase2Rules();
         }
 
+        private const string TaiHongPath = "Assets/CardEngineData/Cards/Sheet/Card_s_bf01.asset";
+        private const string TaiHongUpPath = "Assets/CardEngineData/Cards/Upgraded/Card_s_bf01_up.asset";
+        private const string HouseGhostPath = "Assets/CardEngineData/Cards/Sheet/Card_s_wf01.asset";
+
         // Batch: -executeMethod TawanOS.CardEngine.BossPhaseSetupTool.SetupPhase2Rules
         // The boss has two khwan bars: phase 2 starts when the first runs out, with a full bar of its own (15 Oct;
-        // it used to start at half the one bar). Phase 2 makes a คาถาดูดขวัญ in its hand when it begins and every turn
-        // (taken out 14 Oct, back 16 Oct); the card costs no Corruption.
+        // it used to start at half the one bar). 17 Oct: phase 2 no longer makes a free คาถาดูดขวัญ each turn
+        // (the simulator showed it barely matters); it places ผีตายโหง+ on its board when it begins instead, plays
+        // 1 card a turn (was 2), and ผีตายโหง leaves both phases' decks (ผีบ้านผีเรือน in its place).
         public static void SetupPhase2Rules()
         {
             var boss = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(BossPath);
             var phase2 = AssetDatabase.LoadAssetAtPath<EnemyProfileSO>(Phase2Path);
-            if (boss == null || phase2 == null)
+            var taiHong = AssetDatabase.LoadAssetAtPath<CardDataSO>(TaiHongPath);
+            var taiHongUp = AssetDatabase.LoadAssetAtPath<CardDataSO>(TaiHongUpPath);
+            var houseGhost = AssetDatabase.LoadAssetAtPath<CardDataSO>(HouseGhostPath);
+            if (boss == null || phase2 == null || taiHong == null || taiHongUp == null || houseGhost == null)
             {
-                Debug.LogError("[BossPhaseSetupTool] Needs the boss profile and its phase 2 (run Setup Boss Phase 2 first).");
+                Debug.LogError("[BossPhaseSetupTool] Needs the boss profile, its phase 2 (run Setup Boss Phase 2 first) and the ผีตายโหง, ผีตายโหง+ and ผีบ้านผีเรือน cards.");
                 if (Application.isBatchMode) EditorApplication.Exit(1);
                 return;
             }
 
-            var drain = AssetDatabase.LoadAssetAtPath<CardDataSO>(DrainCardPath);
-            if (drain == null)
-            {
-                if (!AssetDatabase.IsValidFolder(BossCardFolder)) AssetDatabase.CreateFolder("Assets/CardEngineData/Cards", "Boss");
-                drain = ScriptableObject.CreateInstance<CardDataSO>();
-                drain.cardId = "boss_drain";
-                drain.cardNameThai = "คาถาดูดขวัญ";
-                drain.cardNameEng = "Soul Drain";
-                drain.descriptionFormat = "ทำดาเมจ 1 หน่วย ใส่บริวารหรือเครื่องราง 1 ใบ";
-                drain.magicSchool = MagicSchool.BlackMagic;
-                drain.cardType = CardType.Incantation;
-                drain.targetType = TargetType.SingleEnemy;
-                drain.customTypeText = "อาคม • มนต์ดำ";
-                drain.meritCost = 0;
-                drain.corruptionGain = 0;
-                drain.abilities = new List<CardAbility>
-                {
-                    new CardAbility { trigger = AbilityTrigger.OnPlay, effect = AbilityEffect.DamageCard, target = AbilityTarget.EnemyCard, value = 1 },
-                };
-                AssetDatabase.CreateAsset(drain, DrainCardPath);
-                Debug.Log($"<color=green>[BossPhaseSetupTool] {DrainCardPath} created.</color>");
-            }
-
-            if (!drain.enemyOnly || drain.corruptionGain != 0)
-            {
-                drain.enemyOnly = true; // the boss's own card: never in the pit, rewards, shop or card book
-                drain.corruptionGain = 0;
-                EditorUtility.SetDirty(drain);
-            }
             boss.phase2AtKhwanRatio = 0f;
-            phase2.cardEachTurn = drain;
+            boss.cardOnPhaseStart = null;
+            phase2.cardEachTurn = null;
+            phase2.cardOnPhaseStart = taiHongUp;
+            phase2.maxCardsPerTurn = 1;
+            int swapped = SwapCard(boss, taiHong, houseGhost) + SwapCard(phase2, taiHong, houseGhost);
+
             EditorUtility.SetDirty(boss);
             EditorUtility.SetDirty(phase2);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[BossPhaseSetupTool] Phase 2 when the first bar runs out, with {phase2.maxKhwan} khwan of its own; {drain.cardNameThai} in hand each turn.");
+            Debug.Log($"[BossPhaseSetupTool] Phase 2 when the first bar runs out, with {phase2.maxKhwan} khwan of its own; " +
+                      $"{taiHongUp.cardNameThai} lands on its board, {phase2.maxCardsPerTurn} card a turn; {swapped} {taiHong.cardNameThai} swapped for {houseGhost.cardNameThai}.");
+        }
+
+        private static int SwapCard(EnemyProfileSO enemy, CardDataSO from, CardDataSO to)
+        {
+            int n = 0;
+            for (int i = 0; i < enemy.deck.Count; i++)
+            {
+                if (enemy.deck[i] != from) continue;
+                enemy.deck[i] = to;
+                n++;
+            }
+            return n;
         }
 
         // The status the first form's curse move inflicts, so the second form curses the same way

@@ -871,6 +871,21 @@ namespace TawanOS.CardEngine
             OnCardSummoned?.Invoke(card, isPlayer);
         }
 
+        // A given card appears in a free column of one side, like คาถาเรียกผี's familiar (บอสเฟส 2: ผีตายโหง+).
+        // It cannot strike this round and its on-play abilities do not fire. False when there is no card or no free column.
+        public bool SummonCardToBoard(CardDataSO data, bool isPlayer)
+        {
+            if (data == null) return false;
+
+            var card = new CardInstance(data) { summonedThisRound = true };
+            bool placed = isPlayer ? PlaceBoardCard(card) : PlaceEnemyBoardCard(card);
+            if (!placed) return false;
+
+            Debug.Log($"[Ability] {card.cardNameThai} is summoned onto the {(isPlayer ? "player" : "enemy")} board (slot {card.boardSlot})");
+            OnCardSummoned?.Invoke(card, isPlayer);
+            return true;
+        }
+
         private bool HasGraveyardCards(bool isPlayer)
         {
             if (isPlayer) return CardManager.Instance != null && CardManager.Instance.DiscardPile.Count > 0;

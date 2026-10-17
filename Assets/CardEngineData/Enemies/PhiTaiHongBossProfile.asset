@@ -17,8 +17,8 @@ MonoBehaviour:
   portrait: {fileID: 0}
   maxKhwan: 20
   deck:
-  - {fileID: 11400000, guid: d247bf9a859941bd8359651ab65cd479, type: 2}
-  - {fileID: 11400000, guid: d247bf9a859941bd8359651ab65cd479, type: 2}
+  - {fileID: 11400000, guid: 60a7338b3591472cb1c95622807a5661, type: 2}
+  - {fileID: 11400000, guid: 60a7338b3591472cb1c95622807a5661, type: 2}
   - {fileID: 11400000, guid: 4ab6be3c97ca47228d26ab4833e2dada, type: 2}
   - {fileID: 11400000, guid: 4ab6be3c97ca47228d26ab4833e2dada, type: 2}
   - {fileID: 11400000, guid: 75f31182d0f243abaea7a68d3987d485, type: 2}
@@ -64,6 +64,7 @@ MonoBehaviour:
   phase2Profile: {fileID: 11400000, guid: 1602597215fa593418d07241f585beb3, type: 2}
   phase2AtKhwanRatio: 0
   cardEachTurn: {fileID: 0}
+  cardOnPhaseStart: {fileID: 0}
   lines:
     combatStart: []
     playCard: []
