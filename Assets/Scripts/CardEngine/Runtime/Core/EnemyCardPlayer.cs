@@ -125,17 +125,6 @@ namespace TawanOS.CardEngine
         // Cards played so far this turn (maxCardsPerTurn counts over every play phase of the turn)
         private int playedThisTurn;
 
-        // หลุมจั่ว: the enemy weighs pulling from the shared pit against the Corruption it costs
-        // (see PitDrawScore). It never pulls when that would set off its own curse backfire.
-        private const int MaxPitDrawsPerTurn = 3;
-        private const float PitDrawDelay = 0.6f;
-        private const float PitDrawScoreNeeded = 2.5f;
-        private int pitDrawsThisTurn;
-
-        // Same climbing price as the player's: the Nth pull this fight costs N Corruption, at most MaxPitCorruption
-        private int pitDraws;
-        public int NextPitCorruption => Mathf.Min(pitDraws + 1, CardManager.MaxPitCorruption);
-
         public IEnumerator PlayTurn(CombatManager combat, int turn, EnemyCardPlayStyle style)
         {
             yield return DrawForTurn();
@@ -147,7 +136,6 @@ namespace TawanOS.CardEngine
         public IEnumerator DrawForTurn(bool draw = true)
         {
             playedThisTurn = 0;
-            pitDrawsThisTurn = 0;
             scriptTurn++;
             if (!Active || !draw) yield break;
 
@@ -171,24 +159,10 @@ namespace TawanOS.CardEngine
             float speed = combat.EnemyPlaySpeed;
             int played = 0;
 
-            // A thin or losing hand may be worth topping up from the pit before playing (never for the scripted bot)
-            if (!Scripted && PitDrawScore(state, style, costsEnabled, nothingToPlay: false) >= PitDrawScoreNeeded && TryDrawFromPit(combat))
-            {
-                yield return new WaitForSeconds(PitDrawDelay / speed);
-            }
-
             while (playedThisTurn < profile.maxCardsPerTurn && !combat.IsCombatOver)
             {
                 var card = Scripted ? ChooseScriptedCard(state, costsEnabled, filter) : ChooseCard(state, style, costsEnabled, filter);
-                if (card == null)
-                {
-                    if (Scripted) break;
-                    // Nothing to play in this phase: the pit is worth more now, then look again
-                    if (PitDrawScore(state, style, costsEnabled, nothingToPlay: true) < PitDrawScoreNeeded) break;
-                    if (!TryDrawFromPit(combat)) break;
-                    yield return new WaitForSeconds(PitDrawDelay / speed);
-                    continue;
-                }
+                if (card == null) break;
 
                 yield return Think(card, state, costsEnabled, filter, speed);
                 if (combat.IsCombatOver) break;
@@ -259,73 +233,6 @@ namespace TawanOS.CardEngine
             if (filter != null && !filter(card)) return false;
             if (EffectResolver.Instance != null && !EffectResolver.Instance.CanResolve(card, casterIsPlayer: false)) return false;
             return !costsEnabled || card.magicSchool != MagicSchool.WhiteMagic || card.meritCost <= s.enemyMerit;
-        }
-
-        // How much a pit pull is worth right now. Higher when the enemy has nothing to play, a small hand,
-        // unspent Merit or is losing the board / Khwan race; lower the closer the pull takes it to its
-        // curse backfire (keeping room for the Black Magic already in hand) and for every pull this turn.
-        private float PitDrawScore(CombatStateData s, EnemyCardPlayStyle style, bool costsEnabled, bool nothingToPlay)
-        {
-            if (hand.Count >= profile.maxHandSize || pitDrawsThisTurn >= MaxPitDrawsPerTurn) return float.MinValue;
-
-            int corruptionAfter = s.enemyCorruption + NextPitCorruption;
-            if (corruptionAfter >= s.enemyCorruptionThreshold) return float.MinValue;
-
-            float score = 0f;
-            if (nothingToPlay) score += 3f;
-            if (hand.Count < 4) score += (4 - hand.Count) * 0.75f;
-            if (costsEnabled) score += Mathf.Min(s.enemyMerit, 3) * 0.5f; // Merit that would otherwise go unused
-
-            // Behind on the board or in Khwan: dig for answers
-            int ownBoard = s.enemyBoardCards.FindAll(c => c != null && !c.IsDead).Count;
-            int foeBoard = s.activeBoardCards.FindAll(c => c != null && !c.IsDead).Count;
-            score += Mathf.Max(0, foeBoard - ownBoard) * 1f;
-            float ownRatio = s.maxEnemyKhwan > 0 ? (float)s.enemyKhwan / s.maxEnemyKhwan : 1f;
-            float foeRatio = s.maxPlayerKhwan > 0 ? (float)s.playerKhwan / s.maxPlayerKhwan : 1f;
-            if (ownRatio < foeRatio) score += 1.5f;
-
-            // Corruption risk: keep room for the costliest Black Magic card still in hand
-            int reserve = 0;
-            if (costsEnabled)
-            {
-                foreach (var c in hand)
-                {
-                    if (c.magicSchool == MagicSchool.BlackMagic) reserve = Mathf.Max(reserve, c.corruptionGain);
-                }
-            }
-            int headroom = s.enemyCorruptionThreshold - corruptionAfter - reserve;
-            score -= headroom > 0 ? 3f / headroom : 2f + (-headroom);
-
-            score -= pitDrawsThisTurn * 1.5f;
-
-            if (style == EnemyCardPlayStyle.Aggressive) score += 0.5f;
-            else if (style == EnemyCardPlayStyle.Defensive) score -= 0.5f;
-            else if (style == EnemyCardPlayStyle.Random) score = Random.Range(0f, 5f);
-
-            Debug.Log($"[EnemyAI] pit score {score:0.0} (hand {hand.Count}, corruption {s.enemyCorruption}/{s.enemyCorruptionThreshold}, nothing to play: {nothingToPlay})");
-            return score;
-        }
-
-        private bool TryDrawFromPit(CombatManager combat)
-        {
-            var state = combat.State;
-            if (pitDrawsThisTurn >= MaxPitDrawsPerTurn || hand.Count >= profile.maxHandSize) return false;
-            if (state.enemyCorruption + NextPitCorruption >= state.enemyCorruptionThreshold) return false;
-
-            var template = CardManager.PickPitCard();
-            if (template == null) return false;
-
-            pitDrawsThisTurn++;
-            var card = new CardInstance(template) { fromPit = true };
-            hand.Add(card);
-            OnCardDrawn?.Invoke(card);
-            DrawPitView3D.Instance?.PlayUseEffect();
-
-            combat.ReportEnemyAction("ศัตรูจั่วการ์ดจากหลุมจั่ว");
-            int cost = NextPitCorruption;
-            pitDraws++;
-            combat.AddEnemyCorruption(cost);
-            return true;
         }
 
         // Extra draw from a card ability (outside the normal draw step)

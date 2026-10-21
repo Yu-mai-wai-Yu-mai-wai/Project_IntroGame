@@ -187,8 +187,6 @@ namespace TawanOS.UI
             if (turn != 2) return;
             Add("drawPile", Target.DrawPile, words.drawPile);
             Add("graveyard", Target.Graveyard, words.graveyard);
-            int pit = CardManager.Instance != null ? CardManager.Instance.NextPitCorruption : 1;
-            Add("pit", Target.DrawPit, words.pit, ("pit", pit), ("pitMax", CardManager.MaxPitCorruption));
             Add("inspect", Target.None, words.inspect);
         }
 

@@ -4,9 +4,8 @@ using TawanOS.VFX;
 
 namespace TawanOS.CardEngine
 {
-    // หลุมจั่ว: a shared pit at the middle-right of the table, between the two board rows. Each click
-    // during the player's turn draws one random card from every card in the game and adds Corruption
-    // (see CardManager.DrawFromPit); the enemy uses it too (EnemyCardPlayer). Bootstraps itself.
+    // หลุมจั่ว: the smoking pit at the middle-right of the table, between the two board rows, that cards
+    // fly out of (CardInstance.fromPit). Bootstraps itself.
     public class DrawPitView3D : MonoBehaviour
     {
         public static DrawPitView3D Instance { get; private set; }
@@ -20,7 +19,6 @@ namespace TawanOS.CardEngine
         [Header("Look")]
         public Vector3 pitSize = new Vector3(1.3f, 0.05f, 1.3f);
         public Color pitColor = new Color(0.05f, 0.02f, 0.08f);
-        public Color hoverColor = new Color(0.35f, 0.1f, 0.45f);
 
         private Renderer pitRenderer;
         private Vector3 baseScale;
@@ -119,7 +117,7 @@ namespace TawanOS.CardEngine
 
         private void Start()
         {
-            // Smoke covers the pit; the cylinder stays as the click target but is not drawn. The scene's
+            // Smoke covers the pit; the cylinder is not drawn. The scene's
             // DrawPitSmoke object (Tools > TawanOS > VFX > Use Scene Draw Pit Smoke) is used when there is one
             // (the pit was placed on it in Bootstrap) and sets the pit's width; otherwise the prefab is placed
             smoke = FindFirstObjectByType<DrawPitSmoke>();
@@ -137,24 +135,6 @@ namespace TawanOS.CardEngine
             pitRenderer = GetComponent<Renderer>();
             if (pitRenderer != null) pitRenderer.material.color = pitColor;
             if (smoke != null && pitRenderer != null) pitRenderer.enabled = false;
-        }
-
-        private void OnMouseEnter()
-        {
-            if (pitRenderer != null) pitRenderer.material.color = hoverColor;
-            if (smoke != null) smoke.SetHover(true);
-        }
-
-        private void OnMouseExit()
-        {
-            if (pitRenderer != null) pitRenderer.material.color = pitColor;
-            if (smoke != null) smoke.SetHover(false);
-        }
-
-        private void OnMouseDown()
-        {
-            if (CardTargeting3D.BlocksInput || CardPlayController3D.BlocksInput || CombatCameraRig3D.BlocksInput) return;
-            CardManager.Instance?.DrawFromPit();
         }
 
         // Pulse when either side pulls a card out

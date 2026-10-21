@@ -211,56 +211,6 @@ namespace TawanOS.CardEngine
             return true;
         }
 
-        // หลุมจั่ว: the player clicks the pit to draw one random card out of every card in the game.
-        // Each pull costs Corruption, whatever the debug cost switch says, since that is the pit's price,
-        // and the price climbs through the fight: 1st pull 1, 2nd pull 2, then 3 for every pull after that
-        public const int MaxPitCorruption = 3;
-        private int pitDraws;
-        public int NextPitCorruption => Mathf.Min(pitDraws + 1, MaxPitCorruption);
-
-        public bool DrawFromPit()
-        {
-            var combat = CombatManager.Instance;
-            if (combat != null && combat.CurrentPhase != CombatPhase.PlayerTurn) return false;
-
-            if (handCards.Count >= maxHandSize)
-            {
-                Debug.LogWarning("[CardManager] Hand is full! The pit gives nothing.");
-                TawanOS.UI.PlayerNotice.Show(PlayBlockReasons.HandFull);
-                return false;
-            }
-
-            var template = PickPitCard();
-            if (template == null) return false;
-
-            var drawn = new CardInstance(template) { fromPit = true };
-            AddToHand(drawn);
-            DrawPitView3D.Instance?.PlayUseEffect();
-            Debug.Log($"[CardManager] Pit drew {drawn.cardNameThai}");
-
-            int cost = NextPitCorruption;
-            pitDraws++;
-            combat?.AddCorruption(cost);
-            return true;
-        }
-
-        // One random card out of every card in the game; the pit is shared by the player and the enemy
-        public static CardDataSO PickPitCard()
-        {
-            var catalog = CardCatalogSO.Load();
-            var pool = new List<CardDataSO>();
-            if (catalog != null)
-            {
-                pool.AddRange(catalog.BaseCards());
-            }
-            if (pool.Count == 0)
-            {
-                Debug.LogWarning("[CardManager] No Resources/CardCatalog found; the pit has nothing to give.");
-                return null;
-            }
-            return pool[UnityEngine.Random.Range(0, pool.Count)];
-        }
-
         // A card created mid-combat (summoned, given, or brought back) goes straight to the hand
         public void AddToHand(CardInstance card)
         {
