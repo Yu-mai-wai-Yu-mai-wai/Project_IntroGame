@@ -175,6 +175,9 @@ MonoBehaviour:
   statBadgeText: {fileID: 0}
   occupiedRoot: {fileID: 0}
   emptyRoot: {fileID: 0}
+  amuletSlotIcon: {fileID: 0}
+  amuletIconOffset: {x: -0.75, y: 0.3, z: 0}
+  amuletIconHeight: 0.6
 --- !u!23 &108837751
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1145,6 +1148,9 @@ MonoBehaviour:
   statBadgeText: {fileID: 0}
   occupiedRoot: {fileID: 0}
   emptyRoot: {fileID: 0}
+  amuletSlotIcon: {fileID: 0}
+  amuletIconOffset: {x: -0.75, y: 0.3, z: 0}
+  amuletIconHeight: 0.6
 --- !u!23 &468630063
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1280,6 +1286,9 @@ MonoBehaviour:
   statBadgeText: {fileID: 0}
   occupiedRoot: {fileID: 0}
   emptyRoot: {fileID: 0}
+  amuletSlotIcon: {fileID: 0}
+  amuletIconOffset: {x: -0.75, y: 0.3, z: 0}
+  amuletIconHeight: 0.6
 --- !u!23 &474403011
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2461,6 +2470,9 @@ MonoBehaviour:
   statBadgeText: {fileID: 0}
   occupiedRoot: {fileID: 0}
   emptyRoot: {fileID: 0}
+  amuletSlotIcon: {fileID: 0}
+  amuletIconOffset: {x: -0.75, y: 0.3, z: 0}
+  amuletIconHeight: 0.6
 --- !u!23 &603374518
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2864,73 +2876,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &683605828
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Charm-Bold SDF Material (Instance)
-  m_Shader: {fileID: 4800000, guid: fe393ace9b354375a9cb14cdbbc28be4, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _MainTex:
-        m_Texture: {fileID: 3743755800687221625, guid: 9ece194a389fd8a46aeec390079fd8ad, type: 2}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _ColorMask: 15
-    - _CullMode: 0
-    - _FaceDilate: 0
-    - _GradientScale: 10
-    - _MaskSoftnessX: 0
-    - _MaskSoftnessY: 0
-    - _OutlineSoftness: 0
-    - _OutlineWidth: 0.2
-    - _PerspectiveFilter: 0.875
-    - _ScaleRatioA: 0.9
-    - _ScaleRatioB: 1
-    - _ScaleRatioC: 0.73125
-    - _ScaleX: 1
-    - _ScaleY: 1
-    - _ShaderFlags: 0
-    - _Sharpness: 0
-    - _Stencil: 0
-    - _StencilComp: 8
-    - _StencilOp: 0
-    - _StencilReadMask: 255
-    - _StencilWriteMask: 255
-    - _TextureHeight: 1024
-    - _TextureWidth: 1024
-    - _UnderlayDilate: 0
-    - _UnderlayOffsetX: 0
-    - _UnderlayOffsetY: 0
-    - _UnderlaySoftness: 0
-    - _VertexOffsetX: 0
-    - _VertexOffsetY: 0
-    - _WeightBold: 0.75
-    - _WeightNormal: 0
-    m_Colors:
-    - _ClipRect: {r: -32767, g: -32767, b: 32767, a: 32767}
-    - _FaceColor: {r: 1, g: 1, b: 1, a: 1}
-    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
-    - _UnderlayColor: {r: 0, g: 0, b: 0, a: 0.5}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!21 &709814229
 Material:
   serializedVersion: 8
@@ -3514,6 +3459,9 @@ MonoBehaviour:
   statBadgeText: {fileID: 0}
   occupiedRoot: {fileID: 0}
   emptyRoot: {fileID: 0}
+  amuletSlotIcon: {fileID: 0}
+  amuletIconOffset: {x: -0.75, y: 0.3, z: 0}
+  amuletIconHeight: 0.6
 --- !u!23 &909768762
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3801,6 +3749,7 @@ MonoBehaviour:
   considerPull: 0.45
   showcaseHoldTime: 1.6
   showcaseInDuration: 0.3
+  abilityCardHoldTime: 1.2
   pileCardSize: {x: 1.96, y: 2.8}
   thicknessPerCard: 0.02
   pileMaterial: {fileID: 2100000, guid: b6d9be235dd1cb348b4214068f665f0f, type: 2}
@@ -3860,6 +3809,9 @@ MonoBehaviour:
   statBadgeText: {fileID: 0}
   occupiedRoot: {fileID: 0}
   emptyRoot: {fileID: 0}
+  amuletSlotIcon: {fileID: 0}
+  amuletIconOffset: {x: -0.75, y: 0.3, z: 0}
+  amuletIconHeight: 0.6
 --- !u!23 &1305718494
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4063,6 +4015,9 @@ MonoBehaviour:
   statBadgeText: {fileID: 0}
   occupiedRoot: {fileID: 0}
   emptyRoot: {fileID: 0}
+  amuletSlotIcon: {fileID: 21300000, guid: d54ba02bcd12bf241a5194e4a9fe84d4, type: 3}
+  amuletIconOffset: {x: -0.75, y: 0.3, z: 0}
+  amuletIconHeight: 0.6
 --- !u!23 &1397705454
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4273,6 +4228,8 @@ MonoBehaviour:
   drawOnFirstTurn: 0
   openingHandSize: 3
   drawPhaseStartDelay: 0.3
+  pitDealDelay: 0.5
+  pitPickDelay: 0.5
   discardHandAtEnd: 0
   endPhaseDelay: 0.6
   enemyActsAfterEnd: 1
@@ -4670,6 +4627,9 @@ MonoBehaviour:
   statBadgeText: {fileID: 0}
   occupiedRoot: {fileID: 0}
   emptyRoot: {fileID: 0}
+  amuletSlotIcon: {fileID: 21300000, guid: d54ba02bcd12bf241a5194e4a9fe84d4, type: 3}
+  amuletIconOffset: {x: -0.75, y: 0.3, z: 0}
+  amuletIconHeight: 0.6
 --- !u!23 &1660141966
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5203,6 +5163,9 @@ MonoBehaviour:
   statBadgeText: {fileID: 0}
   occupiedRoot: {fileID: 0}
   emptyRoot: {fileID: 0}
+  amuletSlotIcon: {fileID: 0}
+  amuletIconOffset: {x: -0.75, y: 0.3, z: 0}
+  amuletIconHeight: 0.6
 --- !u!23 &1856475142
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5338,6 +5301,9 @@ MonoBehaviour:
   statBadgeText: {fileID: 0}
   occupiedRoot: {fileID: 0}
   emptyRoot: {fileID: 0}
+  amuletSlotIcon: {fileID: 0}
+  amuletIconOffset: {x: -0.75, y: 0.3, z: 0}
+  amuletIconHeight: 0.6
 --- !u!23 &1874202473
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5583,6 +5549,9 @@ MonoBehaviour:
   statBadgeText: {fileID: 0}
   occupiedRoot: {fileID: 0}
   emptyRoot: {fileID: 0}
+  amuletSlotIcon: {fileID: 0}
+  amuletIconOffset: {x: -0.75, y: 0.3, z: 0}
+  amuletIconHeight: 0.6
 --- !u!23 &1930226587
 MeshRenderer:
   m_ObjectHideFlags: 0
