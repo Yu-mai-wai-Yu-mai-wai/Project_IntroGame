@@ -200,8 +200,9 @@ namespace TawanOS.CardEngine
                 }
 
                 hand.Remove(card);
-                // A familiar or amulet goes where it stops the most damage heading for the enemy's face
-                if (card.cardType != CardType.Incantation && !Scripted) // the tutorial bot keeps its scripted columns
+                // A familiar goes where it stops the most damage heading for the enemy's face (an amulet always
+                // goes to the amulet slot)
+                if (card.cardType == CardType.Familiar && !Scripted) // the tutorial bot keeps its scripted columns
                 {
                     int slot = BestBlockSlot(state);
                     if (slot >= 0) card.boardSlot = slot;
@@ -447,7 +448,7 @@ namespace TawanOS.CardEngine
         {
             var damage = IncomingFaceDamage(s, out _);
             int best = -1, bestDamage = 0;
-            for (int col = 0; col < damage.Length; col++)
+            for (int col = EffectResolver.FirstFamiliarSlot; col < damage.Length; col++)
             {
                 if (EffectResolver.CardAt(s.enemyBoardCards, col) != null) continue;
                 if (damage[col] > bestDamage)
@@ -465,7 +466,7 @@ namespace TawanOS.CardEngine
         private float BlockScore(CardInstance card, CombatStateData s)
         {
             if (card.cardType == CardType.Incantation) return 0f;
-            bool blocks = card.cardType == CardType.Familiar || card.maxKhwan > 0;
+            bool blocks = card.cardType == CardType.Familiar;
             if (!blocks || EffectResolver.FreeSlot(s.enemyBoardCards) < 0) return 0f;
 
             var damage = IncomingFaceDamage(s, out int unblockable);

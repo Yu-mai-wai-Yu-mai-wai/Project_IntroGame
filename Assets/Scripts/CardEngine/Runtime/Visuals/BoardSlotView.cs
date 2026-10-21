@@ -29,7 +29,17 @@ namespace TawanOS.CardEngine
         public GameObject occupiedRoot;
         public GameObject emptyRoot;
 
+        [Header("Amulet Slot")]
+        [Tooltip("Picture standing beside the amulet slot (column 0), like the candles beside the slots. " +
+                 "Set by Tools/TawanOS/Combat Scene/Amulet Slot Icon; empty = no picture.")]
+        public Sprite amuletSlotIcon;
+        [Tooltip("Where the picture stands, in world units from the slot's centre (x = right, y = up, z = away from the player)")]
+        public Vector3 amuletIconOffset = new Vector3(-0.75f, 0.3f, 0f);
+        [Tooltip("Height of the picture in world units")]
+        public float amuletIconHeight = 0.6f;
+
         private CardInstance currentCard;
+        private Transform amuletIcon;
 
         // Local scale for a card parented to this slot: as wide as the slot's mesh (a quad lying in the
         // slot's local X/Y), with the card's own shape kept, so it may reach past the slot's ends.
@@ -56,10 +66,42 @@ namespace TawanOS.CardEngine
                 EffectResolver.Instance.OnSlotCleared += HandleSlotCleared;
             }
             ClearSlot(playDeathFx: false);
+            BuildAmuletIcon();
+        }
+
+        // The amulet slot gets a small standing picture of an amulet beside it. It sits at the scene root, not under
+        // the slot: the slot is scaled unevenly, which would skew a child. It turns to face the camera (LateUpdate).
+        private void BuildAmuletIcon()
+        {
+            if (slotIndex != EffectResolver.AmuletSlot || amuletSlotIcon == null || amuletIcon != null) return;
+            if (GetComponent<DeckPileView3D>() != null || name.Contains("Deck")) return;
+
+            var go = new GameObject("AmuletSlotIcon");
+            go.transform.position = transform.position + amuletIconOffset;
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = amuletSlotIcon;
+            float h = amuletSlotIcon.bounds.size.y;
+            float scale = h > 0f ? amuletIconHeight / h : 1f;
+            go.transform.localScale = Vector3.one * scale;
+            amuletIcon = go.transform;
+            FaceCamera();
+        }
+
+        private void LateUpdate()
+        {
+            if (amuletIcon != null) FaceCamera();
+        }
+
+        private void FaceCamera()
+        {
+            var cam = Camera.main;
+            if (cam == null) return;
+            amuletIcon.rotation = Quaternion.LookRotation(amuletIcon.position - cam.transform.position, Vector3.up);
         }
 
         private void OnDestroy()
         {
+            if (amuletIcon != null) Destroy(amuletIcon.gameObject);
             if (side == SlotSide.Player && EffectResolver.Instance != null)
             {
                 EffectResolver.Instance.OnSlotOccupied -= HandleSlotOccupied;

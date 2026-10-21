@@ -280,8 +280,8 @@ namespace TawanOS.CardEngine
         {
             if (card == null) return false;
 
-            // A full board (5 cards) takes no more familiars or amulets
-            if (card.cardType != CardType.Incantation && IsBoardFull(casterIsPlayer)) return false;
+            // Four familiars fill the board; an amulet always fits (it replaces the one in the amulet slot)
+            if (card.cardType == CardType.Familiar && IsBoardFull(casterIsPlayer)) return false;
 
             if (card.cardType != CardType.Incantation || card.abilities == null || card.abilities.Count == 0) return true;
 
@@ -488,8 +488,9 @@ namespace TawanOS.CardEngine
                 case AbilityTarget.Adjacent:
                     if (sourceIndex >= 0)
                     {
-                        result.Add(CardAt(own, sourceIndex - 1));
-                        result.Add(CardAt(own, sourceIndex + 1));
+                        // The amulet slot is not a neighbour of the first familiar column
+                        if (IsFamiliarSlot(sourceIndex - 1)) result.Add(CardAt(own, sourceIndex - 1));
+                        if (IsFamiliarSlot(sourceIndex + 1)) result.Add(CardAt(own, sourceIndex + 1));
                     }
                     break;
 
@@ -752,7 +753,7 @@ namespace TawanOS.CardEngine
                 return defenders.Find(c => !c.IsDead && HasKeyword(c, AbilityEffect.OverheadMagnet));
             }
 
-            var taunt = defenders.Find(c => !c.IsDead && c.maxKhwan > 0 && HasTaunt(c));
+            var taunt = defenders.Find(c => IsStrikeable(c) && HasTaunt(c));
             if (taunt != null) return taunt;
 
             var opposite = CardAt(defenders, col);
@@ -780,7 +781,7 @@ namespace TawanOS.CardEngine
                 for (int d = -1; d <= 1 && targets.Count + faceHits < hits; d++)
                 {
                     int c = ownCol + d;
-                    if (c < 0 || c >= MaxBoardSlots) continue;
+                    if (!IsFamiliarSlot(c)) continue;
                     var ahead = CardAt(defenders, c);
                     if (IsStrikeable(ahead)) targets.Add(ahead);
                     else faceHits++;

@@ -300,13 +300,21 @@ namespace TawanOS.CardEngine
 
         // ---------------------------------------------------------------- slots
 
-        private static IEnumerable<BoardSlotView> EmptyPlayerSlots()
+        // The slots a held card may go to: an amulet only to the amulet slot (also when one is there: it is replaced),
+        // a familiar to the empty familiar columns
+        private static IEnumerable<BoardSlotView> EmptyPlayerSlots(CardType type)
         {
             var board = CombatManager.Instance != null ? CombatManager.Instance.State.activeBoardCards : null;
             foreach (var slot in FindObjectsByType<BoardSlotView>(FindObjectsSortMode.None))
             {
                 if (slot.side != BoardSlotView.SlotSide.Player) continue;
                 if (slot.GetComponent<DeckPileView3D>() != null || slot.name.Contains("Deck")) continue;
+                if (type == CardType.Amulet)
+                {
+                    if (slot.slotIndex == EffectResolver.AmuletSlot) yield return slot;
+                    continue;
+                }
+                if (!EffectResolver.IsFamiliarSlot(slot.slotIndex)) continue;
                 if (board != null && EffectResolver.CardAt(board, slot.slotIndex) != null) continue;
                 yield return slot;
             }
@@ -317,7 +325,7 @@ namespace TawanOS.CardEngine
         private void ShowSlotMarkers()
         {
             HideSlotMarkers();
-            foreach (var slot in EmptyPlayerSlots())
+            foreach (var slot in EmptyPlayerSlots(held != null ? held.CardData.cardType : CardType.Familiar))
             {
                 var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 go.name = "SlotMarker";

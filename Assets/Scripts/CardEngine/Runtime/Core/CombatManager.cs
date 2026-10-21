@@ -341,7 +341,8 @@ namespace TawanOS.CardEngine
             var view = BoardClashView3D.Instance;
             Action<ClashStrike> apply = s => resolver.ResolveFamiliarStrike(s.attacker, s.target, s.fromPlayer, s.isCrit);
 
-            for (int col = 0; col < EffectResolver.MaxBoardSlots; col++)
+            // Column 0 is the amulet slot: amulets do not clash
+            for (int col = EffectResolver.FirstFamiliarSlot; col < EffectResolver.MaxBoardSlots; col++)
             {
                 if (IsCombatOver) yield break;
 
@@ -397,7 +398,7 @@ namespace TawanOS.CardEngine
             return EffectResolver.IsStrikerType(card) && card.familiarDamage > 0;
         }
 
-        // The card in this column that may strike: a live familiar, or an amulet (it strikes once it has สะเทือนขวัญ)
+        // The card in this column that may strike: a live familiar
         private CardInstance PlayerFamiliarAt(int col)
         {
             var card = EffectResolver.CardAt(state.activeBoardCards, col);

@@ -22,6 +22,11 @@ namespace TawanOS.CardEngine
         public event Action<CardInstance, bool> OnCardSummoned;
 
         public const int MaxBoardSlots = 5;
+        // Column 0 (far left) is each side's amulet slot: one amulet at a time, a new one replaces it.
+        // Columns 1-4 hold familiars. Amulets do not take part in the clash.
+        public const int AmuletSlot = 0;
+        public const int FirstFamiliarSlot = 1;
+        public static bool IsFamiliarSlot(int slot) => slot >= FirstFamiliarSlot && slot < MaxBoardSlots;
 
         private void Awake()
         {
@@ -103,7 +108,7 @@ namespace TawanOS.CardEngine
             if (CombatManager.Instance == null) return false;
 
             var list = CombatManager.Instance.State.enemyBoardCards;
-            if (!PutOnBoard(list, card)) return false;
+            if (!PutOnBoard(list, card, isPlayer: false)) return false;
             RefreshAuras();
             ResyncEnemySlots(list);
             return true;
@@ -126,18 +131,19 @@ namespace TawanOS.CardEngine
             return board.Find(c => c != null && c.boardSlot == slot);
         }
 
-        // The column a new card goes to: the requested one when it is free, else the leftmost free one (-1 = full)
+        // The familiar column a new familiar goes to: the requested one when it is free, else the leftmost free
+        // one (-1 = all four familiar columns are taken). The amulet slot is never handed out here.
         public static int FreeSlot(List<CardInstance> board, int preferred = -1)
         {
-            if (preferred >= 0 && preferred < MaxBoardSlots && CardAt(board, preferred) == null) return preferred;
-            for (int i = 0; i < MaxBoardSlots; i++)
+            if (IsFamiliarSlot(preferred) && CardAt(board, preferred) == null) return preferred;
+            for (int i = FirstFamiliarSlot; i < MaxBoardSlots; i++)
             {
                 if (CardAt(board, i) == null) return i;
             }
             return -1;
         }
 
-        // Places a card in a fixed column. When the board is full the oldest card is replaced in its column.
+        // True when all four familiar columns are taken (the amulet slot never fills up: a new amulet replaces the old)
         public bool IsBoardFull(bool playerSide)
         {
             if (CombatManager.Instance == null) return false;
@@ -145,9 +151,26 @@ namespace TawanOS.CardEngine
             return FreeSlot(list) < 0;
         }
 
-        // Places a card in a fixed column. Returns false when the board is full (CanResolve stops that earlier).
-        private static bool PutOnBoard(List<CardInstance> list, CardInstance card)
+        // Places a card in a fixed column. An amulet always goes to the amulet slot and sends the amulet already there
+        // to the graveyard. A familiar takes a free familiar column; returns false when there is none (CanResolve
+        // stops that earlier).
+        private bool PutOnBoard(List<CardInstance> list, CardInstance card, bool isPlayer)
         {
+            if (card.cardType == CardType.Amulet)
+            {
+                var old = CardAt(list, AmuletSlot);
+                if (old != null)
+                {
+                    list.Remove(old);
+                    old.boardSlot = -1;
+                    SendToGraveyard(old, isPlayer);
+                    Debug.Log($"[EffectResolver] {card.cardNameThai} replaces {old.cardNameThai} in the amulet slot");
+                }
+                card.boardSlot = AmuletSlot;
+                list.Add(card);
+                return true;
+            }
+
             int slot = FreeSlot(list, card.boardSlot);
             if (slot < 0)
             {
@@ -176,7 +199,7 @@ namespace TawanOS.CardEngine
             if (CombatManager.Instance == null) return false;
 
             var list = CombatManager.Instance.State.activeBoardCards;
-            if (!PutOnBoard(list, card)) return false;
+            if (!PutOnBoard(list, card, isPlayer: true)) return false;
             RefreshAuras();
             ResyncSlots(list);
             return true;
@@ -283,20 +306,17 @@ namespace TawanOS.CardEngine
             return card != null && card.cardType == CardType.Familiar && card.familiarHealth > 0;
         }
 
-        // Cards that can strike in the clash: live familiars, and amulets still on the board (an amulet strikes only once
-        // it has สะเทือนขวัญ, from a buff or an aura; CanStrike checks the attack)
+        // Cards that can strike in the clash: live familiars. Amulets sit in their own slot and never fight.
         public static bool IsStrikerType(CardInstance card)
         {
-            if (card == null) return false;
-            if (card.cardType == CardType.Familiar) return card.familiarHealth > 0;
-            return card.cardType == CardType.Amulet && !card.IsDead;
+            return card != null && card.cardType == CardType.Familiar && card.familiarHealth > 0;
         }
 
-        // Cards a familiar can hit: live familiars, and amulets that have Khwan (they can be destroyed)
+        // Cards a familiar can hit: live familiars (amulets in the amulet slot cannot be struck)
         public static bool IsStrikeable(CardInstance card)
         {
             if (card == null || card.IsDead) return false;
-            return card.cardType == CardType.Familiar || card.maxKhwan > 0;
+            return card.cardType == CardType.Familiar;
         }
 
         // A familiar strikes: the target card loses Khwan (armor first); with no target the hit lands on the
