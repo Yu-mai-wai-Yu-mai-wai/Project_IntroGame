@@ -270,6 +270,16 @@ namespace TawanOS.CardEngine
             yield return enemyCards.PlayCards(this, enemyAI.CurrentPlayStyle, filter);
         }
 
+        // หลุมกลาง: the enemy takes its pick of the pit's cards. False when it takes nothing.
+        public bool EnemyTakeFromPit(CenterPit pit)
+        {
+            if (pit == null || pit.Offer.Count == 0 || !enemyCards.CanTakeFromPit) return false;
+            var card = enemyCards.ChoosePitCard(pit.Offer, state, enemyAI.CurrentPlayStyle);
+            if (!pit.TakeForEnemy(card, enemyCards)) return false;
+            ReportEnemyAction($"ศัตรูหยิบ {card.cardNameThai} จากหลุมกลาง");
+            return true;
+        }
+
         // An enemy without a card deck uses its telegraphed move instead
         public void ResolveEnemyIntentMove()
         {

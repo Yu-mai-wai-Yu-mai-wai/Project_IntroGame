@@ -84,11 +84,11 @@ namespace TawanOS.CardEngine
             view.Bind(card);
             activeViews.Add(view);
 
-            if (card.fromPit && DrawPitView3D.Instance != null)
+            if (card.fromPit && CenterPitView3D.TryGetSpawnPosition(card, out var pitPosition))
             {
-                // Pulled from the pit: fly out of it instead of the deck
+                // Taken from the center pit: fly out of its slot instead of the deck
                 card.fromPit = false;
-                view.transform.position = DrawPitView3D.Instance.SpawnPosition;
+                view.transform.position = pitPosition;
                 view.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
                 newlyDrawn.Add(view);
                 TawanOS.VFX.PitCardTrail.Spawn(view.transform); // red smoke trailing it to the hand

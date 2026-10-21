@@ -1,11 +1,10 @@
 using UnityEngine;
-using DG.Tweening;
 using TawanOS.VFX;
 
 namespace TawanOS.CardEngine
 {
-    // หลุมจั่ว: the smoking pit at the middle-right of the table, between the two board rows, that cards
-    // fly out of (CardInstance.fromPit). Bootstraps itself.
+    // หลุมจั่ว: the smoking pit at the middle-right of the table, between the two board rows. Only scenery now:
+    // the center pit's cards lie in their own slots (CenterPitView3D). Bootstraps itself.
     public class DrawPitView3D : MonoBehaviour
     {
         public static DrawPitView3D Instance { get; private set; }
@@ -21,7 +20,6 @@ namespace TawanOS.CardEngine
         public Color pitColor = new Color(0.05f, 0.02f, 0.08f);
 
         private Renderer pitRenderer;
-        private Vector3 baseScale;
         private DrawPitSmoke smoke; // black smoke over the pit when Resources/DrawPit/DarkSmoke.mat exists
 
         // AfterSceneLoad fires only for the first scene played; the combat scene is usually loaded later from the map.
@@ -131,20 +129,9 @@ namespace TawanOS.CardEngine
             else smoke = DrawPitSmoke.Attach(transform);
 
             transform.localScale = size; // a unit cylinder: x and z are the pit's width and depth
-            baseScale = transform.localScale;
             pitRenderer = GetComponent<Renderer>();
             if (pitRenderer != null) pitRenderer.material.color = pitColor;
             if (smoke != null && pitRenderer != null) pitRenderer.enabled = false;
-        }
-
-        // Pulse when either side pulls a card out
-        public void PlayUseEffect()
-        {
-            if (baseScale == Vector3.zero) baseScale = transform.localScale;
-            transform.DOKill();
-            transform.localScale = baseScale;
-            transform.DOPunchScale(baseScale * 0.15f, 0.25f, 6);
-            if (smoke != null) smoke.Burst();
         }
     }
 }

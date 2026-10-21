@@ -49,7 +49,8 @@ namespace TawanOS.CardEngine
         PlayerSpell,    // ผู้เล่นร่ายอาคม
         EnemySpell,     // ศัตรูร่ายอาคม
         Clash,          // การ์ดตีกัน
-        End
+        End,
+        PitPick         // ทั้งสองฝ่ายหยิบการ์ดจากหลุมกลาง
     }
 
     public enum EnemyIntent

@@ -177,7 +177,7 @@ namespace TawanOS.CardEngine
 
             var view = CardUnderMouse();
             if (view == null || view.CardData == null) return;
-            if (IsBoardCard(view) || view.IsInHand) CardDetailPanelUI.Ensure().Show(view); // not the enemy's face-down hand
+            if (IsBoardCard(view) || view.IsInHand || CenterPitView3D.Shows(view)) CardDetailPanelUI.Ensure().Show(view); // not the enemy's face-down hand
         }
 
         private CardView3D CardUnderMouse()

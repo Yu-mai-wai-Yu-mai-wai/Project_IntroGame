@@ -187,6 +187,7 @@ namespace TawanOS.UI
             if (turn != 2) return;
             Add("drawPile", Target.DrawPile, words.drawPile);
             Add("graveyard", Target.Graveyard, words.graveyard);
+            Add("centerPit", Target.DrawPit, words.centerPit);
             Add("inspect", Target.None, words.inspect);
         }
 

@@ -26,6 +26,8 @@ namespace TawanOS.CardEngine
                     return "ตอนนี้เป็นตาของศัตรู รอให้ถึงตาคุณ";
                 case TurnPhase.Clash:
                     return "การ์ดกำลังตีกัน รอให้จบก่อน";
+                case TurnPhase.PitPick:
+                    return "หยิบการ์ดจากหลุมกลางก่อน";
                 default:
                     return "กำลังเปลี่ยนเทิร์น รอสักครู่";
             }
@@ -50,6 +52,8 @@ namespace TawanOS.CardEngine
                     return "การ์ดตีกัน";
                 case TurnPhase.Draw:
                     return "จั่วการ์ด";
+                case TurnPhase.PitPick:
+                    return "หลุมกลาง";
                 case TurnPhase.End:
                     return "จบเทิร์น";
                 default:
@@ -62,6 +66,8 @@ namespace TawanOS.CardEngine
         {
             switch (phase)
             {
+                case TurnPhase.PitPick:
+                    return "คลิกเลือกการ์ด 1 ใบจากหลุมกลาง";
                 case TurnPhase.PlayerBoard:
                     return "ลากการ์ดลงช่อง · กด Space เมื่อลงเสร็จ";
                 case TurnPhase.PlayerSpell:

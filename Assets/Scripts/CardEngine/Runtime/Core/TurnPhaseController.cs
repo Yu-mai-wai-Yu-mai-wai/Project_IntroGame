@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace TawanOS.CardEngine
 {
-    // The turn loop. Every turn: Draw -> the enemy plays familiars/amulets -> the player plays
-    // familiars/amulets -> the enemy casts incantations -> the player casts incantations -> the board
+    // The turn loop. Every turn: Draw (from turn 2 also one card each from the center pit, CenterPit) -> the
+    // enemy plays familiars/amulets -> the player plays familiars/amulets -> the enemy casts incantations -> the player casts incantations -> the board
     // clash -> End. The enemy always commits first, so the player answers what it put down. Add it to any object in the combat scene; while it is enabled, CombatManager hands
     // the turn flow over to it. The End Turn button and the Space key finish each of the player's phases.
     public class TurnPhaseController : MonoBehaviour
@@ -20,6 +20,12 @@ namespace TawanOS.CardEngine
         [Tooltip("Opening hand: drawn all at once when the game starts, before turn 1. -1 = CardManager.defaultDrawCount")]
         public int openingHandSize = 3;
         public float drawPhaseStartDelay = 0.3f;
+
+        [Header("Center Pit")]
+        [Tooltip("Pause after the pit's cards are dealt, before the first pick")]
+        public float pitDealDelay = 0.5f;
+        [Tooltip("Pause after each pick")]
+        public float pitPickDelay = 0.5f;
 
         [Header("End Phase")]
         public bool discardHandAtEnd = false;
@@ -54,6 +60,7 @@ namespace TawanOS.CardEngine
                 return;
             }
             Instance = this;
+            CenterPit.Ensure(gameObject);
         }
 
         private void OnDestroy()
@@ -107,6 +114,7 @@ namespace TawanOS.CardEngine
             switch (phase)
             {
                 case TurnPhase.Draw: return "จั่วการ์ด";
+                case TurnPhase.PitPick: return "หยิบการ์ดจากหลุมกลาง";
                 case TurnPhase.PlayerBoard: return "ลงบริวาร / เครื่องราง";
                 case TurnPhase.EnemyBoard: return "ศัตรูลงบริวาร / เครื่องราง...";
                 case TurnPhase.PlayerSpell: return "ร่ายอาคม";
@@ -162,6 +170,13 @@ namespace TawanOS.CardEngine
                 // The enemy's turn starts at the same time: shield reset, start-of-turn abilities, its draw
                 if (enemyActs) yield return combat.EnemyTurnStart(draw: !SkipsTurnDraw);
 
+                // หลุมกลาง: on top of the deck draw each side takes one of 4 face-up cards
+                if (!SkipsTurnDraw)
+                {
+                    yield return PitPicks(combat, enemyActs);
+                    if (combat != null && combat.IsCombatOver) break;
+                }
+
                 // --- 1. Enemy: familiars / amulets ---
                 if (enemyActs)
                 {
@@ -213,6 +228,41 @@ namespace TawanOS.CardEngine
             }
 
             loop = null;
+        }
+
+        // Deals the center pit, lets each side take one card (the first pick alternates), then throws the rest away
+        private IEnumerator PitPicks(CombatManager combat, bool enemyActs)
+        {
+            var pit = CenterPit.Ensure(gameObject);
+            pit.Deal(TurnNumber);
+            if (pit.Offer.Count == 0) yield break;
+
+            SetPhase(TurnPhase.PitPick);
+            yield return new WaitForSeconds(pitDealDelay);
+
+            bool playerFirst = CenterPit.PlayerPicksFirst(TurnNumber);
+            for (int i = 0; i < 2; i++)
+            {
+                if (combat != null && combat.IsCombatOver) yield break;
+                if ((i == 0) == playerFirst) yield return PlayerPitPick(pit);
+                else if (enemyActs && combat.EnemyTakeFromPit(pit)) yield return new WaitForSeconds(pitPickDelay);
+            }
+
+            yield return new WaitForSeconds(pitPickDelay);
+            pit.Clear();
+        }
+
+        private IEnumerator PlayerPitPick(CenterPit pit)
+        {
+            var cards = CardManager.Instance;
+            if (cards == null || cards.Hand.Count >= cards.maxHandSize) yield break; // a full hand takes nothing
+            pit.BeginPlayerPick();
+            while (pit.WaitingForPlayer)
+            {
+                if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver) yield break;
+                yield return null;
+            }
+            yield return new WaitForSeconds(pitPickDelay);
         }
 
         // Waits for the player to finish one play phase (End Turn button / Space)

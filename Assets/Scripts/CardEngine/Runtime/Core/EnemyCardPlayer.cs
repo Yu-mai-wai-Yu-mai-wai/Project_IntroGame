@@ -235,6 +235,27 @@ namespace TawanOS.CardEngine
             return !costsEnabled || card.magicSchool != MagicSchool.WhiteMagic || card.meritCost <= s.enemyMerit;
         }
 
+        // หลุมกลาง: the enemy takes the card it would most like to play, the same scoring as ChooseCard but
+        // without needing the Merit for it yet. The scripted bot (tutorial) and a full hand take nothing.
+        public bool CanTakeFromPit => Active && !Scripted && hand.Count < profile.maxHandSize;
+
+        public CardInstance ChoosePitCard(IReadOnlyList<CardInstance> offer, CombatStateData s, EnemyCardPlayStyle style)
+        {
+            CardInstance best = null;
+            float bestScore = float.MinValue;
+            foreach (var card in offer)
+            {
+                float score = Score(card, s, style);
+                if (style != EnemyCardPlayStyle.Random) score += BlockScore(card, s);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best = card;
+                }
+            }
+            return best;
+        }
+
         // Extra draw from a card ability (outside the normal draw step)
         public int DrawExtra(int count)
         {
