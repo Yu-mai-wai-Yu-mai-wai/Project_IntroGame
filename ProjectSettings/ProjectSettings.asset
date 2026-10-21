@@ -14,7 +14,7 @@ PlayerSettings:
   accelerometerFrequency: 60
   companyName: NoClaudeNoMe
   productName: There, there, my dear
-  defaultCursor: {fileID: 2800000, guid: 50eb780e6beea394db13ba2512d8168e, type: 3}
+  defaultCursor: {fileID: 2800000, guid: b29c237e863295e40a8ec23b09a007bd, type: 3}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
   m_ShowUnitySplashScreen: 1
