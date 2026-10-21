@@ -25,4 +25,4 @@ MonoBehaviour:
     preset: {fileID: 11400000, guid: 21bf8a1fc7186034f9c0278efbd14306, type: 2}
   scaleKhwan: 1
   khwanPerNode: 2
-  khwanCap: 10
+  khwanCap: 12

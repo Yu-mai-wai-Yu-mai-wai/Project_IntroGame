@@ -16,15 +16,14 @@ MonoBehaviour:
   enemyOnly: 0
   cardNameThai: "\u0E04\u0E32\u0E16\u0E32\u0E40\u0E23\u0E35\u0E22\u0E01\u0E02\u0E27\u0E31\u0E0D"
   cardNameEng: Soul-Calling Chant
-  descriptionFormat: "\u0E1F\u0E37\u0E49\u0E19\u0E1F\u0E39\u0E02\u0E27\u0E31\u0E0D
-    3 \u0E2B\u0E19\u0E48\u0E27\u0E22\u0E43\u0E2B\u0E49\u0E01\u0E32\u0E23\u0E4C\u0E14\n\u0E1D\u0E48\u0E32\u0E22\u0E40\u0E23\u0E32
+  descriptionFormat: "\u0E2E\u0E35\u0E25 2 \u0E41\u0E25\u0E30\u0E08\u0E31\u0E48\u0E27
     1 \u0E43\u0E1A"
   magicSchool: 0
   cardType: 0
   targetType: 3
   customTypeText: "\u0E2D\u0E32\u0E04\u0E21 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E02\u0E32\u0E27"
   bossOnly: 0
-  meritCost: 4
+  meritCost: 3
   corruptionGain: 0
   shopPrice: 6
   baseValue: 3

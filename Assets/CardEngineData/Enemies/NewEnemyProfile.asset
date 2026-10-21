@@ -15,7 +15,7 @@ MonoBehaviour:
   enemyId: enemy_krasue
   enemyName: "\u0E1C\u0E35\u0E01\u0E23\u0E30\u0E2A\u0E37\u0E2D"
   portrait: {fileID: 0}
-  maxKhwan: 4
+  maxKhwan: 6
   deck:
   - {fileID: 11400000, guid: 4e4b0a9b4b42416c856f56538bebb1d1, type: 2}
   - {fileID: 11400000, guid: 4e4b0a9b4b42416c856f56538bebb1d1, type: 2}
@@ -31,7 +31,7 @@ MonoBehaviour:
   startingHandSize: 3
   drawPerTurn: 1
   maxHandSize: 10
-  maxCardsPerTurn: 1
+  maxCardsPerTurn: 2
   scriptedDeck: 0
   cardsPerTurn: 
   moves: []

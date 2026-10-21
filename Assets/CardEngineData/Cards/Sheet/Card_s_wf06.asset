@@ -16,18 +16,19 @@ MonoBehaviour:
   enemyOnly: 0
   cardNameThai: "\u0E1C\u0E35\u0E1F\u0E49\u0E32"
   cardNameEng: Sky Spirit
-  descriptionFormat: "\u0E15\u0E35\u0E02\u0E49\u0E32\u0E21\u0E2B\u0E31\u0E27"
+  descriptionFormat: "\u0E1A\u0E34\u0E19"
   magicSchool: 0
   cardType: 2
   targetType: 0
   customTypeText: "\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E02\u0E32\u0E27"
-  meritCost: 5
+  bossOnly: 0
+  meritCost: 3
   corruptionGain: 0
   shopPrice: 8
   baseValue: 0
   durability: 0
-  familiarHealth: 4
-  familiarDamage: 2
+  familiarHealth: 3
+  familiarDamage: 1
   fontSizeAll: 1
   nameFontSize: 1
   typeFontSize: 1

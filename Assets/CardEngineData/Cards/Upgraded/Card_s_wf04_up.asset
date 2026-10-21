@@ -16,17 +16,21 @@ MonoBehaviour:
   enemyOnly: 0
   cardNameThai: "\u0E1C\u0E35\u0E40\u0E08\u0E49\u0E32\u0E17\u0E35\u0E48+"
   cardNameEng: Guardian Spirit+
-  descriptionFormat: 
+  descriptionFormat: "\u0E14\u0E31\u0E01\u0E1A\u0E34\u0E19 \xB7 \u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23\u0E40\u0E23\u0E32\u0E0A\u0E48\u0E2D\u0E07\u0E15\u0E34\u0E14\u0E01\u0E31\u0E19
+    \u0E02\u0E27\u0E31\u0E0D +1 (\u0E2D\u0E31\u0E1B\u0E40\u0E01\u0E23\u0E14: \u0E02\u0E27\u0E31\u0E0D
+    +1 \u0E41\u0E25\u0E30\u0E15\u0E35 +1)"
   magicSchool: 0
   cardType: 2
   targetType: 0
   customTypeText: "\u0E1A\u0E23\u0E34\u0E27\u0E32\u0E23 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E02\u0E32\u0E27"
+  bossOnly: 0
   meritCost: 3
   corruptionGain: 0
+  shopPrice: 0
   baseValue: 0
   durability: 0
-  familiarHealth: 4
-  familiarDamage: 3
+  familiarHealth: 5
+  familiarDamage: 1
   fontSizeAll: 1
   nameFontSize: 1
   typeFontSize: 1
