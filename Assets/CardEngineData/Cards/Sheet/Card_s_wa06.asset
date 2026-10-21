@@ -37,8 +37,8 @@ MonoBehaviour:
   statFontSize: 1.5
   descriptionFontSize: 1
   abilities:
-  - trigger: 6
-    effect: 23
+  - trigger: 5
+    effect: 44
     target: 0
     status: 0
     value: 1

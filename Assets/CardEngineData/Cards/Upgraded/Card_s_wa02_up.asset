@@ -40,12 +40,12 @@ MonoBehaviour:
   statFontSize: 1
   descriptionFontSize: 1
   abilities:
-  - trigger: 1
-    effect: 11
+  - trigger: 5
+    effect: 32
     target: 0
     status: 0
     value: 1
-    duration: 0
+    duration: 1
     ignoreArmor: 0
     relatedCard: {fileID: 0}
   upgradedCard: {fileID: 0}

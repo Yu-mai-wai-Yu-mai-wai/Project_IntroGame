@@ -38,11 +38,11 @@ MonoBehaviour:
   statFontSize: 1
   descriptionFontSize: 1
   abilities:
-  - trigger: 1
-    effect: 12
+  - trigger: 5
+    effect: 31
     target: 0
     status: 0
-    value: 1
+    value: 2
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}

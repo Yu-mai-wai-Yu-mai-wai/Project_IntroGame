@@ -38,9 +38,9 @@ MonoBehaviour:
   descriptionFontSize: 1
   abilities:
   - trigger: 0
-    effect: 4
-    target: 10
-    status: 0
+    effect: 6
+    target: 6
+    status: 2
     value: 1
     duration: 0
     ignoreArmor: 0

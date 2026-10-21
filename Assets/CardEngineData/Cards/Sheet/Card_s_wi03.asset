@@ -39,11 +39,11 @@ MonoBehaviour:
   descriptionFontSize: 1
   abilities:
   - trigger: 0
-    effect: 7
-    target: 1
+    effect: 6
+    target: 4
     status: 0
     value: 1
-    duration: 0
+    duration: 1
     ignoreArmor: 0
     relatedCard: {fileID: 0}
   upgradedCard: {fileID: 11400000, guid: c19da9aef5813fd48a6f803d08e21d7e, type: 2}

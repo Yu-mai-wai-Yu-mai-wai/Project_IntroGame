@@ -36,7 +36,15 @@ MonoBehaviour:
   costFontSize: 1
   statFontSize: 1.5
   descriptionFontSize: 1
-  abilities: []
+  abilities:
+  - trigger: 0
+    effect: 15
+    target: 0
+    status: 0
+    value: 1
+    duration: 0
+    ignoreArmor: 0
+    relatedCard: {fileID: 11400000, guid: d390b6c3a9641784aaa23764cfb265d3, type: 2}
   upgradedCard: {fileID: 11400000, guid: beaa3d0d72f5fe24e94b44229518df2f, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}

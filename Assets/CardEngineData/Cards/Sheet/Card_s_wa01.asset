@@ -39,7 +39,7 @@ MonoBehaviour:
   descriptionFontSize: 1
   abilities:
   - trigger: 6
-    effect: 0
+    effect: 3
     target: 3
     status: 0
     value: 1

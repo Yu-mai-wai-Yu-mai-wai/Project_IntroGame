@@ -38,10 +38,10 @@ MonoBehaviour:
   descriptionFontSize: 1
   abilities:
   - trigger: 0
-    effect: 8
-    target: 1
+    effect: 42
+    target: 0
     status: 0
-    value: 1
+    value: 0
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}

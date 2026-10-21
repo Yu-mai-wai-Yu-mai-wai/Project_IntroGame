@@ -39,6 +39,14 @@ MonoBehaviour:
   descriptionFontSize: 1
   abilities:
   - trigger: 6
+    effect: 3
+    target: 3
+    status: 0
+    value: 1
+    duration: 0
+    ignoreArmor: 0
+    relatedCard: {fileID: 0}
+  - trigger: 6
     effect: 0
     target: 3
     status: 0

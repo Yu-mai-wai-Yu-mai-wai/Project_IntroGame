@@ -47,6 +47,14 @@ MonoBehaviour:
     duration: 0
     ignoreArmor: 0
     relatedCard: {fileID: 0}
+  - trigger: 5
+    effect: 35
+    target: 0
+    status: 0
+    value: 1
+    duration: 1
+    ignoreArmor: 0
+    relatedCard: {fileID: 0}
   upgradedCard: {fileID: 0}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}

@@ -37,14 +37,14 @@ MonoBehaviour:
   statFontSize: 1.5
   descriptionFontSize: 1
   abilities:
-  - trigger: 0
-    effect: 15
-    target: 0
+  - trigger: 3
+    effect: 4
+    target: 8
     status: 0
     value: 1
     duration: 0
     ignoreArmor: 0
-    relatedCard: {fileID: 11400000, guid: b7eef879b3f0472183ea9abf12c3ab5b, type: 2}
+    relatedCard: {fileID: 0}
   upgradedCard: {fileID: 11400000, guid: f06c0c5a1f38c3543a5948b61b5ec426, type: 2}
   cardImage: {fileID: 0}
   cardBackground: {fileID: 0}

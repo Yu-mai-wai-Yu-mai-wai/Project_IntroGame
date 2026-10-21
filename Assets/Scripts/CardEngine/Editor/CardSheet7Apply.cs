@@ -11,7 +11,7 @@ namespace TawanOS.CardEngine
     // reads Docs/Design/card_skills_th_en.csv and brings the data in line with it.
     //  - The 42 cards (by card_id) and their _up versions: cost (Merit or Corruption), ขวัญ / สะเทือนขวัญ on
     //    familiars, Thai card text. Upgrades keep the base stats except the ones the sheet changes
-    //    (s_bf02 / s_wf06 start with 2 ATK, s_wi04 costs 2). Abilities are not touched: new effects are Phase 2.
+    //    (s_bf02 / s_wf06 start with 2 ATK, s_wi04 costs 2). Abilities: CardSheet7Abilities.
     //  - Every amulet lasts 3 turns.
     //  - Normal enemies play 2 cards a turn and have +2 Khwan (4 -> 6, growth cap 10 -> 12); the boss plays 1 in both phases.
     // Idempotent. Batch: -executeMethod TawanOS.CardEngine.CardSheet7Apply.ApplyFromCli
@@ -72,7 +72,11 @@ namespace TawanOS.CardEngine
                 updated++;
             }
 
+            ok &= CardSheet7Abilities.Apply(cards); // Phase 2: what every card does
             ok &= ApplyEnemies();
+            // The keyword glossary in Resources takes the sheet 7 names (บิน, ดักบิน, คุ้มกัน, สาป, ฮีล, สังเวย)
+            var glossary = Resources.Load<KeywordGlossarySO>("KeywordGlossary");
+            if (glossary != null) { Undo.RecordObject(glossary, "Apply sheet 7"); glossary.PopulateDefaults(); EditorUtility.SetDirty(glossary); }
             AssetDatabase.SaveAssets();
             Debug.Log(ok ? $"<color=green>[CardSheet7Apply] {updated} cards and the enemy profiles updated from sheet 7.</color>"
                          : "[CardSheet7Apply] Finished with errors (see above).");
