@@ -50,7 +50,6 @@ namespace TawanOS.CardEngine
         public void Init(EnemyProfileSO enemyProfile, List<CardDataSO> deckOverride = null)
         {
             profile = enemyProfile;
-            pitDraws = 0;
             drawPile.Clear();
             hand.Clear();
             discardPile.Clear();

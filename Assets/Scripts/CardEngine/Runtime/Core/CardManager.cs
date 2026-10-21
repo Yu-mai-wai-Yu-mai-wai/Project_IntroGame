@@ -49,7 +49,6 @@ namespace TawanOS.CardEngine
             drawPile.Clear();
             handCards.Clear();
             discardPile.Clear();
-            pitDraws = 0;
 
             if (startingDeck != null)
             {
