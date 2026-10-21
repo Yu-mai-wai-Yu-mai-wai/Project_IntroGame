@@ -135,6 +135,12 @@ namespace TawanOS.CardEngine
                                 else enemyCap += a.value;
                                 break;
 
+                            case AbilityEffect.AttackPerCorruption:
+                            case AbilityEffect.AttackIfSturdy:
+                            case AbilityEffect.AttackPerAlly:
+                                Sheet7Auras(isPlayer, source, a, attack);
+                                break;
+
                             case AbilityEffect.ThreadFormation:
                                 // Counted once per card name, however many copies are in play
                                 if (formations.Contains(source.cardId)) break;

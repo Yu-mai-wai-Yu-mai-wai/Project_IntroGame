@@ -60,6 +60,17 @@ namespace TawanOS.CardEngine
         [NonSerialized] public CardInstance protectedFrom;
         [NonSerialized] public int protectedTurn = -1;
 
+        // Sheet 7 (EffectResolver.Sheet7): uses left on an amulet that breaks (-1 = not counted yet), the turn its
+        // per-turn trigger last fired, what it did this turn, the other card in a ด้ายแดงผูกจิต lane, and whether a
+        // revived familiar leaves the fight when it dies again
+        [NonSerialized] public int usesLeft = -1;
+        [NonSerialized] public int usedOnTurn = -1;
+        [NonSerialized] public int usedThisTurn;
+        [NonSerialized] public CardInstance linkedWith;
+        [NonSerialized] public bool linkReturnsToHand;
+        [NonSerialized] public bool exileOnDeath;
+        [NonSerialized] public bool savedFromDeath;
+
         public bool IsDead
         {
             get

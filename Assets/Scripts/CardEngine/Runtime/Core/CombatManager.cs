@@ -112,6 +112,7 @@ namespace TawanOS.CardEngine
 
         public void StartCombat(EnemyProfileSO enemyProfile)
         {
+            EffectResolver.Instance?.ResetSheet7State();
             currentEnemyProfile = enemyProfile;
             EnemyPhase = 1;
             ApplyPlayerStartingKhwan();
@@ -485,6 +486,24 @@ namespace TawanOS.CardEngine
                 }
             }
             nextEnemyMove = currentEnemyProfile.moves[0];
+        }
+
+        /// <summary>
+        /// Heals a side's Khwan up to its max (never cuts ขวัญชั่วคราว above it). Returns what was restored.
+        /// Card effects that react to a heal count the full amount (sheet 7, Game Designer 22 Oct).
+        /// </summary>
+        public int HealKhwan(int amount, bool toPlayer)
+        {
+            if (amount <= 0) return 0;
+            if (toPlayer)
+            {
+                int before = state.playerKhwan;
+                state.playerKhwan = Mathf.Max(state.playerKhwan, Mathf.Min(state.maxPlayerKhwan, state.playerKhwan + amount));
+                return state.playerKhwan - before;
+            }
+            int was = state.enemyKhwan;
+            state.enemyKhwan = Mathf.Max(state.enemyKhwan, Mathf.Min(state.maxEnemyKhwan, state.enemyKhwan + amount));
+            return state.enemyKhwan - was;
         }
 
         public void TakeDamage(int amount, bool toPlayer, string cause = null)

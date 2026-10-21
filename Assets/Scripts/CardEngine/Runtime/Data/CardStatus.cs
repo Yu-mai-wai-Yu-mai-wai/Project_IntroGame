@@ -10,11 +10,11 @@ namespace TawanOS.CardEngine
     {
         [InspectorName("ผวา")] Phawa,          // อัปมงคล ผวา: สะเทือนขวัญลด 1 ต่อหน่วย
         [InspectorName("ผีอำ")] PhiAm,          // โจมตีไม่ได้
-        [InspectorName("โดนของ")] DoneKhong,      // เสียขวัญทุกรอบเท่าจำนวนหน่วย แล้วลดลง 1 หน่วย (ไม่สนเกราะ)
+        [InspectorName("สาป")] DoneKhong,        // สาป (เดิม โดนของ): จบรอบเสียขวัญเท่าจำนวนหน่วย แล้วลดลง 1 หน่วย (ไม่สนเกราะ)
         [InspectorName("ไฟแตก")] FireBreak,      // เสียขวัญ 2 ต่อหน่วยทุกรอบ (ไม่สนเกราะ)
         [InspectorName("ผีบังตา")] Blinded,        // อัปมงคล ผีบังตา: ความสามารถของการ์ดใช้ไม่ได้ (ทริกเกอร์ คำสำคัญ ออร่า) ตีได้ปกติ
         [InspectorName("กรรมตามสนอง")] Karma,          // ดาเมจที่ทำได้สะท้อนกลับใส่ตัวเองเท่ากัน
-        [InspectorName("ยั่วยุ")] Taunt,          // สิริมงคล ยั่วยุ: ศัตรูต้องโจมตีใบนี้ก่อน
+        [InspectorName("คุ้มกัน")] Taunt,         // สิริมงคล คุ้มกัน (เดิม ยั่วยุ): ศัตรูต้องโจมตีใบนี้ก่อน
         [InspectorName("ฮึกเหิม")] Might,          // สะเทือนขวัญ +1 ต่อหน่วย
         [InspectorName("เกราะคุ้มภัย")] Protect,        // สิริมงคล เกราะคุ้มภัย: กันดาเมจได้ทั้งก้อน 1 ครั้งต่อหน่วย
         [InspectorName("ฟื้นขวัญ")] Vital           // ฟื้นขวัญ 1 ต่อหน่วยทุกรอบ
@@ -31,6 +31,10 @@ namespace TawanOS.CardEngine
         [NonSerialized] public bool fromAura;
 
         private static readonly CardStatusType[] Debuffs = { CardStatusType.Blinded, CardStatusType.Phawa };
+        // Bad statuses a cleanse or an immunity covers: the omens plus สาป and ผีอำ (sheet 7)
+        private static readonly CardStatusType[] Harmful = { CardStatusType.Blinded, CardStatusType.Phawa, CardStatusType.DoneKhong, CardStatusType.PhiAm };
+
+        public static bool IsHarmful(CardStatusType type) => Array.IndexOf(Harmful, type) >= 0;
         private static readonly CardStatusType[] Blessings = { CardStatusType.Taunt, CardStatusType.Protect };
 
         public CardStatus(CardStatusType type, int stacks, int duration)

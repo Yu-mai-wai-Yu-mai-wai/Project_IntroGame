@@ -481,6 +481,13 @@ namespace TawanOS.CardEngine
 
             foreach (var a in card.abilities)
             {
+                // Sheet 7 keywords and auras: worth having on the board, more so the longer it stays
+                if (a.effect >= AbilityEffect.HealPlayer && (a.trigger == AbilityTrigger.Passive || a.trigger == AbilityTrigger.Aura))
+                {
+                    utility += 3f;
+                    continue;
+                }
+
                 switch (a.trigger)
                 {
                     case AbilityTrigger.Passive:
@@ -586,6 +593,34 @@ namespace TawanOS.CardEngine
                     case AbilityEffect.ThreadFormation:
                         int copies = own.FindAll(c => c != null && c.cardId == card.cardId).Count;
                         utility += copies >= 1 ? 6f : 2f; // this card would be the second copy
+                        break;
+
+                    case AbilityEffect.HealPlayer:
+                    case AbilityEffect.HealPerAlly:
+                        int lost = s.maxEnemyKhwan - s.enemyKhwan;
+                        defense += Mathf.Min(lost, a.value * (a.effect == AbilityEffect.HealPerAlly ? Mathf.Max(1, ownCards.Count) : 1)) * 1.5f + 0.5f;
+                        break;
+
+                    case AbilityEffect.SacrificeForAttack:
+                    case AbilityEffect.SacrificeForHeal:
+                        utility += own.Exists(c => EffectResolver.IsAliveFamiliar(c)) ? 3f : -6f;
+                        break;
+
+                    case AbilityEffect.ReturnToHand:
+                    case AbilityEffect.DamageHealOnKill:
+                    case AbilityEffect.CursedCannotAttack:
+                        offense += foeFamiliars.Count > 0 ? 6f : -6f;
+                        break;
+
+                    case AbilityEffect.DestroyEnemyAmulet:
+                        offense += EffectResolver.CardAt(foe, EffectResolver.AmuletSlot) != null ? 7f : -6f;
+                        break;
+
+                    case AbilityEffect.LinkLane:
+                    case AbilityEffect.MoveCurses:
+                    case AbilityEffect.ReviveLast:
+                    case AbilityEffect.SummonRelated:
+                        utility += 5f;
                         break;
 
                     case AbilityEffect.DetonateWithOpposite:

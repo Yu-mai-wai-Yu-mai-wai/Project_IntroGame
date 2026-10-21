@@ -58,9 +58,9 @@ namespace TawanOS.CardEngine
         [InspectorName("ทำลายการ์ดช่องตรงข้าม")] DetonateWithOpposite,   // ระเบิดตัวเอง ทำลายการ์ดตรงข้ามในช่องเดียวกัน
 
         // --- Passive keywords (trigger = Passive) ---
-        [InspectorName("ยั่วยุ")] Taunt,                  // ยั่วยุ: ศัตรูต้องโจมตีใบนี้ก่อน
-        [InspectorName("ตีข้ามหัว")] Overhead,               // ตีข้ามหัว: โจมตีข้ามการ์ดตรงหน้าไปที่ผู้เล่นโดยตรง
-        [InspectorName("รับดาเมจตีข้ามหัว")] OverheadMagnet,         // รับดาเมจตีข้ามหัวแทนผู้เล่น
+        [InspectorName("คุ้มกัน")] Taunt,                 // คุ้มกัน (เดิม ยั่วยุ): ศัตรูต้องโจมตีใบนี้ก่อน
+        [InspectorName("บิน")] Overhead,                  // บิน (เดิม ตีข้ามหัว): โจมตีข้ามการ์ดตรงหน้าไปที่ผู้เล่นโดยตรง
+        [InspectorName("ดักบิน")] OverheadMagnet,          // ดักบิน: รับการโจมตีของบริวารบินแทนผู้เล่น
         [InspectorName("ตีหลายใบพร้อมกัน")] MultiStrike,            // โจมตีการ์ดด้านหน้าพร้อมกัน value ใบ
         [InspectorName("การ์ดข้างๆ ได้สะเทือนขวัญ")] AdjacentAttackAura,     // การ์ดที่อยู่ติดกันได้สะเทือนขวัญ +value
 
@@ -68,7 +68,39 @@ namespace TawanOS.CardEngine
         [InspectorName("เพิ่มมลทินสูงสุด")] RaiseCorruptionCap,     // เพิ่มมลทินสูงสุดของเจ้าของ +value (ตลอดการต่อสู้)
         [InspectorName("สะท้อนดาเมจ")] ReflectDamage,          // Passive: สะท้อนดาเมจที่ตีเข้ามาใส่ผู้โจมตีเท่ากัน
         [InspectorName("เพิ่มอัตราคริ (ค่า x 0.1%)")] CritChanceBonus,        // Passive: บริวารฝั่งเราได้อัตราคริเพิ่ม value หน่วยละ 0.1% (25 = 2.5%)
-        [InspectorName("สุ่มบริวารมนต์ดำลงสนาม")] SummonToBoard           // สร้างบริวารมนต์ดำแบบสุ่มบนช่องว่างของฝั่งเรา (ตีไม่ได้ในรอบนี้)
+        [InspectorName("สุ่มบริวารมนต์ดำลงสนาม")] SummonToBoard,          // สร้างบริวารมนต์ดำแบบสุ่มบนช่องว่างของฝั่งเรา (ตีไม่ได้ในรอบนี้)
+
+        // --- Sheet 7 (Narathorn, 21 Oct 2026). EffectResolver.Sheet7.cs. "ฮีล" = the owner's Khwan ---
+        [InspectorName("ฮีล (ขวัญผู้เล่น)")] HealPlayer,             // ฮีลขวัญเจ้าของ value (ไม่เกินขวัญสูงสุด)
+        [InspectorName("ฮีลต่อบริวารเรา 1 ตัว")] HealPerAlly,         // ฮีล value ต่อบริวารฝั่งเรา 1 ตัว
+        [InspectorName("ทุกครั้งที่ฮีล: ใบนี้โจมตี")] AttackOnHeal,    // Passive: โจมตีทันทีเมื่อเจ้าของฮีล (value ครั้งต่อเทิร์น)
+        [InspectorName("ทุกครั้งที่ฮีล: ศัตรูเสียขวัญ")] HealHurtsEnemy, // Passive: ศัตรูเสียขวัญเท่าที่ฮีล (สูงสุด value ต่อเทิร์น)
+        [InspectorName("ฮีลทุกครั้ง +ค่า")] HealBonus,                // Passive: การฮีลของเจ้าของ +value
+        [InspectorName("จบรอบ: ฮีลแล้วจั่ว / ไม่ฮีลก็ฮีล")] EndRoundHealOrDraw, // Passive: ถ้าเทิร์นนี้ฮีล จั่ว 1 ไม่งั้นฮีล value (duration 1 = ทั้งสองอย่าง)
+        [InspectorName("บริวารเราตาย: ศัตรูเสียขวัญ")] AllyDeathHurtsEnemy, // Passive: ศัตรูเสียขวัญ value (ใช้ได้ duration ครั้ง แล้วพัง)
+        [InspectorName("บริวารเราตัวแรกที่ตาย: เรียก Related ลงช่องนั้น")] AllyDeathSummon, // Passive: ครั้งละเทิร์น
+        [InspectorName("บริวารเราตัวอื่นตาย: ใบนี้ตี +ค่า")] AllyDeathBuff, // Passive: ตี +value ขวัญ +duration ถาวร
+        [InspectorName("สังเวย: ได้ตีของตัวนั้น")] SacrificeForAttack, // เมื่อลง: สังเวยบริวารเรา 1 ตัว ได้ตีเพิ่ม (value 1 = ได้ขวัญด้วย)
+        [InspectorName("สังเวย: ฮีลตามขวัญ")] SacrificeForHeal,     // สังเวยบริวารเรา 1 ตัว ฮีลตามขวัญ (value 1 = ศัตรูเสียขวัญเท่ากันด้วย)
+        [InspectorName("คืนชีพบริวารที่ตายล่าสุด")] ReviveLast,       // คืนชีพ value ตัว ฮีล duration ต่อตัว ตายอีกจะหายจากไฟต์
+        [InspectorName("ส่งบริวารกลับขึ้นมือ (ติดสาป = ทำลาย)")] ReturnToHand,
+        [InspectorName("ตีบริวารที่ติดสาปแรงขึ้น")] CursedBonusDamage, // Passive: +value (duration 1 = สองเท่า)
+        [InspectorName("สาปบนบริวารศัตรูไม่ลดลง")] CurseNoDecay,      // Passive: value = ฮีลเมื่อบริวารศัตรูตายเพราะสาป
+        [InspectorName("ย้ายสาปไปบริวารศัตรูช่องตรงข้าม")] MoveCurses,  // value = จั่วการ์ดเพิ่ม
+        [InspectorName("บริวารลงฝั่งเรา: สาปบริวารศัตรูช่องตรงข้าม")] CurseOnAllyEnter, // Passive: สาป value
+        [InspectorName("บริวารเราติดสาป/สถานะร้ายไม่ได้")] CurseImmunity, // Passive
+        [InspectorName("บริวารเราจะตาย: เหลือขวัญ 1 แทน")] DeathSave,  // Passive: ใช้ได้ value ครั้ง แล้วพัง
+        [InspectorName("เชื่อมเลน: ตัวหนึ่งตาย อีกตัวตายด้วย")] LinkLane, // เมื่อวาง: เลือกบริวาร 1 ตัว (value 1 = ฝั่งเราขึ้นมือแทนตาย)
+        [InspectorName("ตี +ค่า ต่อมลทิน duration หน่วย")] AttackPerCorruption, // Aura
+        [InspectorName("บริวารที่ขวัญสูงสุดถึง duration ตี +ค่า")] AttackIfSturdy, // Aura
+        [InspectorName("ตี +ค่า ต่อบริวารเราตัวอื่น")] AttackPerAlly,  // Aura (ตัวเอง)
+        [InspectorName("ทำลายเครื่องรางศัตรู")] DestroyEnemyAmulet,
+        [InspectorName("บริวารบินของศัตรูบินข้ามไม่ได้")] BlockFlying,  // Passive
+        [InspectorName("บริวารศัตรูตีบริวารเรา: ผู้ตีโดน ค่า")] Thorns, // Passive
+        [InspectorName("ลงบริวารเราตัวอื่น: ใบนี้ขวัญ +ค่า")] GrowOnAllyPlayed, // Passive: ขวัญ +value ตี +duration
+        [InspectorName("ทำดาเมจ ถ้าตายฮีล")] DamageHealOnKill,      // ดาเมจ value ถ้าตายฮีล duration
+        [InspectorName("เรียก Related ลงช่องว่าง")] SummonRelated,     // เรียก relatedCard ลงช่องว่าง value ตัว
+        [InspectorName("บริวารศัตรูที่ติดสาปตีไม่ได้เทิร์นนี้")] CursedCannotAttack
     }
 
     [Serializable]

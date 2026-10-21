@@ -111,6 +111,7 @@ namespace TawanOS.CardEngine
             if (!PutOnBoard(list, card, isPlayer: false)) return false;
             RefreshAuras();
             ResyncEnemySlots(list);
+            Sheet7AllyEntered(card, isPlayer: false);
             return true;
         }
 
@@ -202,6 +203,7 @@ namespace TawanOS.CardEngine
             if (!PutOnBoard(list, card, isPlayer: true)) return false;
             RefreshAuras();
             ResyncSlots(list);
+            Sheet7AllyEntered(card, isPlayer: true);
             return true;
         }
 
@@ -349,8 +351,10 @@ namespace TawanOS.CardEngine
                 for (int i = 0; i < faceHits; i++) HitOpposingPlayer(attacker, attack, fromPlayer);
                 foreach (var t in targets)
                 {
-                    Debug.Log($"[Clash] {attacker.cardNameThai} hits {t.cardNameThai} for {attack}");
-                    DamageCard(t, attack, ignoreArmor: false, attacker, fromPlayer);
+                    int hit = StrikeDamageOn(attacker, t, attack); // ผีตายโหง on a cursed card
+                    Debug.Log($"[Clash] {attacker.cardNameThai} hits {t.cardNameThai} for {hit}");
+                    DamageCard(t, hit, ignoreArmor: false, attacker, fromPlayer);
+                    ThornsOnStrike(attacker, t, fromPlayer);
                     // ผีตายโหง: riders on the card it just hit
                     if (!t.IsDead) TriggerAbilities(attacker, AbilityTrigger.OnHit, fromPlayer, t);
                 }
@@ -374,6 +378,7 @@ namespace TawanOS.CardEngine
                 RefreshAuras();
                 if (!removed) break;
             }
+            PlacePendingSummons(); // หุ่นพยนต์ takes the dead card's slot once it is free
         }
 
         private bool RemoveDeadFrom(List<CardInstance> list, bool isPlayer)
@@ -385,7 +390,7 @@ namespace TawanOS.CardEngine
             foreach (var c in dead)
             {
                 c.boardSlot = -1;
-                SendToGraveyard(c, isPlayer);
+                if (!c.exileOnDeath) SendToGraveyard(c, isPlayer); // revived or returned to hand: not to the graveyard
             }
             if (isPlayer) ResyncSlots(list);
             else ResyncEnemySlots(list);
@@ -410,7 +415,7 @@ namespace TawanOS.CardEngine
             if (!fromPlayer && card != null)
             {
                 cause = HasKeyword(card, AbilityEffect.Overhead)
-                    ? $"{card.cardNameThai}ตีข้ามหัว"
+                    ? $"{card.cardNameThai}บินข้ามมา"
                     : $"ถูก {card.cardNameThai} โจมตี";
             }
             combat.TakeDamage(damage, toPlayer: !fromPlayer, cause: cause);

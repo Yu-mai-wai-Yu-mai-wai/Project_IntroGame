@@ -102,6 +102,7 @@ namespace TawanOS.CardEngine
         public void AddCardStatus(CardInstance card, CardStatusType type, int stacks, int duration)
         {
             if (card == null || card.IsDead) return;
+            if (BlocksHarm(card, type)) return;
             stacks = Mathf.Max(1, stacks);
             duration = duration > 0 ? duration : DefaultStatusDuration;
 
@@ -204,6 +205,7 @@ namespace TawanOS.CardEngine
         // Start of a side's turn: draw / merit amulets and the like
         public void TriggerTurnStart(bool isPlayer)
         {
+            Sheet7TurnStart(isPlayer);
             foreach (var card in new List<CardInstance>(BoardOf(isPlayer)))
             {
                 if (!card.IsDead) TriggerAbilities(card, AbilityTrigger.OnTurnStart, isPlayer);
@@ -224,6 +226,9 @@ namespace TawanOS.CardEngine
             {
                 foreach (var card in BoardOf(side)) card.summonedThisRound = false;
             }
+
+            Sheet7RoundEnd(true);
+            Sheet7RoundEnd(false);
 
             foreach (bool isPlayer in new[] { true, false })
             {
@@ -251,7 +256,8 @@ namespace TawanOS.CardEngine
                     if (s.type == CardStatusType.DoneKhong)
                     {
                         DamageCard(card, s.stacks, ignoreArmor: true, source: null, sourceIsPlayer: !isPlayer);
-                        s.stacks--;
+                        if (card.IsDead) { CurseKilled(isPlayer); break; }
+                        if (!CurseFrozen(isPlayer)) s.stacks--; // หัวกะโหลก on the other side keeps it
                         if (s.stacks <= 0) card.statuses.Remove(s);
                         continue;
                     }
@@ -289,7 +295,11 @@ namespace TawanOS.CardEngine
             {
                 if (a.trigger != AbilityTrigger.OnPlay) continue;
 
-                if (a.effect == AbilityEffect.ReturnFromGraveyard)
+                if (IsSheet7Choice(a.effect))
+                {
+                    if (Sheet7Pool(a, null, casterIsPlayer).Count == 0) return false;
+                }
+                else if (a.effect == AbilityEffect.ReturnFromGraveyard)
                 {
                     if (!HasGraveyardCards(casterIsPlayer)) return false;
                 }
@@ -318,7 +328,7 @@ namespace TawanOS.CardEngine
         {
             if (card == null || card.abilities == null) return null;
             return card.abilities.Find(a => a.trigger == AbilityTrigger.OnPlay
-                && (a.effect == AbilityEffect.FlipOmens
+                && (a.effect == AbilityEffect.FlipOmens || IsSheet7Choice(a.effect)
                     || (card.cardType == CardType.Incantation && IsChosenCardTarget(a.target))));
         }
 
@@ -355,6 +365,8 @@ namespace TawanOS.CardEngine
             var a = GetTargetedAbility(card);
             if (a == null) return result;
 
+            if (IsSheet7Choice(a.effect)) return Sheet7Pool(a, null, casterIsPlayer);
+
             if (a.effect == AbilityEffect.FlipOmens)
             {
                 // Our cards with an อัปมงคล to turn good, the other side's with a สิริมงคล to turn bad
@@ -377,6 +389,7 @@ namespace TawanOS.CardEngine
             var a = GetTargetedAbility(card);
             if (a == null) return null;
             if (a.effect == AbilityEffect.FlipOmens) return PickFlipTarget(casterIsPlayer, out _);
+            if (IsSheet7Choice(a.effect)) return PickedOrAuto(a, null, casterIsPlayer, null);
             return AutoPickFor(a, casterIsPlayer);
         }
 
@@ -531,6 +544,7 @@ namespace TawanOS.CardEngine
         private void ExecuteAbility(CardAbility a, CardInstance source, bool ownerIsPlayer, CardInstance other, object explicitTarget)
         {
             var combat = CombatManager.Instance;
+            if (ExecuteSheet7(a, source, ownerIsPlayer, other, explicitTarget)) return;
 
             switch (a.effect)
             {
@@ -619,6 +633,7 @@ namespace TawanOS.CardEngine
                     break;
 
                 case AbilityEffect.BuffAttack:
+                    if (target.cardType == CardType.Amulet) return; // an amulet with attack would start to strike
                     target.familiarDamage = Mathf.Max(0, target.familiarDamage + a.value);
                     break;
 
@@ -647,7 +662,7 @@ namespace TawanOS.CardEngine
                     break;
 
                 case AbilityEffect.CleanseAll:
-                    target.statuses.RemoveAll(s => CardStatus.IsDebuff(s.type) && !s.fromAura);
+                    target.statuses.RemoveAll(s => CardStatus.IsHarmful(s.type) && !s.fromAura); // สาป and ผีอำ too (sheet 7)
                     break;
             }
             NotifyChanged(target);
@@ -682,6 +697,7 @@ namespace TawanOS.CardEngine
             }
 
             target.familiarHealth = Mathf.Max(0, target.familiarHealth - amount);
+            TrySaveFromDeath(target); // มหาอุด
             if (source != null) target.lastAttacker = source;
             OnFamiliarDamaged?.Invoke(target, amount);
 
@@ -710,6 +726,7 @@ namespace TawanOS.CardEngine
 
             bool deadIsPlayer = TryFindCard(dead, out bool isPlayer, out _) ? isPlayer : !killerIsPlayer;
             TriggerAbilities(dead, AbilityTrigger.OnDeath, deadIsPlayer, killer);
+            Sheet7AllyDied(dead, deadIsPlayer);
 
             // A broken amulet's aura ends right away
             RefreshAuras();
@@ -748,7 +765,7 @@ namespace TawanOS.CardEngine
         {
             var defenders = BoardOf(!fromPlayer);
 
-            if (HasKeyword(attacker, AbilityEffect.Overhead))
+            if (HasKeyword(attacker, AbilityEffect.Overhead) && !SideBlocksFlying(!fromPlayer))
             {
                 return defenders.Find(c => !c.IsDead && HasKeyword(c, AbilityEffect.OverheadMagnet));
             }
