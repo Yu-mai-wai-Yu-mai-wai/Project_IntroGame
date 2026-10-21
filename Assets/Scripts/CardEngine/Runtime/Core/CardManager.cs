@@ -62,7 +62,21 @@ namespace TawanOS.CardEngine
             }
 
             Shuffle(drawPile);
+            // The tutorial's fixed hand wins; otherwise the opening hand always has one amulet (sheet 7, Narathorn)
+            if (fixedOpeningCards == null && openingHandHasAmulet) PutFirstAmuletOnTop();
             PutFixedCardsOnTop();
+        }
+
+        [Tooltip("The player's opening hand always gets one amulet (the first one in the shuffled deck), the rest at random.")]
+        public bool openingHandHasAmulet = true;
+
+        private void PutFirstAmuletOnTop()
+        {
+            int at = drawPile.FindIndex(c => c.cardType == CardType.Amulet);
+            if (at <= 0) return;
+            var card = drawPile[at];
+            drawPile.RemoveAt(at);
+            drawPile.Insert(0, card);
         }
 
         private void PutFixedCardsOnTop()
