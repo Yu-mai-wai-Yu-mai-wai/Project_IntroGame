@@ -37,7 +37,6 @@ namespace TawanOS.CardEngine
         [NonSerialized] public CardInstance lastAttacker;
         [NonSerialized] public bool deathHandled;
         [NonSerialized] public bool pendingRemoval;
-        [NonSerialized] public bool formationBuffed;
         // Summoned onto the board by คาถาเรียกผี: it cannot strike until the round ends
         [NonSerialized] public bool summonedThisRound;
 

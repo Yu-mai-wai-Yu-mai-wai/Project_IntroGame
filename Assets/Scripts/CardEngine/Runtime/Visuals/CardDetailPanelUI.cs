@@ -282,10 +282,9 @@ namespace TawanOS.CardEngine
         // Effects where the value carries no meaning for the player
         private static readonly AbilityEffect[] NoValueEffects =
         {
-            AbilityEffect.Taunt, AbilityEffect.Overhead, AbilityEffect.OverheadMagnet, AbilityEffect.FlipOmens,
-            AbilityEffect.CleanseAll, AbilityEffect.SummonRandomFamiliar, AbilityEffect.ReturnFromGraveyard,
-            AbilityEffect.GiveCardToHand, AbilityEffect.DetonateWithOpposite, AbilityEffect.ReflectDamage,
-            AbilityEffect.SummonToBoard,
+            AbilityEffect.Taunt, AbilityEffect.Overhead, AbilityEffect.OverheadMagnet,
+            AbilityEffect.CleanseAll, AbilityEffect.GiveCardToHand, AbilityEffect.BlockFlying, AbilityEffect.CurseImmunity,
+            AbilityEffect.DestroyEnemyAmulet, AbilityEffect.CursedCannotAttack,
         };
 
         // e.g. "เมื่อลงการ์ด: มอบสถานะ ผีบังตา 1 (2 เทิร์น) → การ์ดฝั่งตรงข้าม 1 ใบ (ผู้เล่นเลือก)"
@@ -294,8 +293,7 @@ namespace TawanOS.CardEngine
             string line = $"{NameOf(a.trigger)}: {NameOf(a.effect)}";
             if (a.effect == AbilityEffect.ApplyStatus) line += $" {NameOf(a.status)}";
 
-            if (a.effect == AbilityEffect.CritChanceBonus) line += $" {a.value * 0.1f:0.#}%";
-            else if (Array.IndexOf(NoValueEffects, a.effect) < 0)
+            if (Array.IndexOf(NoValueEffects, a.effect) < 0)
             {
                 bool signed = a.effect == AbilityEffect.BuffKhwan || a.effect == AbilityEffect.BuffAttack;
                 line += $" {(signed && a.value > 0 ? "+" : "")}{a.value}";

@@ -522,10 +522,6 @@ namespace TawanOS.CardEngine
                         defense += Mathf.Min(a.value, missing) * 1.5f + 0.3f;
                         break;
 
-                    case AbilityEffect.GrantArmor:
-                        defense += ownCards.Count > 0 ? a.value * 1.2f : 0f;
-                        break;
-
                     case AbilityEffect.BuffAttack:
                         if (a.value >= 0) offense += 3f * a.value * (allTargets ? friendlyCount : Mathf.Min(1, friendlyCount));
                         else offense += 3f * -a.value * (allTargets ? foeCount : Mathf.Min(1, foeCount));
@@ -536,12 +532,6 @@ namespace TawanOS.CardEngine
                         // คาถาคุณไสย hits both sides: what it costs our own familiars counts against it
                         if (a.target == AbilityTarget.AllOnBoard)
                             offense -= ScoreDamage(a, ownCards, ownCards.FindAll(c => EffectResolver.IsAliveFamiliar(c)), true);
-                        break;
-
-                    case AbilityEffect.DestroyBelowKhwan:
-                        float best = 0f;
-                        foreach (var c in foeCards) if (c.familiarHealth <= a.value) best = Mathf.Max(best, 6f + c.familiarDamage);
-                        offense += best;
                         break;
 
                     case AbilityEffect.ApplyStatus:
@@ -557,42 +547,18 @@ namespace TawanOS.CardEngine
                         }
                         break;
 
-                    case AbilityEffect.CleanseLatest:
                     case AbilityEffect.CleanseAll:
                         int debuffs = 0;
                         foreach (var c in ownCards) debuffs += c.statuses.FindAll(st => CardStatus.IsDebuff(st.type)).Count;
                         defense += 2f + debuffs * 3f;
                         break;
 
-                    case AbilityEffect.Purify:
-                        defense += 2f;
-                        break;
-
-                    case AbilityEffect.FlipOmens:
-                        defense += 4f;
-                        break;
-
                     case AbilityEffect.DrawCards:
                         utility += 4f * a.value;
                         break;
 
-                    case AbilityEffect.GainMerit:
-                        utility += 3f * a.value;
-                        break;
-
-                    case AbilityEffect.SummonToBoard:
-                        utility += 7f; // a free familiar on the board
-                        break;
-
-                    case AbilityEffect.SummonRandomFamiliar:
-                    case AbilityEffect.ReturnFromGraveyard:
                     case AbilityEffect.GiveCardToHand:
                         utility += 5f;
-                        break;
-
-                    case AbilityEffect.ThreadFormation:
-                        int copies = own.FindAll(c => c != null && c.cardId == card.cardId).Count;
-                        utility += copies >= 1 ? 6f : 2f; // this card would be the second copy
                         break;
 
                     case AbilityEffect.HealPlayer:
@@ -623,11 +589,6 @@ namespace TawanOS.CardEngine
                         utility += 5f;
                         break;
 
-                    case AbilityEffect.DetonateWithOpposite:
-                        int slot = EffectResolver.FreeSlot(own);
-                        var facing = EffectResolver.CardAt(foe, slot);
-                        utility += facing != null && !facing.IsDead ? 8f : 1f;
-                        break;
                 }
             }
 
@@ -687,9 +648,6 @@ namespace TawanOS.CardEngine
                     break;
                 case AbilityEffect.OverheadMagnet:
                     defense += foeFamiliars.Exists(c => EffectResolver.HasKeyword(c, AbilityEffect.Overhead)) ? 4f : 1f;
-                    break;
-                case AbilityEffect.MultiStrike:
-                    offense += 1.5f * Mathf.Min(a.value, Mathf.Max(1, foeFamiliars.Count));
                     break;
                 case AbilityEffect.AdjacentAttackAura:
                     defense += 2f * a.value * Mathf.Min(2, s.enemyBoardCards.Count);

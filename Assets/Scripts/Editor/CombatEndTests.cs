@@ -96,80 +96,12 @@ namespace TawanOS.EditorTools
             });
 
             // P0-5: Detonate into a protected card: protect -1, card lives, detonating card dies
-            failures += CheckDetonateProtectedCard();
 
             Debug.Log(failures == 0
                 ? "[CombatEndTests] PASS (8 cases)"
                 : $"[CombatEndTests] FAIL: {failures} case(s) failed");
 
             if (exitOnFinish) EditorApplication.Exit(failures == 0 ? 0 : 1);
-        }
-
-        private static int CheckDetonateProtectedCard()
-        {
-            const string name = "Detonate into a protected card: protect -1, card lives";
-            var go = new GameObject("CombatEndTests_DetonateProtected");
-            var prevCombat = CombatManager.Instance;
-            var prevResolver = EffectResolver.Instance;
-            try
-            {
-                var mgr = go.AddComponent<CombatManager>();
-                var resolver = go.AddComponent<EffectResolver>();
-                typeof(CombatManager).GetProperty("Instance", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-                    ?.GetSetMethod(true)?.Invoke(null, new object[] { mgr });
-                typeof(EffectResolver).GetProperty("Instance", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-                    ?.GetSetMethod(true)?.Invoke(null, new object[] { resolver });
-
-                var victim = new CardInstance
-                {
-                    cardId = "test_victim",
-                    cardNameThai = "ผู้คุ้มภัย",
-                    cardType = CardType.Familiar,
-                    maxKhwan = 5,
-                    familiarHealth = 5,
-                    boardSlot = 0
-                };
-                victim.statuses.Add(new CardStatus(CardStatusType.Protect, 1, 99));
-                mgr.State.enemyBoardCards.Add(victim);
-
-                var bomb = new CardInstance
-                {
-                    cardId = "test_bomb",
-                    cardNameThai = "ด้ายแดง",
-                    cardType = CardType.Familiar,
-                    maxKhwan = 2,
-                    familiarHealth = 2,
-                    boardSlot = 0,
-                    abilities = new List<CardAbility>
-                    {
-                        new CardAbility { effect = AbilityEffect.DetonateWithOpposite, trigger = AbilityTrigger.OnPlay }
-                    }
-                };
-                mgr.State.activeBoardCards.Add(bomb);
-
-                resolver.TriggerAbilities(bomb, AbilityTrigger.OnPlay, ownerIsPlayer: true);
-
-                bool protectConsumed = !victim.statuses.Exists(s => s.type == CardStatusType.Protect && s.stacks > 0);
-                bool victimLives = !victim.IsDead && victim.familiarHealth == 5;
-                bool bombDied = bomb.IsDead;
-
-                bool ok = protectConsumed && victimLives && bombDied;
-                Debug.Log($"[CombatEndTests] {(ok ? "ok  " : "FAIL")} {name} (protectConsumed={protectConsumed}, victimLives={victimLives}, bombDied={bombDied})");
-                return ok ? 0 : 1;
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[CombatEndTests] FAIL {name}: {e}");
-                return 1;
-            }
-            finally
-            {
-                typeof(CombatManager).GetProperty("Instance", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-                    ?.GetSetMethod(true)?.Invoke(null, new object[] { prevCombat });
-                typeof(EffectResolver).GetProperty("Instance", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
-                    ?.GetSetMethod(true)?.Invoke(null, new object[] { prevResolver });
-                Object.DestroyImmediate(go);
-            }
         }
 
         private static int Check(string name, int expectedCount, bool expectedResult, System.Action<CombatManager> arrange)

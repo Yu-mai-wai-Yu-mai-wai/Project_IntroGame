@@ -179,11 +179,6 @@ namespace TawanOS.CardEngine
                     if (a.effect == AbilityEffect.Overhead && !found.Contains("บิน")) found.Add("บิน");
                     if (a.effect == AbilityEffect.OverheadMagnet && !found.Contains("ดักบิน")) found.Add("ดักบิน");
                     if (a.effect == AbilityEffect.CleanseAll && !found.Contains("ชำระล้าง")) found.Add("ชำระล้าง");
-                    if (a.effect == AbilityEffect.FlipOmens)
-                    {
-                        if (!found.Contains("อัปมงคล")) found.Add("อัปมงคล");
-                        if (!found.Contains("สิริมงคล")) found.Add("สิริมงคล");
-                    }
                 }
             }
 

@@ -158,19 +158,10 @@ namespace TawanOS.CardEngine
             return card != null && !card.summonedThisRound && EffectiveAttack(card) > 0 && !HasCardStatus(card, CardStatusType.PhiAm);
         }
 
-        // Base crit plus every CritChanceBonus (ผ้ายันต์มหาอุด) on the attacker's side of the board, for any card that
-        // strikes: a familiar, or an amulet that has สะเทือนขวัญ
+        // Base crit for any card that strikes: a familiar, or an amulet that has สะเทือนขวัญ
         public float CritChancePercent(CardInstance attacker, bool fromPlayer)
         {
-            if (!IsStrikerType(attacker)) return 0f;
-
-            float chance = BaseCritPercent;
-            foreach (var c in BoardOf(fromPlayer))
-            {
-                if (c == null || c.IsDead) continue;
-                chance += KeywordValue(c, AbilityEffect.CritChanceBonus) * 0.1f;
-            }
-            return chance;
+            return IsStrikerType(attacker) ? BaseCritPercent : 0f;
         }
 
         // Decided before the strike is animated so the view can wind up for a critical hit
@@ -299,18 +290,6 @@ namespace TawanOS.CardEngine
                 {
                     if (Sheet7Pool(a, null, casterIsPlayer).Count == 0) return false;
                 }
-                else if (a.effect == AbilityEffect.ReturnFromGraveyard)
-                {
-                    if (!HasGraveyardCards(casterIsPlayer)) return false;
-                }
-                else if (a.effect == AbilityEffect.SummonToBoard)
-                {
-                    if (IsBoardFull(casterIsPlayer) || SummonPool().Count == 0) return false;
-                }
-                else if (a.effect == AbilityEffect.FlipOmens)
-                {
-                    if (PickFlipTarget(casterIsPlayer, out _) == null) return false;
-                }
                 else if (IsChosenCardTarget(a.target))
                 {
                     if (AutoPickFor(a, casterIsPlayer) == null) return false;
@@ -328,7 +307,7 @@ namespace TawanOS.CardEngine
         {
             if (card == null || card.abilities == null) return null;
             return card.abilities.Find(a => a.trigger == AbilityTrigger.OnPlay
-                && (a.effect == AbilityEffect.FlipOmens || IsSheet7Choice(a.effect)
+                && (IsSheet7Choice(a.effect)
                     || (card.cardType == CardType.Incantation && IsChosenCardTarget(a.target))));
         }
 
@@ -352,7 +331,7 @@ namespace TawanOS.CardEngine
         private CardInstance AutoPickFor(CardAbility a, bool ownerIsPlayer)
         {
             if (a.target != AbilityTarget.AnyCard) return AutoPick(a, ChosenCardPool(a, ownerIsPlayer));
-            bool harms = a.effect == AbilityEffect.DamageCard || a.effect == AbilityEffect.DestroyBelowKhwan
+            bool harms = a.effect == AbilityEffect.DamageCard
                 || (a.effect == AbilityEffect.ApplyStatus && CardStatus.IsDebuff(a.status));
             return AutoPick(a, BoardOf(harms ? !ownerIsPlayer : ownerIsPlayer))
                 ?? AutoPick(a, BoardOf(harms ? ownerIsPlayer : !ownerIsPlayer));
@@ -367,14 +346,6 @@ namespace TawanOS.CardEngine
 
             if (IsSheet7Choice(a.effect)) return Sheet7Pool(a, null, casterIsPlayer);
 
-            if (a.effect == AbilityEffect.FlipOmens)
-            {
-                // Our cards with an อัปมงคล to turn good, the other side's with a สิริมงคล to turn bad
-                foreach (var c in BoardOf(casterIsPlayer)) if (c != null && !c.IsDead && CountDebuffs(c) > 0) result.Add(c);
-                foreach (var c in BoardOf(!casterIsPlayer)) if (c != null && !c.IsDead && CountBlessings(c) > 0) result.Add(c);
-                return result;
-            }
-
             foreach (var c in ChosenCardPool(a, casterIsPlayer))
             {
                 if (c != null && !c.IsDead && TryScore(a, c, out _)) result.Add(c);
@@ -388,7 +359,6 @@ namespace TawanOS.CardEngine
         {
             var a = GetTargetedAbility(card);
             if (a == null) return null;
-            if (a.effect == AbilityEffect.FlipOmens) return PickFlipTarget(casterIsPlayer, out _);
             if (IsSheet7Choice(a.effect)) return PickedOrAuto(a, null, casterIsPlayer, null);
             return AutoPickFor(a, casterIsPlayer);
         }
@@ -427,21 +397,10 @@ namespace TawanOS.CardEngine
                     score = c.familiarDamage * 2f - c.familiarHealth * 0.1f;
                     return true;
 
-                case AbilityEffect.GrantArmor:
-                    if (!hasKhwan) return false;
-                    score = -(c.familiarHealth + c.armor);
-                    return true;
-
-                case AbilityEffect.CleanseLatest:
                 case AbilityEffect.CleanseAll:
                     int debuffs = CountDebuffs(c);
                     if (debuffs == 0) return false;
                     score = debuffs;
-                    return true;
-
-                case AbilityEffect.DestroyBelowKhwan:
-                    if (!hasKhwan || c.familiarHealth > a.value) return false;
-                    score = c.familiarDamage;
                     return true;
 
                 case AbilityEffect.DamageCard:
@@ -552,56 +511,16 @@ namespace TawanOS.CardEngine
                 case AbilityEffect.Taunt:
                 case AbilityEffect.Overhead:
                 case AbilityEffect.OverheadMagnet:
-                case AbilityEffect.MultiStrike:
                 case AbilityEffect.AdjacentAttackAura:
-                case AbilityEffect.ReflectDamage:
-                case AbilityEffect.CritChanceBonus:
-                    return;
-
-                case AbilityEffect.RaiseCorruptionCap:
-                    combat?.RaiseCorruptionThreshold(a.value, ownerIsPlayer);
-                    return;
-
-                case AbilityEffect.Purify:
-                    combat?.AddPurify(Mathf.Max(1, a.value), ownerIsPlayer);
                     return;
 
                 case AbilityEffect.DrawCards:
                     DrawFor(ownerIsPlayer, a.value);
                     return;
 
-                case AbilityEffect.GainMerit:
-                    if (ownerIsPlayer) combat?.AddMerit(a.value);
-                    else combat?.AddEnemyMerit(a.value);
-                    return;
-
-                case AbilityEffect.SummonRandomFamiliar:
-                    GiveToHand(ownerIsPlayer, PickRandomCommonFamiliar());
-                    return;
-
-                case AbilityEffect.SummonToBoard:
-                    SummonToBoard(ownerIsPlayer);
-                    return;
-
-                case AbilityEffect.ReturnFromGraveyard:
-                    ReturnFromGraveyard(ownerIsPlayer);
-                    return;
-
                 case AbilityEffect.GiveCardToHand:
                     GiveToHand(ownerIsPlayer, a.relatedCard);
                     return;
-
-                case AbilityEffect.ThreadFormation:
-                    return; // an aura: RefreshAuras applies it while the copies are on the board
-
-                case AbilityEffect.DetonateWithOpposite:
-                    TryDetonate(source, ownerIsPlayer);
-                    return;
-
-                case AbilityEffect.FlipOmens:
-                    FlipOmens(source, ownerIsPlayer, explicitTarget as CardInstance);
-                    return;
-
             }
 
             var targets = ResolveTargets(a, source, ownerIsPlayer, other, explicitTarget);
@@ -628,10 +547,6 @@ namespace TawanOS.CardEngine
                     target.familiarHealth = Mathf.Min(target.maxKhwan, target.familiarHealth + a.value);
                     break;
 
-                case AbilityEffect.GrantArmor:
-                    target.armor += a.value;
-                    break;
-
                 case AbilityEffect.BuffAttack:
                     if (target.cardType == CardType.Amulet) return; // an amulet with attack would start to strike
                     target.familiarDamage = Mathf.Max(0, target.familiarDamage + a.value);
@@ -641,32 +556,18 @@ namespace TawanOS.CardEngine
                     DamageCard(target, a.value, a.ignoreArmor, source, ownerIsPlayer);
                     return;
 
-                case AbilityEffect.DestroyBelowKhwan:
-                    if (target.familiarHealth <= a.value) DamageCard(target, target.familiarHealth, ignoreArmor: true, source, ownerIsPlayer);
-                    return;
-
                 case AbilityEffect.ApplyStatus:
                     // โดนของ: value = starting stacks, and it wears off by itself. เกราะคุ้มภัย lasts until it blocks a hit.
                     bool untilUsed = a.status == CardStatusType.DoneKhong || a.status == CardStatusType.Protect;
                     AddCardStatus(target, a.status, a.value, untilUsed ? 99 : a.duration);
                     return;
 
-                case AbilityEffect.CleanseLatest:
-                    for (int i = target.statuses.Count - 1; i >= 0; i--)
-                    {
-                        if (!CardStatus.IsDebuff(target.statuses[i].type) || target.statuses[i].fromAura) continue;
-                        target.statuses[i].stacks--;
-                        if (target.statuses[i].stacks <= 0) target.statuses.RemoveAt(i);
-                        break;
-                    }
-                    break;
-
                 case AbilityEffect.CleanseAll:
                     target.statuses.RemoveAll(s => CardStatus.IsHarmful(s.type) && !s.fromAura); // สาป and ผีอำ too (sheet 7)
                     break;
             }
             NotifyChanged(target);
-            if (a.effect == AbilityEffect.CleanseLatest || a.effect == AbilityEffect.CleanseAll) RefreshAuras();
+            if (a.effect == AbilityEffect.CleanseAll) RefreshAuras();
         }
 
         // ---------------------------------------------------------------- damage / death
@@ -684,7 +585,6 @@ namespace TawanOS.CardEngine
                 if (ProtectBlocks(target, source))
                 {
                     Debug.Log($"[Ability] {target.cardNameThai}'s เกราะคุ้มภัย blocks {amount} damage");
-                    Reflect(target, source, incoming, sourceIsPlayer);
                     return 0;
                 }
 
@@ -703,19 +603,7 @@ namespace TawanOS.CardEngine
 
             if (target.IsDead) HandleDeath(target, source, sourceIsPlayer);
 
-            Reflect(target, source, incoming, sourceIsPlayer);
             return amount;
-        }
-
-        // หุ่นพยนต์: the hit that came in goes back on the attacker in full, also when เกราะคุ้มภัย or armor stopped it
-        // (no source, so two reflectors cannot loop)
-        private void Reflect(CardInstance target, CardInstance source, int incoming, bool sourceIsPlayer)
-        {
-            if (incoming > 0 && source != null && source != target && (source.cardType == CardType.Familiar || source.maxKhwan > 0)
-                && HasKeyword(target, AbilityEffect.ReflectDamage))
-            {
-                DamageCard(source, incoming, ignoreArmor: true, source: null, sourceIsPlayer: !sourceIsPlayer);
-            }
         }
 
         private void HandleDeath(CardInstance dead, CardInstance killer, bool killerIsPlayer)
@@ -782,52 +670,13 @@ namespace TawanOS.CardEngine
             return card != null && BoardOf(onPlayerSide).Contains(card) ? card.boardSlot : -1;
         }
 
-        // faceHits: how many times the strike also lands on the opposing player's Khwan. A multi-striker (ควายธนู)
-        // covers the three columns in front of it: a card there is hit, an empty column (on the board) sends that hit
-        // to the opposing Khwan. A taunt elsewhere pulls the strike onto itself and the cards beside it instead.
+        // The cards a strike lands on: its target, or none when it goes to the opposing player's Khwan.
+        // faceHits stays 0 now that no card hits several columns (sheet 7).
         private List<CardInstance> CollectStrikeTargets(CardInstance attacker, CardInstance primary, bool fromPlayer, out int faceHits)
         {
             faceHits = 0;
             var targets = new List<CardInstance>();
-            int hits = Mathf.Max(1, KeywordValue(attacker, AbilityEffect.MultiStrike));
-            var defenders = BoardOf(!fromPlayer);
-
-            if (hits > 1 && TryFindCard(attacker, out _, out int ownCol)
-                && (primary == null || (defenders.Contains(primary) && primary.boardSlot == ownCol)))
-            {
-                for (int d = -1; d <= 1 && targets.Count + faceHits < hits; d++)
-                {
-                    int c = ownCol + d;
-                    if (!IsFamiliarSlot(c)) continue;
-                    var ahead = CardAt(defenders, c);
-                    if (IsStrikeable(ahead)) targets.Add(ahead);
-                    else faceHits++;
-                }
-                return targets;
-            }
-
-            if (primary != null)
-            {
-                targets.Add(primary);
-                if (hits > 1)
-                {
-                    int idx = defenders.Contains(primary) ? primary.boardSlot : -1;
-                    for (int d = -1; d <= 1; d += 2)
-                    {
-                        var beside = idx >= 0 ? CardAt(defenders, idx + d) : null;
-                        if (IsStrikeable(beside) && targets.Count < hits) targets.Add(beside);
-                    }
-                }
-            }
-            else if (hits > 1 && TryFindCard(attacker, out _, out int col))
-            {
-                // Nothing straight ahead: sweep the columns in front (left, centre, right)
-                for (int d = -1; d <= 1 && targets.Count < hits; d++)
-                {
-                    var ahead = CardAt(defenders, col + d);
-                    if (IsStrikeable(ahead)) targets.Add(ahead);
-                }
-            }
+            if (primary != null) targets.Add(primary);
             return targets;
         }
 
@@ -848,165 +697,10 @@ namespace TawanOS.CardEngine
             else CombatManager.Instance?.EnemyCards.AddToHand(card);
         }
 
-        private CardDataSO PickRandomCommonFamiliar()
-        {
-            var pool = new List<CardDataSO>();
-            if (catalog != null)
-            {
-                foreach (var c in catalog.cards)
-                {
-                    if (c != null && !c.enemyOnly && c.cardType == CardType.Familiar && c.meritCost <= CommonFamiliarMaxCost) pool.Add(c);
-                }
-            }
-            if (pool.Count == 0) return null;
-            return pool[Random.Range(0, pool.Count)];
-        }
-
-        // คาถาเรียกผี draws from the black-magic familiars (upgraded versions excluded)
-        private List<CardDataSO> SummonPool()
-        {
-            var pool = new List<CardDataSO>();
-            if (catalog == null) return pool;
-            foreach (var c in catalog.BaseCards())
-            {
-                if (c.cardType == CardType.Familiar && c.magicSchool == MagicSchool.BlackMagic) pool.Add(c);
-            }
-            return pool;
-        }
-
-        // คาถาเรียกผี: a random black-magic familiar appears in a free column of the caster's side.
-        // It cannot strike this round. Its own on-play abilities do not fire (it was not played).
-        private void SummonToBoard(bool isPlayer)
-        {
-            var pool = SummonPool();
-            if (pool.Count == 0) return;
-
-            var card = new CardInstance(pool[Random.Range(0, pool.Count)]) { summonedThisRound = true };
-            bool placed = isPlayer ? PlaceBoardCard(card) : PlaceEnemyBoardCard(card);
-            if (!placed) return;
-
-            Debug.Log($"[Ability] {card.cardNameThai} is summoned onto the {(isPlayer ? "player" : "enemy")} board (slot {card.boardSlot})");
-            OnCardSummoned?.Invoke(card, isPlayer);
-        }
-
-        private bool HasGraveyardCards(bool isPlayer)
-        {
-            if (isPlayer) return CardManager.Instance != null && CardManager.Instance.DiscardPile.Count > 0;
-            return CombatManager.Instance != null && CombatManager.Instance.EnemyCards.DiscardCount > 0;
-        }
-
-        private void ReturnFromGraveyard(bool isPlayer)
-        {
-            if (isPlayer) CardManager.Instance?.ReturnRandomFromDiscard();
-            else CombatManager.Instance?.EnemyCards.ReturnRandomFromDiscard();
-        }
-
         private void SendToGraveyard(CardInstance card, bool isPlayer)
         {
             if (isPlayer) CardManager.Instance?.SendToGraveyard(card);
             else CombatManager.Instance?.EnemyCards.SendToGraveyard(card);
-        }
-
-        // ด้ายแดงผูกจิต: blows itself up together with the enemy card in the same column
-        // As an OnDeath ability (the card was just destroyed) it only takes the opposite card down with it.
-        private void TryDetonate(CardInstance source, bool ownerIsPlayer)
-        {
-            if (source == null) return;
-            if (!TryFindCard(source, out _, out int index)) return;
-
-            var victim = CardAt(BoardOf(!ownerIsPlayer), index);
-            if (victim == null || victim.IsDead) return;
-
-            if (ProtectBlocks(victim, source))
-            {
-                Debug.Log($"[Ability] {victim.cardNameThai}'s เกราะคุ้มภัย absorbs detonation from {source.cardNameThai}");
-            }
-            else
-            {
-                if (victim.maxKhwan > 0 || victim.cardType == CardType.Familiar)
-                {
-                    DamageCard(victim, Mathf.Max(1, victim.familiarHealth), ignoreArmor: true, source, ownerIsPlayer);
-                }
-                else
-                {
-                    victim.pendingRemoval = true;
-                    HandleDeath(victim, source, ownerIsPlayer);
-                }
-            }
-
-            if (!source.IsDead)
-            {
-                source.pendingRemoval = true;
-                HandleDeath(source, victim, !ownerIsPlayer);
-            }
-        }
-
-        // ผ้ายันต์กลับด้าน: our card with อัปมงคล -> each becomes a random สิริมงคล; otherwise an enemy card's
-        // สิริมงคล -> each becomes a random อัปมงคล
-        private CardInstance PickFlipTarget(bool ownerIsPlayer, out bool toBlessing)
-        {
-            CardInstance ally = null;
-            int allyDebuffs = 0;
-            foreach (var c in BoardOf(ownerIsPlayer))
-            {
-                int n = c.IsDead ? 0 : CountDebuffs(c);
-                if (n > allyDebuffs)
-                {
-                    allyDebuffs = n;
-                    ally = c;
-                }
-            }
-            if (ally != null)
-            {
-                toBlessing = true;
-                return ally;
-            }
-
-            toBlessing = false;
-            CardInstance enemy = null;
-            int enemyBlessings = 0;
-            foreach (var c in BoardOf(!ownerIsPlayer))
-            {
-                int n = c.IsDead ? 0 : CountBlessings(c);
-                if (n > enemyBlessings)
-                {
-                    enemyBlessings = n;
-                    enemy = c;
-                }
-            }
-            return enemy;
-        }
-
-        // Each flip is remembered so it can be turned back when the amulet leaves the board (RefreshAuras)
-        // `chosen`: the card the player picked; one that has nothing to flip falls back to the game's pick
-        private void FlipOmens(CardInstance source, bool ownerIsPlayer, CardInstance chosen)
-        {
-            CardInstance target;
-            bool toBlessing;
-            if (chosen != null && !chosen.IsDead && BoardOf(ownerIsPlayer).Contains(chosen) && CountDebuffs(chosen) > 0)
-            {
-                target = chosen;
-                toBlessing = true;
-            }
-            else if (chosen != null && !chosen.IsDead && BoardOf(!ownerIsPlayer).Contains(chosen) && CountBlessings(chosen) > 0)
-            {
-                target = chosen;
-                toBlessing = false;
-            }
-            else target = PickFlipTarget(ownerIsPlayer, out toBlessing);
-            if (target == null) return;
-
-            foreach (var s in target.statuses)
-            {
-                var original = s.type;
-                if (s.fromAura) continue;
-                if (toBlessing && CardStatus.IsDebuff(s.type)) s.type = CardStatus.RandomBlessing();
-                else if (!toBlessing && CardStatus.IsBlessing(s.type)) s.type = CardStatus.RandomDebuff();
-                else continue;
-
-                if (source != null) activeFlips.Add(new StatusFlip { source = source, target = target, status = s, original = original });
-            }
-            NotifyChanged(target);
         }
     }
 }

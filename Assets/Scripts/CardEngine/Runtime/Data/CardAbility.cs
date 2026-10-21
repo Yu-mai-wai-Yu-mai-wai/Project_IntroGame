@@ -36,39 +36,40 @@ namespace TawanOS.CardEngine
     public enum AbilityEffect
     {
         // --- Card effects (use the ability's target) ---
+        // "(ไม่ใช้แล้ว)": no card uses it since sheet 7 and the game ignores it; kept so saved assets keep their numbers
         [InspectorName("เพิ่มขวัญ (ขวัญสูงสุด)")] BuffKhwan,              // เพิ่มขวัญสูงสุดและขวัญปัจจุบัน +value
         [InspectorName("ฟื้นฟูขวัญ")] HealKhwan,              // ฟื้นฟูขวัญ +value (ไม่เกินขวัญสูงสุด)
-        [InspectorName("ให้เกราะ")] GrantArmor,             // เกราะ +value (ดูดซับดาเมจก่อนขวัญ)
+        [InspectorName("(ไม่ใช้แล้ว) ให้เกราะ")] GrantArmor,             // เกราะ +value (ดูดซับดาเมจก่อนขวัญ)
         [InspectorName("เพิ่ม/ลด สะเทือนขวัญ")] BuffAttack,             // สะเทือนขวัญถาวร +value (ติดลบ = ลด)
         [InspectorName("ทำดาเมจ")] DamageCard,             // ทำดาเมจ value (ignoreArmor = ไม่สนเกราะ)
-        [InspectorName("ทำลายการ์ดที่ขวัญไม่เกิน ค่า")] DestroyBelowKhwan,      // ทำลายการ์ดที่ขวัญไม่เกิน value (ไม่สนเกราะ)
+        [InspectorName("(ไม่ใช้แล้ว) ทำลายการ์ดที่ขวัญไม่เกิน ค่า")] DestroyBelowKhwan,      // ทำลายการ์ดที่ขวัญไม่เกิน value (ไม่สนเกราะ)
         [InspectorName("มอบสถานะ")] ApplyStatus,            // มอบสถานะ status จำนวน value หน่วย นาน duration เทิร์น
-        [InspectorName("ล้างอัปมงคลล่าสุด")] CleanseLatest,          // ล้างสถานะอัปมงคลล่าสุด 1 หน่วย
+        [InspectorName("(ไม่ใช้แล้ว) ล้างอัปมงคลล่าสุด")] CleanseLatest,          // ล้างสถานะอัปมงคลล่าสุด 1 หน่วย
         [InspectorName("ล้างอัปมงคลทั้งหมด")] CleanseAll,             // ล้างสถานะอัปมงคลทั้งหมด
 
         // --- Side / hand effects (target ignored) ---
-        [InspectorName("กลับอัปมงคล/สิริมงคล")] FlipOmens,              // กลับอัปมงคลเป็นสิริมงคล (ฝั่งเรา) หรือสิริมงคลเป็นอัปมงคล (ฝั่งตรงข้าม)
-        [InspectorName("ชำระล้าง (กันอัปมงคล)")] Purify,                 // ชำระล้าง: กันสถานะอัปมงคลของผู้เล่น value ครั้ง
+        [InspectorName("(ไม่ใช้แล้ว) กลับอัปมงคล/สิริมงคล")] FlipOmens,              // กลับอัปมงคลเป็นสิริมงคล (ฝั่งเรา) หรือสิริมงคลเป็นอัปมงคล (ฝั่งตรงข้าม)
+        [InspectorName("(ไม่ใช้แล้ว) ชำระล้าง (กันอัปมงคล)")] Purify,                 // ชำระล้าง: กันสถานะอัปมงคลของผู้เล่น value ครั้ง
         [InspectorName("จั่วการ์ด")] DrawCards,              // จั่วการ์ด value ใบ
-        [InspectorName("ได้กุศล")] GainMerit,              // ได้กุศล value (ไม่เกินค่ากุศลสูงสุด)
-        [InspectorName("สุ่มบริวารขึ้นมือ")] SummonRandomFamiliar,   // สุ่มบริวารระดับทั่วไปขึ้นมือ
-        [InspectorName("สุ่มการ์ดจากกองสุสานขึ้นมือ")] ReturnFromGraveyard,    // สุ่มการ์ดจากกองสุสานขึ้นมือ
+        [InspectorName("(ไม่ใช้แล้ว) ได้กุศล")] GainMerit,              // ได้กุศล value (ไม่เกินค่ากุศลสูงสุด)
+        [InspectorName("(ไม่ใช้แล้ว) สุ่มบริวารขึ้นมือ")] SummonRandomFamiliar,   // สุ่มบริวารระดับทั่วไปขึ้นมือ
+        [InspectorName("(ไม่ใช้แล้ว) สุ่มการ์ดจากกองสุสานขึ้นมือ")] ReturnFromGraveyard,    // สุ่มการ์ดจากกองสุสานขึ้นมือ
         [InspectorName("ได้การ์ด (Related Card) ขึ้นมือ")] GiveCardToHand,         // ได้การ์ด relatedCard ขึ้นมือ
-        [InspectorName("สายสิญจน์ (2 ใบขึ้นไป)")] ThreadFormation,        // ถ้ามีการ์ดชื่อเดียวกันบนสนามตั้งแต่ 2 ใบ: การ์ดฝั่งเรา +value ขวัญสูงสุด/สะเทือนขวัญ (ครั้งเดียวต่อใบ) และอายุขลังเหลือ duration
-        [InspectorName("ทำลายการ์ดช่องตรงข้าม")] DetonateWithOpposite,   // ระเบิดตัวเอง ทำลายการ์ดตรงข้ามในช่องเดียวกัน
+        [InspectorName("(ไม่ใช้แล้ว) สายสิญจน์ (2 ใบขึ้นไป)")] ThreadFormation,        // ถ้ามีการ์ดชื่อเดียวกันบนสนามตั้งแต่ 2 ใบ: การ์ดฝั่งเรา +value ขวัญสูงสุด/สะเทือนขวัญ (ครั้งเดียวต่อใบ) และอายุขลังเหลือ duration
+        [InspectorName("(ไม่ใช้แล้ว) ทำลายการ์ดช่องตรงข้าม")] DetonateWithOpposite,   // ระเบิดตัวเอง ทำลายการ์ดตรงข้ามในช่องเดียวกัน
 
         // --- Passive keywords (trigger = Passive) ---
         [InspectorName("คุ้มกัน")] Taunt,                 // คุ้มกัน (เดิม ยั่วยุ): ศัตรูต้องโจมตีใบนี้ก่อน
         [InspectorName("บิน")] Overhead,                  // บิน (เดิม ตีข้ามหัว): โจมตีข้ามการ์ดตรงหน้าไปที่ผู้เล่นโดยตรง
         [InspectorName("ดักบิน")] OverheadMagnet,          // ดักบิน: รับการโจมตีของบริวารบินแทนผู้เล่น
-        [InspectorName("ตีหลายใบพร้อมกัน")] MultiStrike,            // โจมตีการ์ดด้านหน้าพร้อมกัน value ใบ
+        [InspectorName("(ไม่ใช้แล้ว) ตีหลายใบพร้อมกัน")] MultiStrike,            // โจมตีการ์ดด้านหน้าพร้อมกัน value ใบ
         [InspectorName("การ์ดข้างๆ ได้สะเทือนขวัญ")] AdjacentAttackAura,     // การ์ดที่อยู่ติดกันได้สะเทือนขวัญ +value
 
         // --- Added later: kept at the end so saved card assets keep their effect numbers ---
-        [InspectorName("เพิ่มมลทินสูงสุด")] RaiseCorruptionCap,     // เพิ่มมลทินสูงสุดของเจ้าของ +value (ตลอดการต่อสู้)
-        [InspectorName("สะท้อนดาเมจ")] ReflectDamage,          // Passive: สะท้อนดาเมจที่ตีเข้ามาใส่ผู้โจมตีเท่ากัน
-        [InspectorName("เพิ่มอัตราคริ (ค่า x 0.1%)")] CritChanceBonus,        // Passive: บริวารฝั่งเราได้อัตราคริเพิ่ม value หน่วยละ 0.1% (25 = 2.5%)
-        [InspectorName("สุ่มบริวารมนต์ดำลงสนาม")] SummonToBoard,          // สร้างบริวารมนต์ดำแบบสุ่มบนช่องว่างของฝั่งเรา (ตีไม่ได้ในรอบนี้)
+        [InspectorName("(ไม่ใช้แล้ว) เพิ่มมลทินสูงสุด")] RaiseCorruptionCap,     // เพิ่มมลทินสูงสุดของเจ้าของ +value (ตลอดการต่อสู้)
+        [InspectorName("(ไม่ใช้แล้ว) สะท้อนดาเมจ")] ReflectDamage,          // Passive: สะท้อนดาเมจที่ตีเข้ามาใส่ผู้โจมตีเท่ากัน
+        [InspectorName("(ไม่ใช้แล้ว) เพิ่มอัตราคริ (ค่า x 0.1%)")] CritChanceBonus,        // Passive: บริวารฝั่งเราได้อัตราคริเพิ่ม value หน่วยละ 0.1% (25 = 2.5%)
+        [InspectorName("(ไม่ใช้แล้ว) สุ่มบริวารมนต์ดำลงสนาม")] SummonToBoard,          // สร้างบริวารมนต์ดำแบบสุ่มบนช่องว่างของฝั่งเรา (ตีไม่ได้ในรอบนี้)
 
         // --- Sheet 7 (Narathorn, 21 Oct 2026). EffectResolver.Sheet7.cs. "ฮีล" = the owner's Khwan ---
         [InspectorName("ฮีล (ขวัญผู้เล่น)")] HealPlayer,             // ฮีลขวัญเจ้าของ value (ไม่เกินขวัญสูงสุด)

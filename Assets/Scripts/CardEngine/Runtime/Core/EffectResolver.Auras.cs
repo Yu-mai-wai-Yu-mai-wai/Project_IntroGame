@@ -14,32 +14,6 @@ namespace TawanOS.CardEngine
     {
         private bool refreshingAuras;
 
-        // ผ้ายันต์กลับด้าน: statuses it flipped, turned back once it is no longer on the board
-        private class StatusFlip
-        {
-            public CardInstance source;
-            public CardInstance target;
-            public CardStatus status;
-            public CardStatusType original;
-        }
-        private readonly List<StatusFlip> activeFlips = new List<StatusFlip>();
-
-        private void RevertEndedFlips()
-        {
-            for (int i = activeFlips.Count - 1; i >= 0; i--)
-            {
-                var f = activeFlips[i];
-                if (IsInPlay(f.source)) continue;
-
-                activeFlips.RemoveAt(i);
-                if (f.target == null || f.target.IsDead || !f.target.statuses.Contains(f.status)) continue;
-
-                f.status.type = f.original;
-                Debug.Log($"[Aura] {f.source.cardNameThai} left: {f.target.cardNameThai}'s {f.status.type} is back");
-                NotifyChanged(f.target);
-            }
-        }
-
         private static bool IsInPlay(CardInstance card)
         {
             return card != null && !card.IsDead && TryFindCard(card, out _, out _);
@@ -86,18 +60,14 @@ namespace TawanOS.CardEngine
             var combat = CombatManager.Instance;
             refreshingAuras = true;
 
-            RevertEndedFlips();
-
             var khwan = new Dictionary<CardInstance, int>();
             var attack = new Dictionary<CardInstance, int>();
             var statuses = new Dictionary<CardInstance, Dictionary<CardStatusType, int>>();
-            int playerCap = 0, enemyCap = 0;
 
             for (int side = 0; side < 2; side++)
             {
                 bool isPlayer = side == 0;
                 var own = BoardOf(isPlayer);
-                var formations = new HashSet<string>();
 
                 foreach (var source in own.ToArray())
                 {
@@ -129,39 +99,6 @@ namespace TawanOS.CardEngine
                                     onCard[a.status] = n + Mathf.Max(1, a.value);
                                 }
                                 break;
-
-                            case AbilityEffect.RaiseCorruptionCap:
-                                if (isPlayer) playerCap += a.value;
-                                else enemyCap += a.value;
-                                break;
-
-                            case AbilityEffect.AttackPerCorruption:
-                            case AbilityEffect.AttackIfSturdy:
-                            case AbilityEffect.AttackPerAlly:
-                                Sheet7Auras(isPlayer, source, a, attack);
-                                break;
-
-                            case AbilityEffect.ThreadFormation:
-                                // Counted once per card name, however many copies are in play
-                                if (formations.Contains(source.cardId)) break;
-                                var copies = own.FindAll(c => c != null && !c.IsDead && c.cardId == source.cardId);
-                                if (copies.Count < 2) break;
-                                formations.Add(source.cardId);
-
-                                foreach (var c in own)
-                                {
-                                    if (c == null || c.IsDead) continue;
-                                    Add(khwan, c, a.value);
-                                    if (c.cardType == CardType.Familiar || c.cardType == CardType.Amulet) Add(attack, c, a.value);
-                                }
-                                // The copies' lifespan is set once, when they join the formation
-                                foreach (var thread in copies)
-                                {
-                                    if (thread.formationBuffed || a.duration <= 0) continue;
-                                    thread.currentDurability = a.duration;
-                                    thread.formationBuffed = true;
-                                }
-                                break;
                         }
                     }
                 }
@@ -180,9 +117,6 @@ namespace TawanOS.CardEngine
                     ApplyAura(card, k, atk, isPlayer);
                 }
             }
-
-            SetAuraCorruptionCap(playerCap, forPlayer: true);
-            SetAuraCorruptionCap(enemyCap, forPlayer: false);
 
             refreshingAuras = false;
         }
@@ -248,18 +182,6 @@ namespace TawanOS.CardEngine
             }
 
             if (changed) NotifyChanged(card);
-        }
-
-        private void SetAuraCorruptionCap(int total, bool forPlayer)
-        {
-            var combat = CombatManager.Instance;
-            var s = combat.State;
-            int applied = forPlayer ? s.playerAuraCorruptionCap : s.enemyAuraCorruptionCap;
-            if (total == applied) return;
-
-            combat.RaiseCorruptionThreshold(total - applied, forPlayer);
-            if (forPlayer) s.playerAuraCorruptionCap = total;
-            else s.enemyAuraCorruptionCap = total;
         }
     }
 }
