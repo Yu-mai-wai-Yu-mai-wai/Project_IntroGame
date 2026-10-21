@@ -59,10 +59,14 @@ namespace TawanOS.CardEngine
             entries.Add(new KeywordEntry("ผีบังตา", "ความสามารถของการ์ดใช้ไม่ได้ (ทริกเกอร์ คำสำคัญ ออร่า) แต่ยังโจมตีได้ตามปกติ"));
             entries.Add(new KeywordEntry("เกราะคุ้มภัย", "กันความเสียหายทั้งก้อนได้ 1 ครั้งต่อ stack รวมถึงการระเบิด"));
             entries.Add(new KeywordEntry("ชำระล้าง", "เมื่อได้รับมลทิน จะป้องกันมลทินนั้น 1 หน่วยต่อ 1 stack"));
-            entries.Add(new KeywordEntry("ยั่วยุ", "[ชั่วคราว] ศัตรูต้องโจมตีการ์ดใบนี้ก่อน"));
-            entries.Add(new KeywordEntry("ตีข้ามหัว","[ชั่วคราว] โจมตีข้ามการ์ดบนกระดานเข้าใส่ผู้เล่นหรือศัตรูโดยตรง (ยกเว้นมีตัวดักจับ)"));
+            entries.Add(new KeywordEntry("คุ้มกัน", "บริวารศัตรูต้องโจมตีการ์ดใบนี้ก่อน"));
+            entries.Add(new KeywordEntry("บิน", "โจมตีข้ามบริวารตรงหน้าเข้าใส่ขวัญฝ่ายตรงข้ามโดยตรง ยกเว้นฝ่ายนั้นมีบริวารดักบิน"));
+            entries.Add(new KeywordEntry("ดักบิน", "รับการโจมตีของบริวารบินฝ่ายตรงข้ามแทนขวัญของเรา"));
+            entries.Add(new KeywordEntry("สาป", "จบรอบ บริวารที่ติดสาปเสียขวัญเท่าจำนวนสาป แล้วสาปลดลง 1 ถ้าตายทั้งที่ยังติดสาป เจ้าของเสียขวัญเท่าสาปที่เหลือ"));
+            entries.Add(new KeywordEntry("ฮีล", "ฟื้นขวัญของเจ้าของการ์ด ไม่เกินขวัญสูงสุด"));
+            entries.Add(new KeywordEntry("สังเวย", "ทำลายบริวารฝั่งเรา 1 ตัวที่เลือก เพื่อรับผลของการ์ด"));
             entries.Add(new KeywordEntry("อัปมงคล", "[ชั่วคราว] สถานะทางลบของการ์ด (ผวา, ผีบังตา)"));
-            entries.Add(new KeywordEntry("สิริมงคล", "[ชั่วคราว] สถานะทางบวกของการ์ด (เกราะคุ้มภัย, ยั่วยุ)"));
+            entries.Add(new KeywordEntry("สิริมงคล", "[ชั่วคราว] สถานะทางบวกของการ์ด (เกราะคุ้มภัย, คุ้มกัน)"));
             entries.Add(new KeywordEntry("กุศล", "[ชั่วคราว] ทรัพยากรสำหรับใช้ร่ายการ์ดสายขาว"));
             entries.Add(new KeywordEntry("มลทิน", "[ชั่วคราว] ค่าสะสมจากการใช้การ์ดสายดำ หากสะสมจนเต็มเพดานจะเกิดคำสาปย้อน"));
             entries.Add(new KeywordEntry("คำสาปย้อน", "[ชั่วคราว] เมื่อมลทินถึงขีดจำกัด จะสูญเสียขวัญ 5 หน่วยทันที (ไม่ทะลุต่ำกว่า 1 เว้นแต่เหลือ 1 อยู่แล้ว)"));
@@ -92,15 +96,19 @@ namespace TawanOS.CardEngine
         {
             "เกราะคุ้มภัย",
             "คำสาปย้อน",
-            "ตีข้ามหัว",
             "สิริมงคล",
             "ชำระล้าง",
             "ผีบังตา",
             "อัปมงคล",
-            "ยั่วยุ",
+            "คุ้มกัน",
+            "ดักบิน",
+            "สังเวย",
             "กุศล",
             "มลทิน",
             "ผวา",
+            "สาป",
+            "บิน",
+            "ฮีล",
         };
 
         private static Regex wrapRegex;
@@ -160,14 +168,16 @@ namespace TawanOS.CardEngine
                             CardStatusType.Phawa => "ผวา",
                             CardStatusType.Blinded => "ผีบังตา",
                             CardStatusType.Protect => "เกราะคุ้มภัย",
-                            CardStatusType.Taunt => "ยั่วยุ",
+                            CardStatusType.Taunt => "คุ้มกัน",
+                            CardStatusType.DoneKhong => "สาป",
                             _ => null
                         };
                         if (statusName != null && !found.Contains(statusName))
                             found.Add(statusName);
                     }
-                    if (a.effect == AbilityEffect.Taunt && !found.Contains("ยั่วยุ")) found.Add("ยั่วยุ");
-                    if (a.effect == AbilityEffect.Overhead && !found.Contains("ตีข้ามหัว")) found.Add("ตีข้ามหัว");
+                    if (a.effect == AbilityEffect.Taunt && !found.Contains("คุ้มกัน")) found.Add("คุ้มกัน");
+                    if (a.effect == AbilityEffect.Overhead && !found.Contains("บิน")) found.Add("บิน");
+                    if (a.effect == AbilityEffect.OverheadMagnet && !found.Contains("ดักบิน")) found.Add("ดักบิน");
                     if (a.effect == AbilityEffect.CleanseAll && !found.Contains("ชำระล้าง")) found.Add("ชำระล้าง");
                     if (a.effect == AbilityEffect.FlipOmens)
                     {

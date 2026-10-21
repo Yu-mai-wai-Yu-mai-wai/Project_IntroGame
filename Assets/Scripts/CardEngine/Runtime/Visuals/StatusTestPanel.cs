@@ -158,7 +158,7 @@ namespace TawanOS.CardEngine
             switch (type)
             {
                 case CardStatusType.Protect: return "เกราะ";
-                case CardStatusType.Taunt: return "ยั่วยุ";
+                case CardStatusType.Taunt: return "คุ้มกัน";
                 case CardStatusType.Blinded: return "บังตา";
                 case CardStatusType.Phawa: return "ผวา";
                 default: return type.ToString();

@@ -38,8 +38,8 @@ namespace TawanOS.Tests
 
             string[] requiredTerms =
             {
-                "ผวา", "ผีบังตา", "เกราะคุ้มภัย", "ชำระล้าง", "ยั่วยุ",
-                "ตีข้ามหัว", "อัปมงคล", "สิริมงคล", "กุศล", "มลทิน", "คำสาปย้อน"
+                "ผวา", "ผีบังตา", "เกราะคุ้มภัย", "ชำระล้าง", "คุ้มกัน",
+                "บิน", "ดักบิน", "สาป", "อัปมงคล", "สิริมงคล", "กุศล", "มลทิน", "คำสาปย้อน"
             };
 
             foreach (var term in requiredTerms)
@@ -67,17 +67,17 @@ namespace TawanOS.Tests
                 cardType = CardType.Familiar,
                 magicSchool = MagicSchool.WhiteMagic,
                 armor = 2,
-                descriptionFormat = "มอบ ยั่วยุ และ ชำระล้าง 1 ครั้ง"
+                descriptionFormat = "มอบ คุ้มกัน และ ชำระล้าง 1 ครั้ง"
             };
             var foundKeywords = KeywordGlossarySO.GetKeywordsOnCard(card);
             Check("GetKeywordsOnCard finds 'เกราะคุ้มภัย' from armor", foundKeywords.Contains("เกราะคุ้มภัย"));
-            Check("GetKeywordsOnCard finds 'ยั่วยุ' from description", foundKeywords.Contains("ยั่วยุ"));
+            Check("GetKeywordsOnCard finds 'คุ้มกัน' from description", foundKeywords.Contains("คุ้มกัน"));
             Check("GetKeywordsOnCard finds 'ชำระล้าง' from description", foundKeywords.Contains("ชำระล้าง"));
 
             // Test InfoBody includes คำสำคัญ block
             string body = CardDetailPanelUI.InfoBody(card, Color.white, "888888", "CCCCCC", "00FF00", "FF0000");
             Check("CardDetailPanelUI.InfoBody includes 'คำสำคัญ' header", body.Contains("คำสำคัญ"));
-            Check("CardDetailPanelUI.InfoBody lists keyword and definition", body.Contains("ยั่วยุ") && body.Contains("ชำระล้าง"));
+            Check("CardDetailPanelUI.InfoBody lists keyword and definition", body.Contains("คุ้มกัน") && body.Contains("ชำระล้าง"));
 
             // Test CardBookPanel spread structure
             var bookGo = new GameObject("TestBookPanel");

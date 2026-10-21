@@ -79,7 +79,9 @@ namespace TawanOS.CardEngine
                 case CardStatusType.Phawa: return "ผวา";
                 case CardStatusType.Blinded: return "ผีบังตา";
                 case CardStatusType.Protect: return "เกราะคุ้มภัย";
-                case CardStatusType.Taunt: return "ยั่วยุ";
+                case CardStatusType.Taunt: return "คุ้มกัน";
+                case CardStatusType.DoneKhong: return "สาป";
+                case CardStatusType.PhiAm: return "ผีอำ";
                 default: return type.ToString();
             }
         }
