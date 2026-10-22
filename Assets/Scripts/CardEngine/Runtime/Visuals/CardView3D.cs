@@ -325,14 +325,19 @@ namespace TawanOS.CardEngine
                 int attack = EffectResolver.Instance != null ? EffectResolver.Instance.EffectiveAttack(CardData) : CardData.familiarDamage;
                 bool amuletStrikes = CardData.cardType == CardType.Amulet && attack > 0;
                 attackLabel.gameObject.SetActive(!isSpell && (familiar || amuletStrikes) && faceVisible);
-                attackLabel.text = attack.ToString();
-                attackLabel.color = attack > CardData.familiarDamage ? attackRaisedColor
-                    : attack < CardData.familiarDamage ? attackLoweredColor : faceTextColor;
+                // Grown past the printed card (เปรต, ผีปอบ, an aura...): the gain is shown small beside it (Game Designer, 22 Oct)
+                int printedAttack = CardData.source != null ? CardData.source.familiarDamage : CardData.familiarDamage;
+                attackLabel.text = attack > printedAttack ? $"{attack}<size=55%>+{attack - printedAttack}</size>" : attack.ToString();
+                attackLabel.color = attack > printedAttack ? attackRaisedColor
+                    : attack < printedAttack ? attackLoweredColor : faceTextColor;
             }
             if (khwanLabel != null)
             {
                 khwanLabel.gameObject.SetActive(hasKhwan && faceVisible);
-                khwanLabel.text = CardData.familiarHealth.ToString();
+                int printedKhwan = CardData.source != null ? CardData.source.familiarHealth : CardData.maxKhwan;
+                khwanLabel.text = CardData.maxKhwan > printedKhwan && printedKhwan > 0
+                    ? $"{CardData.familiarHealth}<size=55%>+{CardData.maxKhwan - printedKhwan}</size>"
+                    : CardData.familiarHealth.ToString();
                 khwanLabel.color = CardData.familiarHealth < CardData.maxKhwan ? khwanDamagedColor : faceTextColor;
             }
             RefreshStatusTags();
