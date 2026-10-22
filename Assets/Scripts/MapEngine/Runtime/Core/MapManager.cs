@@ -402,6 +402,14 @@ namespace TawanOS.MapEngine
         private Dictionary<string, Transform> pedestalCache;
         private bool renderingRandomLinks;
 
+        // A random-link node sits a little off its spot (offset x across the rows = world Z, y along the floors = world
+        // X, which runs from the start towards the boss as it goes down); fixed maps keep their spots
+        private Vector3 TableJitter(Vector3 pos, Vector2 offset)
+        {
+            if (!renderingRandomLinks) return pos;
+            return new Vector3(pos.x - offset.y, pos.y, pos.z + offset.x);
+        }
+
         private Vector3 CalculateWorldPosition(NodeBlueprint nodeBlueprint, float startX, MapConfigSO configData)
         {
             Vector2Int gridPos = nodeBlueprint.gridPosition;
@@ -439,14 +447,14 @@ namespace TawanOS.MapEngine
                         {
                             // Hide the baked FBX icon disc; the procedural MapNodeView sprite is the only node visual.
                             if (pedestal.TryGetComponent<Renderer>(out var pedestalRenderer)) pedestalRenderer.enabled = false;
-                            return new Vector3(TableNodeX(pedestal.position.x, gridPos, configData), pedestal.position.y + 0.025f, pedestal.position.z);
+                            return TableJitter(new Vector3(TableNodeX(pedestal.position.x, gridPos, configData), pedestal.position.y + 0.025f, pedestal.position.z), offset);
                         }
                     }
 
                     if (TablePedestalWorldPositions.TryGetValue(nodeName, out Vector3 fallbackPos))
                     {
                         fallbackPos.x = TableNodeX(fallbackPos.x, gridPos, configData);
-                        return fallbackPos;
+                        return TableJitter(fallbackPos, offset);
                     }
                 }
 

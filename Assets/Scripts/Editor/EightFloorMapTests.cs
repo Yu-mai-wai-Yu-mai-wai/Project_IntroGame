@@ -13,8 +13,9 @@ namespace TawanOS.EditorTools
     /// a link goes to the next floor or skips one on its row, links never cross or run through a node, the floor
     /// before the boss is never skipped, some path passes every floor and some maps have a shorter path too.
     /// In both shapes:
-    /// Floors 1, 4, 7 (counted from 1) are fights only, the others never fights; the other five node types all
-    /// show up; every path to the boss passes a วัด (Game Designer, 15 Oct); every node has a way in and out; every node has a board position and the floors run from the start
+    /// Floors 1, 4, 7 (counted from 1) are all fights and no link skips over one, the others have no fight; floor 8 has วัด, ศาลตายาย, เมรุ
+    /// with no repeats (Game Designer, 23 Oct); the five non-fight node types all show up; every path to the boss
+    /// passes one of those rest stops; every node has a way in and out; every node has a board position and the floors run from the start
     /// end of the board to the boss end. A new run uses 8 floors.
     /// Menu: Tools/TawanOS/Tests/Eight Floor Map. Batch: -executeMethod TawanOS.EditorTools.EightFloorMapTests.Run
     /// </summary>
@@ -81,12 +82,10 @@ namespace TawanOS.EditorTools
                 {
                     var floor = graph.floors[y];
                     if (floor.Count != Widths[y]) badShape++;
-                    bool fight = CombatFloors.Contains(y);
+                    badCombat += BadFloorTypes(floor, CombatFloors.Contains(y), y == 7);
                     foreach (var node in floor)
                     {
-                        if (fight != (node.type == NodeType.MinorEnemy)) badCombat++;
-                        if (node.type == NodeType.EliteEnemy || node.type == NodeType.Boss) badCombat++;
-                        if (!fight) seen.Add(node.type);
+                        if (y < 7 && node.type != NodeType.MinorEnemy) seen.Add(node.type);
                         if (node.incomingConnections.Count == 0 || node.outgoingConnections.Count == 0) badLinks++;
                         foreach (var next in node.outgoingConnections)
                         {
@@ -105,11 +104,11 @@ namespace TawanOS.EditorTools
             }
 
             failures += Expect($"Fixed: {Seeds} maps: floors 3,2,3,1,3,3,2,2 then one boss", badShape == 0);
-            failures += Expect("Fixed: floors 1, 4, 7 are all fights and no other floor has a fight", badCombat == 0);
+            failures += Expect("Fixed: floors 1, 4, 7 are all fights, no other fights, floor 8 deals วัด, ศาลตายาย, เมรุ", badCombat == 0);
             failures += Expect("Fixed: every node has a way in and a way on to the next floor", badLinks == 0);
             failures += Expect("Fixed: every node has a place on the board", badBoard == 0);
             failures += Expect("Fixed: เมรุ, ศาลตายาย, วัด never follow their own type", consecutive == 0);
-            failures += Expect("Fixed: every path to the boss passes a วัด", noTempleBeforeBoss == 0);
+            failures += Expect("Fixed: every path to the boss passes a วัด, ศาลตายาย or เมรุ", noTempleBeforeBoss == 0);
             foreach (var type in new[] { NodeType.Event, NodeType.Treasure, NodeType.Store, NodeType.RestSite, NodeType.Temple })
                 failures += Expect($"Fixed: {type} shows up on the random floors", seen.Contains(type));
             return failures;
@@ -134,23 +133,20 @@ namespace TawanOS.EditorTools
                 for (int y = 0; y < 8; y++)
                 {
                     var floor = graph.floors[y];
-                    if (floor.Count < 1 || floor.Count > MapGraphGenerator.TableLanes || (y == 0 && floor.Count < 2)) badShape++;
+                    if (floor.Count < 1 || floor.Count > MapGraphGenerator.TableLanes || ((y == 0 || y == 7) && floor.Count < 2)) badShape++;
+                    badCombat += BadFloorTypes(floor, y % 3 == 0 && y < 7, y == 7);
                     foreach (var node in floor)
                     {
                         layout.Append(node.gridPosition).Append(node.outgoingConnections.Count);
                         if (node.gridPosition.x < 0 || node.gridPosition.x >= MapGraphGenerator.TableLanes) badShape++;
-                        bool fight = y % 3 == 0 && y < 7;
-                        if (fight != (node.type == NodeType.MinorEnemy)) badCombat++;
-                        if (y == 7 && node.type != NodeType.Temple) badCombat++;
-                        if (node.type == NodeType.EliteEnemy || node.type == NodeType.Boss) badCombat++;
-                        if (!fight && y < 7) seen.Add(node.type);
+                        if (y < 7 && node.type != NodeType.MinorEnemy) seen.Add(node.type);
                         if (node.incomingConnections.Count == 0 || node.outgoingConnections.Count == 0) badLinks++;
                         foreach (var next in node.outgoingConnections)
                         {
                             var child = graph.GetNode(next);
                             int dx = next.x - node.gridPosition.x, dy = next.y - y;
                             bool step = dy == 1 && Mathf.Abs(dx) <= 1 && next.y <= 7;
-                            bool skip = dy == 2 && dx == 0 && next.y <= 7;
+                            bool skip = dy == 2 && dx == 0 && next.y <= 7 && !CombatFloors.Contains(y + 1);
                             bool toBoss = y == 7 && child != null && child.type == NodeType.Boss;
                             if (child == null || !(step || skip || toBoss)) badLinks++;
                             else if (child.type == node.type && (node.type == NodeType.RestSite || node.type == NodeType.Store || node.type == NodeType.Temple)) consecutive++;
@@ -182,13 +178,13 @@ namespace TawanOS.EditorTools
             }
 
             failures += Expect($"Random: {Seeds} maps all come from the random-link generator", notRandom == 0);
-            failures += Expect("Random: 1-3 nodes on every floor (2+ on the first), one boss fed by every floor-8 node", badShape == 0);
-            failures += Expect("Random: floors 1, 4, 7 are all fights, floor 8 is all วัด, no other fights", badCombat == 0);
-            failures += Expect("Random: every link goes to the next floor (one row over at most) or skips one on its row, never past floor 8", badLinks == 0);
+            failures += Expect("Random: 1-3 nodes on every floor (2+ on floors 1 and 8), one boss fed by every floor-8 node", badShape == 0);
+            failures += Expect("Random: floors 1, 4, 7 are all fights, no other fights, floor 8 deals วัด, ศาลตายาย, เมรุ", badCombat == 0);
+            failures += Expect("Random: every link goes to the next floor (one row over at most) or skips one on its row, never over a fight floor or past floor 8", badLinks == 0);
             failures += Expect("Random: no two links cross and no link runs through a node", crossings == 0);
             failures += Expect("Random: every node has a place on the board", badBoard == 0);
             failures += Expect("Random: เมรุ, ศาลตายาย, วัด never follow their own type", consecutive == 0);
-            failures += Expect("Random: every path to the boss passes a วัด", noTempleBeforeBoss == 0);
+            failures += Expect("Random: every path to the boss passes a วัด, ศาลตายาย or เมรุ", noTempleBeforeBoss == 0);
             failures += Expect("Random: every map has a path that passes all 8 floors", noFullPath == 0);
             failures += Expect($"Random: most maps also have a shorter path ({withShortcut}/{Seeds})", withShortcut > Seeds / 2);
             failures += Expect($"Random: maps differ from seed to seed ({layouts.Count} layouts)", layouts.Count > Seeds / 2);
@@ -251,7 +247,25 @@ namespace TawanOS.EditorTools
 
         private static bool OnInside(Vector2Int p, Vector2Int a, Vector2Int b) => p != a && p != b && On(p, a, b);
 
-        // Walks from the start without stepping on a วัด; true if the boss can still be reached that way
+        private static readonly NodeType[] RestStops = { NodeType.Temple, NodeType.Store, NodeType.RestSite };
+
+        // Wrong types on one floor: a fight floor is all fights, the floor before the boss one each of วัด,
+        // ศาลตายาย, เมรุ at most, any other floor no fight; never an elite or a boss
+        private static int BadFloorTypes(List<NodeBlueprint> floor, bool fightFloor, bool preBoss)
+        {
+            int bad = 0, fights = 0;
+            var stops = new HashSet<NodeType>();
+            foreach (var node in floor)
+            {
+                if (node.type == NodeType.MinorEnemy) fights++;
+                if (node.type == NodeType.EliteEnemy || node.type == NodeType.Boss) bad++;
+                if (preBoss && (!RestStops.Contains(node.type) || !stops.Add(node.type))) bad++;
+            }
+            if (fights != (fightFloor ? floor.Count : 0)) bad++;
+            return bad;
+        }
+
+        // Walks from the start without stepping on a วัด, ศาลตายาย or เมรุ; true if the boss can still be reached that way
         private static bool CanReachBossWithoutTemple(MapGraphData graph)
         {
             if (graph.startNode == null) return true;
@@ -265,7 +279,7 @@ namespace TawanOS.EditorTools
                 foreach (var next in node.outgoingConnections)
                 {
                     var child = graph.GetNode(next);
-                    if (child == null || child.type == NodeType.Temple || !seenPos.Add(next)) continue;
+                    if (child == null || RestStops.Contains(child.type) || !seenPos.Add(next)) continue;
                     open.Push(child);
                 }
             }

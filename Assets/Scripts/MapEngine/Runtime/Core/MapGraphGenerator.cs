@@ -575,7 +575,8 @@ namespace TawanOS.MapEngine
         // Node count of each floor on the 8-floor map, floor 0 first (the boss comes after, on floor 8)
         public static readonly int[] EightFloorWidths = { 3, 2, 3, 1, 3, 3, 2, 2 };
 
-        // Floors where every node is a fight: floors 1, 4 and 7 counted from 1 (Game Designer, 11 Oct)
+        // Fight floors: floors 1, 4 and 7 counted from 1 (Game Designer, 11 Oct). Every node there is a fight, so no
+        // path gets past one without a fight (like Inscryption's battle rows, 23 Oct)
         public static readonly int[] EightFloorCombatFloors = { 0, 3, 6 };
 
         // Which nodes of the floor above each node leads to, by column (same paths as the pedestal map, plus floor 7 -> 8)
@@ -592,7 +593,7 @@ namespace TawanOS.MapEngine
 
         /// <summary>
         /// The 8-floor map (Game Designer, 11 Oct): start, 8 floors of 3,2,3,1,3,3,2,2 nodes, then the boss.
-        /// Floors 1, 4 and 7 (counted from 1) are all fights; floor 8 (just before the boss) is all วัด; every other floor rolls หมอกดำ, กองของเซ่น, ศาลตายาย,
+        /// Floors 1, 4 and 7 (counted from 1) have one fight each; floor 8 (just before the boss) deals วัด, ศาลตายาย, เมรุ; every other node rolls หมอกดำ, กองของเซ่น, ศาลตายาย,
         /// เมรุ and วัด with the same chance, with no fixed nodes. The board has pedestals for 7 floors only, so
         /// MapManager places these nodes by floor (TableFloorX) instead of on pedestals.
         /// </summary>
@@ -620,15 +621,9 @@ namespace TawanOS.MapEngine
                         Connect(graph.floors[y][x], graph.floors[y + 1][next]);
             foreach (var node in graph.floors[floorsBeforeBoss - 1]) Connect(node, boss);
 
-            // Floor by floor, so a node can look at the types of the floor before it.
-            // The last floor before the boss is all วัด, so every path heals before the boss (Game Designer, 15 Oct).
+            // Floor by floor, so a node can look at the types of the floor before it
             for (int y = 0; y < floorsBeforeBoss; y++)
-            {
-                if (Array.IndexOf(EightFloorCombatFloors, y) >= 0) continue;
-                bool templeFloor = y == floorsBeforeBoss - 1;
-                foreach (var node in graph.floors[y])
-                    node.type = templeFloor ? NodeType.Temple : RollNonCombatType(node, graph, config, random);
-            }
+                AssignFloorTypes(graph, y, Array.IndexOf(EightFloorCombatFloors, y) >= 0, y == floorsBeforeBoss - 1, config, random);
 
             foreach (var node in graph.GetAllNodes()) node.positionOffset = Vector2.zero;
             start.positionOffset = Vector2.zero;
@@ -643,8 +638,10 @@ namespace TawanOS.MapEngine
         /// The random-link map (Game Designer, 22 Oct): which nodes exist and how they link is rolled every run.
         /// A few walks go from the start to the boss; each step moves to the next floor (same row or one row over) or,
         /// now and then, skips a floor and stays on its row, so some paths pass fewer nodes than others. No two links
-        /// cross and no link runs through a node. Node types follow the fixed map's rules: floors 1, 4, 7 (counted
-        /// from 1) are fights, the last floor before the boss is all วัด, the others roll a non-fight type.
+        /// cross and no link runs through a node. Floors 1, 4, 7 (counted from 1) are all fights and no link skips over
+        /// one, so every path has three fights (Game Designer, 23 Oct); the last floor before the boss deals วัด,
+        /// ศาลตายาย, เมรุ; the others roll a non-fight type. Each node is nudged a little off its spot so the map does
+        /// not read as a grid.
         /// </summary>
         private MapGraphData GenerateRandomLinkTableMap(MapConfigSO config, int actualSeed, System.Random random)
         {
@@ -655,14 +652,12 @@ namespace TawanOS.MapEngine
 
                 int preBoss = config.totalFloors - 1;
                 for (int y = 0; y <= preBoss; y++)
-                {
-                    foreach (var node in graph.floors[y])
-                    {
-                        if (y == preBoss) node.type = NodeType.Temple;
-                        else if (y % 3 == 0) node.type = NodeType.MinorEnemy;
-                        else node.type = RollNonCombatType(node, graph, config, random, LinksToFloor(node, preBoss));
-                    }
-                }
+                    AssignFloorTypes(graph, y, IsFightFloor(y, preBoss), y == preBoss, config, random);
+
+                // x: across the rows, y: along the floors (MapManager places it on the table)
+                foreach (var node in graph.GetAllNodes())
+                    if (node.type != NodeType.Boss)
+                        node.positionOffset = new Vector2(RandomRange(random, NodeJitter.x), RandomRange(random, NodeJitter.y));
 
                 InitializeVisibilityAndStatus(graph);
                 return graph;
@@ -672,10 +667,38 @@ namespace TawanOS.MapEngine
             return GenerateEightFloorTableMap(config, actualSeed, random);
         }
 
-        private static bool LinksToFloor(NodeBlueprint node, int floor)
+        // How far a random-link node may sit off its spot, in table units: across the rows, along the floors
+        public static readonly Vector2 NodeJitter = new Vector2(0.35f, 0.6f);
+
+        private static float RandomRange(System.Random random, float range) => (float)(random.NextDouble() * 2 - 1) * range;
+
+        private static bool IsFightFloor(int y, int preBoss) => y < preBoss && Array.IndexOf(EightFloorCombatFloors, y) >= 0;
+
+        // The rest stops of the floor before the boss: วัด, ศาลตายาย, เมรุ (Game Designer, 23 Oct: not all วัด)
+        private static readonly NodeType[] PreBossTypes = { NodeType.Temple, NodeType.Store, NodeType.RestSite };
+
+        /// <summary>
+        /// Types one floor (its parents are typed already). A fight floor is all fights; the floor before the boss deals วัด, ศาลตายาย and เมรุ out without repeats; any other floor rolls a
+        /// non-fight type per node. A node leading into the floor before the boss rolls none of those three, so the stop
+        /// before the boss never follows one of its own type.
+        /// </summary>
+        private void AssignFloorTypes(MapGraphData graph, int y, bool fightFloor, bool preBossFloor, MapConfigSO config, System.Random random)
         {
-            foreach (var pos in node.outgoingConnections) if (pos.y == floor) return true;
-            return false;
+            var nodes = graph.floors[y];
+            if (preBossFloor)
+            {
+                var deal = new List<NodeType>(PreBossTypes);
+                Shuffle(deal, random);
+                for (int i = 0; i < nodes.Count; i++) nodes[i].type = deal[i % deal.Count];
+                return;
+            }
+
+            int preBoss = graph.totalFloors - 1;
+            foreach (var node in nodes)
+            {
+                bool intoPreBoss = node.outgoingConnections.Exists(pos => pos.y == preBoss);
+                node.type = fightFloor ? NodeType.MinorEnemy : RollNonCombatType(node, graph, config, random, intoPreBoss);
+            }
         }
 
         // One try at the shape; null when a walk gets stuck or the map misses a rule, and the caller rolls again
@@ -710,7 +733,8 @@ namespace TawanOS.MapEngine
                 {
                     Vector2Int here = node.gridPosition;
                     var steps = new List<Vector2Int>();
-                    if (here.y + 2 <= preBoss && random.NextDouble() < config.skipLinkChance)
+                    // A skip never jumps over a fight floor, so no path gets past a fight
+                    if (here.y + 2 <= preBoss && !IsFightFloor(here.y + 1, preBoss) && random.NextDouble() < config.skipLinkChance)
                         steps.Add(new Vector2Int(here.x, here.y + 2));
                     var sideways = new List<int> { -1, 0, 1 };
                     Shuffle(sideways, random);
@@ -728,11 +752,11 @@ namespace TawanOS.MapEngine
                 Connect(node, boss);
             }
 
-            // Every floor has a node, the run opens with a choice, at least one link skips a floor, and at least one
-            // path still passes every floor
+            // Every floor has a node, the run opens with a choice, the floor before the boss offers one too, at least one
+            // link skips a floor, and at least one path still passes every floor
             for (int y = 0; y <= preBoss; y++)
                 if (graph.floors[y].Count == 0) return null;
-            if (graph.floors[0].Count < 2) return null;
+            if (graph.floors[0].Count < 2 || graph.floors[preBoss].Count < 2) return null;
             if (!links.Exists(l => l.b.y - l.a.y == 2)) return null;
             var longest = new Dictionary<Vector2Int, int>();
             for (int y = preBoss; y >= 0; y--)
@@ -834,17 +858,17 @@ namespace TawanOS.MapEngine
             { NodeType.Event, NodeType.Treasure, NodeType.Store, NodeType.RestSite, NodeType.Temple };
 
         // Every non-fight node type with the same chance; เมรุ, ศาลตายาย and วัด never follow a node of their own type
-        // blockTemple: the node links to the all-วัด floor before the boss (a random-link map can skip into it)
-        private NodeType RollNonCombatType(NodeBlueprint node, MapGraphData graph, MapConfigSO config, System.Random random, bool blockTemple = false)
+        // noRestStops: no วัด, ศาลตายาย or เมรุ (the node leads into the floor before the boss, which has them)
+        private NodeType RollNonCombatType(NodeBlueprint node, MapGraphData graph, MapConfigSO config, System.Random random, bool noRestStops = false)
         {
             bool checkRest = config == null || config.preventConsecutiveRestSites;
             bool checkShop = config == null || config.preventConsecutiveShops;
             var blocked = new HashSet<NodeType>();
-            if (blockTemple) blocked.Add(NodeType.Temple);
+            if (noRestStops) blocked.UnionWith(PreBossTypes);
             foreach (var pos in node.incomingConnections)
             {
                 var parent = graph.GetNode(pos);
-                if (parent == null) continue;
+                if (parent == null || pos.y < 0) continue; // the start node is typed เมรุ but is no stop
                 if (checkRest && (parent.type == NodeType.RestSite || parent.type == NodeType.Temple)) blocked.Add(parent.type);
                 if (checkShop && parent.type == NodeType.Store) blocked.Add(parent.type);
             }
