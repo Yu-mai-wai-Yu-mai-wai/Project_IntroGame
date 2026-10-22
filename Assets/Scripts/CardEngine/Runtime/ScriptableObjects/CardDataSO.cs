@@ -22,6 +22,8 @@ namespace TawanOS.CardEngine
         public TargetType targetType = TargetType.SingleEnemy;
         [Tooltip("ข้อความประเภทบนการ์ด เช่น 'บริวาร • มนต์ดำ' (เว้นว่าง = สร้างจากประเภทและสายอัตโนมัติ)")]
         public string customTypeText = "";
+        [Tooltip("The card's school in sheet 7 (คุณไสย, สุสาน, เรือนผี, บุญ, กลาง): rewards offer cards from different schools")]
+        public string school = "";
         [Tooltip("เฉพาะบอส: ศัตรูที่ไม่ใช่บอสไม่ใช้การ์ดนี้ และผู้เล่นไม่ได้การ์ดนี้จากรางวัล ของเซ่น หมอกดำ หรือศาลตายาย (ยังสุ่มได้จากกองจั่ว)")]
         public bool bossOnly;
 

@@ -91,21 +91,25 @@ namespace TawanOS.GameFlow
             RunState.Current.SetResume(ResumeKind.Reward);
         }
 
-        // Each card's type is rolled by the config's odds (familiars most likely), then the card
+        // Each card's type is rolled by the config's odds (familiars most likely), then the card; the cards are from
+        // different schools (sheet 7, Narathorn)
         private void RollChoices(int count)
         {
             choices.Clear();
             var pool = config.GetPool();
             if (config.cardTypeOdds != null)
             {
-                choices.AddRange(config.cardTypeOdds.Pick(pool, count));
+                choices.AddRange(config.cardTypeOdds.Pick(pool, count, differentSchools: true));
                 return;
             }
             while (choices.Count < count && pool.Count > 0)
             {
                 int i = UnityEngine.Random.Range(0, pool.Count);
-                choices.Add(pool[i]);
+                var card = pool[i];
+                choices.Add(card);
                 pool.RemoveAt(i);
+                if (!string.IsNullOrEmpty(card.school) && pool.Exists(c => c.school != card.school))
+                    pool.RemoveAll(c => c.school == card.school);
             }
         }
 

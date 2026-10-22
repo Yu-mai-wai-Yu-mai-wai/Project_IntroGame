@@ -61,7 +61,8 @@ namespace TawanOS.CardEngine
                 bool merit = row["cost_resource"].Trim() == "merit";
                 int hp = Int(row["hp"]), atk = Int(row["atk"]);
 
-                Write(card, c => SetStats(c, merit, cost, hp, atk, row["skill_th"]));
+                string school = row["school_th"].Trim();
+                Write(card, c => { SetStats(c, merit, cost, hp, atk, row["skill_th"]); c.school = school; });
                 updated++;
 
                 var up = card.upgradedCard != null ? card.upgradedCard : (cards.TryGetValue(id + "_up", out var u) ? u : null);
@@ -69,7 +70,7 @@ namespace TawanOS.CardEngine
                 int upCost = id == "s_wi04" ? 2 : cost;
                 int upAtk = id == "s_bf02" || id == "s_wf06" ? 2 : atk;
                 string upText = CardSheet7UpgradeText.ById.TryGetValue(id, out var full) ? full : row["upgraded_th"];
-                Write(up, c => SetStats(c, merit, upCost, hp, upAtk, upText));
+                Write(up, c => { SetStats(c, merit, upCost, hp, upAtk, upText); c.school = school; });
                 updated++;
             }
 

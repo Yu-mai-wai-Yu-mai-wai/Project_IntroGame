@@ -22,6 +22,7 @@ MonoBehaviour:
   cardType: 0
   targetType: 1
   customTypeText: "\u0E2D\u0E32\u0E04\u0E21 \u2022 \u0E21\u0E19\u0E15\u0E4C\u0E14\u0E33"
+  school: "\u0E04\u0E38\u0E13\u0E44\u0E2A\u0E22"
   bossOnly: 0
   meritCost: 0
   corruptionGain: 2

@@ -21,6 +21,7 @@ MonoBehaviour:
   cardType: 2
   targetType: 1
   customTypeText: 
+  school: 
   bossOnly: 0
   meritCost: 0
   corruptionGain: 2

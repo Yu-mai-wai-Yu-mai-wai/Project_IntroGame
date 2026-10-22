@@ -28,8 +28,12 @@ namespace TawanOS.GameFlow
             }
         }
 
-        /// <summary>Up to `count` different cards from `source`, each one's type rolled by the weights.</summary>
-        public List<CardDataSO> Pick(List<CardDataSO> source, int count)
+        /// <summary>
+        /// Up to `count` different cards from `source`, each one's type rolled by the weights. With
+        /// `differentSchools`, each card is from a school (CardDataSO.school) none of the others is from, as long as
+        /// there are schools left (sheet 7: a fight reward offers 3 schools).
+        /// </summary>
+        public List<CardDataSO> Pick(List<CardDataSO> source, int count, bool differentSchools = false)
         {
             var pool = source.FindAll(c => c != null);
             var picked = new List<CardDataSO>();
@@ -56,6 +60,11 @@ namespace TawanOS.GameFlow
                 var card = candidates[UnityEngine.Random.Range(0, candidates.Count)];
                 picked.Add(card);
                 pool.Remove(card);
+                if (differentSchools && !string.IsNullOrEmpty(card.school))
+                {
+                    var otherSchools = pool.FindAll(c => c.school != card.school);
+                    if (otherSchools.Count > 0) pool = otherSchools; // only when another school is still there
+                }
             }
             return picked;
         }
