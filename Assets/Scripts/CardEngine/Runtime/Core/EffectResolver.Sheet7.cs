@@ -117,7 +117,7 @@ namespace TawanOS.CardEngine
             if (linked != null && !linked.IsDead && TryFindCard(linked, out bool linkedIsPlayer, out _))
             {
                 linked.linkedWith = null;
-                if (linked.linkReturnsToHand && linkedIsPlayer) ReturnCardToHand(linked, linkedIsPlayer);
+                if (linked.linkReturnsToHand) ReturnCardToHand(linked, linkedIsPlayer);
                 else DamageCard(linked, linked.familiarHealth, ignoreArmor: true, source: null, sourceIsPlayer: !linkedIsPlayer);
                 // The link was ด้ายแดงผูกจิต's one use: it breaks
                 foreach (bool side in new[] { true, false })
@@ -335,14 +335,16 @@ namespace TawanOS.CardEngine
                     return true;
 
                 case AbilityEffect.DrawCheaper:
-                    // กุมารทอง+: the drawn cards cost 1 less for the rest of the fight (player only: the enemy draws blind)
+                    // กุมารทอง+: the drawn cards cost 1 less for the rest of the fight, for either side
                     for (int i = 0; i < Mathf.Max(1, a.value); i++)
                     {
-                        var hand = ownerIsPlayer ? CardManager.Instance : null;
-                        int before = hand != null ? hand.Hand.Count : 0;
+                        IReadOnlyList<CardInstance> hand = ownerIsPlayer
+                            ? CardManager.Instance?.Hand
+                            : CombatManager.Instance?.EnemyCards?.Hand;
+                        int before = hand != null ? hand.Count : 0;
                         DrawFor(ownerIsPlayer, 1);
-                        if (hand == null || hand.Hand.Count <= before) continue;
-                        var drawn = hand.Hand[hand.Hand.Count - 1];
+                        if (hand == null || hand.Count <= before) continue;
+                        var drawn = hand[hand.Count - 1];
                         drawn.meritCost = Mathf.Max(0, drawn.meritCost - 1);
                         drawn.corruptionGain = Mathf.Max(0, drawn.corruptionGain - 1);
                     }
@@ -453,8 +455,11 @@ namespace TawanOS.CardEngine
 
                 case AbilityEffect.SummonRelated:
                 {
-                    // The first one goes to the leftmost free column; the upgrade adds one on each side of it if free
-                    var first = Summon(a.relatedCard, ownerIsPlayer);
+                    // The first one goes to the column the player put the spell on (the enemy: the leftmost free one);
+                    // the upgrade adds one on each side of it if free
+                    int chosen = source != null && IsFamiliarSlot(source.boardSlot) ? source.boardSlot : -1;
+                    if (source != null) source.boardSlot = -1;
+                    var first = Summon(a.relatedCard, ownerIsPlayer, chosen);
                     if (first == null || a.value <= 1) return true;
                     int slot = first.boardSlot;
                     var own = BoardOf(ownerIsPlayer);
@@ -527,6 +532,11 @@ namespace TawanOS.CardEngine
             }
             return 0f;
         }
+
+        // คาถาเรียกผี: a spell that is put on a familiar column, which it summons into
+        public static bool PicksSlot(CardInstance card) =>
+            card != null && card.cardType == CardType.Incantation && card.abilities != null
+            && card.abilities.Exists(a => a.trigger == AbilityTrigger.OnPlay && a.effect == AbilityEffect.SummonRelated);
 
         public static bool IsSheet7Choice(AbilityEffect e) =>
             e == AbilityEffect.SacrificeForAttack || e == AbilityEffect.SacrificeForHeal || e == AbilityEffect.ReturnToHand

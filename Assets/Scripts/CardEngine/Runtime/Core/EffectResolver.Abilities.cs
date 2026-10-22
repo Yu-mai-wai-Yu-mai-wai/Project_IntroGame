@@ -290,6 +290,10 @@ namespace TawanOS.CardEngine
                 {
                     if (Sheet7Pool(a, null, casterIsPlayer).Count == 0) return false;
                 }
+                else if (a.effect == AbilityEffect.SummonRelated)
+                {
+                    if (IsBoardFull(casterIsPlayer)) return false; // nowhere to summon into
+                }
                 else if (IsChosenCardTarget(a.target))
                 {
                     if (AutoPickFor(a, casterIsPlayer) == null) return false;

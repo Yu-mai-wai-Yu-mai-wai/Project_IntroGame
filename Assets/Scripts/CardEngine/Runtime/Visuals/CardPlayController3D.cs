@@ -102,7 +102,7 @@ namespace TawanOS.CardEngine
             MoveToHeldPosition(view);
             MoveCameraToTop();
 
-            if (card.cardType == CardType.Familiar || card.cardType == CardType.Amulet)
+            if (card.cardType == CardType.Familiar || card.cardType == CardType.Amulet || EffectResolver.PicksSlot(card))
             {
                 ShowSlotMarkers();
                 Debug.Log($"[CardPlay] {card.cardNameThai}: click an empty slot (right-click / Esc to cancel)");
@@ -207,7 +207,7 @@ namespace TawanOS.CardEngine
             }
 
             var card = held.CardData;
-            bool boardCard = card.cardType == CardType.Familiar || card.cardType == CardType.Amulet;
+            bool boardCard = card.cardType == CardType.Familiar || card.cardType == CardType.Amulet || EffectResolver.PicksSlot(card);
 
             if (boardCard && CardTargeting3D.BlocksInput) return; // picking the card an amulet acts on
             if (boardCard) UpdateSlotHover();
@@ -270,7 +270,10 @@ namespace TawanOS.CardEngine
             bool played = CardManager.Instance != null && CardManager.Instance.PlayCard(view.CardData, target);
 
             Release(returnToHand: !played);
-            if (played) view.PlaceOnBoard();
+            if (!played) return;
+            if (view.CardData.cardType != CardType.Incantation) { view.PlaceOnBoard(); return; }
+            view.transform.DOKill(); // a summoning spell (คาถาเรียกผี): the spell is spent, what it calls up takes the slot
+            Destroy(view.gameObject);
         }
 
         private void PlayHeld(CardInstance target)
