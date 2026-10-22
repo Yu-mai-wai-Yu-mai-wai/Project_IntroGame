@@ -111,5 +111,6 @@ InitTestScene*.unity*
 .plastic/plastic.changes
 .plastic/plastic.wktree
 .plastic/plastic.workspaceui
+.plastic/fs_beacon
 *.private
 *.private.*
