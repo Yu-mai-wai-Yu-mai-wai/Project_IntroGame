@@ -408,7 +408,9 @@ namespace TawanOS.MapEngine
             }
             if (config != null && config.totalFloors >= 8)
             {
-                return GenerateEightFloorTableMap(config, actualSeed, random);
+                return config.randomTableLinks
+                    ? GenerateRandomLinkTableMap(config, actualSeed, random)
+                    : GenerateEightFloorTableMap(config, actualSeed, random);
             }
 
             // The 7-floor map (saves made before 11 Oct): 8 rows (0 to 7) matching the 19 pedestals on the paper board
@@ -634,6 +636,194 @@ namespace TawanOS.MapEngine
             return graph;
         }
 
+        // Rows of the board a random-link node can stand on (x of its grid position). The start and the boss use row 1.
+        public const int TableLanes = 3;
+
+        /// <summary>
+        /// The random-link map (Game Designer, 22 Oct): which nodes exist and how they link is rolled every run.
+        /// A few walks go from the start to the boss; each step moves to the next floor (same row or one row over) or,
+        /// now and then, skips a floor and stays on its row, so some paths pass fewer nodes than others. No two links
+        /// cross and no link runs through a node. Node types follow the fixed map's rules: floors 1, 4, 7 (counted
+        /// from 1) are fights, the last floor before the boss is all วัด, the others roll a non-fight type.
+        /// </summary>
+        private MapGraphData GenerateRandomLinkTableMap(MapConfigSO config, int actualSeed, System.Random random)
+        {
+            for (int attempt = 0; attempt < 50; attempt++)
+            {
+                var graph = TryBuildRandomLinks(config, actualSeed, random);
+                if (graph == null) continue;
+
+                int preBoss = config.totalFloors - 1;
+                for (int y = 0; y <= preBoss; y++)
+                {
+                    foreach (var node in graph.floors[y])
+                    {
+                        if (y == preBoss) node.type = NodeType.Temple;
+                        else if (y % 3 == 0) node.type = NodeType.MinorEnemy;
+                        else node.type = RollNonCombatType(node, graph, config, random, LinksToFloor(node, preBoss));
+                    }
+                }
+
+                InitializeVisibilityAndStatus(graph);
+                return graph;
+            }
+
+            Debug.LogWarning($"[MapGraphGenerator] Seed {actualSeed}: no random-link map came out right, using the fixed map");
+            return GenerateEightFloorTableMap(config, actualSeed, random);
+        }
+
+        private static bool LinksToFloor(NodeBlueprint node, int floor)
+        {
+            foreach (var pos in node.outgoingConnections) if (pos.y == floor) return true;
+            return false;
+        }
+
+        // One try at the shape; null when a walk gets stuck or the map misses a rule, and the caller rolls again
+        private MapGraphData TryBuildRandomLinks(MapConfigSO config, int actualSeed, System.Random random)
+        {
+            int floors = config.totalFloors;
+            int preBoss = floors - 1;
+            var graph = new MapGraphData(actualSeed, floors, TableLanes) { randomLinks = true };
+
+            var start = new NodeBlueprint(new Vector2Int(1, -1), NodeType.RestSite);
+            start.status = NodeStatus.Visited;
+            start.visibility = NodeVisibility.Visited;
+            graph.startNode = start;
+            graph.currentPlayerPosition = start.gridPosition;
+            var boss = new NodeBlueprint(new Vector2Int(1, floors), NodeType.Boss);
+            graph.floors[floors].Add(boss);
+
+            // Links between floor 0 and the last floor before the boss; the start and boss fans can never cross them
+            var links = new List<(Vector2Int a, Vector2Int b)>();
+            int walks = Mathf.Max(2, config.tablePathCount);
+            int firstLane = random.Next(TableLanes);
+            for (int w = 0; w < walks; w++)
+            {
+                // The first two walks start on different rows, so the run opens with a choice
+                int lane = w == 0 ? firstLane
+                    : w == 1 ? (firstLane + 1 + random.Next(TableLanes - 1)) % TableLanes
+                    : random.Next(TableLanes);
+                var node = GetOrAddNode(graph, new Vector2Int(lane, 0));
+                Connect(start, node);
+
+                while (node.gridPosition.y < preBoss)
+                {
+                    Vector2Int here = node.gridPosition;
+                    var steps = new List<Vector2Int>();
+                    if (here.y + 2 <= preBoss && random.NextDouble() < config.skipLinkChance)
+                        steps.Add(new Vector2Int(here.x, here.y + 2));
+                    var sideways = new List<int> { -1, 0, 1 };
+                    Shuffle(sideways, random);
+                    foreach (int d in sideways)
+                        if (here.x + d >= 0 && here.x + d < TableLanes) steps.Add(new Vector2Int(here.x + d, here.y + 1));
+
+                    int pick = steps.FindIndex(to => !LinkBlocked(graph, links, here, to));
+                    if (pick < 0) return null;
+                    Vector2Int target = steps[pick];
+                    var next = GetOrAddNode(graph, target);
+                    if (!node.outgoingConnections.Contains(target)) links.Add((here, target));
+                    Connect(node, next);
+                    node = next;
+                }
+                Connect(node, boss);
+            }
+
+            // Every floor has a node, the run opens with a choice, at least one link skips a floor, and at least one
+            // path still passes every floor
+            for (int y = 0; y <= preBoss; y++)
+                if (graph.floors[y].Count == 0) return null;
+            if (graph.floors[0].Count < 2) return null;
+            if (!links.Exists(l => l.b.y - l.a.y == 2)) return null;
+            var longest = new Dictionary<Vector2Int, int>();
+            for (int y = preBoss; y >= 0; y--)
+            {
+                foreach (var n in graph.floors[y])
+                {
+                    int best = 0;
+                    foreach (var pos in n.outgoingConnections)
+                        if (pos.y <= preBoss) best = Math.Max(best, longest[pos]);
+                    longest[n.gridPosition] = best + 1;
+                }
+            }
+            bool fullPath = false;
+            foreach (var n in graph.floors[0]) if (longest[n.gridPosition] == floors) fullPath = true;
+            return fullPath ? graph : null;
+        }
+
+        private static NodeBlueprint GetOrAddNode(MapGraphData graph, Vector2Int pos)
+        {
+            var node = graph.GetNode(pos);
+            if (node != null) return node;
+            node = new NodeBlueprint(pos, NodeType.MinorEnemy);
+            graph.floors[pos.y].Add(node);
+            return node;
+        }
+
+        private static void Shuffle<T>(List<T> list, System.Random random)
+        {
+            for (int i = list.Count - 1; i > 0; i--)
+            {
+                int j = random.Next(i + 1);
+                (list[i], list[j]) = (list[j], list[i]);
+            }
+        }
+
+        // A new link from -> to is blocked when it crosses or overlaps a link, runs through a node, or ends on a new
+        // node that an existing link already runs through. Points are (row, floor), so a skip link's middle is a spot.
+        private static bool LinkBlocked(MapGraphData graph, List<(Vector2Int a, Vector2Int b)> links, Vector2Int from, Vector2Int to)
+        {
+            foreach (var link in links)
+            {
+                if (link.a == from && link.b == to) return false; // the walk reuses a link that is already there
+            }
+            foreach (var link in links)
+            {
+                if (LinksClash(from, to, link.a, link.b)) return true;
+            }
+            foreach (var node in graph.GetAllNodes())
+            {
+                if (node.type != NodeType.Boss && OnLinkInside(node.gridPosition, from, to)) return true;
+            }
+            if (graph.GetNode(to) == null)
+            {
+                foreach (var link in links)
+                    if (OnLinkInside(to, link.a, link.b)) return true;
+            }
+            return false;
+        }
+
+        private static bool LinksClash(Vector2Int a, Vector2Int b, Vector2Int c, Vector2Int d)
+        {
+            if (a == c || a == d || b == c || b == d)
+            {
+                // Links from the same node only clash when one lies along the other
+                return OnLinkInside(c, a, b) || OnLinkInside(d, a, b) || OnLinkInside(a, c, d) || OnLinkInside(b, c, d);
+            }
+            int o1 = Orientation(a, b, c), o2 = Orientation(a, b, d), o3 = Orientation(c, d, a), o4 = Orientation(c, d, b);
+            if (o1 * o2 < 0 && o3 * o4 < 0) return true;
+            return OnLink(c, a, b) || OnLink(d, a, b) || OnLink(a, c, d) || OnLink(b, c, d);
+        }
+
+        private static int Orientation(Vector2Int a, Vector2Int b, Vector2Int c)
+        {
+            long cross = (long)(b.x - a.x) * (c.y - a.y) - (long)(b.y - a.y) * (c.x - a.x);
+            return Math.Sign(cross);
+        }
+
+        // p lies on the link a-b, ends included
+        private static bool OnLink(Vector2Int p, Vector2Int a, Vector2Int b)
+        {
+            return Orientation(a, b, p) == 0
+                && p.x >= Math.Min(a.x, b.x) && p.x <= Math.Max(a.x, b.x)
+                && p.y >= Math.Min(a.y, b.y) && p.y <= Math.Max(a.y, b.y);
+        }
+
+        // p lies on the link a-b, ends left out
+        private static bool OnLinkInside(Vector2Int p, Vector2Int a, Vector2Int b)
+        {
+            return p != a && p != b && OnLink(p, a, b);
+        }
+
         private static void Connect(NodeBlueprint from, NodeBlueprint to)
         {
             from.AddOutgoingConnection(to.gridPosition);
@@ -644,11 +834,13 @@ namespace TawanOS.MapEngine
             { NodeType.Event, NodeType.Treasure, NodeType.Store, NodeType.RestSite, NodeType.Temple };
 
         // Every non-fight node type with the same chance; เมรุ, ศาลตายาย and วัด never follow a node of their own type
-        private NodeType RollNonCombatType(NodeBlueprint node, MapGraphData graph, MapConfigSO config, System.Random random)
+        // blockTemple: the node links to the all-วัด floor before the boss (a random-link map can skip into it)
+        private NodeType RollNonCombatType(NodeBlueprint node, MapGraphData graph, MapConfigSO config, System.Random random, bool blockTemple = false)
         {
             bool checkRest = config == null || config.preventConsecutiveRestSites;
             bool checkShop = config == null || config.preventConsecutiveShops;
             var blocked = new HashSet<NodeType>();
+            if (blockTemple) blocked.Add(NodeType.Temple);
             foreach (var pos in node.incomingConnections)
             {
                 var parent = graph.GetNode(pos);

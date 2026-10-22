@@ -52,6 +52,14 @@ namespace TawanOS.MapEngine
         public bool renderStartPointLines = true;
         public Vector3 startNodeOffset = new Vector3(0f, 0f, -2.5f);
 
+        [Header("Random Links (3D table, 8+ floors)")]
+        [Tooltip("On: every run rolls which nodes exist and how they link; a link may skip a floor, so some paths are shorter. Off: the fixed 3,2,3,1,3,3,2,2 map.")]
+        public bool randomTableLinks = true;
+        [Tooltip("How many walks from the start to the boss lay out the map. More walks = more nodes and links.")]
+        [Min(2)] public int tablePathCount = 4;
+        [Tooltip("Chance that a step of a walk skips the next floor (never the last floor before the boss).")]
+        [Range(0f, 0.6f)] public float skipLinkChance = 0.3f;
+
         [Header("Profiles")]
         public BiomeProfileSO biomeProfile;
         public List<NodeProfileSO> nodeProfiles = new List<NodeProfileSO>();

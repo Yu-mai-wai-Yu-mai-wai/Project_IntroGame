@@ -145,7 +145,7 @@ namespace TawanOS.MapEngine
                     {
                         if (node == null) continue;
                         if (node.gridPosition.x >= cfg.mapWidth || node.gridPosition.y > cfg.totalFloors) return false;
-                        if (!TryGetTableNodeFbxName(node.gridPosition, cfg.totalFloors, out _)) return false;
+                        if (!TryGetBoardPedestalName(node.gridPosition, cfg.totalFloors, graph.randomLinks, out _)) return false;
                     }
                 }
             }
@@ -165,6 +165,7 @@ namespace TawanOS.MapEngine
             if (graphData == null || configData == null) return;
 
             ClearMap();
+            renderingRandomLinks = graphData.randomLinks;
 
             float totalWidth = (configData.mapWidth - 1) * configData.columnSpacingX;
             float startX = -totalWidth * 0.5f;
@@ -351,6 +352,19 @@ namespace TawanOS.MapEngine
             return TableNodeFbxNames.TryGetValue(gridPos, out nodeName);
         }
 
+        // Random-link maps (22 Oct): x is the node's row, and every floor stands in the rows of a 3-node floor
+        // (Z of Node, Node.003, Node.002); X comes from TableFloorX like the 8-floor map. Start and boss use row 1.
+        private static readonly string[] TableLanePedestalNames = { "Node", "Node.003", "Node.002" };
+
+        /// <summary>The pedestal whose row (Z) a node takes: by row for a random-link map, else by the fixed layout.</summary>
+        public static bool TryGetBoardPedestalName(Vector2Int gridPos, int totalFloors, bool randomLinks, out string nodeName)
+        {
+            if (!randomLinks) return TryGetTableNodeFbxName(gridPos, totalFloors, out nodeName);
+            bool onBoard = gridPos.x >= 0 && gridPos.x < TableLanePedestalNames.Length && gridPos.y >= -1 && gridPos.y <= totalFloors;
+            nodeName = onBoard ? TableLanePedestalNames[gridPos.x] : null;
+            return onBoard;
+        }
+
         public static readonly Dictionary<string, Vector3> TablePedestalWorldPositions = new Dictionary<string, Vector3>
         {
             // Fallback only (live pedestal transforms win). Unity pos = (-fbxX, fbxY, fbxZ) / 100.
@@ -386,6 +400,7 @@ namespace TawanOS.MapEngine
 
         private Transform environmentTransform;
         private Dictionary<string, Transform> pedestalCache;
+        private bool renderingRandomLinks;
 
         private Vector3 CalculateWorldPosition(NodeBlueprint nodeBlueprint, float startX, MapConfigSO configData)
         {
@@ -395,7 +410,7 @@ namespace TawanOS.MapEngine
 
             if (configData != null && configData.use3DTableMode)
             {
-                if (TryGetTableNodeFbxName(gridPos, configData.totalFloors, out string nodeName))
+                if (TryGetBoardPedestalName(gridPos, configData.totalFloors, renderingRandomLinks, out string nodeName))
                 {
                     if (environmentTransform == null)
                     {
@@ -514,13 +529,14 @@ namespace TawanOS.MapEngine
             // Auto-scroll to player floor smoothly
             ScrollToFloor(nodeData.gridPosition.y);
 
-            // Step 2: Update all other nodes on same floor to Disabled if not visited
-            var sameFloorNodes = CurrentGraph.GetNodesOnFloor(nodeData.gridPosition.y);
-            foreach (var sameFloorNode in sameFloorNodes)
+            // Step 2: Disable every node the player can no longer reach: the other choices they had, and the nodes
+            // left behind on this floor or on floors below it (a random-link map can skip a floor, 22 Oct)
+            foreach (var otherNode in CurrentGraph.GetAllNodes())
             {
-                if (sameFloorNode.gridPosition != nodeData.gridPosition && sameFloorNode.status != NodeStatus.Visited)
+                if (otherNode == nodeData || otherNode.status == NodeStatus.Visited) continue;
+                if (otherNode.status == NodeStatus.Attainable || otherNode.gridPosition.y <= nodeData.gridPosition.y)
                 {
-                    sameFloorNode.status = NodeStatus.Disabled;
+                    otherNode.status = NodeStatus.Disabled;
                 }
             }
 
