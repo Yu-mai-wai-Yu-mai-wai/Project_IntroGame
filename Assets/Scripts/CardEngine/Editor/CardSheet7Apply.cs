@@ -68,7 +68,8 @@ namespace TawanOS.CardEngine
                 if (up == null) continue;
                 int upCost = id == "s_wi04" ? 2 : cost;
                 int upAtk = id == "s_bf02" || id == "s_wf06" ? 2 : atk;
-                Write(up, c => SetStats(c, merit, upCost, hp, upAtk, UpgradedText(row["skill_th"], row["upgraded_th"])));
+                string upText = CardSheet7UpgradeText.ById.TryGetValue(id, out var full) ? full : row["upgraded_th"];
+                Write(up, c => SetStats(c, merit, upCost, hp, upAtk, upText));
                 updated++;
             }
 
@@ -92,19 +93,14 @@ namespace TawanOS.CardEngine
                 c.familiarHealth = hp;
                 c.familiarDamage = atk;
             }
-            if (c.cardType == CardType.Amulet) c.durability = AmuletTurns;
-            c.descriptionFormat = text.Trim();
-        }
-
-        // The sheet's upgrade column is sometimes the whole new text, sometimes only what changes ("สาป 3").
-        // A change-only note is shown after the base text so the card still reads in full.
-        private static string UpgradedText(string skill, string upgrade)
-        {
-            skill = skill.Trim();
-            upgrade = upgrade.Trim();
-            if (upgrade.Length == 0) return skill;
-            if (upgrade.Length >= skill.Length * 0.7f) return upgrade;
-            return $"{skill} (อัปเกรด: {upgrade})";
+            if (c.cardType == CardType.Amulet)
+            {
+                // Sheet 7 amulets have no ขวัญ or attack: they last their turns or uses, and only พิธีสะเดาะเคราะห์ destroys one
+                c.durability = AmuletTurns;
+                c.familiarHealth = 0;
+                c.familiarDamage = 0;
+            }
+            c.descriptionFormat = text.Trim().Replace("ไฟต์", "การต่อสู้"); // "จนจบไฟต์" reads "จนจบการต่อสู้" (Game Designer, 22 Oct)
         }
 
         private static bool ApplyEnemies()

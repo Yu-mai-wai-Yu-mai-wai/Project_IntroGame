@@ -9,7 +9,6 @@ namespace TawanOS.CardEngine
 {
     // Phase 2 of the sheet 7 port: the abilities of the 42 cards and their upgrades, as the sheet's skill text
     // says (Docs/Design/card_skills_th_en.csv), plus the token cards some of them make. Run by CardSheet7Apply.
-    // Not in the sheet's mechanics yet: ควายธนู+'s ทะลวง and กุมารทอง+'s cheaper draw (kept as text only).
     public static class CardSheet7Abilities
     {
         private const string TokenFolder = "Assets/CardEngineData/Cards/Tokens";
@@ -60,10 +59,10 @@ namespace TawanOS.CardEngine
             ok &= Set(cards, "s_wf01", L(P(E.Taunt, 1), P(E.GrowOnAllyPlayed, 1, 0)), L(P(E.Taunt, 1), P(E.GrowOnAllyPlayed, 1, 1)));
             ok &= Set(cards, "s_wf02", L(Play(E.HealPlayer, 2), A(T.OnPlay, E.HealKhwan, G.AllFriendly, 1)),
                                        L(Play(E.HealPlayer, 3), A(T.OnPlay, E.HealKhwan, G.AllFriendly, 1)));
-            ok &= Set(cards, "s_wf03", L(Aura(E.AttackPerAlly, 1, 0, G.Self)), L(Aura(E.AttackPerAlly, 1, 0, G.Self)));
+            ok &= Set(cards, "s_wf03", L(Aura(E.AttackPerAlly, 1, 0, G.Self)), L(Aura(E.AttackPerAlly, 1, 0, G.Self), P(E.Pierce, 1)));
             ok &= Set(cards, "s_wf04", L(P(E.OverheadMagnet, 1), Aura(E.BuffKhwan, 1, 0, G.Adjacent)),
                                        L(P(E.OverheadMagnet, 1), Aura(E.BuffKhwan, 1, 0, G.Adjacent), P(E.AdjacentAttackAura, 1)));
-            ok &= Set(cards, "s_wf05", L(A(T.OnDeath, E.DrawCards, G.Self, 1)), L(A(T.OnDeath, E.DrawCards, G.Self, 1)));
+            ok &= Set(cards, "s_wf05", L(A(T.OnDeath, E.DrawCards, G.Self, 1)), L(A(T.OnDeath, E.DrawCheaper, G.Self, 1)));
             ok &= Set(cards, "s_wf06", L(P(E.Overhead, 1)), L(P(E.Overhead, 1)));
             ok &= Set(cards, "s_wf07", L(P(E.AttackOnHeal, 1)), L(P(E.AttackOnHeal, 2)));
 

@@ -353,7 +353,9 @@ namespace TawanOS.CardEngine
                 {
                     int hit = StrikeDamageOn(attacker, t, attack); // ผีตายโหง on a cursed card
                     Debug.Log($"[Clash] {attacker.cardNameThai} hits {t.cardNameThai} for {hit}");
+                    int khwanBefore = t.familiarHealth;
                     DamageCard(t, hit, ignoreArmor: false, attacker, fromPlayer);
+                    PierceOnStrike(attacker, t, hit, khwanBefore, fromPlayer);
                     ThornsOnStrike(attacker, t, fromPlayer);
                     // ผีตายโหง: riders on the card it just hit
                     if (!t.IsDead) TriggerAbilities(attacker, AbilityTrigger.OnHit, fromPlayer, t);

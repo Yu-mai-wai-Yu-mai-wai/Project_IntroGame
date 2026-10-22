@@ -413,6 +413,7 @@ namespace TawanOS.CardEngine
                     // ผวา lowers สะเทือนขวัญ and its card says บริวาร; ผีบังตา switches off a card's abilities, so it takes an
                     // amulet too (ตุ๊กตาคุณไสย, ตะกรุดดำ, หุ่นพยนต์ live on their abilities)
                     if (a.status == CardStatusType.Phawa && c.cardType != CardType.Familiar) return false;
+                    if (!CardStatus.IsDebuff(a.status) && a.status != CardStatusType.DoneKhong && c.cardType != CardType.Familiar) return false;
                     if (HasCardStatus(c, a.status)) score -= 50f;
                     if (a.status == CardStatusType.Blinded)
                         score += c.familiarDamage * 2f + (c.abilities != null ? c.abilities.Count * 3f : 0f); // the card with most to lose

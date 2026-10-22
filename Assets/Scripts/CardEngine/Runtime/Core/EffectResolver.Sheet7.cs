@@ -279,6 +279,14 @@ namespace TawanOS.CardEngine
             return a.duration > 0 ? attack * 2 : attack + a.value;
         }
 
+        // ควายธนู+ (ทะลวง): what a strike has left after killing the familiar it hit goes on to the opposing Khwan
+        private void PierceOnStrike(CardInstance attacker, CardInstance target, int hit, int khwanBefore, bool fromPlayer)
+        {
+            if (!target.IsDead || !HasKeyword(attacker, AbilityEffect.Pierce)) return;
+            int overflow = hit - khwanBefore;
+            if (overflow > 0) HitOpposingPlayer(attacker, overflow, fromPlayer);
+        }
+
         // สายสิญจน์ (Thorns): an enemy familiar that hits one of ours takes damage back
         private void ThornsOnStrike(CardInstance attacker, CardInstance target, bool attackerIsPlayer)
         {
@@ -319,10 +327,25 @@ namespace TawanOS.CardEngine
                 case AbilityEffect.BlockFlying:
                 case AbilityEffect.Thorns:
                 case AbilityEffect.GrowOnAllyPlayed:
+                case AbilityEffect.Pierce:
                     return true; // keywords and auras: read where they matter
 
                 case AbilityEffect.HealPlayer:
                     HealSide(ownerIsPlayer, a.value);
+                    return true;
+
+                case AbilityEffect.DrawCheaper:
+                    // กุมารทอง+: the drawn cards cost 1 less for the rest of the fight (player only: the enemy draws blind)
+                    for (int i = 0; i < Mathf.Max(1, a.value); i++)
+                    {
+                        var hand = ownerIsPlayer ? CardManager.Instance : null;
+                        int before = hand != null ? hand.Hand.Count : 0;
+                        DrawFor(ownerIsPlayer, 1);
+                        if (hand == null || hand.Hand.Count <= before) continue;
+                        var drawn = hand.Hand[hand.Hand.Count - 1];
+                        drawn.meritCost = Mathf.Max(0, drawn.meritCost - 1);
+                        drawn.corruptionGain = Mathf.Max(0, drawn.corruptionGain - 1);
+                    }
                     return true;
 
                 case AbilityEffect.HealPerAlly:

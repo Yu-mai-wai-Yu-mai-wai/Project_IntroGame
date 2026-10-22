@@ -101,7 +101,9 @@ namespace TawanOS.CardEngine
         [InspectorName("ลงบริวารเราตัวอื่น: ใบนี้ขวัญ +ค่า")] GrowOnAllyPlayed, // Passive: ขวัญ +value ตี +duration
         [InspectorName("ทำดาเมจ ถ้าตายฮีล")] DamageHealOnKill,      // ดาเมจ value ถ้าตายฮีล duration
         [InspectorName("เรียก Related ลงช่องว่าง")] SummonRelated,     // เรียก relatedCard ลงช่องว่าง value ตัว
-        [InspectorName("บริวารศัตรูที่ติดสาปตีไม่ได้เทิร์นนี้")] CursedCannotAttack
+        [InspectorName("บริวารศัตรูที่ติดสาปตีไม่ได้เทิร์นนี้")] CursedCannotAttack,
+        [InspectorName("ทะลวง: ดาเมจที่เกินเข้าขวัญศัตรู")] Pierce,       // Passive
+        [InspectorName("จั่วการ์ด ใบที่ได้ลดราคา 1")] DrawCheaper         // จั่ว value ใบ แต่ละใบลดราคา 1 จนจบไฟต์ (ต่ำสุด 0)
     }
 
     [Serializable]
