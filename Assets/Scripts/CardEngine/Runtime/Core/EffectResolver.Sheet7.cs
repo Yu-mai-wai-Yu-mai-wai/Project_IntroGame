@@ -111,20 +111,22 @@ namespace TawanOS.CardEngine
                 if (list.Count > 5) list.RemoveAt(0);
             }
 
-            // ด้ายแดงผูกจิต: the other card in the lane goes too (or back to its owner's hand)
-            var linked = dead.linkedWith;
-            dead.linkedWith = null;
-            if (linked != null && !linked.IsDead && TryFindCard(linked, out bool linkedIsPlayer, out _))
+            // ด้ายแดงผูกจิต (either side's): a familiar dying in its lane takes the one across the lane with it, then it breaks.
+            // The upgrade sends the amulet owner's familiar back to hand instead of dying.
+            foreach (bool side in new[] { true, false })
             {
-                linked.linkedWith = null;
-                if (linked.linkReturnsToHand) ReturnCardToHand(linked, linkedIsPlayer);
-                else DamageCard(linked, linked.familiarHealth, ignoreArmor: true, source: null, sourceIsPlayer: !linkedIsPlayer);
-                // The link was ด้ายแดงผูกจิต's one use: it breaks
-                foreach (bool side in new[] { true, false })
-                {
-                    var amulet = CardAt(BoardOf(side), AmuletSlot);
-                    if (amulet != null && amulet.abilities.Exists(x => x.effect == AbilityEffect.LinkLane)) { amulet.currentDurability = 0; amulet.pendingRemoval = true; }
-                }
+                var amulet = CardAt(BoardOf(side), AmuletSlot);
+                if (amulet == null || amulet.IsDead || amulet.chosenLane != dead.boardSlot) continue;
+                var link = amulet.abilities.Find(x => x.effect == AbilityEffect.LinkLane);
+                if (link == null) continue;
+                amulet.currentDurability = 0;
+                amulet.pendingRemoval = true; // first: the second death must not fire it again
+                var other = CardAt(BoardOf(!deadIsPlayer), dead.boardSlot);
+                if (other == null || other.IsDead || other.cardType != CardType.Familiar) continue;
+                Debug.Log($"[Sheet7] {amulet.cardNameThai}: {dead.cardNameThai} died, so {other.cardNameThai} goes too");
+                bool otherIsOwners = !deadIsPlayer == side;
+                if (link.value > 0 && otherIsOwners) ReturnCardToHand(other, !deadIsPlayer);
+                else DamageCard(other, other.familiarHealth, ignoreArmor: true, source: null, sourceIsPlayer: deadIsPlayer);
             }
 
             // ตะกรุดดำ: the enemy loses Khwan, a set number of times
@@ -422,19 +424,10 @@ namespace TawanOS.CardEngine
                     return true;
 
                 case AbilityEffect.LinkLane:
-                {
-                    var picked = PickedOrAuto(a, source, ownerIsPlayer, explicitTarget);
-                    if (picked == null) return true;
-                    int lane = picked.boardSlot;
-                    var mine = CardAt(BoardOf(ownerIsPlayer), lane);
-                    var theirs = CardAt(BoardOf(!ownerIsPlayer), lane);
-                    if (mine == null || theirs == null) return true;
-                    mine.linkedWith = theirs;
-                    theirs.linkedWith = mine;
-                    mine.linkReturnsToHand = a.value > 0;
-                    Debug.Log($"[Sheet7] {source?.cardNameThai} links {mine.cardNameThai} and {theirs.cardNameThai}");
+                    // The player clicked a column for it; the enemy ties the lane its strongest foe stands in
+                    if (source != null && !IsFamiliarSlot(source.chosenLane)) source.chosenLane = BestLane(ownerIsPlayer);
+                    Debug.Log($"[Sheet7] {source?.cardNameThai} ties lane {source?.chosenLane}");
                     return true;
-                }
 
                 case AbilityEffect.DestroyEnemyAmulet:
                 {
@@ -506,10 +499,6 @@ namespace TawanOS.CardEngine
                     AddFrom(!ownerIsPlayer);
                     if (a.target == AbilityTarget.AnyCard) AddFrom(ownerIsPlayer);
                     break;
-                case AbilityEffect.LinkLane:
-                    AddFrom(ownerIsPlayer);
-                    pool.RemoveAll(c => CardAt(BoardOf(!ownerIsPlayer), c.boardSlot) == null);
-                    break;
                 case AbilityEffect.DamageHealOnKill:
                     AddFrom(!ownerIsPlayer);
                     break;
@@ -525,9 +514,6 @@ namespace TawanOS.CardEngine
                 case AbilityEffect.SacrificeForAttack: return EffectiveAttack(c) * 2f - c.familiarHealth * 0.1f;
                 case AbilityEffect.SacrificeForHeal: return c.familiarHealth - EffectiveAttack(c) * 0.5f;
                 case AbilityEffect.ReturnToHand: return (IsCursed(c) ? 20f : 0f) + EffectiveAttack(c) * 2f + c.familiarHealth;
-                case AbilityEffect.LinkLane:
-                    var theirs = CardAt(BoardOf(!ownerIsPlayer), c.boardSlot);
-                    return (theirs != null ? EffectiveAttack(theirs) * 2f + theirs.familiarHealth : 0f) - EffectiveAttack(c);
                 case AbilityEffect.DamageHealOnKill: return c.familiarHealth <= a.value ? 10f + EffectiveAttack(c) : -c.familiarHealth;
             }
             return 0f;
@@ -538,9 +524,29 @@ namespace TawanOS.CardEngine
             card != null && card.cardType == CardType.Incantation && card.abilities != null
             && card.abilities.Exists(a => a.trigger == AbilityTrigger.OnPlay && a.effect == AbilityEffect.SummonRelated);
 
+        // ด้ายแดงผูกจิต: an amulet that asks for a lane (any familiar column, empty or not) when it is placed
+        public static bool PicksLane(CardInstance card) =>
+            card != null && card.cardType == CardType.Amulet && card.abilities != null
+            && card.abilities.Exists(a => a.trigger == AbilityTrigger.OnPlay && a.effect == AbilityEffect.LinkLane);
+
+        // The lane worth tying: the other side's strongest familiar against our weakest
+        private int BestLane(bool ownerIsPlayer)
+        {
+            int best = FirstFamiliarSlot;
+            float bestScore = float.MinValue;
+            for (int lane = FirstFamiliarSlot; lane < MaxBoardSlots; lane++)
+            {
+                var theirs = CardAt(BoardOf(!ownerIsPlayer), lane);
+                var mine = CardAt(BoardOf(ownerIsPlayer), lane);
+                float score = (theirs != null ? EffectiveAttack(theirs) * 2f + theirs.familiarHealth : 0f) - (mine != null ? EffectiveAttack(mine) : 0f);
+                if (score > bestScore) { bestScore = score; best = lane; }
+            }
+            return best;
+        }
+
         public static bool IsSheet7Choice(AbilityEffect e) =>
             e == AbilityEffect.SacrificeForAttack || e == AbilityEffect.SacrificeForHeal || e == AbilityEffect.ReturnToHand
-            || e == AbilityEffect.LinkLane || e == AbilityEffect.DamageHealOnKill;
+            || e == AbilityEffect.DamageHealOnKill;
 
         // ---------------------------------------------------------------- auras
 

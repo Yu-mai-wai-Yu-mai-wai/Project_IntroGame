@@ -65,8 +65,7 @@ namespace TawanOS.CardEngine
         [NonSerialized] public int usesLeft = -1;
         [NonSerialized] public int usedOnTurn = -1;
         [NonSerialized] public int usedThisTurn;
-        [NonSerialized] public CardInstance linkedWith;
-        [NonSerialized] public bool linkReturnsToHand;
+        [NonSerialized] public int chosenLane = -1; // ด้ายแดงผูกจิต: the familiar column it ties (picked when it is placed)
         [NonSerialized] public bool exileOnDeath;
         [NonSerialized] public bool savedFromDeath;
 

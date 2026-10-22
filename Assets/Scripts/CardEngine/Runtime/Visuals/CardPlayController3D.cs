@@ -243,7 +243,9 @@ namespace TawanOS.CardEngine
         private void PlayOnSlot(BoardSlotView slot)
         {
             var card = held.CardData;
-            card.boardSlot = slot.slotIndex;
+            // ด้ายแดงผูกจิต: the column clicked is its lane; the amulet itself goes to the amulet slot
+            if (EffectResolver.PicksLane(card)) { card.chosenLane = slot.slotIndex; card.boardSlot = EffectResolver.AmuletSlot; }
+            else card.boardSlot = slot.slotIndex;
             pendingSlot = slot;
 
             if (EffectResolver.GetTargetedAbility(card) != null && EffectResolver.Instance != null)
@@ -305,13 +307,20 @@ namespace TawanOS.CardEngine
 
         // The slots a held card may go to: an amulet only to the amulet slot (also when one is there: it is replaced),
         // a familiar to the empty familiar columns
-        private static IEnumerable<BoardSlotView> EmptyPlayerSlots(CardType type)
+        private static IEnumerable<BoardSlotView> EmptyPlayerSlots(CardInstance card)
         {
+            var type = card != null ? card.cardType : CardType.Familiar;
+            bool anyLane = EffectResolver.PicksLane(card); // ด้ายแดงผูกจิต: every familiar column, taken or not
             var board = CombatManager.Instance != null ? CombatManager.Instance.State.activeBoardCards : null;
             foreach (var slot in FindObjectsByType<BoardSlotView>(FindObjectsSortMode.None))
             {
                 if (slot.side != BoardSlotView.SlotSide.Player) continue;
                 if (slot.GetComponent<DeckPileView3D>() != null || slot.name.Contains("Deck")) continue;
+                if (anyLane)
+                {
+                    if (EffectResolver.IsFamiliarSlot(slot.slotIndex)) yield return slot;
+                    continue;
+                }
                 if (type == CardType.Amulet)
                 {
                     if (slot.slotIndex == EffectResolver.AmuletSlot) yield return slot;
@@ -328,7 +337,7 @@ namespace TawanOS.CardEngine
         private void ShowSlotMarkers()
         {
             HideSlotMarkers();
-            foreach (var slot in EmptyPlayerSlots(held != null ? held.CardData.cardType : CardType.Familiar))
+            foreach (var slot in EmptyPlayerSlots(held != null ? held.CardData : null))
             {
                 var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 go.name = "SlotMarker";
