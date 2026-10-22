@@ -15,8 +15,8 @@ namespace TawanOS.CardEngine
         public static CenterPitView3D Instance { get; private set; }
 
         [Header("Cards")]
-        [Tooltip("Card size relative to a card on the board; made smaller when the gap between the rows is too short")]
-        public float cardScale = 0.8f;
+        [Tooltip("Card size relative to a card on the board (1 = the same size, Game Designer 22 Oct); made smaller only when the gap between the rows is too short")]
+        public float cardScale = 1f;
         [Tooltip("Height above the table")]
         public float height = 0.03f;
         public float hoverLift = 0.25f;
@@ -81,7 +81,7 @@ namespace TawanOS.CardEngine
             return Instance != null && view != null && Instance.SlotOf(view) != null;
         }
 
-        // Where a card taken from the pit starts flying to its hand: its slot, else the old pit's spot
+        // Where a card taken from the pit starts flying to its hand: its slot
         public static bool TryGetSpawnPosition(CardInstance card, out Vector3 position)
         {
             if (Instance != null && card != null && Instance.takenFrom.TryGetValue(card, out position))
@@ -90,9 +90,7 @@ namespace TawanOS.CardEngine
                 return true;
             }
             position = Vector3.zero;
-            if (DrawPitView3D.Instance == null) return false;
-            position = DrawPitView3D.Instance.SpawnPosition;
-            return true;
+            return false;
         }
 
         private void Awake()
@@ -181,10 +179,11 @@ namespace TawanOS.CardEngine
             var offer = subscribed.Offer;
             for (int i = 0; i < offer.Count; i++)
             {
-                // Column i + 1: the familiar columns, left to right
-                if (!TryFindColumn(EffectResolver.FirstFamiliarSlot + i, out var player, out var enemy))
+                // Card i sits in the gap between board columns i and i + 1, halfway between the rows, so the four pit
+                // cards are staggered against the board's five columns and spread over the whole table (Game Designer, 22 Oct)
+                if (!TryFindColumn(i, out var player, out var enemy) || !TryFindColumn(i + 1, out var player2, out var enemy2))
                 {
-                    Debug.LogWarning($"[CenterPitView3D] No board column {EffectResolver.FirstFamiliarSlot + i} on both sides; card {i + 1} of the pit has no slot.");
+                    Debug.LogWarning($"[CenterPitView3D] No board columns {i} and {i + 1} on both sides; card {i + 1} of the pit has no slot.");
                     continue;
                 }
 
@@ -205,7 +204,8 @@ namespace TawanOS.CardEngine
                     root = new GameObject($"PitSlot{i + 1}"),
                     card = view,
                     scale = boardScale * factor,
-                    rest = (player.transform.position + enemy.transform.position) * 0.5f + Vector3.up * height,
+                    rest = (player.transform.position + enemy.transform.position + player2.transform.position + enemy2.transform.position) * 0.25f
+                        + Vector3.up * height,
                 };
                 slot.root.transform.SetParent(transform, false);
                 slot.root.transform.position = slot.rest;

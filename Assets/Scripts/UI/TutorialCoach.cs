@@ -491,7 +491,8 @@ namespace TawanOS.UI
                     if (grave != null) area.AddRenderers(grave.graveyardObject != null ? grave.graveyardObject : grave.gameObject);
                     break;
                 case Target.DrawPit:
-                    if (DrawPitView3D.Instance != null) area.AddRenderers(DrawPitView3D.Instance.gameObject);
+                    // the center pit's four cards (the old smoking pit is gone, Game Designer 22 Oct)
+                    if (CenterPitView3D.Instance != null) area.AddRenderers(CenterPitView3D.Instance.gameObject);
                     break;
             }
             rect = area.rect;
