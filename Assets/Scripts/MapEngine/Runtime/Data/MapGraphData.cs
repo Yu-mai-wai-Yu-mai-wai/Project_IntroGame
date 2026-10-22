@@ -10,6 +10,9 @@ namespace TawanOS.MapEngine
         public int seed;
         public int totalFloors;
         public int mapWidth;
+        // True for a map made by the random-link generator: x is the node's row on the board (0-2), and a link can
+        // skip a floor. Saves made before 22 Oct read as false and keep their fixed board layout.
+        public bool randomLinks;
         public Vector2Int currentPlayerPosition = new Vector2Int(-1, -1);
         public NodeBlueprint startNode;
         public List<List<NodeBlueprint>> floors = new List<List<NodeBlueprint>>();
