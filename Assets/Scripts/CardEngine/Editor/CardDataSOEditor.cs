@@ -437,6 +437,10 @@ namespace TawanOS.CardEngine
             {
                 EditorGUILayout.HelpBox("ไม่พบ Resources/CardCatalog", MessageType.Warning);
             }
+            else if (CardCatalogAutoRegister.IsToken(card))
+            {
+                EditorGUILayout.LabelField("การ์ดที่เกิดจากสกิล (Tokens): ไม่อยู่ในคลังการ์ด จึงไม่ออกจากหลุม รางวัล หรือร้าน", EditorStyles.miniLabel);
+            }
             else if (catalog.cards.Contains(card))
             {
                 EditorGUILayout.LabelField("อยู่ในคลังการ์ดของเกมแล้ว (สุ่มจากหลุมจั่ว / อัญเชิญได้)", EditorStyles.miniLabel);

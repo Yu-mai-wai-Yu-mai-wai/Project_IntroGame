@@ -8,7 +8,8 @@ namespace TawanOS.CardEngine
     //    full amount (Game Designer, 22 Oct). ลูกประคำ adds to every heal, พระเครื่อง hurts the enemy, ผีแม่ย่านาง strikes.
     //  - Death: ตะกรุดดำ, หุ่นพยนต์, เปรต react to an ally dying; sacrifice, revive (exiled on a second death),
     //    return to hand.
-    //  - สาป (CardStatusType.DoneKhong): a cursed familiar that dies takes its remaining สาป off its owner's Khwan.
+    //  - สาป (CardStatusType.DoneKhong): only hurts the familiar it is on; when that familiar dies the rest of it is
+    //    gone (no Khwan off its owner: that rule came from the port handoff, not the designer; taken out 22 Oct).
     //  - Amulets that break after a number of uses (usesLeft), ด้ายแดงผูกจิต's linked lane.
     public partial class EffectResolver
     {
@@ -99,10 +100,6 @@ namespace TawanOS.CardEngine
             var combat = CombatManager.Instance;
             if (dead.cardType != CardType.Familiar || combat == null) return;
 
-            // สาป: what is left of it comes off the owner's Khwan
-            var curse = dead.statuses.Find(s => s.type == CardStatusType.DoneKhong && s.stacks > 0);
-            if (curse != null) combat.TakeDamage(curse.stacks, toPlayer: deadIsPlayer, cause: $"สาปของ {dead.cardNameThai}");
-
             // Remembered for พิธีเรียกวิญญาณ, unless it was already brought back once
             if (!dead.exileOnDeath && dead.source != null)
             {
@@ -126,7 +123,8 @@ namespace TawanOS.CardEngine
                 Debug.Log($"[Sheet7] {amulet.cardNameThai}: {dead.cardNameThai} died, so {other.cardNameThai} goes too");
                 bool otherIsOwners = !deadIsPlayer == side;
                 if (link.value > 0 && otherIsOwners) ReturnCardToHand(other, !deadIsPlayer);
-                else DamageCard(other, other.familiarHealth, ignoreArmor: true, source: null, sourceIsPlayer: deadIsPlayer);
+                else DamageCard(other, other.familiarHealth, ignoreArmor: true, source: null, sourceIsPlayer: deadIsPlayer,
+                    cause: $"{amulet.cardNameThai}: {dead.cardNameThai} died across the lane");
             }
 
             // ตะกรุดดำ: the enemy loses Khwan, a set number of times
@@ -294,7 +292,8 @@ namespace TawanOS.CardEngine
         {
             if (target == null || target.cardType != CardType.Familiar || attacker.IsDead) return;
             foreach (var c in LiveWith(!attackerIsPlayer, AbilityEffect.Thorns))
-                DamageCard(attacker, KeywordValue(c, AbilityEffect.Thorns), ignoreArmor: true, source: null, sourceIsPlayer: !attackerIsPlayer);
+                DamageCard(attacker, KeywordValue(c, AbilityEffect.Thorns), ignoreArmor: true, source: null, sourceIsPlayer: !attackerIsPlayer,
+                    cause: $"thorns of {c.cardNameThai}");
         }
 
         private static bool SideBlocksFlying(bool defenderIsPlayer)
@@ -364,7 +363,7 @@ namespace TawanOS.CardEngine
                     if (victim == null) return true;
                     int atk = EffectiveAttack(victim), khwan = victim.familiarHealth, maxK = victim.maxKhwan;
                     victim.familiarHealth = 0;
-                    HandleDeath(victim, null, ownerIsPlayer);
+                    HandleDeath(victim, null, ownerIsPlayer, $"sacrificed to {source?.cardNameThai}");
                     if (a.effect == AbilityEffect.SacrificeForAttack && source != null)
                     {
                         source.familiarDamage += atk;
@@ -403,7 +402,7 @@ namespace TawanOS.CardEngine
                     var target = PickedOrAuto(a, source, ownerIsPlayer, explicitTarget);
                     if (target == null || !TryFindCard(target, out bool targetIsPlayer, out _)) return true;
                     if (targetIsPlayer != ownerIsPlayer && IsCursed(target))
-                        DamageCard(target, target.familiarHealth, ignoreArmor: true, source, ownerIsPlayer);
+                        DamageCard(target, target.familiarHealth, ignoreArmor: true, source, ownerIsPlayer, cause: $"destroyed by {source?.cardNameThai} (it was cursed)");
                     else
                         ReturnCardToHand(target, targetIsPlayer);
                     RemoveDeadFamiliars();

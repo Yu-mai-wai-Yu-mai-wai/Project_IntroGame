@@ -151,7 +151,7 @@ namespace TawanOS.CardEngine
             Debug.Log($"[Aura] {card.cardNameThai}: Khwan {(dk >= 0 ? "+" : "")}{dk}, attack {(da >= 0 ? "+" : "")}{da}");
             NotifyChanged(card);
 
-            if (card.IsDead) HandleDeath(card, null, !ownerIsPlayer);
+            if (card.IsDead) HandleDeath(card, null, !ownerIsPlayer, $"an aura took its Khwan to 0 (Khwan {dk})");
         }
 
         // Brings the card's aura statuses in line with what the auras in play give it right now
