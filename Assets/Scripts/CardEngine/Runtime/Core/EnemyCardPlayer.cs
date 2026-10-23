@@ -7,7 +7,9 @@ namespace TawanOS.CardEngine
     // Gives an enemy its own deck / hand / discard and lets it play cards with the same rules as the
     // player: Merit refills each turn (firstTurnMerit, +1 per turn), White Magic costs Merit, Black
     // Magic builds Corruption. Active only when the EnemyProfileSO has a non-empty deck.
-    public class EnemyCardPlayer
+    // Choosing what to play: EnemyCardPlayer.Planning.cs (the whole turn at once); sheet 7 effects are valued in
+    // EnemyCardPlayer.Sheet7.cs.
+    public partial class EnemyCardPlayer
     {
         // Play pacing at speed 1; CombatManager.EnemyPlaySpeed divides these
         // Thinking before each card: a pause, a look at up to MaxCardsWeighed other cards it could play (each
@@ -160,7 +162,7 @@ namespace TawanOS.CardEngine
 
             while (playedThisTurn < profile.maxCardsPerTurn && !combat.IsCombatOver)
             {
-                var card = Scripted ? ChooseScriptedCard(state, costsEnabled, filter) : ChooseCard(state, style, costsEnabled, filter);
+                var card = Scripted ? ChooseScriptedCard(state, costsEnabled, filter) : NextPlannedCard(state, style, costsEnabled, filter);
                 if (card == null) break;
 
                 yield return Think(card, state, costsEnabled, filter, speed);
@@ -234,26 +236,9 @@ namespace TawanOS.CardEngine
             return !costsEnabled || card.magicSchool != MagicSchool.WhiteMagic || card.meritCost <= s.enemyMerit;
         }
 
-        // หลุมกลาง: the enemy takes the card it would most like to play, the same scoring as ChooseCard but
-        // without needing the Merit for it yet. The scripted bot (tutorial) and a full hand take nothing.
+        // หลุมกลาง: the scripted bot (tutorial) and a full hand take nothing. The pick itself: ChoosePitCard
+        // (EnemyCardPlayer.Planning.cs).
         public bool CanTakeFromPit => Active && !Scripted && hand.Count < profile.maxHandSize;
-
-        public CardInstance ChoosePitCard(IReadOnlyList<CardInstance> offer, CombatStateData s, EnemyCardPlayStyle style)
-        {
-            CardInstance best = null;
-            float bestScore = float.MinValue;
-            foreach (var card in offer)
-            {
-                float score = Score(card, s, style);
-                if (style != EnemyCardPlayStyle.Random) score += BlockScore(card, s);
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    best = card;
-                }
-            }
-            return best;
-        }
 
         // Extra draw from a card ability (outside the normal draw step)
         public int DrawExtra(int count)
@@ -311,32 +296,6 @@ namespace TawanOS.CardEngine
             return drawn;
         }
 
-        private CardInstance ChooseCard(CombatStateData s, EnemyCardPlayStyle style, bool costsEnabled,
-            System.Predicate<CardInstance> filter = null)
-        {
-            CardInstance best = null;
-            float bestScore = float.MinValue;
-
-            foreach (var card in hand)
-            {
-                if (filter != null && !filter(card)) continue;
-                if (EffectResolver.Instance != null && !EffectResolver.Instance.CanResolve(card, casterIsPlayer: false)) continue;
-
-                bool affordable = !costsEnabled || card.magicSchool != MagicSchool.WhiteMagic || card.meritCost <= s.enemyMerit;
-                if (!affordable) continue;
-
-                // Small bonus for spending more Merit so ties use the turn's budget fully
-                float score = Score(card, s, style) + card.meritCost * 0.01f;
-                if (style != EnemyCardPlayStyle.Random) score += BlockScore(card, s);
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    best = card;
-                }
-            }
-            return best;
-        }
-
         // ---------------------------------------------------------------- defending its own Khwan
 
         // The damage the player's familiars will deal to the enemy's face in the next clash, by the column they
@@ -387,29 +346,10 @@ namespace TawanOS.CardEngine
             return best;
         }
 
-        // How much putting this card on the board protects the enemy's Khwan: the damage it would stop (all of
-        // it for a taunting card), worth more the lower its Khwan, and decisive when the hits coming would
-        // otherwise kill it
-        private float BlockScore(CardInstance card, CombatStateData s)
+        // How much stopping `stopped` of the `total` face damage coming protects the enemy's Khwan: worth more the
+        // lower its Khwan, and decisive when the hits coming would otherwise kill it
+        private static float BlockValue(int stopped, int total, CombatStateData s)
         {
-            if (card.cardType == CardType.Incantation) return 0f;
-            bool blocks = card.cardType == CardType.Familiar;
-            if (!blocks || EffectResolver.FreeSlot(s.enemyBoardCards) < 0) return 0f;
-
-            var damage = IncomingFaceDamage(s, out int unblockable);
-            int total = unblockable;
-            foreach (int d in damage) total += d;
-
-            int stopped;
-            if (EffectResolver.HasTaunt(card))
-            {
-                stopped = total - unblockable;
-            }
-            else
-            {
-                int slot = BestBlockSlot(s);
-                stopped = slot >= 0 ? damage[slot] : 0;
-            }
             if (stopped <= 0) return 0f;
 
             int life = s.enemyKhwan + s.enemyShield;
@@ -427,8 +367,9 @@ namespace TawanOS.CardEngine
         {
             if (style == EnemyCardPlayStyle.Random) return Random.value;
 
-            // Cards built from abilities are valued by what their abilities do on the current board
-            if (card.abilities != null && card.abilities.Count > 0) return ScoreAbilities(card, s, style);
+            // Cards built from abilities are valued by what their abilities do on the current board, and both kinds by
+            // what the amulet in our slot adds to them (AmuletBonus, EnemyCardPlayer.Planning.cs)
+            if (card.abilities != null && card.abilities.Count > 0) return ScoreAbilities(card, s, style) + AmuletBonus(card, s);
 
             float score;
             switch (card.cardType)
@@ -464,7 +405,7 @@ namespace TawanOS.CardEngine
                     score = 3f;
                     break;
             }
-            return score;
+            return score + AmuletBonus(card, s);
         }
 
         // Values an ability card for the enemy. Offense (hurting/hindering the player's board), defense
@@ -481,10 +422,11 @@ namespace TawanOS.CardEngine
 
             foreach (var a in card.abilities)
             {
-                // Sheet 7 keywords and auras: worth having on the board, more so the longer it stays
-                if (a.effect >= AbilityEffect.HealPlayer && (a.trigger == AbilityTrigger.Passive || a.trigger == AbilityTrigger.Aura))
+                // Sheet 7 effects, played or kept on the board: valued by the board they would meet
+                if (a.effect >= AbilityEffect.HealPlayer && (a.trigger == AbilityTrigger.OnPlay
+                    || a.trigger == AbilityTrigger.Passive || a.trigger == AbilityTrigger.Aura))
                 {
-                    utility += 3f;
+                    ScoreSheet7(a, card, s, ref offense, ref defense, ref utility);
                     continue;
                 }
 
@@ -535,7 +477,8 @@ namespace TawanOS.CardEngine
                         break;
 
                     case AbilityEffect.ApplyStatus:
-                        if (CardStatus.IsDebuff(a.status))
+                        // Harmful, not IsDebuff: สาป and ผีอำ go on the player's cards too
+                        if (CardStatus.IsHarmful(a.status))
                         {
                             float top = 0f;
                             foreach (var c in foeCards) top = Mathf.Max(top, 3f + c.familiarDamage * 1.5f);
@@ -560,35 +503,6 @@ namespace TawanOS.CardEngine
                     case AbilityEffect.GiveCardToHand:
                         utility += 5f;
                         break;
-
-                    case AbilityEffect.HealPlayer:
-                    case AbilityEffect.HealPerAlly:
-                        int lost = s.maxEnemyKhwan - s.enemyKhwan;
-                        defense += Mathf.Min(lost, a.value * (a.effect == AbilityEffect.HealPerAlly ? Mathf.Max(1, ownCards.Count) : 1)) * 1.5f + 0.5f;
-                        break;
-
-                    case AbilityEffect.SacrificeForAttack:
-                    case AbilityEffect.SacrificeForHeal:
-                        utility += own.Exists(c => EffectResolver.IsAliveFamiliar(c)) ? 3f : -6f;
-                        break;
-
-                    case AbilityEffect.ReturnToHand:
-                    case AbilityEffect.DamageHealOnKill:
-                    case AbilityEffect.CursedCannotAttack:
-                        offense += foeFamiliars.Count > 0 ? 6f : -6f;
-                        break;
-
-                    case AbilityEffect.DestroyEnemyAmulet:
-                        offense += EffectResolver.CardAt(foe, EffectResolver.AmuletSlot) != null ? 7f : -6f;
-                        break;
-
-                    case AbilityEffect.LinkLane:
-                    case AbilityEffect.MoveCurses:
-                    case AbilityEffect.ReviveLast:
-                    case AbilityEffect.SummonRelated:
-                        utility += 5f;
-                        break;
-
                 }
             }
 
@@ -606,15 +520,8 @@ namespace TawanOS.CardEngine
 
             float aggressive = style == EnemyCardPlayStyle.Aggressive ? 1.4f : style == EnemyCardPlayStyle.Defensive ? 0.7f : 1f;
             float defensive = style == EnemyCardPlayStyle.Defensive ? 1.4f : style == EnemyCardPlayStyle.Aggressive ? 0.7f : 1f;
-            float score = offense * aggressive + defense * defensive + utility;
-
-            // Black Magic that would tip Corruption over the threshold triggers a backfire on the enemy
-            if (card.magicSchool == MagicSchool.BlackMagic && card.corruptionGain > 0
-                && s.enemyCorruption + card.corruptionGain >= s.enemyCorruptionThreshold)
-            {
-                score *= style == EnemyCardPlayStyle.Aggressive ? 0.8f : 0.5f;
-            }
-            return score;
+            // What its Corruption costs is counted over the whole turn's plan (CorruptionCost)
+            return offense * aggressive + defense * defensive + utility;
         }
 
         private static float ScoreDamage(CardAbility a, List<CardInstance> foeCards, List<CardInstance> foeFamiliars, bool allTargets)

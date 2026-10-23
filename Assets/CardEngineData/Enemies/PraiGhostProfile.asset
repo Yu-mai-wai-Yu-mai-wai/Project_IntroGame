@@ -17,24 +17,26 @@ MonoBehaviour:
   portrait: {fileID: 0}
   maxKhwan: 6
   deck:
+  - {fileID: 11400000, guid: 7590c4d9a3464f80a678bb0fed6a7a1a, type: 2}
+  - {fileID: 11400000, guid: 7590c4d9a3464f80a678bb0fed6a7a1a, type: 2}
+  - {fileID: 11400000, guid: 7590c4d9a3464f80a678bb0fed6a7a1a, type: 2}
   - {fileID: 11400000, guid: ef0bb6a9bc72420ebfb9f6573767c6d9, type: 2}
   - {fileID: 11400000, guid: ef0bb6a9bc72420ebfb9f6573767c6d9, type: 2}
+  - {fileID: 11400000, guid: ae65b9ddd4324187943853a583d0c67b, type: 2}
   - {fileID: 11400000, guid: 9c9e71d2c8394afc90a78832d1c906ab, type: 2}
-  - {fileID: 11400000, guid: 9c9e71d2c8394afc90a78832d1c906ab, type: 2}
-  - {fileID: 11400000, guid: b7eef879b3f0472183ea9abf12c3ab5b, type: 2}
-  - {fileID: 11400000, guid: b7eef879b3f0472183ea9abf12c3ab5b, type: 2}
-  - {fileID: 11400000, guid: 1ec028819c584099b76bf27dc724a5b0, type: 2}
-  - {fileID: 11400000, guid: 1ec028819c584099b76bf27dc724a5b0, type: 2}
-  - {fileID: 11400000, guid: 1aa76638236c464fbf62f706d5d48482, type: 2}
-  - {fileID: 11400000, guid: 1aa76638236c464fbf62f706d5d48482, type: 2}
-  - {fileID: 11400000, guid: 77f4926329ce48c1bb11af83f379dca2, type: 2}
-  - {fileID: 11400000, guid: 77f4926329ce48c1bb11af83f379dca2, type: 2}
-  - {fileID: 11400000, guid: 16247a9ec67b4df0ae1fcedec0a5a5a0, type: 2}
-  - {fileID: 11400000, guid: 16247a9ec67b4df0ae1fcedec0a5a5a0, type: 2}
+  - {fileID: 11400000, guid: 0473c625bd6347dc9fd24948b9e0d25f, type: 2}
+  - {fileID: 11400000, guid: 0473c625bd6347dc9fd24948b9e0d25f, type: 2}
+  - {fileID: 11400000, guid: d9931a7c75a840fcb97c4494d541aea7, type: 2}
+  - {fileID: 11400000, guid: eb211b6918b44ef1a2d1be4a874295ea, type: 2}
+  - {fileID: 11400000, guid: eb211b6918b44ef1a2d1be4a874295ea, type: 2}
+  - {fileID: 11400000, guid: 1ba19c6e581946ddb57e8cab6e2fbb94, type: 2}
+  - {fileID: 11400000, guid: 130dc1e8007e44babdc907a6ecb67eae, type: 2}
   startingHandSize: 3
   drawPerTurn: 1
   maxHandSize: 10
-  maxCardsPerTurn: 2
+  maxCardsPerTurn: 6
+  mistakeChance: 0.3
+  pitMistakeChance: 0.25
   scriptedDeck: 0
   cardsPerTurn: 
   moves:

@@ -17,21 +17,24 @@ MonoBehaviour:
   portrait: {fileID: 0}
   maxKhwan: 6
   deck:
+  - {fileID: 11400000, guid: 77f4926329ce48c1bb11af83f379dca2, type: 2}
+  - {fileID: 11400000, guid: 0906f51c37874c21acc2003fe8810372, type: 2}
+  - {fileID: 11400000, guid: 904986997b8348699a37abc9397be673, type: 2}
+  - {fileID: 11400000, guid: 904986997b8348699a37abc9397be673, type: 2}
+  - {fileID: 11400000, guid: 5a7b5c0b1f0b457e9c8fcb3160587921, type: 2}
+  - {fileID: 11400000, guid: 5a7b5c0b1f0b457e9c8fcb3160587921, type: 2}
+  - {fileID: 11400000, guid: 3784e78133804091aef77a4f018c2643, type: 2}
+  - {fileID: 11400000, guid: 3784e78133804091aef77a4f018c2643, type: 2}
+  - {fileID: 11400000, guid: 1ba19c6e581946ddb57e8cab6e2fbb94, type: 2}
   - {fileID: 11400000, guid: 4e4b0a9b4b42416c856f56538bebb1d1, type: 2}
   - {fileID: 11400000, guid: 4e4b0a9b4b42416c856f56538bebb1d1, type: 2}
-  - {fileID: 11400000, guid: a0be6a1ce018479b9d41937919e550b3, type: 2}
-  - {fileID: 11400000, guid: a0be6a1ce018479b9d41937919e550b3, type: 2}
-  - {fileID: 11400000, guid: 7590c4d9a3464f80a678bb0fed6a7a1a, type: 2}
-  - {fileID: 11400000, guid: 7590c4d9a3464f80a678bb0fed6a7a1a, type: 2}
-  - {fileID: 11400000, guid: ae65b9ddd4324187943853a583d0c67b, type: 2}
-  - {fileID: 11400000, guid: ae65b9ddd4324187943853a583d0c67b, type: 2}
   - {fileID: 11400000, guid: 35c2f03b5bfd462a9b00281c6f7af7f1, type: 2}
-  - {fileID: 11400000, guid: 35c2f03b5bfd462a9b00281c6f7af7f1, type: 2}
-  - {fileID: 11400000, guid: cc76c02000534d2bbc142a22902b6b72, type: 2}
   startingHandSize: 3
   drawPerTurn: 1
   maxHandSize: 10
-  maxCardsPerTurn: 2
+  maxCardsPerTurn: 6
+  mistakeChance: 0.3
+  pitMistakeChance: 0.25
   scriptedDeck: 0
   cardsPerTurn: 
   moves: []

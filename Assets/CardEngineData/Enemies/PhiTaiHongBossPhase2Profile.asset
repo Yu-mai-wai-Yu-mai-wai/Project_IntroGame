@@ -19,24 +19,26 @@ MonoBehaviour:
   deck:
   - {fileID: 11400000, guid: d247bf9a859941bd8359651ab65cd479, type: 2}
   - {fileID: 11400000, guid: d247bf9a859941bd8359651ab65cd479, type: 2}
-  - {fileID: 11400000, guid: 4ab6be3c97ca47228d26ab4833e2dada, type: 2}
-  - {fileID: 11400000, guid: 4ab6be3c97ca47228d26ab4833e2dada, type: 2}
   - {fileID: 11400000, guid: 75f31182d0f243abaea7a68d3987d485, type: 2}
   - {fileID: 11400000, guid: 75f31182d0f243abaea7a68d3987d485, type: 2}
-  - {fileID: 11400000, guid: 593ef1abcdc143c3a7314ba19f11145d, type: 2}
-  - {fileID: 11400000, guid: 593ef1abcdc143c3a7314ba19f11145d, type: 2}
   - {fileID: 11400000, guid: d389b8d3618f4df687885269cba1e6aa, type: 2}
-  - {fileID: 11400000, guid: d389b8d3618f4df687885269cba1e6aa, type: 2}
-  - {fileID: 11400000, guid: 60a7338b3591472cb1c95622807a5661, type: 2}
-  - {fileID: 11400000, guid: 60a7338b3591472cb1c95622807a5661, type: 2}
-  - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
-  - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
+  - {fileID: 11400000, guid: a0be6a1ce018479b9d41937919e550b3, type: 2}
   - {fileID: 11400000, guid: 1affc8bd5a564ff8838b52bae88a0373, type: 2}
-  - {fileID: 11400000, guid: 1affc8bd5a564ff8838b52bae88a0373, type: 2}
+  - {fileID: 11400000, guid: 1aa76638236c464fbf62f706d5d48482, type: 2}
+  - {fileID: 11400000, guid: 0473c625bd6347dc9fd24948b9e0d25f, type: 2}
+  - {fileID: 11400000, guid: 0473c625bd6347dc9fd24948b9e0d25f, type: 2}
+  - {fileID: 11400000, guid: 1ba19c6e581946ddb57e8cab6e2fbb94, type: 2}
+  - {fileID: 11400000, guid: 60a7338b3591472cb1c95622807a5661, type: 2}
+  - {fileID: 11400000, guid: 45638ff984ac4ce58ec07a469d256182, type: 2}
+  - {fileID: 11400000, guid: eb211b6918b44ef1a2d1be4a874295ea, type: 2}
+  - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
+  - {fileID: 11400000, guid: 64081d977c90474984626111c98e6b3a, type: 2}
   startingHandSize: 3
   drawPerTurn: 1
   maxHandSize: 10
-  maxCardsPerTurn: 1
+  maxCardsPerTurn: 6
+  mistakeChance: 0.15
+  pitMistakeChance: 0.75
   scriptedDeck: 0
   cardsPerTurn: 
   moves:
