@@ -69,8 +69,9 @@ namespace TawanOS.CardEngine
                 if (up == null) continue;
                 int upCost = id == "s_wi04" ? 2 : cost;
                 int upAtk = id == "s_bf02" || id == "s_wf06" ? 2 : atk;
+                int upHp = id == "s_bf02" ? 3 : hp; // กระสือ+ is 2/3: the redesign sheet (23 Oct) starts กระสือ at 2 ATK already
                 string upText = CardSheet7UpgradeText.ById.TryGetValue(id, out var full) ? full : row["upgraded_th"];
-                Write(up, c => { SetStats(c, merit, upCost, hp, upAtk, upText); c.school = school; });
+                Write(up, c => { SetStats(c, merit, upCost, upHp, upAtk, upText); c.school = school; });
                 updated++;
             }
 

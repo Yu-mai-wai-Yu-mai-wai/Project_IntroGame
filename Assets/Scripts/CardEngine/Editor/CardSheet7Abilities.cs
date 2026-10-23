@@ -69,7 +69,7 @@ namespace TawanOS.CardEngine
             ok &= Set(cards, "s_wi01", L(A(T.OnPlay, E.BuffKhwan, G.AllFriendly, 1), Play(E.HealPerAlly, 1)),
                                        L(A(T.OnPlay, E.BuffKhwan, G.AllFriendly, 1), A(T.OnPlay, E.BuffAttack, G.AllFriendly, 1), Play(E.HealPerAlly, 1)));
             ok &= Set(cards, "s_wi02", L(Play(E.HealPlayer, 2), Play(E.DrawCards, 1)), L(Play(E.HealPlayer, 2), Play(E.HealPlayer, 2), Play(E.DrawCards, 1)));
-            ok &= Set(cards, "s_wi03", L(Status(G.EnemyCard, CardStatusType.Phawa, 1, 1)), L(Status(G.EnemyCard, CardStatusType.Phawa, 2, 1)));
+            ok &= Set(cards, "s_wi03", L(Status(G.EnemyCard, CardStatusType.Phawa, 2, 1)), L(Status(G.EnemyCard, CardStatusType.Phawa, 3, 1))); // redesign sheet, 23 Oct: 2, upgraded 3
             ok &= Set(cards, "s_wi04", L(Status(G.FriendlyCard, CardStatusType.Protect, 1, 0), Status(G.FriendlyCard, CardStatusType.Taunt, 1, 1)),
                                        L(Status(G.FriendlyCard, CardStatusType.Protect, 1, 0), Status(G.FriendlyCard, CardStatusType.Taunt, 1, 1)));
             ok &= Set(cards, "s_wi05", L(Play(E.MoveCurses, 0)), L(Play(E.MoveCurses, 1)));
