@@ -33,7 +33,7 @@ namespace TawanOS.UI
         [Tooltip("Extra pause, in letters, at a space and at each dot of \"...\".")]
         public float pauseLetters = 3f;
         [Tooltip("How strong the line is once fully in (below 1 = faint).")]
-        [Range(0.2f, 1f)] public float lineAlpha = 0.85f;
+        [Range(0.2f, 1f)] public float lineAlpha = 1f; // full: at 0.85 the red sank into the dark (Game Designer, 25 Oct)
         [Tooltip("Seconds a line stays after it is fully typed.")]
         public float holdSeconds = 2.4f;
         [Tooltip("Seconds after a line before a line that is not important may be said.")]
@@ -265,7 +265,7 @@ namespace TawanOS.UI
             group.blocksRaycasts = false;
             group.interactable = false;
 
-            var back = UiFactory.CreateImage("Back", box, new Color(1f, 1f, 1f, 0.75f));
+            var back = UiFactory.CreateImage("Back", box, new Color(1f, 1f, 1f, 0.92f));
             back.sprite = Haze();
             UiFactory.Stretch(back.rectTransform, 0f);
             back.rectTransform.offsetMin = new Vector2(-160f, -30f); // the haze reaches past the text and fades out
@@ -273,7 +273,7 @@ namespace TawanOS.UI
             back.raycastTarget = false;
 
             var useFont = font != null ? font : theme != null ? theme.bodyFont : null;
-            speaker = UiFactory.CreateText(box, "Speaker", "", 24f, new Color(0.75f, 0.32f, 0.3f, 0.7f), TextAlignmentOptions.Top, useFont);
+            speaker = UiFactory.CreateText(box, "Speaker", "", 24f, new Color(0.95f, 0.5f, 0.45f, 0.9f), TextAlignmentOptions.Top, useFont);
             var sr = speaker.rectTransform;
             sr.anchorMin = new Vector2(0f, 1f);
             sr.anchorMax = new Vector2(1f, 1f);
@@ -281,7 +281,7 @@ namespace TawanOS.UI
             sr.offsetMin = new Vector2(28f, -40f);
             sr.offsetMax = new Vector2(-28f, -8f);
 
-            line = UiFactory.CreateText(box, "Line", "", 34f, new Color(0.9f, 0.2f, 0.18f), TextAlignmentOptions.Center, useFont);
+            line = UiFactory.CreateText(box, "Line", "", 34f, new Color(1f, 0.38f, 0.32f), TextAlignmentOptions.Center, useFont);
             var lr = line.rectTransform;
             lr.anchorMin = Vector2.zero;
             lr.anchorMax = Vector2.one;
