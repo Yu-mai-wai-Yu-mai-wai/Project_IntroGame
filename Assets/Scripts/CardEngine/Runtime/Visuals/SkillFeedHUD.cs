@@ -75,10 +75,10 @@ namespace TawanOS.CardEngine
             var canvas = UiFactory.CreateOverlayCanvas("SkillFeedCanvas", 60, transform);
             canvas.gameObject.AddComponent<GraphicRaycaster>();
             column = UiFactory.CreateRect("Column", canvas.transform);
-            column.anchorMin = column.anchorMax = new Vector2(1f, 0.5f);
-            column.pivot = new Vector2(1f, 0.5f);
+            column.anchorMin = column.anchorMax = new Vector2(1f, 1f);
+            column.pivot = new Vector2(1f, 1f);
             column.sizeDelta = new Vector2(StripWidth, (StripHeight + Gap) * MaxShown);
-            column.anchoredPosition = new Vector2(0f, 230f); // high on the right, clear of the end-turn button
+            column.anchoredPosition = new Vector2(0f, -16f); // top-right corner, out of the board's way
             columnGroup = column.gameObject.AddComponent<CanvasGroup>();
         }
 
@@ -121,8 +121,8 @@ namespace TawanOS.CardEngine
             var bg = UiFactory.CreateImage("Strip", column, new Color(0.04f, 0.03f, 0.03f, 0.88f));
             bg.raycastTarget = true; // pointing at it shows the whole skill
             s.root = bg.rectTransform;
-            s.root.anchorMin = s.root.anchorMax = new Vector2(1f, 0f);
-            s.root.pivot = new Vector2(1f, 0f);
+            s.root.anchorMin = s.root.anchorMax = new Vector2(1f, 1f);
+            s.root.pivot = new Vector2(1f, 1f);
             s.root.sizeDelta = new Vector2(StripWidth, StripHeight);
             s.group = bg.gameObject.AddComponent<CanvasGroup>();
             s.group.blocksRaycasts = true;
@@ -183,7 +183,7 @@ namespace TawanOS.CardEngine
             Layout();
         }
 
-        // Newest at the bottom; each strip slides to its place
+        // Newest at the top, older ones pushed down; each strip slides to its place
         private void Layout()
         {
             float y = 0f;
@@ -192,7 +192,7 @@ namespace TawanOS.CardEngine
                 var s = strips[i];
                 s.root.DOKill();
                 s.root.DOAnchorPos(new Vector2(0f, y), 0.25f).SetEase(Ease.OutCubic).SetLink(s.root.gameObject);
-                y += s.root.sizeDelta.y + Gap;
+                y -= s.root.sizeDelta.y + Gap;
             }
         }
 
