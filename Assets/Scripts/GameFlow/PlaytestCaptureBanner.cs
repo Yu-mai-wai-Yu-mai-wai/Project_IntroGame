@@ -10,7 +10,7 @@ namespace TawanOS.GameFlow
     /// </summary>
     public static class PlaytestCaptureBanner
     {
-        public const bool Enabled = true;
+        public const bool Enabled = false; // off since 25 Oct (Game Designer)
         public const string Message = "แคปหน้านี้ด้วย";
 
         /// <summary>Puts the banner at the top of `screen` (a full-screen RectTransform), once.</summary>

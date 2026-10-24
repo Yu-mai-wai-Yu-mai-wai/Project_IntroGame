@@ -157,6 +157,10 @@ namespace TawanOS.GameFlow
             dim.raycastTarget = true;
             UiFactory.Stretch(dim.rectTransform, 0f);
 
+            // 1b. The defeat picture behind everything (Game Designer, 25 Oct), rage lines boiling round the head, a vignette
+            var artSo = GameOverArtSO.Load();
+            if (artSo != null && artSo.defeatArt != null) screen.BuildDefeatArt(canvas.transform, artSo.defeatArt);
+
             // 2. Cutscene group (Character art + dialogue)
             var cutsceneGo = new GameObject("CutsceneGroup", typeof(RectTransform), typeof(CanvasGroup));
             cutsceneGo.transform.SetParent(canvas.transform, false);
@@ -212,8 +216,10 @@ namespace TawanOS.GameFlow
             screen.menuButton = UiFactory.CreateButton(statsGo.transform, "MainMenuButton", "เมนูหลัก", theme,
                 new Vector2(0.52f, 0.24f), new Vector2(0.70f, 0.34f));
             // Old paper ยันต์ (Game Designer, 24 Oct)
-            TawanOS.VFX.UiTalismanButton.Dress(screen.restartButton);
-            TawanOS.VFX.UiTalismanButton.Dress(screen.menuButton);
+            // Plain words, not ยันต์ (Game Designer, 25 Oct); เริ่มใหม่ trembles
+            PlainTextButton(screen.restartButton, theme);
+            PlainTextButton(screen.menuButton, theme);
+            screen.restartButton.GetComponentInChildren<TMP_Text>().gameObject.AddComponent<TawanOS.VFX.ShakyLabel>();
             screen.restartButton.onClick.AddListener(screen.Restart);
             screen.menuButton.onClick.AddListener(screen.GoToMainMenu);
 
@@ -238,43 +244,13 @@ namespace TawanOS.GameFlow
 
         private IEnumerator PlayDefeatSequence(GameOverSummary summary)
         {
-            // --- Part 1: Character Art + Dialogue ---
-            cutsceneGroup.alpha = 1f;
+            // --- Part 1: the defeat dialogue is no longer played (Game Designer, 25 Oct: straight to "ขวัญหลุด").
+            // Its panel and lines stay built, hidden, for whoever writes a new one.
+            cutsceneGroup.alpha = 0f;
+            if (artGroup != null) artGroup.DOFade(1f, 0.6f).SetUpdate(true);
 
-            for (int i = 0; i < DefeatDialogueLines.Length; i++)
-            {
-                string line = DefeatDialogueLines[i];
-                dialogueText.text = "";
-
-                for (int c = 0; c < line.Length; c++)
-                {
-                    if (skipDialogueRequested)
-                    {
-                        dialogueText.text = line;
-                        skipDialogueRequested = false;
-                        break;
-                    }
-                    dialogueText.text += line[c];
-                    yield return new WaitForSeconds(0.03f);
-                }
-
-                // Pause between lines
-                float pause = 1.0f;
-                while (pause > 0f)
-                {
-                    if (skipDialogueRequested)
-                    {
-                        skipDialogueRequested = false;
-                        break;
-                    }
-                    pause -= Time.deltaTime;
-                    yield return null;
-                }
-            }
-
-            // --- Part 2: Fade to black + red blood overlay ---
-            cutsceneGroup.DOFade(0f, 0.7f);
-            bloodOverlay.DOColor(new Color(0.6f, 0.04f, 0.04f, 0.95f), 0.8f);
+            // --- Part 2: Fade to black + red blood overlay (light over the picture, so it shows through) ---
+            bloodOverlay.DOColor(BloodColor, 0.8f);
             yield return new WaitForSeconds(0.8f);
 
             // --- Part 3: Show Stats Panel & Buttons ---
@@ -288,6 +264,111 @@ namespace TawanOS.GameFlow
                 EventSystem.current.SetSelectedGameObject(restartButton.gameObject);
         }
 
+        // With the defeat picture the old blood overlay is gone (Game Designer, 25 Oct: the picture alone)
+        private Color BloodColor => new Color(0.6f, 0.04f, 0.04f, artGroup != null ? 0f : 0.95f);
+
+        private CanvasGroup artGroup;
+
+        // No box: just the word, which brightens under the pointer
+        private static void PlainTextButton(Button button, UIThemeSO theme)
+        {
+            var image = button.GetComponent<Image>();
+            if (image != null) image.color = new Color(0f, 0f, 0f, 0f); // still takes the click
+            var label = button.GetComponentInChildren<TMP_Text>();
+            label.font = theme.titleFont != null ? theme.titleFont : label.font;
+            label.fontSize = theme.titleSize * 1.1f;
+            label.color = Color.white;
+            label.outlineWidth = 0.2f;
+            label.outlineColor = new Color32(0, 0, 0, 255);
+            button.targetGraphic = label;
+            var colors = button.colors;
+            colors.normalColor = theme.text;
+            colors.highlightedColor = theme.accent;
+            colors.selectedColor = theme.text;
+            colors.pressedColor = Color.Lerp(theme.accent, Color.white, 0.4f);
+            button.colors = colors;
+        }
+
+        // The picture fills the screen (cropped, never stretched); the lines sit on it, so they keep to the head
+        private void BuildDefeatArt(Transform parent, Sprite sprite)
+        {
+            var root = new GameObject("DefeatArt", typeof(RectTransform), typeof(CanvasGroup));
+            root.transform.SetParent(parent, false);
+            UiFactory.Stretch((RectTransform)root.transform, 0f);
+            artGroup = root.GetComponent<CanvasGroup>();
+            artGroup.alpha = 0f;
+            artGroup.blocksRaycasts = artGroup.interactable = false;
+
+            var picture = UiFactory.CreateImage("Picture", root.transform, new Color(0.42f, 0.42f, 0.42f)); // darker, so the words read over it
+            picture.sprite = sprite;
+            picture.raycastTarget = false;
+            var prt = picture.rectTransform;
+            prt.anchorMin = prt.anchorMax = new Vector2(0.5f, 0.5f);
+            var fit = picture.gameObject.AddComponent<AspectRatioFitter>();
+            fit.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            fit.aspectRatio = sprite.rect.width / Mathf.Max(1f, sprite.rect.height);
+
+            var linesGo = new GameObject("RageLines", typeof(RectTransform), typeof(CanvasRenderer));
+            linesGo.transform.SetParent(prt, false);
+            UiFactory.Stretch((RectTransform)linesGo.transform, 0f);
+            var lines = linesGo.AddComponent<TawanOS.VFX.ScribbleLines>();
+            lines.color = new Color(0.1f, 0.01f, 0.01f, 0.92f);
+            lines.raycastTarget = false;
+            foreach (var stroke in RageStrokes) lines.strokes.Add(stroke);
+
+            var vignette = UiFactory.CreateImage("Vignette", root.transform, new Color(0f, 0f, 0f, 0.85f));
+            vignette.sprite = VignetteSprite();
+            vignette.raycastTarget = false;
+            UiFactory.Stretch(vignette.rectTransform, 0f);
+        }
+
+        // Zigzags round the head, spread over the red so no side is bare (picture space: x right, y up, 0..1)
+        private static readonly Vector2[][] RageStrokes =
+        {
+            // upper left, the long one from the reference, and one under it
+            new[] { new Vector2(0.093f, 0.970f), new Vector2(0.150f, 0.910f), new Vector2(0.165f, 0.990f), new Vector2(0.275f, 0.810f), new Vector2(0.300f, 0.895f), new Vector2(0.335f, 0.810f) },
+            new[] { new Vector2(0.015f, 0.860f), new Vector2(0.070f, 0.800f), new Vector2(0.082f, 0.865f), new Vector2(0.150f, 0.745f), new Vector2(0.168f, 0.805f), new Vector2(0.205f, 0.745f) },
+            // in the red between the left arms
+            new[] { new Vector2(0.200f, 0.560f), new Vector2(0.245f, 0.505f), new Vector2(0.258f, 0.565f), new Vector2(0.305f, 0.475f), new Vector2(0.322f, 0.530f), new Vector2(0.352f, 0.478f) },
+            // over the head, left and right of the hair
+            new[] { new Vector2(0.345f, 0.930f), new Vector2(0.372f, 0.985f), new Vector2(0.392f, 0.925f), new Vector2(0.420f, 0.992f) },
+            new[] { new Vector2(0.640f, 0.990f), new Vector2(0.668f, 0.935f), new Vector2(0.690f, 0.990f), new Vector2(0.715f, 0.925f) },
+            // upper right, the two from the reference
+            new[] { new Vector2(0.700f, 0.750f), new Vector2(0.718f, 0.870f), new Vector2(0.760f, 0.856f), new Vector2(0.807f, 0.980f), new Vector2(0.812f, 0.900f), new Vector2(0.885f, 0.995f) },
+            new[] { new Vector2(0.730f, 0.640f), new Vector2(0.780f, 0.700f), new Vector2(0.807f, 0.645f), new Vector2(0.917f, 0.790f), new Vector2(0.904f, 0.695f), new Vector2(0.977f, 0.790f) },
+            // top right corner, and the red between the head and the right arm
+            new[] { new Vector2(0.900f, 0.975f), new Vector2(0.930f, 0.915f), new Vector2(0.950f, 0.980f), new Vector2(0.990f, 0.900f) },
+            new[] { new Vector2(0.745f, 0.500f), new Vector2(0.795f, 0.555f), new Vector2(0.812f, 0.495f), new Vector2(0.878f, 0.600f), new Vector2(0.872f, 0.530f), new Vector2(0.930f, 0.618f) },
+        };
+
+        // 0 below a, 1 above b, smooth between (Mathf.SmoothStep interpolates a..b instead, which is not this)
+        private static float Ramp(float a, float b, float x)
+        {
+            float t = Mathf.Clamp01((x - a) / (b - a));
+            return t * t * (3f - 2f * t);
+        }
+
+        // Clear in the middle, dark at the edges and corners
+        private static Sprite vignetteSprite;
+        private static Sprite VignetteSprite()
+        {
+            if (vignetteSprite != null) return vignetteSprite;
+            const int size = 128;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            var px = new Color32[size * size];
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = (x + 0.5f) / size * 2f - 1f, dy = (y + 0.5f) / size * 2f - 1f;
+                    float d = Mathf.Sqrt(dx * dx * 0.85f + dy * dy);
+                    px[y * size + x] = new Color32(255, 255, 255, (byte)(255f * Ramp(0.55f, 1.35f, d)));
+                }
+            tex.SetPixels32(px);
+            tex.Apply();
+            vignetteSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+            return vignetteSprite;
+        }
+
         public void CompleteCutsceneImmediately()
         {
             if (sequenceCoroutine != null)
@@ -297,7 +378,8 @@ namespace TawanOS.GameFlow
             }
             if (cutsceneGroup != null) cutsceneGroup.alpha = 0f;
             if (dialogueText != null) dialogueText.text = DefeatDialogueLines[DefeatDialogueLines.Length - 1];
-            if (bloodOverlay != null) bloodOverlay.color = new Color(0.6f, 0.04f, 0.04f, 0.95f);
+            if (bloodOverlay != null) bloodOverlay.color = BloodColor;
+            if (artGroup != null) artGroup.alpha = 1f;
             if (statsGroup != null)
             {
                 statsGroup.alpha = 1f;
