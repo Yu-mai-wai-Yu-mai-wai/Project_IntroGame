@@ -261,7 +261,7 @@ namespace TawanOS.GameFlow
             statsGroup.blocksRaycasts = true;
 
             if (EventSystem.current != null)
-                EventSystem.current.SetSelectedGameObject(restartButton.gameObject);
+                EventSystem.current.SetSelectedGameObject(null); // a selected button ignores the pointer's highlight
         }
 
         // With the defeat picture the old blood overlay is gone (Game Designer, 25 Oct: the picture alone)
@@ -388,7 +388,7 @@ namespace TawanOS.GameFlow
             }
             if (EventSystem.current != null && restartButton != null)
             {
-                EventSystem.current.SetSelectedGameObject(restartButton.gameObject);
+                EventSystem.current.SetSelectedGameObject(null); // a selected button ignores the pointer's highlight
             }
         }
 
