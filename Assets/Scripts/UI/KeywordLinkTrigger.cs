@@ -10,6 +10,10 @@ namespace TawanOS.UI
     /// </summary>
     public class KeywordLinkTrigger : MonoBehaviour
     {
+        // The trigger whose link the tooltip shows. Only it may hide the tooltip: with many texts on screen, one the
+        // pointer just left used to hide the tooltip another had opened that same frame, and it never came back
+        private static KeywordLinkTrigger owner;
+
         private TMP_Text textComponent;
         private Canvas parentCanvas;
         private int lastHoveredLink = -1;
@@ -47,8 +51,9 @@ namespace TawanOS.UI
                     if (!string.IsNullOrEmpty(id) && id.StartsWith("kw:"))
                     {
                         string term = id.Substring(3);
-                        if (linkIndex != lastHoveredLink || term != lastTerm)
+                        if (linkIndex != lastHoveredLink || term != lastTerm || owner != this)
                         {
+                            owner = this;
                             lastHoveredLink = linkIndex;
                             lastTerm = term;
                             string def = KeywordGlossarySO.Current.GetDefinition(term);
@@ -67,8 +72,15 @@ namespace TawanOS.UI
             {
                 lastHoveredLink = -1;
                 lastTerm = null;
-                KeywordTooltipView.Instance?.Hide();
+                HideIfMine();
             }
+        }
+
+        private void HideIfMine()
+        {
+            if (owner != this) return;
+            owner = null;
+            KeywordTooltipView.Instance?.Hide();
         }
 
         private void OnDisable()
@@ -77,7 +89,7 @@ namespace TawanOS.UI
             {
                 lastHoveredLink = -1;
                 lastTerm = null;
-                KeywordTooltipView.Instance?.Hide();
+                HideIfMine();
             }
         }
     }
