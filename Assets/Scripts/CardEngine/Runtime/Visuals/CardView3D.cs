@@ -44,8 +44,13 @@ namespace TawanOS.CardEngine
         public float hoverLift = 1f;
         public float hoverPullToCamera = 0.6f;
         public float hoverScale = 1.15f;
+        [Tooltip("A hovered hand card stands upright and rises at least this far, more if that is what it takes to show " +
+                 "the whole card (its ability text) above the bottom of the screen, like Inscryption (Game Designer, 24 Oct).")]
+        [Range(0f, 0.2f)] public float hoverScreenMargin = 0.02f;
 
         private Vector3 baseLocalScale;
+        private BoxCollider box;
+        private Vector3 boxSize, boxCenter; // the collider as the prefab has it; a hovered card stretches it down
         private Vector3 originalLocalPosition;
         private Quaternion originalLocalRotation;
         private bool isPlacedOnBoard;
@@ -54,6 +59,8 @@ namespace TawanOS.CardEngine
         private bool wasIgnoringMouse;
 
         public bool IsHovered => isHovered;
+        /// <summary>The hand card under the mouse, raised (null: none). The player's Khwan bar fades out of its way.</summary>
+        public static CardView3D HoveredInHand { get; private set; }
 
         private SpriteRenderer backgroundFace;
         private SpriteRenderer artworkFace;
@@ -70,11 +77,15 @@ namespace TawanOS.CardEngine
         private Color faceTextColor = Color.white; // the face's normal text colour (khwanLabel goes back to it when healed)
 
         public Vector3 BaseScale => baseLocalScale;
+        public Vector3 RestingLocalPosition => originalLocalPosition;
+        public Quaternion RestingLocalRotation => originalLocalRotation;
         public bool IsInHand => !isPlacedOnBoard && enabled;
 
         private void Awake()
         {
             baseLocalScale = transform.localScale;
+            box = GetComponent<BoxCollider>();
+            if (box != null) { boxSize = box.size; boxCenter = box.center; }
         }
 
         // A card placed in the scene by hand shows its Card Data; views the game binds itself are left alone
@@ -477,9 +488,60 @@ namespace TawanOS.CardEngine
         public void Hover()
         {
             isHovered = true;
+            HoveredInHand = this;
+            Vector2 offset = HoverOffsetShowingWholeCard();
+            float lift = offset.y;
             transform.DOKill();
-            transform.DOLocalMove(originalLocalPosition + new Vector3(0, hoverLift, -hoverPullToCamera), 0.15f);
+            transform.DOLocalMove(originalLocalPosition + new Vector3(offset.x, lift, -hoverPullToCamera), 0.15f);
+            transform.DOLocalRotateQuaternion(Quaternion.identity, 0.15f);
             transform.DOScale(baseLocalScale * hoverScale, 0.15f);
+
+            // The raised card still answers the mouse where it rested, so a pointer near the bottom of the hand does not
+            // see it rise away, leave it and start the hover over again
+            if (box != null && baseLocalScale.y > 0f)
+            {
+                float reach = lift / (baseLocalScale.y * hoverScale);
+                box.size = new Vector3(boxSize.x, boxSize.y + reach, boxSize.z);
+                box.center = new Vector3(boxCenter.x, boxCenter.y - reach * 0.5f, boxCenter.z);
+            }
+        }
+
+        // Where a hovered hand card goes, from its resting spot (x sideways, y up): up by hoverLift, or more until its
+        // bottom edge is on screen but never so far that its top edge leaves it; and sideways, a card at the end of a
+        // long hand, until both side edges are on screen
+        private Vector2 HoverOffsetShowingWholeCard()
+        {
+            var cam = Camera.main;
+            var parent = transform.parent;
+            if (cam == null || parent == null) return new Vector2(0f, hoverLift);
+
+            // The card mesh is a unit cube
+            float halfH = 0.5f * Mathf.Abs(baseLocalScale.y) * hoverScale;
+            float halfW = 0.5f * Mathf.Abs(baseLocalScale.x) * hoverScale;
+            float ViewY(Vector3 local) => cam.WorldToViewportPoint(parent.TransformPoint(local)).y;
+            float ViewX(Vector3 local) => cam.WorldToViewportPoint(parent.TransformPoint(local)).x;
+
+            float lift = hoverLift;
+            for (int i = 0; i < 120; i++, lift += 0.05f)
+            {
+                Vector3 centre = originalLocalPosition + new Vector3(0f, lift, -hoverPullToCamera);
+                if (ViewY(centre + new Vector3(0f, halfH, 0f)) > 1f - hoverScreenMargin) { lift = Mathf.Max(hoverLift, lift - 0.05f); break; }
+                if (ViewY(centre - new Vector3(0f, halfH, 0f)) >= hoverScreenMargin) break;
+            }
+
+            Vector3 at = originalLocalPosition + new Vector3(0f, lift, -hoverPullToCamera);
+            float dx = 0f;
+            for (int i = 0; i < 120 && ViewX(at + new Vector3(dx - halfW, 0f, 0f)) < hoverScreenMargin; i++) dx += 0.05f;
+            for (int i = 0; i < 120 && ViewX(at + new Vector3(dx + halfW, 0f, 0f)) > 1f - hoverScreenMargin; i++) dx -= 0.05f;
+            return new Vector2(dx, lift);
+        }
+
+        private void ResetHoverCollider()
+        {
+            if (HoveredInHand == this) HoveredInHand = null;
+            if (box == null) return;
+            box.size = boxSize;
+            box.center = boxCenter;
         }
 
         private void OnMouseExit()
@@ -491,6 +553,7 @@ namespace TawanOS.CardEngine
         public void Unhover(bool instant = false)
         {
             isHovered = false;
+            ResetHoverCollider();
             transform.DOKill();
             if (instant)
             {
@@ -504,6 +567,11 @@ namespace TawanOS.CardEngine
                 transform.DOLocalRotateQuaternion(originalLocalRotation, 0.15f);
                 transform.DOScale(baseLocalScale, 0.15f);
             }
+        }
+
+        private void OnDestroy()
+        {
+            if (HoveredInHand == this) HoveredInHand = null;
         }
 
         private void Update()
@@ -674,6 +742,7 @@ namespace TawanOS.CardEngine
         public void ReturnToHand()
         {
             isHovered = false;
+            ResetHoverCollider();
             transform.DOKill();
             transform.DOLocalMove(originalLocalPosition, 0.25f).SetEase(Ease.OutQuad);
             transform.DOLocalRotateQuaternion(originalLocalRotation, 0.25f);
@@ -703,6 +772,7 @@ namespace TawanOS.CardEngine
             }
 
             transform.SetParent(targetSlot.transform, worldPositionStays: true);
+            ResetHoverCollider();
             transform.DOKill();
             transform.DOLocalMove(Vector3.zero, 0.3f).SetEase(Ease.OutQuad)
                 .OnComplete(() => transform.localPosition = Vector3.zero);

@@ -149,6 +149,16 @@ namespace TawanOS.CardEngine
             SetFill(player.fill, KhwanDisplay.Fill(s.playerKhwan, s.maxPlayerKhwan), ref lastPlayerRatio, player.root);
             KhwanDisplay.SetTempStrip(player.tempStrip, s.playerKhwan, s.maxPlayerKhwan);
 
+            // A raised hand card shows whole: the Khwan bar fades out of its way and back once the hover ends
+            // (Game Designer, 24 Oct)
+            var hovered = CardView3D.HoveredInHand;
+            bool cardRaised = hovered != null && hovered.IsHovered;
+            var panelGroup = player.root.GetComponent<CanvasGroup>();
+            if (panelGroup == null) panelGroup = player.root.gameObject.AddComponent<CanvasGroup>();
+            panelGroup.alpha = Mathf.MoveTowards(panelGroup.alpha, cardRaised ? 0f : 1f, Time.unscaledDeltaTime * 6f);
+            // ... and the vignette eases off so a card at the screen's edge is not darkened
+            HoverVignetteEase.Tick(cardRaised);
+
             var turns = TurnPhaseController.Instance;
             bool isCombatOver = combat.IsCombatOver;
             bool isPlayerTurn = !isCombatOver;

@@ -256,16 +256,27 @@ namespace TawanOS.CardEngine
         private void ApplyStyle()
         {
             if (style == null || merit == null || corruption == null) return;
-            float upper = style.upperY, lower = style.lowerY;
-            Apply(merit, style.merit, style.meritOnTop ? upper : lower);
-            Apply(corruption, style.corruption, style.meritOnTop ? lower : upper);
+            float size = style.size;
+            if (style.topLeftRow)
+            {
+                // A row at the top-left corner: the 'upper' gauge on the left
+                float y = -(style.topMargin + size * 0.5f);
+                float left = style.leftMargin + size * 0.5f, right = left + size + style.rowGap;
+                Apply(merit, style.merit, new Vector2(0f, 1f), new Vector2(style.meritOnTop ? left : right, y));
+                Apply(corruption, style.corruption, new Vector2(0f, 1f), new Vector2(style.meritOnTop ? right : left, y));
+                return;
+            }
+            float upper = style.upperY, lower = style.lowerY, x = style.leftMargin + size * 0.5f;
+            Apply(merit, style.merit, new Vector2(0f, 0.5f), new Vector2(x, style.meritOnTop ? upper : lower));
+            Apply(corruption, style.corruption, new Vector2(0f, 0.5f), new Vector2(x, style.meritOnTop ? lower : upper));
         }
 
-        private void Apply(Gauge g, FlameGaugeStyleSO.Palette pal, float y)
+        private void Apply(Gauge g, FlameGaugeStyleSO.Palette pal, Vector2 anchor, Vector2 position)
         {
             float size = style.size;
             g.root.sizeDelta = Vector2.one * size;
-            g.root.anchoredPosition = new Vector2(style.leftMargin + size * 0.5f, y);
+            g.root.anchorMin = g.root.anchorMax = anchor;
+            g.root.anchoredPosition = position;
             g.face.sizeDelta = Vector2.one * size;
 
             g.material.SetColor("_FlameColor", pal.flame);

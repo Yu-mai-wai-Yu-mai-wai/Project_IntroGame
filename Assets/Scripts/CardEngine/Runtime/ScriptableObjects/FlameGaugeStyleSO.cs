@@ -35,6 +35,14 @@ namespace TawanOS.CardEngine
         public float lowerY = -105f;
         [Tooltip("On: กุศล is the upper gauge. Off: มลทิน is the upper gauge.")]
         public bool meritOnTop = false;
+        [Tooltip("On: both gauges sit in a row at the top-left corner, out of the way of a raised hand card (Game " +
+                 "Designer, 24 Oct); the 'upper' gauge is the left one and Upper Y / Lower Y are not used. Off: stacked " +
+                 "at the left side, at Upper Y / Lower Y.")]
+        public bool topLeftRow = true;
+        [Tooltip("Top-left row: distance from the top of the screen to the top of the gauges' squares.")]
+        public float topMargin = 0f;
+        [Tooltip("Top-left row: space between the two gauges' squares (negative = they overlap).")]
+        public float rowGap = -40f;
 
         [Header("Ring (fractions of the gauge's square, 0.5 = its edge)")]
         [Tooltip("Inner edge of the ring = edge of the black plate behind the number.")]

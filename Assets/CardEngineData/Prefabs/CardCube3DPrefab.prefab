@@ -137,9 +137,12 @@ MonoBehaviour:
   textOnPlainWhite: {r: 0.12, g: 0.08, b: 0.05, a: 1}
   textOnPlainBlack: {r: 0.95, g: 0.9, b: 0.85, a: 1}
   khwanDamagedColor: {r: 0.9, g: 0.1, b: 0.1, a: 1}
+  attackRaisedColor: {r: 0.35, g: 0.95, b: 0.35, a: 1}
+  attackLoweredColor: {r: 0.9, g: 0.1, b: 0.1, a: 1}
   hoverLift: 1
   hoverPullToCamera: 0.6
-  hoverScale: 1.15
+  hoverScale: 1.45
+  hoverScreenMargin: 0.02
 --- !u!1 &9004239742615636460
 GameObject:
   m_ObjectHideFlags: 0

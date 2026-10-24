@@ -20,6 +20,11 @@ namespace TawanOS.CardEngine
         [Tooltip("Space kept free at each side of the screen, as a share of the screen width.")]
         [Range(0f, 0.2f)] public float screenMargin = 0.03f;
 
+        [Header("Hover")]
+        [Tooltip("While a hand card is hovered, the cards beside it slide this far aside (in card widths) so it shows " +
+                 "whole and they stay in sight (Game Designer, 24 Oct)")]
+        public float hoverSpread = 0.45f;
+
         [Header("Draw Animation")]
         [Tooltip("Optional. Cards fly from this deck pile into the hand. Auto-found in the scene if empty.")]
         public DeckPileView3D deckPile;
@@ -33,6 +38,7 @@ namespace TawanOS.CardEngine
         private bool simultaneousDraw;
         private float lastFitSpan = -1f;
         private Vector2 cardSize; // one card's width and height in the hand container's units, measured once
+        private CardView3D spreadFor; // the hovered card the others last slid aside for (null: none)
 
         // The next batch of drawn cards flies in all at once instead of staggered (opening hand)
         public void BeginSimultaneousDraw()
@@ -115,9 +121,40 @@ namespace TawanOS.CardEngine
                 if (span > 0f && Mathf.Abs(span - lastFitSpan) > 0.05f) layoutDirty = true;
             }
 
-            if (!layoutDirty) return;
-            layoutDirty = false;
-            UpdateHandLayout();
+            if (layoutDirty)
+            {
+                layoutDirty = false;
+                UpdateHandLayout();
+            }
+            SpreadAroundHovered();
+        }
+
+        // The cards beside a hovered card slide aside (the nearest the most), and back when the hover ends
+        private void SpreadAroundHovered()
+        {
+            CardView3D hovered = activeViews.Find(v => v != null && v.IsHovered && !v.IsHeld && v.transform.parent == handContainer);
+            if (hovered == spreadFor) return;
+            spreadFor = hovered;
+            if (cardSize.x <= 0f) cardSize = MeasureCard();
+
+            int h = hovered != null ? activeViews.IndexOf(hovered) : -1;
+            for (int i = 0; i < activeViews.Count; i++)
+            {
+                var view = activeViews[i];
+                if (view == null || i == h || view.IsHovered || view.IsHeld || view.transform.parent != handContainer) continue;
+                float dx = 0f;
+                if (h >= 0)
+                {
+                    int away = i - h;
+                    dx = Mathf.Sign(away) * hoverSpread * cardSize.x / Mathf.Abs(away);
+                }
+                // DOKill also stops a card's own way back from a hover (it stood upright and larger), so finish that too:
+                // its tilt in the hand's arc and its size
+                view.transform.DOKill();
+                view.transform.DOLocalMove(view.RestingLocalPosition + new Vector3(dx, 0f, 0f), 0.15f).SetEase(Ease.OutQuad);
+                view.transform.DOLocalRotateQuaternion(view.RestingLocalRotation, 0.15f);
+                view.transform.DOScale(view.BaseScale, 0.15f);
+            }
         }
 
         // How far apart (in the hand container's units) the first and last card's centres may be so that both
@@ -262,6 +299,7 @@ namespace TawanOS.CardEngine
 
             if (newlyDrawn.Count > 0) simultaneousDraw = false;
             newlyDrawn.Clear();
+            spreadFor = null; // the layout moved every card back to rest: slide aside again if one is hovered
         }
     }
 }
