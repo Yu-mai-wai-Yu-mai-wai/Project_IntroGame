@@ -23,8 +23,6 @@ namespace TawanOS.GameFlow
         private static readonly Color Gold = new Color(0.93f, 0.78f, 0.45f);
         private static readonly Color Parchment = new Color(0.96f, 0.92f, 0.82f);
         private static readonly Color Muted = new Color(0.66f, 0.61f, 0.54f);
-        private static readonly Color Ember = new Color(0.55f, 0.16f, 0.08f);
-        private static readonly Color ButtonBrown = new Color(0.3f, 0.2f, 0.16f);
 
         [MenuItem("Tools/TawanOS/Meru/Setup Meru Scene")]
         private static void SetupMeruScene_Menu()
@@ -95,23 +93,23 @@ namespace TawanOS.GameFlow
             // One hidden card the panel copies; it lives in the panel's grid
             view.cardTemplate = R.BuildCardTemplate(view.upgradeColumn.cardGrid, bodyFont, charm, panelSprite);
 
-            view.leaveButton = SmallButton("LeaveButton", root, new Vector2(0.42f, 0.06f), new Vector2(0.58f, 0.12f), bodyFont, panelSprite, "จากไปเฉย ๆ");
+            view.leaveButton = TalismanButton("LeaveButton", root, new Vector2(0.5f, 0.09f), charm, "จากไปเฉย ๆ");
 
             BuildResultPanel(view, root, charm, bodyFont, panelSprite);
             return view;
         }
 
-        // The upgrade panel: dark and a little see-through with a soft top edge, the run deck as a scrolling grid six
-        // cards across, a prompt, and its back and confirm buttons. MeruViewUI lays it over the middle of the screen
+        // The upgrade panel: dark and a little see-through with soft edges, the run deck as a scrolling grid six
+        // cards across, a prompt, and its back and confirm buttons. MeruViewUI lays it in the middle of the screen
         // and slides it up from the bottom when the furnace door is clicked (Game Designer, 24 Oct)
         private static MeruViewUI.Column BuildPanel(string name, Transform root, TMP_FontAsset charm, TMP_FontAsset font, Sprite panelSprite)
         {
             var column = new MeruViewUI.Column();
-            column.root = R.Rect(name, root, new Vector2(0.08f, 0f), new Vector2(0.92f, 0.8f));
+            column.root = R.Rect(name, root, new Vector2(0.08f, 0.1f), new Vector2(0.92f, 0.9f));
 
             column.background = R.Img("Background", column.root, Vector2.zero, Vector2.one, new Color(0f, 0f, 0f, 0.9f), null);
             column.background.raycastTarget = false;
-            column.background.gameObject.AddComponent<TawanOS.UI.SoftEdgeImage>().SetSides(0f, 0f, 0.06f, 0f);
+            column.background.gameObject.AddComponent<TawanOS.UI.SoftEdgeImage>().SetSides(0.02f, 0.02f, 0.06f, 0.06f);
 
             var panel = R.Rect("Panel", column.root, Vector2.zero, Vector2.one);
             panel.offsetMin = new Vector2(24f, 0f);
@@ -144,9 +142,8 @@ namespace TawanOS.GameFlow
             scroll.content = content;
             column.cardGrid = content;
 
-            column.backButton = SmallButton("BackButton", panel, new Vector2(0.08f, 0.03f), new Vector2(0.44f, 0.1f), font, panelSprite, "ย้อนกลับ");
-            column.confirmButton = SmallButton("ConfirmButton", panel, new Vector2(0.56f, 0.03f), new Vector2(0.92f, 0.1f), font, panelSprite, "อัพเกรด");
-            column.confirmButton.GetComponent<Image>().color = Ember;
+            column.backButton = TalismanButton("BackButton", panel, new Vector2(0.27f, 0.065f), charm, "ย้อนกลับ");
+            column.confirmButton = TalismanButton("ConfirmButton", panel, new Vector2(0.73f, 0.065f), charm, "อัพเกรด");
             column.confirmLabel = column.confirmButton.GetComponentInChildren<TextMeshProUGUI>();
             return column;
         }
@@ -166,17 +163,24 @@ namespace TawanOS.GameFlow
             view.resultCard = R.BuildCardTemplate(holder, sarabun, charm, panelSprite);
             view.resultCard.name = "ResultCard";
 
-            view.continueButton = SmallButton("ContinueButton", panel, new Vector2(0.4f, 0f), new Vector2(0.6f, 0.1f), sarabun, panelSprite, "เดินทางต่อ");
+            view.continueButton = TalismanButton("ContinueButton", panel, new Vector2(0.5f, 0.05f), charm, "เดินทางต่อ");
             panel.gameObject.SetActive(false);
         }
 
-        private static Button SmallButton(string name, Transform parent, Vector2 min, Vector2 max, TMP_FontAsset font, Sprite panelSprite, string label)
+        // An old paper ยันต์ like the fight's end-turn button (UiTalismanButton, Game Designer 24 Oct), its middle at
+        // `center` of the parent, the label in ink between its two seals
+        private static Button TalismanButton(string name, Transform parent, Vector2 center, TMP_FontAsset font, string label)
         {
-            var bg = R.Img(name, parent, min, max, ButtonBrown, panelSprite);
+            var bg = R.Img(name, parent, center, center, Color.white, null);
+            bg.rectTransform.sizeDelta = new Vector2(330f, 86f);
             var button = bg.gameObject.AddComponent<Button>();
-            var t = R.Text("Label", bg.transform, Vector2.zero, Vector2.one, font, 28, Parchment, TextAlignmentOptions.Center);
+            button.targetGraphic = bg;
+            var t = R.Text("Label", bg.transform, new Vector2(0.2f, 0f), new Vector2(0.8f, 1f), font, 30, Parchment, TextAlignmentOptions.Center);
+            t.fontStyle = FontStyles.Bold;
             t.text = label;
             t.raycastTarget = false;
+            R.AutoSize(t, 18, 30);
+            bg.gameObject.AddComponent<TawanOS.VFX.UiTalismanButton>();
             return button;
         }
     }

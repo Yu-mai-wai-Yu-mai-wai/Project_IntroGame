@@ -22,7 +22,7 @@ namespace TawanOS.GameFlow
         public class Column
         {
             public RectTransform root;
-            [Tooltip("Dark, a little see-through, with a soft top edge.")]
+            [Tooltip("Dark, a little see-through, with soft edges.")]
             public Image background;
             public CanvasGroup panelGroup;
             public TextMeshProUGUI promptText;
@@ -48,10 +48,12 @@ namespace TawanOS.GameFlow
         public Button continueButton;
 
         [Header("Look")]
-        [Tooltip("Height of the upgrade panel once up, as a fraction of the screen.")]
+        [Tooltip("Height of the upgrade panel once up, as a fraction of the screen; it sits in the middle.")]
         [Range(0.3f, 1f)] public float panelHeight = 0.8f;
         [Tooltip("Space left at each side of the panel, as a fraction of the screen width.")]
         [Range(0f, 0.3f)] public float panelSideMargin = 0.08f;
+        [Tooltip("How dark the whole screen goes behind the panel while it is up (Game Designer, 24 Oct).")]
+        [Range(0f, 1f)] public float screenDim = 0.75f;
         [Min(0.05f)] public float slideSeconds = 0.6f;
 
         // Set by MeruStageView in its Awake: it shuts the door when the panel goes back down
@@ -66,24 +68,46 @@ namespace TawanOS.GameFlow
         private CanvasGroup group;
         private RectTransform canvasRect;
         private Vector2 resultCardHome;
+        private Image dim; // darkens the whole screen behind the panel, with the panel's slide
         private RewardCardView pickedView;
 
         /// <summary>The upgrade panel can be brought up (something to upgrade, not up already, nothing playing).</summary>
         public bool CanOpenPanel => meru != null && canUpgrade && !open && !busy;
         public bool PanelOpen => open;
+        /// <summary>A เมรุ upgrade panel is up (the run deck pile at the bottom of the screen hides meanwhile).</summary>
+        public static bool AnyPanelOpen => current != null && current.open;
+        private static MeruViewUI current;
 
         private void Awake()
         {
+            current = this;
             canvasRect = (RectTransform)transform;
             group = GetComponent<CanvasGroup>();
             if (group == null) group = gameObject.AddComponent<CanvasGroup>();
             if (cardTemplate != null) cardTemplate.gameObject.SetActive(false);
             if (resultCard != null) resultCardHome = ((RectTransform)resultCard.transform).anchoredPosition;
 
+            // Behind everything on this canvas, so the panel and its buttons sit on a dark screen instead of floating
+            var dimGo = new GameObject("ScreenDim", typeof(RectTransform));
+            dimGo.transform.SetParent(transform, false);
+            dimGo.transform.SetAsFirstSibling();
+            var dimRt = (RectTransform)dimGo.transform;
+            dimRt.anchorMin = Vector2.zero;
+            dimRt.anchorMax = Vector2.one;
+            dimRt.offsetMin = dimRt.offsetMax = Vector2.zero;
+            dim = dimGo.AddComponent<Image>();
+            dim.color = Color.clear;
+            dim.raycastTarget = false;
+
             if (upgradeColumn.confirmButton != null) upgradeColumn.confirmButton.onClick.AddListener(Confirm);
             if (upgradeColumn.backButton != null) upgradeColumn.backButton.onClick.AddListener(Back);
             if (leaveButton != null) leaveButton.onClick.AddListener(() => meru?.Leave());
             if (continueButton != null) continueButton.onClick.AddListener(() => meru?.Leave());
+        }
+
+        private void OnDestroy()
+        {
+            if (current == this) current = null;
         }
 
         private void OnEnable()
@@ -267,16 +291,18 @@ namespace TawanOS.GameFlow
                 .SetEase(target < column.hidden ? Ease.OutCubic : Ease.InOutCubic).SetId(column).SetLink(gameObject);
         }
 
-        // Across the middle of the screen from the bottom up to panelHeight, pushed below the screen by `hidden`
+        // In the middle of the screen, panelHeight tall, pushed below the screen by `hidden` (Game Designer, 24 Oct)
         private void ApplyColumn()
         {
             var column = upgradeColumn;
             if (column.root == null) return;
             float screenHeight = canvasRect.rect.height > 0f ? canvasRect.rect.height : 1080f;
-            column.root.anchorMin = new Vector2(panelSideMargin, 0f);
-            column.root.anchorMax = new Vector2(1f - panelSideMargin, panelHeight);
-            column.root.anchoredPosition = new Vector2(0f, -(panelHeight * screenHeight + 40f) * column.hidden);
+            float bottom = (1f - panelHeight) * 0.5f, top = (1f + panelHeight) * 0.5f;
+            column.root.anchorMin = new Vector2(panelSideMargin, bottom);
+            column.root.anchorMax = new Vector2(1f - panelSideMargin, top);
+            column.root.anchoredPosition = new Vector2(0f, -(top * screenHeight + 40f) * column.hidden);
             column.root.sizeDelta = Vector2.zero;
+            if (dim != null) dim.color = new Color(0f, 0f, 0f, screenDim * (1f - Mathf.Clamp01(column.hidden)));
         }
 
         private static void SetGroup(CanvasGroup g, bool on)
