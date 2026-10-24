@@ -55,8 +55,9 @@ MonoBehaviour:
     tutorialFightEnemy: {fileID: 11400000, guid: d0b3c231e3ec2c34caf8af6f330ad687, type: 2}
     tutorialOpeningHand:
     - {fileID: 11400000, guid: 1ba19c6e581946ddb57e8cab6e2fbb94, type: 2}
+    - {fileID: 11400000, guid: 130dc1e8007e44babdc907a6ecb67eae, type: 2}
     - {fileID: 11400000, guid: 7590c4d9a3464f80a678bb0fed6a7a1a, type: 2}
-    - {fileID: 11400000, guid: cb5fda8b4036455b8e1cbf368795bf1b, type: 2}
+    - {fileID: 11400000, guid: ae65b9ddd4324187943853a583d0c67b, type: 2}
   - backgroundVideo: {fileID: 0}
     background: {fileID: 21300000, guid: ae5d8d81db7e3c04f9663ef01906ee09, type: 3}
     blackScreen: 0

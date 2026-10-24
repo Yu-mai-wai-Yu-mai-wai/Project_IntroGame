@@ -18,7 +18,7 @@ namespace TawanOS.CardEngine
             switch (phase)
             {
                 case TurnPhase.PlayerBoard:
-                    return isBoardCard ? null : "อาคมใช้ได้ในเฟสร่ายอาคม กด Space เพื่อไปเฟสนั้น";
+                    return isBoardCard ? null : "อาคมใช้ได้ในเฟสร่ายอาคม กดปุ่มจบช่วงเพื่อไปเฟสนั้น";
                 case TurnPhase.PlayerSpell:
                     return isBoardCard ? "เฟสนี้ร่ายอาคมได้อย่างเดียว บริวารและเครื่องรางลงได้ในเฟสก่อนหน้าเท่านั้น" : null;
                 case TurnPhase.EnemyBoard:
@@ -69,9 +69,9 @@ namespace TawanOS.CardEngine
                 case TurnPhase.PitPick:
                     return "คลิกเลือกการ์ด 1 ใบจากหลุมกลาง";
                 case TurnPhase.PlayerBoard:
-                    return "ลากการ์ดลงช่อง · กด Space เมื่อลงเสร็จ";
+                    return "ลากการ์ดลงช่อง · ลงเสร็จแล้วกดปุ่มจบช่วง";
                 case TurnPhase.PlayerSpell:
-                    return "ลากการ์ดอาคมไปใช้ · กด Space เพื่อจบเทิร์น";
+                    return "ลากการ์ดอาคมไปใช้ · เสร็จแล้วกดปุ่มจบเทิร์น";
                 case TurnPhase.EnemyBoard:
                 case TurnPhase.EnemySpell:
                     return "รอศัตรู ยังเล่นการ์ดไม่ได้";

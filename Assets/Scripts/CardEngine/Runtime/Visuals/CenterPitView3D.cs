@@ -153,6 +153,7 @@ namespace TawanOS.CardEngine
         }
 
         private static bool BlocksInput => TawanOS.UI.PauseMenu.IsPaused || TawanOS.UI.TutorialCoach.Blocking
+            || !TawanOS.UI.TutorialCoach.AllowsPitPick
             || CardDetailPanelUI.BlocksInput || CombatCameraRig3D.BlocksInput
             || (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver);
 

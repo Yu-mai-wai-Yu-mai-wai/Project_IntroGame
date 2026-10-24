@@ -56,6 +56,14 @@ namespace TawanOS.CardEngine
         private Quaternion topRot;
         private float topFov;
         private int zoomZone;
+        /// <summary>The W view is zoomed onto the player's row / the centre pit / the enemy's row (the tutorial checks).</summary>
+        public bool ZoomedOnPlayer => zoomZone == ZoomPlayer;
+        public bool ZoomedOnPit => zoomZone == ZoomPit;
+        public bool ZoomedOnEnemy => zoomZone == ZoomEnemy;
+        public bool Zoomed => zoomZone != ZoomNone;
+
+        // A camera key pressed this frame that the tutorial allows now
+        private static bool Key(KeyCode key) => Input.GetKeyDown(key) && TawanOS.UI.TutorialCoach.AllowsCameraKey(key);
         private int topRequests;
         private bool locked;
 
@@ -187,11 +195,13 @@ namespace TawanOS.CardEngine
             if (!CardDetailPanelUI.IsOpen && !GraveyardPanelUI.IsOpen && !DeckViewerPanelUI.IsOpen
                 && !TawanOS.UI.TutorialCoach.Blocking && !TawanOS.VFX.BossPhaseCutscene.Playing)
             {
-                bool zoomKeys = IsBoardOnlyView && (zoomZone != ZoomNone || Input.GetKeyDown(rowZoomKey));
+                bool zoomKeys = IsBoardOnlyView && (zoomZone != ZoomNone || Key(rowZoomKey));
                 if (zoomKeys) HandleRowZoomKeys();
-                else if (Input.GetKeyDown(topKey) && !userTop) ToggleTopView();
-                else if (Input.GetKeyDown(homeKey)) ReturnHome();
+                else if (Key(topKey) && !userTop) ToggleTopView();
+                else if (Key(homeKey)) ReturnHome();
             }
+            // Zoomed on the centre pit and the pick is made: back to the normal view (Game Designer, 25 Oct)
+            if (zoomZone == ZoomPit && !PitPicking) ReturnHome();
 
             // Right-click a card: its detail screen. A held card or a target choice uses right-click to cancel.
             if (!Input.GetMouseButtonDown(1) || BlocksInput
@@ -257,7 +267,9 @@ namespace TawanOS.CardEngine
                 foreach (var canvas in FindObjectsByType<Canvas>(FindObjectsSortMode.None))
                 {
                     if (!canvas.isRootCanvas || !canvas.enabled || canvas.renderMode == RenderMode.WorldSpace) continue;
-                    if (canvas.GetComponentInParent<CardDetailPanelUI>() != null || canvas.GetComponentInParent<GraveyardPanelUI>() != null) continue;
+                    if (canvas.GetComponentInParent<CardDetailPanelUI>() != null || canvas.GetComponentInParent<GraveyardPanelUI>() != null
+                        || canvas.GetComponentInParent<TawanOS.UI.TutorialCoach>() != null
+                        || canvas.GetComponentInParent<TawanOS.UI.KeywordTooltipView>() != null) continue; // keyword tooltips work from above too
                     canvas.enabled = false;
                     hiddenCanvases.Add(canvas);
                 }
@@ -296,7 +308,7 @@ namespace TawanOS.CardEngine
         private void HandleRowZoomKeys()
         {
             if (!IsBoardOnlyView) return;
-            if (Input.GetKeyDown(rowZoomKey))
+            if (Key(rowZoomKey))
             {
                 SetRowZoom(zoomZone != ZoomNone ? ZoomNone : PitPicking ? ZoomPit : ZoomPlayer);
                 return;
@@ -305,8 +317,8 @@ namespace TawanOS.CardEngine
 
             int[] steps = PitPicking ? new[] { ZoomPlayer, ZoomPit, ZoomEnemy } : new[] { ZoomPlayer, ZoomEnemy };
             int at = System.Array.IndexOf(steps, zoomZone);
-            if (Input.GetKeyDown(topKey)) SetRowZoom(at < 0 ? ZoomEnemy : steps[Mathf.Min(at + 1, steps.Length - 1)]);
-            else if (Input.GetKeyDown(homeKey)) SetRowZoom(at < 0 ? ZoomPlayer : steps[Mathf.Max(at - 1, 0)]);
+            if (Key(topKey)) SetRowZoom(at < 0 ? ZoomEnemy : steps[Mathf.Min(at + 1, steps.Length - 1)]);
+            else if (Key(homeKey)) SetRowZoom(at < 0 ? ZoomPlayer : steps[Mathf.Max(at - 1, 0)]);
         }
 
         private void SetRowZoom(int zone)

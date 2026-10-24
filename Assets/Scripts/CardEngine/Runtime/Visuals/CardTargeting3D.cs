@@ -6,7 +6,9 @@ using DG.Tweening;
 namespace TawanOS.CardEngine
 {
     // Lets the player pick the card an incantation acts on (บทแผ่เมตตา, คาถาสะกด, ...).
-    // Valid targets on the board pulse and a bobbing arrow points down at the chosen one (like the
+    // The slots under the valid targets light up, the chosen one brighter (Game Designer, 25 Oct: the cards no longer
+    // pulse or lift, which pushed a card at the top of the screen out of view), a card off the board still pulses,
+    // and a bobbing arrow points down at the chosen one (like the
     // cursor in Yu-Gi-Oh! GX Tag Force). The arrow follows the mouse onto a target, or Left / Right
     // (A / D) move it between targets. Left-click a target or Enter confirms; right-click or Esc
     // cancels. Created on demand.
@@ -47,6 +49,7 @@ namespace TawanOS.CardEngine
         private CardView3D source;
         private readonly List<CardView3D> targetViews = new List<CardView3D>();
         private readonly Dictionary<CardView3D, Vector3> baseScales = new Dictionary<CardView3D, Vector3>();
+        private readonly Dictionary<CardView3D, Renderer> slotGlows = new Dictionary<CardView3D, Renderer>();
         private CardView3D hovered;
         private CardView3D focused; // the card the pointer is on
         private Transform pointer;
@@ -103,6 +106,13 @@ namespace TawanOS.CardEngine
                 if (view == sourceView || view.CardData == null || !targets.Contains(view.CardData)) continue;
                 targetViews.Add(view);
                 baseScales[view] = view.transform.localScale;
+                var slot = view.transform.parent != null ? view.transform.parent.GetComponent<BoardSlotView>() : null;
+                var play = CardPlayController3D.Instance;
+                if (slot != null && play != null)
+                {
+                    slotGlows[view] = play.CreateSlotGlow(slot);
+                    continue;
+                }
                 view.transform.DOKill();
                 view.transform.DOScale(view.transform.localScale * pulseScale, pulseDuration)
                     .SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
@@ -344,9 +354,10 @@ namespace TawanOS.CardEngine
         private void SetHovered(CardView3D view)
         {
             if (hovered == view) return;
-            if (hovered != null) hovered.transform.DOLocalMove(Vector3.zero, 0.12f);
+            var play = CardPlayController3D.Instance;
+            if (hovered != null && slotGlows.TryGetValue(hovered, out var oldGlow)) play?.SetSlotGlowChosen(oldGlow, false);
             hovered = view;
-            if (hovered != null) hovered.transform.DOLocalMove(Vector3.up * hoverLift, 0.12f);
+            if (hovered != null && slotGlows.TryGetValue(hovered, out var newGlow)) play?.SetSlotGlowChosen(newGlow, true);
         }
 
         public void Cancel()
@@ -366,15 +377,24 @@ namespace TawanOS.CardEngine
             if (pointer != null) pointer.gameObject.SetActive(false);
             focused = null;
 
+            foreach (var glow in slotGlows.Values)
+            {
+                if (glow == null) continue;
+                glow.transform.DOKill();
+                DOTween.Kill(glow.gameObject);
+                Destroy(glow.gameObject);
+            }
+
             foreach (var view in targetViews)
             {
-                if (view == null) continue;
+                if (view == null || slotGlows.ContainsKey(view)) continue; // a card with a lit slot was never moved
                 view.transform.DOKill();
                 view.transform.localScale = baseScales[view];
                 view.transform.localPosition = Vector3.zero; // board cards rest on their slot's centre
             }
             targetViews.Clear();
             baseScales.Clear();
+            slotGlows.Clear();
             hovered = null;
             source = null;
             onChosen = null;

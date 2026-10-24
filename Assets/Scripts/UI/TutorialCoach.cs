@@ -10,15 +10,15 @@ using UnityEngine.UI;
 namespace TawanOS.UI
 {
     /// <summary>
-    /// Step-by-step spotlight hints for the tutorial fight in the intro story. Each hint shows once, when the fight
-    /// first reaches the moment it explains (the first enemy board phase, the first time Corruption rises, ...):
-    /// the screen goes dark except a lit window around what the hint is about (the hand, the board row, the Merit
-    /// panel, the draw pile, ...), with the text beside it. The fight is frozen and card input is blocked while a
-    /// hint is up; a click or Enter goes to the next one. "ข้ามบทสอน" leaves the fight at once.
+    /// The tutorial fight in the intro story (Game Designer, 25 Oct: learn by doing). A scripted run of steps
+    /// (TutorialFlow.cs): explanations, where the screen goes dark except a lit window around what they are about,
+    /// the fight frozen, and the ต่อไป button (or Enter) goes on; and things to do, where the screen stays clear, a
+    /// line at the top says what to do and a blinking arrow points at it, and only that is allowed until it is done.
+    /// After the last step the player plays on alone. There is no skipping.
     /// Started by GameFlowManager; built in code, no scene setup needed. The words come from
     /// <see cref="TutorialTextSO"/> (Resources/TutorialText.asset), editable in the Inspector.
     /// </summary>
-    public class TutorialCoach : MonoBehaviour
+    public partial class TutorialCoach : MonoBehaviour
     {
         public static TutorialCoach Instance { get; private set; }
 
@@ -54,6 +54,7 @@ namespace TawanOS.UI
             public string title;
             public string body;
             public Target target;
+            public Func<Rect?> rect; // where to light, worked out each frame (screen pixels); overrides target
             public bool final; // the end-of-fight message: no buttons, the fight is not frozen
         }
 
@@ -104,104 +105,26 @@ namespace TawanOS.UI
             Instance = this;
             words = TutorialTextSO.Current;
             Build();
-            Add("enemyKhwan", Target.EnemyStatus, words.enemyKhwan);
-            Add("playerKhwan", Target.PlayerStatus, words.playerKhwan);
+            BuildTask();
         }
 
         private void Start()
         {
             turns = TurnPhaseController.Instance;
             combat = CombatManager.Instance;
-            if (turns != null)
-            {
-                turns.OnPhaseChanged += HandlePhase;
-                turns.OnTurnStarted += HandleTurnStarted;
-            }
-            if (combat != null)
-            {
-                combat.OnCorruptionChanged += HandleCorruption;
-                combat.OnCurseBackfireTriggered += HandleBackfire;
-                combat.OnCombatEnded += HandleCombatEnded;
-            }
+            if (combat != null) combat.OnCombatEnded += HandleCombatEnded;
+            StartFlow();
         }
 
         private void OnDestroy()
         {
             RestoreTime();
             if (Instance == this) Instance = null;
-            if (turns != null)
-            {
-                turns.OnPhaseChanged -= HandlePhase;
-                turns.OnTurnStarted -= HandleTurnStarted;
-            }
-            if (combat != null)
-            {
-                combat.OnCorruptionChanged -= HandleCorruption;
-                combat.OnCurseBackfireTriggered -= HandleBackfire;
-                combat.OnCombatEnded -= HandleCombatEnded;
-            }
+            if (combat != null) combat.OnCombatEnded -= HandleCombatEnded;
+            EndFlow();
         }
 
-        // ---------------------------------------------------------------- when each hint shows
-
-        private void HandlePhase(TurnPhase phase)
-        {
-            switch (phase)
-            {
-                case TurnPhase.EnemyBoard:
-                    Add("enemyFirst", Target.EnemyBoard, words.enemyFirst);
-                    break;
-
-                case TurnPhase.PlayerBoard:
-                    CountHand(out int boardCards, out int incantations);
-                    Add("hand", Target.Hand, words.hand, ("boardCards", boardCards), ("incantations", incantations));
-                    Add("board", Target.PlayerBoard, words.board);
-                    int first = combat != null ? combat.FirstTurnMerit : 2;
-                    int max = combat != null ? combat.State.playerMaxMerit : 6;
-                    Add("merit", Target.Merit, words.merit, ("first", first), ("max", max));
-                    break;
-
-                case TurnPhase.PlayerSpell:
-                    Add("spell", Target.Hand, words.spell);
-                    break;
-
-                case TurnPhase.Clash:
-                    Add("clash", Target.BothBoards, words.clash);
-                    break;
-            }
-        }
-
-        private static void CountHand(out int boardCards, out int incantations)
-        {
-            boardCards = incantations = 0;
-            if (CardManager.Instance == null) return;
-            foreach (var card in CardManager.Instance.Hand)
-            {
-                if (card.cardType == CardType.Incantation) incantations++;
-                else boardCards++;
-            }
-        }
-
-        private void HandleTurnStarted(int turn)
-        {
-            if (turn != 2) return;
-            Add("drawPile", Target.DrawPile, words.drawPile);
-            Add("graveyard", Target.Graveyard, words.graveyard);
-            Add("centerPit", Target.DrawPit, words.centerPit);
-            Add("inspect", Target.None, words.inspect);
-        }
-
-        private void HandleCorruption(int current, int threshold)
-        {
-            if (current <= 0) return;
-            Add("corruption", Target.Corruption, words.corruption,
-                ("threshold", threshold), ("khwanLoss", EffectResolver.CurseBackfireKhwanLoss));
-        }
-
-        private void HandleBackfire()
-        {
-            Add("backfire", Target.Corruption, words.backfire, ("khwanLoss", EffectResolver.CurseBackfireKhwanLoss));
-        }
+        // ---------------------------------------------------------------- the end-of-fight message
 
         private void HandleCombatEnded(bool victory)
         {
@@ -219,9 +142,14 @@ namespace TawanOS.UI
 
         private void Enqueue(string key, Target target, TutorialTextSO.Hint hint, bool final, params (string name, int value)[] numbers)
         {
+            Enqueue(key, target, null, hint, final, numbers);
+        }
+
+        private void Enqueue(string key, Target target, Func<Rect?> rect, TutorialTextSO.Hint hint, bool final, params (string name, int value)[] numbers)
+        {
             if (!shown.Add(key)) return;
             if (queue.Count == 0 && !showing) queuedAt = Time.unscaledTime;
-            queue.Enqueue(new Tip { key = key, title = hint.title, body = Fill(hint.body, numbers), target = target, final = final });
+            queue.Enqueue(new Tip { key = key, title = hint.title, body = Fill(hint.body, numbers), target = target, rect = rect, final = final });
         }
 
         // "{name}" in the text set in the Inspector becomes the game's number
@@ -245,13 +173,12 @@ namespace TawanOS.UI
             }
             else if (showing && !current.final && !PauseMenu.IsPaused && Time.frameCount > closedFrame
                 && Time.frameCount > confirmClosedFrame
-                && (Input.GetMouseButtonDown(0) && !OverSkipButton()
-                    || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
+                && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))) // or the ต่อไป button
             {
                 Next();
             }
 
-            if (showing) PlaceSpotlight(current.target); // the camera or the cards may still move under it
+            if (showing) PlaceSpotlight(current); // the camera or the cards may still move under it
 
             group.alpha = Mathf.MoveTowards(group.alpha, showing ? 1f : 0f, FadeSpeed * Time.unscaledDeltaTime);
             group.blocksRaycasts = showing && !current.final;
@@ -262,11 +189,11 @@ namespace TawanOS.UI
             current = queue.Dequeue();
             titleText.text = current.title;
             bodyText.text = current.body;
-            stepText.text = current.final ? "" : words.nextPrompt;
+            stepText.text = "";
             buttonsRow.SetActive(!current.final);
             showing = true;
             if (!current.final) FreezeTime();
-            PlaceSpotlight(current.target);
+            PlaceSpotlight(current);
         }
 
         // For the automated test (AutomatedTutorialFlowTest)
@@ -281,7 +208,7 @@ namespace TawanOS.UI
             get
             {
                 if (box == null) return false;
-                PlaceSpotlight(current != null ? current.target : Target.None);
+                PlaceSpotlight(current);
                 var corners = new Vector3[4];
                 box.GetWorldCorners(corners);
                 foreach (var c in corners)
@@ -358,15 +285,19 @@ namespace TawanOS.UI
         private bool OverSkipButton()
         {
             var skip = buttonsRow != null ? (RectTransform)buttonsRow.transform.GetChild(0) : null;
-            return skip != null && RectTransformUtility.RectangleContainsScreenPoint(skip, Input.mousePosition, null);
+            return skip != null && skip.gameObject.activeInHierarchy
+                && RectTransformUtility.RectangleContainsScreenPoint(skip, Input.mousePosition, null);
         }
 
         // ---------------------------------------------------------------- the lit window
 
         // Darkens everything but the target's screen rectangle and puts the text box beside it
-        private void PlaceSpotlight(Target target)
+        private void PlaceSpotlight(Tip tip)
         {
-            bool lit = TryFindScreenRect(target, out Rect r);
+            Rect r = default;
+            Rect? given = tip != null && tip.rect != null ? tip.rect() : null;
+            bool lit = given.HasValue ? (r = given.Value).width > 1f && r.height > 1f
+                : TryFindScreenRect(tip != null ? tip.target : Target.None, out r);
             ShowingLit = lit;
             if (lit)
             {
@@ -644,8 +575,11 @@ namespace TawanOS.UI
             rowLayout.childForceExpandHeight = false;
 
             MakeButton(row, words.skipButton, theme.black, theme.text, AskSkip); // child 0, see OverSkipButton
-            stepText = UiFactory.CreateText(row, "Next", "", theme.labelSize, theme.accent, TextAlignmentOptions.Right, theme.bodyFont);
+            // No skipping the tutorial fight (Game Designer, 25 Oct): the button is built but hidden
+            row.GetChild(0).gameObject.SetActive(false);
+            stepText = UiFactory.CreateText(row, "Prompt", "", theme.labelSize, theme.accent, TextAlignmentOptions.Right, theme.bodyFont);
             stepText.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+            MakeButton(row, words.nextButton, theme.crimson, theme.text, Next); // ต่อไป (Game Designer, 25 Oct: a button, not a click anywhere)
 
             BuildConfirm(canvas.transform);
         }

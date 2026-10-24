@@ -72,6 +72,11 @@ namespace TawanOS.CardEngine
         // Face text laid out like the card design: cost top-left, name + type top-right,
         // attack / Khwan in the middle band, ability text in the bottom box. nameLabel is the name.
         private TMP_Text costLabel, typeLabel, attackLabel, khwanLabel, descriptionLabel;
+        // The face's parts, for the tutorial to point at
+        public TMP_Text CostLabel => costLabel;
+        public TMP_Text AttackLabel => attackLabel;
+        public TMP_Text KhwanLabel => khwanLabel;
+        public TMP_Text DescriptionLabel => descriptionLabel;
 
         // The statuses on a card in play are shown as symbols (CardStatusTags refreshes them): the set last drawn
         private string shownStatuses = "";

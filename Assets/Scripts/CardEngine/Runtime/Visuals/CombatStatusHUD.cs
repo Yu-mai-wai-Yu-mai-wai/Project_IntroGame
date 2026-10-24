@@ -334,6 +334,7 @@ namespace TawanOS.CardEngine
 
             p.button.onClick.AddListener(() =>
             {
+                if (!TawanOS.UI.TutorialCoach.AllowsEndTurn) return; // the tutorial says when
                 var turns = TurnPhaseController.Instance;
                 if (turns != null && turns.isActiveAndEnabled)
                 {

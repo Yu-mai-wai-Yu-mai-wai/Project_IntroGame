@@ -7,7 +7,7 @@ namespace TawanOS.CardEngine
     // The turn loop. Every turn: Draw (from turn 2 also one card each from the center pit, CenterPit) -> the
     // enemy plays familiars/amulets -> the player plays familiars/amulets -> the enemy casts incantations -> the player casts incantations -> the board
     // clash -> End. The enemy always commits first, so the player answers what it put down. Add it to any object in the combat scene; while it is enabled, CombatManager hands
-    // the turn flow over to it. The End Turn button and the Space key finish each of the player's phases.
+    // the turn flow over to it. The End Turn button finishes each of the player's phases (no key since 25 Oct: Space is the camera's zoom).
     public class TurnPhaseController : MonoBehaviour
     {
         public static TurnPhaseController Instance { get; private set; }
@@ -37,7 +37,6 @@ namespace TawanOS.CardEngine
         public float enemyPhaseEndDelay = 0.4f;
 
         [Header("Testing")]
-        public KeyCode endTurnKey = KeyCode.Space;
         public bool showDebugLabel = true;
 
         public TurnPhase CurrentPhase { get; private set; } = TurnPhase.None;
@@ -48,6 +47,8 @@ namespace TawanOS.CardEngine
 
         public event Action<TurnPhase> OnPhaseChanged;
         public event Action<int> OnTurnStarted;
+        /// <summary>While this returns true the turn waits before the enemy's board phase (the tutorial's opening steps).</summary>
+        public static Func<bool> HoldBeforeEnemyBoard;
 
         private bool endTurnRequested;
         private Coroutine loop;
@@ -127,11 +128,7 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
-            if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver) return;
-            if (Input.GetKeyDown(endTurnKey) && !TawanOS.UI.PauseMenu.IsPaused && !TawanOS.UI.TutorialCoach.Blocking
-                && !TawanOS.VFX.BossPhaseCutscene.Playing
-                && !(CombatCameraRig3D.Instance != null && CombatCameraRig3D.Instance.IsTopView))
-                RequestEndTurn(); // Space ends the turn only in the normal view with the hand; from above it zooms the camera (CombatCameraRig3D)
+            // The turn is ended with the End Turn button only (Game Designer, 25 Oct: no Space key)
         }
 
         private IEnumerator TurnLoop()
@@ -180,6 +177,8 @@ namespace TawanOS.CardEngine
                 }
 
                 // --- 1. Enemy: familiars / amulets ---
+                // The tutorial may hold the turn here while it explains the hand (TutorialCoach)
+                while (HoldBeforeEnemyBoard != null && HoldBeforeEnemyBoard()) yield return null;
                 if (enemyActs)
                 {
                     SetPhase(TurnPhase.EnemyBoard);
@@ -267,7 +266,7 @@ namespace TawanOS.CardEngine
             yield return new WaitForSeconds(pitPickDelay);
         }
 
-        // Waits for the player to finish one play phase (End Turn button / Space)
+        // Waits for the player to finish one play phase (End Turn button)
         private IEnumerator PlayerPhase(TurnPhase phase)
         {
             endTurnRequested = false;
@@ -350,7 +349,7 @@ namespace TawanOS.CardEngine
 
             if (CombatCameraRig3D.HideOverlay) return; // the board-only camera view hides all UI
             if (!showDebugLabel || !debugOverlayVisible) return;
-            GUI.Label(new Rect(10, 10, 500, 24), $"Turn {TurnNumber}  |  Phase: {CurrentPhase}  |  [{endTurnKey}] next phase");
+            GUI.Label(new Rect(10, 10, 500, 24), $"Turn {TurnNumber}  |  Phase: {CurrentPhase}  |  End Turn button: next phase");
             if (CombatManager.Instance != null)
             {
                 var move = CombatManager.Instance.nextEnemyMove;

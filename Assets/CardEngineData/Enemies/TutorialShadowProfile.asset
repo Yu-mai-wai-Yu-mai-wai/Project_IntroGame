@@ -18,14 +18,17 @@ MonoBehaviour:
   maxKhwan: 10
   deck:
   - {fileID: 11400000, guid: 1ba19c6e581946ddb57e8cab6e2fbb94, type: 2}
-  - {fileID: 11400000, guid: 60a7338b3591472cb1c95622807a5661, type: 2}
   - {fileID: 11400000, guid: 1ba19c6e581946ddb57e8cab6e2fbb94, type: 2}
+  - {fileID: 11400000, guid: 16247a9ec67b4df0ae1fcedec0a5a5a0, type: 2}
+  - {fileID: 11400000, guid: 60a7338b3591472cb1c95622807a5661, type: 2}
   startingHandSize: 3
   drawPerTurn: 1
   maxHandSize: 10
   maxCardsPerTurn: 6
+  mistakeChance: 0
+  pitMistakeChance: 0
   scriptedDeck: 1
-  cardsPerTurn: 010000000100000001000000
+  cardsPerTurn: 01000000010000000100000001000000
   moves:
   - intent: 0
     baseValue: 6
@@ -49,3 +52,14 @@ MonoBehaviour:
   initialAIState: 
   isBoss: 0
   phase2Profile: {fileID: 0}
+  phase2AtKhwanRatio: 0
+  cardEachTurn: {fileID: 0}
+  lines:
+    combatStart: []
+    playCard: []
+    hurt: []
+    playerHurt: []
+    lowKhwan: []
+    phaseChange: []
+    enemyWins: []
+    enemyLoses: []

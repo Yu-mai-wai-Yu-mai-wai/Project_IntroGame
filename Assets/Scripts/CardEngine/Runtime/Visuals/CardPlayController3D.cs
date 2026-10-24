@@ -86,6 +86,7 @@ namespace TawanOS.CardEngine
 
             // An unplayable card leaves the current selection as it is
             var card = view.CardData;
+            if (!TawanOS.UI.TutorialCoach.AllowsPlaying(card)) return; // the tutorial asks for one card at a time
             if (!CanStartPlaying(card)) return;
 
             if (held != null)
@@ -110,6 +111,7 @@ namespace TawanOS.CardEngine
             else if (EffectResolver.GetTargetedAbility(card) != null)
             {
                 var targets = EffectResolver.Instance.GetValidTargets(card, casterIsPlayer: true);
+                targets.RemoveAll(t => !TawanOS.UI.TutorialCoach.AllowsTarget(card, t));
                 CardTargeting3D.Ensure().Begin(view, targets, OnTargetChosen, OnTargetCancelled);
             }
             else
@@ -317,6 +319,7 @@ namespace TawanOS.CardEngine
             {
                 if (slot.side != BoardSlotView.SlotSide.Player) continue;
                 if (slot.GetComponent<DeckPileView3D>() != null || slot.name.Contains("Deck")) continue;
+                if (!TawanOS.UI.TutorialCoach.AllowsSlot(card, slot)) continue; // the tutorial's chosen slot only
                 if (anyLane)
                 {
                     if (EffectResolver.IsFamiliarSlot(slot.slotIndex)) yield return slot;
@@ -339,6 +342,15 @@ namespace TawanOS.CardEngine
         {
             HideSlotMarkers();
             foreach (var slot in EmptyPlayerSlots(held != null ? held.CardData : null))
+                slotMarkers[slot] = CreateSlotGlow(slot);
+        }
+
+        /// <summary>
+        /// A sheet of light on a slot, gently swelling (the empty slots a held card can go to; also the slots under the
+        /// cards an incantation can target, CardTargeting3D). Destroy its GameObject to remove it.
+        /// </summary>
+        public Renderer CreateSlotGlow(BoardSlotView slot)
+        {
             {
                 var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 go.name = "SlotMarker";
@@ -365,9 +377,16 @@ namespace TawanOS.CardEngine
                 var mat = r.material;
                 DOTween.To(() => 0f, a => { c.a = a; mat.SetColor(ColorId, c); }, slotColor.a, 0.2f).SetTarget(go);
                 go.transform.DOScale(go.transform.localScale * 1.08f, 0.5f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
-
-                slotMarkers[slot] = r;
+                return r;
             }
+        }
+
+        /// <summary>Lights a slot glow as the chosen one (true) or as one that can be chosen.</summary>
+        public void SetSlotGlowChosen(Renderer glow, bool chosen)
+        {
+            if (glow == null) return;
+            DOTween.Kill(glow.gameObject); // its fade-in, which would set the colour back
+            SetMarkerColor(glow, chosen ? slotHoverColor : slotColor);
         }
 
         // The width and length in world units of the held card once placed in this slot (BoardSlotView.FitCardScale):
