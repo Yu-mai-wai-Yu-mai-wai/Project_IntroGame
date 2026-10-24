@@ -126,6 +126,7 @@ namespace TawanOS.CardEngine
             wasWaiting = waiting;
 
             var under = waiting ? SlotUnderMouse() : null;
+            if (under != null) TawanOS.UI.PointerCursor.Hover();
             if (under != hovered)
             {
                 if (hovered != null) Rest(hovered);

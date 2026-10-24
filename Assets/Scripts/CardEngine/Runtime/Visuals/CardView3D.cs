@@ -586,6 +586,7 @@ namespace TawanOS.CardEngine
                 ResyncHover();
             }
             wasIgnoringMouse = ignoring;
+            if (isHovered && !ignoring && IsInHand) TawanOS.UI.PointerCursor.Hover(); // a hand card can be picked up
         }
 
         // ---------------------------------------------------------------- status symbols

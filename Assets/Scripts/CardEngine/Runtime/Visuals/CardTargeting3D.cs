@@ -189,6 +189,7 @@ namespace TawanOS.CardEngine
                 arrow.SetPosition(1, over != null ? over.transform.position : aimPoint);
             }
 
+            if (over != null) TawanOS.UI.PointerCursor.Hover();
             CardView3D pick = Input.GetMouseButtonDown(0) ? over
                 : Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) ? focused
                 : null;

@@ -211,6 +211,7 @@ namespace TawanOS.CardEngine
 
             if (boardCard && CardTargeting3D.BlocksInput) return; // picking the card an amulet acts on
             if (boardCard) UpdateSlotHover();
+            if (boardCard && hoveredSlot != null) TawanOS.UI.PointerCursor.Hover();
 
             if (!Input.GetMouseButtonDown(0) || Time.frameCount == selectedFrame) return;
             if (TawanOS.UI.TutorialCoach.Blocking) return; // the click that closes a tutorial hint, not a cast

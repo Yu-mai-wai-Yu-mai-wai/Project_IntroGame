@@ -114,6 +114,7 @@ namespace TawanOS.ShopEngine
 
             bool over = PointerOnPot();
             if (over != hovering) SetHover(over);
+            if (over) TawanOS.UI.PointerCursor.Hover();
             if ((over && Input.GetMouseButtonDown(0)) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.Space))
                 SetMenu(true);
         }

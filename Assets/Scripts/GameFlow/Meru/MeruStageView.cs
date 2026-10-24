@@ -112,6 +112,7 @@ namespace TawanOS.GameFlow
             }
 
             bool over = doorClick != null && PointerOn(doorClick);
+            if (over) TawanOS.UI.PointerCursor.Hover();
             if (over != doorHovered) HoverDoor(over);
             if (over && Input.GetMouseButtonDown(0)) OpenDoor();
         }

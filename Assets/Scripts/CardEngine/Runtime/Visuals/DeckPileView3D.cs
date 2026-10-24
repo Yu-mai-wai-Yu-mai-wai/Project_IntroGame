@@ -74,9 +74,11 @@ namespace TawanOS.CardEngine
 
         private void Update()
         {
-            if (!clickToView || TawanOS.UI.PauseMenu.IsPaused || !Input.GetMouseButtonDown(0)) return;
+            if (!clickToView || TawanOS.UI.PauseMenu.IsPaused) return;
             if (CardTargeting3D.BlocksInput || CardPlayController3D.BlocksInput || CombatCameraRig3D.BlocksInput) return;
             if (!IsPointerOver()) return;
+            TawanOS.UI.PointerCursor.Hover();
+            if (!Input.GetMouseButtonDown(0)) return;
 
             DeckViewerPanelUI.Ensure().Show("กองจั่ว",
                 () => CardManager.Instance != null ? CardManager.Instance.DrawPile : null,

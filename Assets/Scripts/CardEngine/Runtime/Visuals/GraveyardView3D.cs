@@ -84,6 +84,8 @@ namespace TawanOS.CardEngine
         {
             if (TawanOS.UI.PauseMenu.IsPaused) return;
             bool over = IsPointerOver();
+            if (over && !CardTargeting3D.BlocksInput && !CardPlayController3D.BlocksInput && !CombatCameraRig3D.BlocksInput)
+                TawanOS.UI.PointerCursor.Hover();
             if (over != hovered)
             {
                 hovered = over;

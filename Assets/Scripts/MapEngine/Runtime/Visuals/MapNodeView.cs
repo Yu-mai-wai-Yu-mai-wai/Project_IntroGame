@@ -173,6 +173,13 @@ namespace TawanOS.MapEngine
             }
         }
 
+        // The hand cursor over a node the player can walk to
+        private void OnMouseOver()
+        {
+            if (!CardEngine.DeckViewerPanelUI.BlocksInput && NodeData != null && NodeData.status == NodeStatus.Attainable)
+                TawanOS.UI.PointerCursor.Hover();
+        }
+
         private void OnMouseExit()
         {
             ShowHoverRing(false);
