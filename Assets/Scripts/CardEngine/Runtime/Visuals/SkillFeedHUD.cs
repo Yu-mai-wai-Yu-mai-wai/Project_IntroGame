@@ -204,8 +204,10 @@ namespace TawanOS.CardEngine
                 if (s.root != null) Destroy(s.root.gameObject);
                 return;
             }
-            s.group.DOFade(0f, 0.4f).SetLink(s.root.gameObject).OnComplete(() => Destroy(s.root.gameObject));
-            Layout();
+            // Fades where it is (Game Designer, 25 Oct): the other strips stay put rather than sliding up into its place;
+            // the gap closes when the next strip comes in at the top
+            s.root.DOKill();
+            s.group.DOFade(0f, 0.7f).SetEase(Ease.InQuad).SetLink(s.root.gameObject).OnComplete(() => Destroy(s.root.gameObject));
         }
 
         private void Update()
