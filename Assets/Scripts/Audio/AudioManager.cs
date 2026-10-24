@@ -72,10 +72,13 @@ namespace TawanOS.Audio
 
             bgmA = NewSource("BgmA", loop: true, bgmGroup ?? masterGroup);
             bgmB = NewSource("BgmB", loop: true, bgmGroup ?? masterGroup);
-            ambience = NewSource("Ambience", loop: true, bgmGroup ?? masterGroup);
+            // Ambience has its own slider in Settings, so it skips the music group (the music slider would scale it too)
+            ambience = NewSource("Ambience", loop: true, masterGroup);
             sfx = NewSource("Sfx", loop: false, sfxGroup ?? masterGroup);
             bgmActive = bgmA;
             ApplyVolumes();
+            // The Settings sliders write through GameSettings; follow them at once, not only on the next launch
+            TawanOS.Settings.GameSettings.OnChanged += ApplyVolumes;
 
             // Most game scenes ship without an AudioListener, and Unity plays nothing without one.
             // This object lives for the whole session, so it owns the one listener; others get switched off.
@@ -87,6 +90,7 @@ namespace TawanOS.Audio
         private void OnDestroy()
         {
             SceneManager.sceneLoaded -= OnSceneLoadedMuteOtherListeners;
+            if (Instance == this) TawanOS.Settings.GameSettings.OnChanged -= ApplyVolumes;
             if (Instance == this) Instance = null;
         }
 
@@ -135,7 +139,7 @@ namespace TawanOS.Audio
             var clip = Resolve(key);
             ambience.Stop();
             ambience.clip = clip;
-            ambience.volume = SourceVolumeBgm();
+            ambience.volume = AmbienceVolume();
             if (clip != null) ambience.Play();
         }
 
@@ -195,6 +199,9 @@ namespace TawanOS.Audio
             return LoadVolume(AudioChannel.Bgm); // master = AudioListener.volume (GameSettings)
         }
 
+        // The ambience slider; it is not on a mixer group of its own, so it is set on the source
+        private static float AmbienceVolume() => TawanOS.Settings.GameSettings.GetVolume(TawanOS.Settings.VolumeChannel.Ambience);
+
         private void ApplyVolumes()
         {
             if (mixer != null)
@@ -206,7 +213,7 @@ namespace TawanOS.Audio
             // Source volume for crossfade and non-mixer fallback
             float bgmVol = SourceVolumeBgm();
             if (crossfade == null && bgmActive != null) bgmActive.volume = bgmVol;
-            if (ambience != null) ambience.volume = bgmVol;
+            if (ambience != null) ambience.volume = AmbienceVolume();
             // SFX uses PlayOneShot volume; when mixer is absent, scale is applied there.
         }
 
