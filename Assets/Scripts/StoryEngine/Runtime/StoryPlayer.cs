@@ -405,8 +405,9 @@ namespace TawanOS.StoryEngine
         public bool IsAskingSkip => askingSkip;
 
         /// <summary>
-        /// Skip button / Esc. With a tutorial fight still ahead, asks whether to skip the tutorial as well
-        /// (<see cref="AnswerSkip"/>); otherwise the story ends and the game starts.
+        /// Skip button / Esc. With a tutorial fight still ahead, asks first (<see cref="AnswerSkip"/>): skipping the story
+        /// skips its tutorial too (Game Designer, 25 Oct: story and tutorial, or play now; no "skip to the tutorial" button);
+        /// otherwise the story ends and the game starts.
         /// </summary>
         public void Skip()
         {
@@ -479,10 +480,10 @@ namespace TawanOS.StoryEngine
             layout.childForceExpandHeight = false;
             panel.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            UiFactory.CreateText(rt, "Title", "ต้องการข้ามบทสอนเล่นด้วยไหม?", theme.titleSize, theme.accent, TextAlignmentOptions.Center,
+            UiFactory.CreateText(rt, "Title", "ต้องการข้ามเนื้อเรื่องไหม?", theme.titleSize, theme.accent, TextAlignmentOptions.Center,
                 theme.titleFont != null ? theme.titleFont : theme.bodyFont);
             var body = UiFactory.CreateText(rt, "Body",
-                "ข้ามบทสอน: เริ่มการเดินทางบนแผนที่ทันที\nเล่นบทสอน: ข้ามเนื้อเรื่องไปสู้ในฝัน แล้วค่อยเล่าเรื่องต่อ",
+                "ข้ามเนื้อเรื่อง: ข้ามทั้งเนื้อเรื่องและบทสอน เริ่มเดินทางบนแผนที่ทันที\nยกเลิก: ดูเนื้อเรื่องและบทสอนต่อ",
                 26f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
             body.lineSpacing = 12f;
 
@@ -494,8 +495,7 @@ namespace TawanOS.StoryEngine
             rowLayout.childForceExpandWidth = false;
             rowLayout.childForceExpandHeight = false;
             SkipButton(row, "ยกเลิก (Esc)", theme.black, CloseSkipQuestion);
-            SkipButton(row, "เล่นบทสอน", theme.crimson, () => AnswerSkip(false));
-            SkipButton(row, "ข้ามบทสอน", theme.crimson, () => AnswerSkip(true));
+            SkipButton(row, "ข้ามเนื้อเรื่อง", theme.crimson, () => AnswerSkip(true));
 
             skipQuestion.SetActive(false);
         }
