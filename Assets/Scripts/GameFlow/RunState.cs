@@ -104,6 +104,15 @@ namespace TawanOS.GameFlow
         public NodeType ResumeNodeType { get; private set; }
         public int ResumeFloor { get; private set; }
 
+        /// <summary>The run's deck was shown to the player on the first map screen ("นี่คือสำรับของคุณ", RunDeckButton).</summary>
+        public bool DeckIntroShown { get; private set; }
+        public void SetDeckIntroShown()
+        {
+            if (DeckIntroShown) return;
+            DeckIntroShown = true;
+            Changed();
+        }
+
         public bool MeruUsed { get; private set; }
         public void SetMeruUsed(bool used)
         {
@@ -305,6 +314,7 @@ namespace TawanOS.GameFlow
             deckInitialized = false;
             Resume = ResumeKind.None;
             MeruUsed = false;
+            DeckIntroShown = false;
             ShopStock = null;
             PendingReward = null;
             OnChanged?.Invoke();
@@ -516,6 +526,7 @@ namespace TawanOS.GameFlow
                 resumeFloor = ResumeFloor,
                 blessingPurchases = new Dictionary<string, int>(blessingPurchases),
                 meruUsed = MeruUsed,
+                deckIntroShown = DeckIntroShown,
                 shopStock = ShopStock,
                 pendingReward = PendingReward,
             };
@@ -569,6 +580,7 @@ namespace TawanOS.GameFlow
             }
 
             MeruUsed = data.meruUsed;
+            DeckIntroShown = data.deckIntroShown;
             ShopStock = data.shopStock;
             PendingReward = data.pendingReward;
         }
@@ -593,6 +605,7 @@ namespace TawanOS.GameFlow
             public int resumeFloor;
             public Dictionary<string, int> blessingPurchases;
             public bool meruUsed;
+            public bool deckIntroShown;
             public SavedShopStock shopStock;
             public SavedRewardData pendingReward;
         }

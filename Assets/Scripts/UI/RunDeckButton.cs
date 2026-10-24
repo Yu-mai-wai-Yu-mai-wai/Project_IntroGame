@@ -79,10 +79,26 @@ namespace TawanOS.UI
             if (mode == LoadSceneMode.Additive) return;
             inRunScene = Places.TryGetValue(scene.name, out float y);
             if (inRunScene) pile.anchoredPosition = new Vector2(0f, y);
+            // The first map screen of a run opens the deck by itself (Game Designer, 25 Oct); the player closes it
+            introAt = scene.name == MapSceneName && !RunState.Current.DeckIntroShown ? Time.unscaledTime + IntroDelay : 0f;
+        }
+
+        private const string MapSceneName = "MapTestScene";
+        private const float IntroDelay = 0.8f; // let the map settle in first
+        private float introAt;
+
+        private void ShowIntroWhenFree()
+        {
+            if (introAt <= 0f || Time.unscaledTime < introAt || RunState.Current.Deck.Count == 0) return;
+            if (DeckViewerPanelUI.IsOpen || PauseMenu.IsPaused || SettingsPanel.IsOpen) return;
+            introAt = 0f;
+            RunState.Current.SetDeckIntroShown();
+            DeckViewerPanelUI.Ensure().Show("นี่คือสำรับของคุณ", RunState.Current.Deck, "ยังไม่มีการ์ดในสำรับ");
         }
 
         private void Update()
         {
+            ShowIntroWhenFree();
             int count = RunState.Current.Deck.Count;
             bool show = inRunScene && count > 0 && !DeckViewerPanelUI.IsOpen && !PauseMenu.IsPaused && !SettingsPanel.IsOpen
                         && !MeruViewUI.AnyPanelOpen;
