@@ -354,7 +354,7 @@ namespace TawanOS.CardEngine
                     int hit = StrikeDamageOn(attacker, t, attack); // ผีตายโหง on a cursed card
                     Debug.Log($"[Clash] {attacker.cardNameThai} hits {t.cardNameThai} for {hit}");
                     int khwanBefore = t.familiarHealth;
-                    DamageCard(t, hit, ignoreArmor: false, attacker, fromPlayer);
+                    DamageCard(t, hit, ignoreArmor: false, attacker, fromPlayer, cause: $"hit by {attacker.cardNameThai}");
                     PierceOnStrike(attacker, t, hit, khwanBefore, fromPlayer);
                     ThornsOnStrike(attacker, t, fromPlayer);
                     // ผีตายโหง: riders on the card it just hit
@@ -363,7 +363,8 @@ namespace TawanOS.CardEngine
             }
 
             // กรรมตามสนอง: the damage dealt comes back on the attacker
-            if (HasCardStatus(attacker, CardStatusType.Karma)) DamageCard(attacker, attack, ignoreArmor: true, source: null, sourceIsPlayer: !fromPlayer);
+            if (HasCardStatus(attacker, CardStatusType.Karma))
+                DamageCard(attacker, attack, ignoreArmor: true, source: null, sourceIsPlayer: !fromPlayer, cause: "กรรมตามสนอง (its own hit came back)");
         }
 
         // Called once the whole clash is over. The other cards keep their columns.

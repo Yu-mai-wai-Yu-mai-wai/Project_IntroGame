@@ -59,7 +59,7 @@ Never hand-edit asset YAML.
 Add to `EffectResolver.Abilities.cs` (partial class `EffectResolver`), hooked to existing events, and teach `EnemyCardPlayer.ScoreAbilities` about each one:
 1. **Heal triggers:** on-heal trigger for ผีแม่ย่านาง (attack once per turn), พระเครื่อง (enemy loses = heal, max 3/turn), ผ้ายันต์ ("if you healed this turn"); ลูกประคำ: every heal +1.
 2. **Death / sacrifice:** on-ally-death trigger for เปรต, ตะกรุดดำ, หุ่นพยนต์ (first per turn); Sacrifice for ผีปอบ and พิธีฝังรูปฝังรอย (heal = the sacrificed familiar's Khwan); พิธีเรียกวิญญาณ revives the last 2, and they are exiled if they die again; บทสวดส่งวิญญาณ returns to hand, or destroys if Cursed.
-3. **Curse:** a Cursed familiar that dies makes its owner lose its remaining Curse as Khwan; ผีตายโหง +1 damage to Cursed targets; หัวกะโหลก: Curse does not go down; คาถาถอนคุณไสย moves Curses to the opposite side.
+3. **Curse:** ~~a Cursed familiar that dies makes its owner lose its remaining Curse as Khwan~~ (not the designer's rule: written into this handoff by Claude, taken out of the game 22 Oct); ผีตายโหง +1 damage to Cursed targets; หัวกะโหลก: Curse does not go down; คาถาถอนคุณไสย moves Curses to the opposite side.
 4. **Amulets that break:** use counters for ตะกรุดดำ / ด้ายแดง / มหาอุด, break at 0; ด้ายแดงผูกจิต links a lane (the other dies too); ผ้าประเจียดดำ +1 ATK per 3 Corruption; พิธีสะเดาะเคราะห์ destroys the enemy amulet; บทชินบัญชร: one target deals less damage until next turn.
 
 Existing keywords to reuse: `PhiAm` (cannot attack), `Taunt` (Guard), `Protect`, `Overhead` (Flying), `OverheadMagnet` (Anti-air).

@@ -5,8 +5,9 @@ using UnityEngine;
 namespace TawanOS.CardEngine
 {
     // หลุมกลาง: every turn after the first, 4 cards are dealt face up between the two boards (2 familiars,
-    // 1 incantation, 1 amulet). On top of its normal deck draw, each side takes one, the first pick
-    // alternating (turn 2 the enemy, turn 3 the player, ...), and the cards left over are thrown away.
+    // 1 incantation, 1 amulet), half of them White Magic and half Black, which slot gets which at random (22 Oct).
+    // On top of its normal deck draw, each side takes one, the first pick alternating (turn 2 the enemy, turn 3 the
+    // player, ...), and the cards left over are thrown away.
     // TurnPhaseController runs the picks; CenterPitView3D shows the cards in 4 slots and takes the player's click.
     public class CenterPit : MonoBehaviour
     {
@@ -79,23 +80,44 @@ namespace TawanOS.CardEngine
 
             var pool = catalog.BaseCards();
             int cap = CostCap(turn);
-            DealType(pool, CardType.Familiar, familiars, cap);
-            DealType(pool, CardType.Incantation, incantations, cap);
-            DealType(pool, CardType.Amulet, amulets, cap);
-            Debug.Log($"[CenterPit] Turn {turn} (cost {cap} or less): " + string.Join(", ", offer.ConvertAll(c => c.cardNameThai)));
+
+            var slots = new List<CardType>();
+            for (int i = 0; i < familiars; i++) slots.Add(CardType.Familiar);
+            for (int i = 0; i < incantations; i++) slots.Add(CardType.Incantation);
+            for (int i = 0; i < amulets; i++) slots.Add(CardType.Amulet);
+
+            // Half the slots White, half Black (an odd one either), shuffled over the slots
+            var schools = new List<MagicSchool>();
+            for (int i = 0; i < slots.Count; i++)
+                schools.Add(i < slots.Count / 2 ? MagicSchool.WhiteMagic
+                    : i < slots.Count / 2 * 2 ? MagicSchool.BlackMagic
+                    : UnityEngine.Random.value < 0.5f ? MagicSchool.WhiteMagic : MagicSchool.BlackMagic);
+            for (int i = schools.Count - 1; i > 0; i--)
+            {
+                int j = UnityEngine.Random.Range(0, i + 1);
+                (schools[i], schools[j]) = (schools[j], schools[i]);
+            }
+
+            for (int i = 0; i < slots.Count; i++) DealOne(pool, slots[i], schools[i], cap);
+            Debug.Log($"[CenterPit] Turn {turn} (cost {cap} or less): "
+                + string.Join(", ", offer.ConvertAll(c => $"{c.cardNameThai} ({(c.magicSchool == MagicSchool.WhiteMagic ? "W" : "B")})")));
             OnDealt?.Invoke();
         }
 
-        private void DealType(List<CardDataSO> pool, CardType type, int count, int cap)
+        // One card of this type and school, the cheap ones (cost <= cap) when there are any. A type with no card of
+        // that school at all is dealt from the other school, so the slot is never empty.
+        private void DealOne(List<CardDataSO> pool, CardType type, MagicSchool school, int cap)
         {
-            var kind = pool.FindAll(c => c.cardType == type);
+            var kind = pool.FindAll(c => c.cardType == type && c.magicSchool == school);
+            if (kind.Count == 0)
+            {
+                kind = pool.FindAll(c => c.cardType == type);
+                Debug.LogWarning($"[CenterPit] No {school} {type} to deal; dealing either school");
+            }
             var cheap = kind.FindAll(c => Cost(c) <= cap);
             if (cheap.Count > 0) kind = cheap;
             if (kind.Count == 0) return;
-            for (int i = 0; i < count; i++)
-            {
-                offer.Add(new CardInstance(kind[UnityEngine.Random.Range(0, kind.Count)]));
-            }
+            offer.Add(new CardInstance(kind[UnityEngine.Random.Range(0, kind.Count)]));
         }
 
         public void BeginPlayerPick() => WaitingForPlayer = offer.Count > 0;

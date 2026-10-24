@@ -70,6 +70,10 @@ namespace TawanOS.CardEngine
         public int maxHandSize = 10;
         [Tooltip("Safety cap on cards played in one enemy turn.")]
         public int maxCardsPerTurn = 6;
+        [Tooltip("โอกาสที่ศัตรูเล่นพลาดในแต่ละใบ: เล่นการ์ดที่ดีเป็นอันดับ 2 แทนอันดับ 1 0 = เล่นตามแผนที่ดีที่สุดทุกใบ")]
+        [Range(0f, 1f)] public float mistakeChance = 0f;
+        [Tooltip("โอกาสที่ศัตรูหยิบการ์ดจากหลุมกลางพลาด: เอาใบที่เข้ากับมือน้อยที่สุดแทนใบที่ดีที่สุด 0 = หยิบใบที่ดีที่สุดทุกครั้ง")]
+        [Range(0f, 1f)] public float pitMistakeChance = 0f;
 
         [Header("Scripted Deck (tutorial bot)")]
         [Tooltip("On = a scripted bot: the deck is not shuffled, turn N draws Cards Per Turn[N-1] cards in deck order " +

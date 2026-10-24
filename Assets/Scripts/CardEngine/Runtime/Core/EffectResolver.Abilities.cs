@@ -246,7 +246,7 @@ namespace TawanOS.CardEngine
 
                     if (s.type == CardStatusType.DoneKhong)
                     {
-                        DamageCard(card, s.stacks, ignoreArmor: true, source: null, sourceIsPlayer: !isPlayer);
+                        DamageCard(card, s.stacks, ignoreArmor: true, source: null, sourceIsPlayer: !isPlayer, cause: $"สาป {s.stacks}");
                         if (card.IsDead) { CurseKilled(isPlayer); break; }
                         if (!CurseFrozen(isPlayer)) s.stacks--; // หัวกะโหลก on the other side keeps it
                         if (s.stacks <= 0) card.statuses.Remove(s);
@@ -255,7 +255,7 @@ namespace TawanOS.CardEngine
 
                     if (s.type == CardStatusType.FireBreak)
                     {
-                        DamageCard(card, FireBreakDamagePerStack * s.stacks, ignoreArmor: true, source: null, sourceIsPlayer: !isPlayer);
+                        DamageCard(card, FireBreakDamagePerStack * s.stacks, ignoreArmor: true, source: null, sourceIsPlayer: !isPlayer, cause: "ไฟแตก");
                     }
                     else if (s.type == CardStatusType.Vital && card.maxKhwan > 0)
                     {
@@ -558,7 +558,7 @@ namespace TawanOS.CardEngine
                     break;
 
                 case AbilityEffect.DamageCard:
-                    DamageCard(target, a.value, a.ignoreArmor, source, ownerIsPlayer);
+                    DamageCard(target, a.value, a.ignoreArmor, source, ownerIsPlayer, cause: $"{source?.cardNameThai}'s {a.trigger} skill");
                     return;
 
                 case AbilityEffect.ApplyStatus:
@@ -580,7 +580,9 @@ namespace TawanOS.CardEngine
         // Damage to a card on the board: เกราะคุ้มภัย blocks the whole hit (one stack per hit), then armor soaks it
         // (both skipped when armor is ignored), Khwan takes the rest. หุ่นพยนต์ sends the whole hit back either way.
         // Dead cards stay on the board until RemoveDeadFamiliars so slots do not shift mid-clash.
-        public int DamageCard(CardInstance target, int amount, bool ignoreArmor, CardInstance source, bool sourceIsPlayer)
+        // cause: what the damage is, for the death log (null = `source`'s skill)
+        public int DamageCard(CardInstance target, int amount, bool ignoreArmor, CardInstance source, bool sourceIsPlayer,
+            string cause = null)
         {
             if (target == null || target.IsDead || amount <= 0) return 0;
             int incoming = amount;
@@ -606,18 +608,21 @@ namespace TawanOS.CardEngine
             if (source != null) target.lastAttacker = source;
             OnFamiliarDamaged?.Invoke(target, amount);
 
-            if (target.IsDead) HandleDeath(target, source, sourceIsPlayer);
+            if (target.IsDead)
+                HandleDeath(target, source, sourceIsPlayer, $"{cause ?? (source != null ? $"{source.cardNameThai}'s skill" : "unknown")}, {amount} damage");
 
             return amount;
         }
 
-        private void HandleDeath(CardInstance dead, CardInstance killer, bool killerIsPlayer)
+        // cause: what killed it, for the log ("[Death] กุมารทอง [s_wf05] (player, column 2) died: hit by เปรต, 4 damage")
+        private void HandleDeath(CardInstance dead, CardInstance killer, bool killerIsPlayer, string cause)
         {
             if (dead.deathHandled) return;
             dead.deathHandled = true;
-            OnFamiliarDied?.Invoke(dead);
 
             bool deadIsPlayer = TryFindCard(dead, out bool isPlayer, out _) ? isPlayer : !killerIsPlayer;
+            Debug.Log($"[Death] {dead.cardNameThai} [{dead.cardId}] ({(deadIsPlayer ? "player" : "enemy")}, column {dead.boardSlot}) died: {cause}");
+            OnFamiliarDied?.Invoke(dead);
             TriggerAbilities(dead, AbilityTrigger.OnDeath, deadIsPlayer, killer);
             Sheet7AllyDied(dead, deadIsPlayer);
 

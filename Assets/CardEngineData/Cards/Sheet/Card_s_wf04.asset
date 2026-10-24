@@ -29,7 +29,7 @@ MonoBehaviour:
   shopPrice: 4
   baseValue: 0
   durability: 0
-  familiarHealth: 5
+  familiarHealth: 4
   familiarDamage: 1
   fontSizeAll: 1
   nameFontSize: 1

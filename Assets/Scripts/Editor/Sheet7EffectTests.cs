@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -53,13 +54,46 @@ namespace TawanOS.EditorTools
                 Play("s_wi02");
                 return mgr.State.playerKhwan == mgr.State.maxPlayerKhwan && mgr.State.enemyKhwan == 7;
             });
-            failures += Case("A familiar that dies cursed takes its สาป off its owner's Khwan", () =>
+            failures += Case("The center pit deals 2 White and 2 Black every turn (2 familiars, 1 incantation, 1 amulet)", () =>
+            {
+                var host = new GameObject("PitTest");
+                try
+                {
+                    var pit = host.AddComponent<CenterPit>();
+                    for (int deal = 0; deal < 200; deal++)
+                    {
+                        pit.Deal(2 + deal % 8); // every cost cap
+                        var o = pit.Offer;
+                        int white = 0, familiars = 0, incantations = 0, amulets = 0;
+                        foreach (var c in o)
+                        {
+                            if (c.magicSchool == MagicSchool.WhiteMagic) white++;
+                            if (c.cardType == CardType.Familiar) familiars++;
+                            else if (c.cardType == CardType.Incantation) incantations++;
+                            else amulets++;
+                        }
+                        if (o.Count != 4 || white != 2 || familiars != 2 || incantations != 1 || amulets != 1)
+                        {
+                            Debug.LogError($"  pit deal {deal}: " + string.Join(", ", o.Select(c => $"{c.cardId} {c.magicSchool} {c.cardType}")));
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                finally { Object.DestroyImmediate(host); }
+            });
+            failures += Case("Token cards (Cards/Tokens) are not in the catalog, so the pit, rewards and shop never offer them", () =>
+            {
+                var catalog = CardCatalogAutoRegister.LoadCatalog();
+                return catalog != null && !catalog.cards.Exists(CardCatalogAutoRegister.IsToken);
+            });
+            failures += Case("A familiar that dies cursed costs its owner no Khwan (สาป only hurts the familiar)", () =>
             {
                 var foe = Board(false, "s_bf01", 1);
                 resolver.AddCardStatus(foe, CardStatusType.DoneKhong, 3, 99);
                 mgr.State.enemyKhwan = 10;
                 resolver.DamageCard(foe, 99, ignoreArmor: true, source: null, sourceIsPlayer: true);
-                return mgr.State.enemyKhwan == 7;
+                return mgr.State.enemyKhwan == 10;
             });
             failures += Case("ตะกรุดดำ: two ally deaths cost the enemy 1 each, then it breaks", () =>
             {

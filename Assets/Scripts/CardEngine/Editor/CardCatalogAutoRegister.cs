@@ -5,12 +5,18 @@ using UnityEngine;
 
 namespace TawanOS.CardEngine
 {
-    // Every Card Data asset belongs in Resources/CardCatalog (the pit and random summons draw from it).
+    // Every Card Data asset belongs in Resources/CardCatalog (the pit, rewards and the shop draw from it).
     // A card created anywhere (Create > TawanOS > CardEngine > Card Data, the inspector's New Card
     // button, or a duplicate) is added automatically, and gets its file name as card id if it has none.
+    // Token cards (Cards/Tokens: the หุ่นพยนต์, ผีหัวขาด and กุมารทอง a skill makes) are left out: a skill holds them
+    // by reference, and in the catalog the pit, rewards and shop would hand them out.
     public class CardCatalogAutoRegister : AssetPostprocessor
     {
         private const string CatalogPath = "Assets/CardEngineData/Resources/CardCatalog.asset";
+        public const string TokenFolder = "Assets/CardEngineData/Cards/Tokens/";
+
+        public static bool IsToken(CardDataSO card) =>
+            card != null && AssetDatabase.GetAssetPath(card).StartsWith(TokenFolder);
 
         public static CardCatalogSO LoadCatalog()
         {
@@ -20,7 +26,7 @@ namespace TawanOS.CardEngine
         public static void AddToCatalog(CardDataSO card)
         {
             var catalog = LoadCatalog();
-            if (catalog == null || card == null || catalog.cards.Contains(card)) return;
+            if (catalog == null || card == null || catalog.cards.Contains(card) || IsToken(card)) return;
 
             Undo.RecordObject(catalog, "Add card to catalog");
             catalog.cards.Add(card);
@@ -32,7 +38,7 @@ namespace TawanOS.CardEngine
         {
             foreach (string path in imported)
             {
-                if (!path.EndsWith(".asset")) continue;
+                if (!path.EndsWith(".asset") || path.StartsWith(TokenFolder)) continue;
                 string captured = path;
 
                 // Changing assets during an import is unsafe; do it right after
