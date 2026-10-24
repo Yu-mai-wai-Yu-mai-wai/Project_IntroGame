@@ -10,14 +10,11 @@ using UnityEngine.UI;
 namespace TawanOS.GameFlow
 {
     /// <summary>
-    /// เมรุ screen (Game Designer, 14 Oct). In front of the furnace door two narrow black strips stand at the screen's
-    /// sides, เผาการ์ด on the left and อัพเกรดการ์ด on the right. Clicking one widens it into a column holding the whole
-    /// run deck while the other strip slides away (and <see cref="MeruStageView"/> opens the door and moves the camera
-    /// sideways so the door sits beside the column). In the column: click a card to pick it (right-click for details),
-    /// then the column's button to burn or upgrade it; ย้อนกลับ or Esc goes back to the two strips. The black has a
-    /// smoky edge on its side toward the furnace. After the one action of the visit the stage plays the card into the
-    /// furnace; an upgraded card comes back out and shows here with the way on.
-    /// Without a stage the strips show at once and the result shows straight away.
+    /// เมรุ screen (Game Designer, 24 Oct). The camera faces the furnace door; clicking the door
+    /// (<see cref="MeruStageView"/>) slides the upgrade panel up from the bottom of the screen over its middle. In it:
+    /// click a card to pick it (right-click for details), then อัพเกรด; ย้อนกลับ or Esc slides it back down. After the
+    /// upgrade the stage plays the card into the furnace and the upgraded card comes back out and shows here with the
+    /// way on. Without a stage the panel is up at once and the result shows straight away.
     /// </summary>
     public class MeruViewUI : MonoBehaviour
     {
@@ -25,17 +22,8 @@ namespace TawanOS.GameFlow
         public class Column
         {
             public RectTransform root;
-            [Tooltip("Solid black, drawn with a smoky edge on the side facing the furnace.")]
+            [Tooltip("Dark, a little see-through, with a soft top edge.")]
             public Image background;
-
-            [Header("Strip (before choosing)")]
-            [Tooltip("What shows while the column is a narrow strip; the whole strip is its button.")]
-            public CanvasGroup stripGroup;
-            public Button chooseButton;
-            public TextMeshProUGUI stripTitle;
-            public TextMeshProUGUI stripHint;
-
-            [Header("Column (after choosing)")]
             public CanvasGroup panelGroup;
             public TextMeshProUGUI promptText;
             public TextMeshProUGUI deckText;
@@ -44,16 +32,13 @@ namespace TawanOS.GameFlow
             public TextMeshProUGUI confirmLabel;
             public Button backButton;
 
-            [NonSerialized] public float width;   // fraction of the screen
-            [NonSerialized] public float hidden;  // 0 = on screen, 1 = slid off its side
-            [NonSerialized] public Material smoke;
+            [NonSerialized] public float hidden;  // 0 = up, 1 = below the screen
         }
 
-        [Header("Columns")]
-        public Column burnColumn;
+        [Header("Upgrade panel")]
         public Column upgradeColumn;
         public RewardCardView cardTemplate;
-        [Tooltip("Only shown when nothing can be burnt or upgraded, so the node never traps the player.")]
+        [Tooltip("Only shown when nothing can be upgraded, so the node never traps the player.")]
         public Button leaveButton;
 
         [Header("Result")]
@@ -63,39 +48,29 @@ namespace TawanOS.GameFlow
         public Button continueButton;
 
         [Header("Look")]
-        [Tooltip("Width of a strip before choosing, as a fraction of the screen: a third, so burn, furnace and upgrade share it evenly (Game Designer, 14 Oct).")]
-        [Range(0.05f, 0.5f)] public float stripWidth = 1f / 3f;
-        [Tooltip("Width of the chosen column, as a fraction of the screen; the door sits in the rest.")]
-        [Range(0.2f, 0.8f)] public float columnWidth = 0.58f;
+        [Tooltip("Height of the upgrade panel once up, as a fraction of the screen.")]
+        [Range(0.3f, 1f)] public float panelHeight = 0.8f;
+        [Tooltip("Space left at each side of the panel, as a fraction of the screen width.")]
+        [Range(0f, 0.3f)] public float panelSideMargin = 0.08f;
         [Min(0.05f)] public float slideSeconds = 0.6f;
-        [Tooltip("Width of the smoky edge, in reference pixels (1920 wide screen).")]
-        public float smokePixels = 110f;
-        public float smokeSpeed = 1f;
-        public float smokeScale = 4f;
-        [Tooltip("A strip's title brightens to this while the pointer is on it.")]
-        public Color stripHover = new Color(1f, 0.9f, 0.6f);
-        [Tooltip("How much wider a strip grows under the pointer, as a fraction of the screen.")]
-        [Range(0f, 0.2f)] public float stripHoverGrow = 0.05f;
-        [Tooltip("How far the other strip draws back toward its edge meanwhile, as a fraction of its own width.")]
-        [Range(0f, 1f)] public float stripHoverPush = 0.15f;
-        [Min(0.05f)] public float stripHoverSeconds = 1f;
 
-        // Set by MeruStageView in its Awake: the strips wait until the camera is inside
+        // Set by MeruStageView in its Awake: it shuts the door when the panel goes back down
         [NonSerialized] public MeruStageView stage;
 
         private MeruManager meru;
-        private MeruAction selectedAction;
         private int selected = -1;
-        private bool canBurn, canUpgrade;
-        private bool chosen;
-        private MeruAction chosenAction;
+        private bool canUpgrade;
+        private bool open;
         private bool busy;
-        private readonly List<RewardCardView> burnViews = new List<RewardCardView>();
-        private readonly List<RewardCardView> upgradeViews = new List<RewardCardView>();
+        private readonly List<RewardCardView> views = new List<RewardCardView>();
         private CanvasGroup group;
         private RectTransform canvasRect;
-        private Color stripTitleColor;
         private Vector2 resultCardHome;
+        private RewardCardView pickedView;
+
+        /// <summary>The upgrade panel can be brought up (something to upgrade, not up already, nothing playing).</summary>
+        public bool CanOpenPanel => meru != null && canUpgrade && !open && !busy;
+        public bool PanelOpen => open;
 
         private void Awake()
         {
@@ -105,32 +80,10 @@ namespace TawanOS.GameFlow
             if (cardTemplate != null) cardTemplate.gameObject.SetActive(false);
             if (resultCard != null) resultCardHome = ((RectTransform)resultCard.transform).anchoredPosition;
 
-            Wire(burnColumn, MeruAction.Burn);
-            Wire(upgradeColumn, MeruAction.Upgrade);
+            if (upgradeColumn.confirmButton != null) upgradeColumn.confirmButton.onClick.AddListener(Confirm);
+            if (upgradeColumn.backButton != null) upgradeColumn.backButton.onClick.AddListener(Back);
             if (leaveButton != null) leaveButton.onClick.AddListener(() => meru?.Leave());
             if (continueButton != null) continueButton.onClick.AddListener(() => meru?.Leave());
-        }
-
-        private void Wire(Column column, MeruAction action)
-        {
-            if (column.chooseButton != null)
-            {
-                column.chooseButton.onClick.AddListener(() => Choose(action));
-                var hover = column.chooseButton.gameObject.AddComponent<UnityEngine.EventSystems.EventTrigger>();
-                AddTrigger(hover, UnityEngine.EventSystems.EventTriggerType.PointerEnter, () => HoverStrip(column, true));
-                AddTrigger(hover, UnityEngine.EventSystems.EventTriggerType.PointerExit, () => HoverStrip(column, false));
-            }
-            if (column.confirmButton != null) column.confirmButton.onClick.AddListener(() => Confirm(action));
-            if (column.backButton != null) column.backButton.onClick.AddListener(Back);
-            if (column.stripTitle != null) stripTitleColor = column.stripTitle.color;
-            column.smoke = SmokeMaterial(column.background);
-        }
-
-        private static void AddTrigger(UnityEngine.EventSystems.EventTrigger trigger, UnityEngine.EventSystems.EventTriggerType type, Action action)
-        {
-            var entry = new UnityEngine.EventSystems.EventTrigger.Entry { eventID = type };
-            entry.callback.AddListener(_ => action());
-            trigger.triggers.Add(entry);
         }
 
         private void OnEnable()
@@ -146,116 +99,62 @@ namespace TawanOS.GameFlow
 
         private void Update()
         {
-            if (chosen && !busy && !PauseMenu.IsPaused && EscapeKey.Use()) Back();
+            if (open && !busy && !PauseMenu.IsPaused && EscapeKey.Use()) Back();
         }
 
         private void RefreshDeckCount()
         {
-            string text = $"สำรับ {RunState.Current.Deck.Count} ใบ";
-            if (burnColumn.deckText != null) burnColumn.deckText.text = text;
-            if (upgradeColumn.deckText != null) upgradeColumn.deckText.text = text;
+            if (upgradeColumn.deckText != null) upgradeColumn.deckText.text = $"สำรับ {RunState.Current.Deck.Count} ใบ";
         }
 
         public void Show(MeruManager manager)
         {
             meru = manager;
             selected = -1;
-            chosen = busy = false;
+            open = busy = false;
             if (resultPanel != null) resultPanel.SetActive(false);
 
-            canBurn = !meru.Used && meru.Deck.Count > 1;
             canUpgrade = !meru.Used && meru.AnyUpgradable();
-            FillColumn(burnColumn, burnViews, MeruAction.Burn);
-            FillColumn(upgradeColumn, upgradeViews, MeruAction.Upgrade);
+            FillGrid();
             RefreshSelection();
 
-            foreach (var column in new[] { burnColumn, upgradeColumn })
-            {
-                column.width = stripWidth;
-                column.hidden = 1f;
-                SetGroup(column.stripGroup, true, instant: true);
-                SetGroup(column.panelGroup, false, instant: true);
-                ApplyColumn(column);
-            }
-            SetStrip(burnColumn, canBurn, "นำการ์ด 1 ใบออกจากสำรับไปตลอดกาล", meru.Used ? "ใช้เตาเผาในรอบนี้ไปแล้ว" : "สำรับเหลือใบเดียว เผาไม่ได้");
-            SetStrip(upgradeColumn, canUpgrade, "ชำระการ์ด 1 ใบในไฟให้แกร่งขึ้น", meru.Used ? "ใช้เตาเผาในรอบนี้ไปแล้ว" : "ไม่มีการ์ดที่อัพเกรดได้");
-            if (leaveButton != null) leaveButton.gameObject.SetActive(false);
+            upgradeColumn.hidden = 1f;
+            SetGroup(upgradeColumn.panelGroup, true);
+            ApplyColumn();
+            // The player must upgrade a card (Game Designer 10 Oct). Leaving without one is only offered when nothing
+            // can be upgraded, so the node never traps the player.
+            if (leaveButton != null) leaveButton.gameObject.SetActive(!canUpgrade);
             group.blocksRaycasts = group.interactable = true;
 
-            if (stage == null) ShowChoices();
+            if (stage == null) OpenPanel();
         }
 
-        private static void SetStrip(Column column, bool can, string hint, string cannot)
+        /// <summary>The furnace door was clicked: the upgrade panel slides up from the bottom.</summary>
+        public void OpenPanel()
         {
-            if (column.stripHint != null) column.stripHint.text = can ? hint : cannot;
-            if (column.chooseButton != null) column.chooseButton.interactable = can;
-            if (column.stripGroup != null) column.stripGroup.alpha = can ? 1f : 0.5f;
-        }
-
-        /// <summary>The two strips slide in from the sides (the camera is inside, facing the door).</summary>
-        public void ShowChoices()
-        {
-            SlideColumn(burnColumn, 0f);
-            SlideColumn(upgradeColumn, 0f);
-            // The player must burn or upgrade a card (Game Designer 10 Oct). Leaving without one is only offered
-            // when neither is possible (one card left and nothing to upgrade), so the node never traps the player.
-            if (leaveButton != null) leaveButton.gameObject.SetActive(!canBurn && !canUpgrade);
-        }
-
-        // The chosen strip widens into a column of cards, the other slides away; the stage opens the door
-        private void Choose(MeruAction action)
-        {
-            if (chosen || busy) return;
-            chosen = true;
-            chosenAction = action;
+            if (!CanOpenPanel) return;
+            open = true;
             selected = -1;
             RefreshSelection();
-            var (mine, other) = action == MeruAction.Burn ? (burnColumn, upgradeColumn) : (upgradeColumn, burnColumn);
-            HoverStrip(mine, false);
-            WidenColumn(mine, columnWidth);
-            SetGroup(mine.stripGroup, false, instant: false);
-            SetGroup(mine.panelGroup, true, instant: false);
-            SlideColumn(other, 1f);
-            if (leaveButton != null) leaveButton.gameObject.SetActive(false);
-            if (stage != null) stage.OnChoose(action, columnWidth);
+            Slide(0f);
         }
 
+        // The panel slides back down; the stage shuts the door
         private void Back()
         {
-            if (!chosen || busy) return;
-            chosen = false;
+            if (!open || busy) return;
+            open = false;
             selected = -1;
             RefreshSelection();
-            var (mine, other) = chosenAction == MeruAction.Burn ? (burnColumn, upgradeColumn) : (upgradeColumn, burnColumn);
-            WidenColumn(mine, stripWidth);
-            SetGroup(mine.panelGroup, false, instant: false);
-            SetGroup(mine.stripGroup, true, instant: false);
-            SlideColumn(other, 0f);
+            Slide(1f);
             if (stage != null) stage.OnBack();
         }
 
-        // Under the pointer a strip leans in: it widens a little and the other strip draws back toward its edge;
-        // both settle back when the pointer leaves (Game Designer, 14 Oct)
-        private void HoverStrip(Column column, bool on)
+        private void FillGrid()
         {
-            bool lit = on && column.chooseButton != null && column.chooseButton.interactable && !chosen && !busy;
-            if (column.stripTitle != null)
-            {
-                column.stripTitle.DOKill();
-                column.stripTitle.DOColor(lit ? stripHover : stripTitleColor, 0.2f).SetLink(column.stripTitle.gameObject);
-                column.stripTitle.transform.DOScale(lit ? 1.08f : 1f, 0.2f).SetLink(column.stripTitle.gameObject);
-            }
-            if (chosen || busy) return;
-            var other = column == burnColumn ? upgradeColumn : burnColumn;
-            WidenColumn(column, lit ? stripWidth + stripHoverGrow : stripWidth, stripHoverSeconds);
-            SlideColumn(other, lit ? stripHoverPush : 0f, stripHoverSeconds);
-        }
-
-        private void FillColumn(Column column, List<RewardCardView> views, MeruAction action)
-        {
-            if (column.cardGrid == null || cardTemplate == null) return;
+            if (upgradeColumn.cardGrid == null || cardTemplate == null) return;
             var deck = meru.Deck;
-            while (views.Count < deck.Count) views.Add(Instantiate(cardTemplate, column.cardGrid));
+            while (views.Count < deck.Count) views.Add(Instantiate(cardTemplate, upgradeColumn.cardGrid));
             for (int i = 0; i < views.Count; i++)
             {
                 var view = views[i];
@@ -264,19 +163,18 @@ namespace TawanOS.GameFlow
                 if (!used) continue;
 
                 int index = i;
-                view.Setup(deck[i], () => Select(action, index));
+                view.Setup(deck[i], () => Select(index));
 
-                // Cards this action cannot take are shown dimmed and cannot be picked
-                bool allowed = meru.CanApply(action, deck[i]);
+                // Cards that cannot be upgraded are shown dimmed and cannot be picked
+                bool allowed = meru.CanApply(deck[i]);
                 if (view.button != null) view.button.interactable = allowed;
                 var cardGroup = view.GetComponent<CanvasGroup>();
                 if (cardGroup != null) cardGroup.alpha = allowed ? 1f : 0.35f;
             }
         }
 
-        private void Select(MeruAction action, int index)
+        private void Select(int index)
         {
-            selectedAction = action;
             selected = index;
             RefreshSelection();
         }
@@ -285,53 +183,38 @@ namespace TawanOS.GameFlow
         {
             var deck = meru.Deck;
             var card = selected >= 0 && selected < deck.Count ? deck[selected] : null;
-            bool burnPicked = card != null && selectedAction == MeruAction.Burn;
-            bool upgradePicked = card != null && selectedAction == MeruAction.Upgrade;
 
-            for (int i = 0; i < burnViews.Count; i++)
-                if (burnViews[i].pickedHighlight != null) burnViews[i].pickedHighlight.SetActive(burnPicked && i == selected);
-            for (int i = 0; i < upgradeViews.Count; i++)
-                if (upgradeViews[i].pickedHighlight != null) upgradeViews[i].pickedHighlight.SetActive(upgradePicked && i == selected);
+            for (int i = 0; i < views.Count; i++)
+                if (views[i].pickedHighlight != null) views[i].pickedHighlight.SetActive(card != null && i == selected);
 
-            if (burnColumn.promptText != null)
-                burnColumn.promptText.text = burnPicked ? $"เผา \"{card.cardNameThai}\" ทิ้งจากสำรับ?" : "เลือกการ์ด 1 ใบ เผาออกจากสำรับไปตลอดกาล";
             if (upgradeColumn.promptText != null)
-                upgradeColumn.promptText.text = upgradePicked
+                upgradeColumn.promptText.text = card != null
                     ? $"ชำระ \"{card.cardNameThai}\" เป็น \"{card.upgradedCard.cardNameThai}\"?"
                     : "เลือกการ์ด 1 ใบ ชำระให้แกร่งขึ้น";
-
-            if (burnColumn.confirmButton != null) burnColumn.confirmButton.interactable = burnPicked;
-            if (upgradeColumn.confirmButton != null) upgradeColumn.confirmButton.interactable = upgradePicked;
+            if (upgradeColumn.confirmButton != null) upgradeColumn.confirmButton.interactable = card != null;
         }
 
-        private RewardCardView pickedView;
-
-        private void Confirm(MeruAction action)
+        private void Confirm()
         {
             var deck = meru.Deck;
-            if (busy || action != selectedAction || selected < 0 || selected >= deck.Count) return;
-            pickedView = (action == MeruAction.Burn ? burnViews : upgradeViews)[selected];
-            meru.Apply(action, deck[selected]);
+            if (busy || selected < 0 || selected >= deck.Count) return;
+            pickedView = views[selected];
+            meru.Apply(deck[selected]);
         }
 
-        /// <summary>Called by <see cref="MeruManager"/> once the card has been burnt or upgraded.</summary>
-        public void ShowResult(MeruAction doneAction, CardDataSO card)
+        /// <summary>Called by <see cref="MeruManager"/> once the card has been upgraded.</summary>
+        public void ShowResult(CardDataSO card)
         {
             busy = true;
-            var column = doneAction == MeruAction.Burn ? burnColumn : upgradeColumn;
+            Slide(1f);
             if (stage != null)
             {
-                // The column slides away and the stage carries the picked card into the furnace
-                SlideColumn(column, 1f);
+                // The stage carries the picked card into the furnace
                 group.blocksRaycasts = group.interactable = false;
-                stage.Offer(doneAction, card, pickedView);
+                stage.Offer(card, pickedView);
                 return;
             }
-
-            // No stage: the result straight away
-            SlideColumn(column, 1f);
-            if (doneAction == MeruAction.Burn) meru.Leave();
-            else ShowUpgraded(card, null);
+            ShowUpgraded(card, null);
         }
 
         /// <summary>
@@ -374,64 +257,34 @@ namespace TawanOS.GameFlow
                 .Join(rt.DOScale(1f, 0.8f).SetEase(Ease.OutBack));
         }
 
-        // ---- Column layout ----
+        // ---- Panel layout ----
 
-        private void WidenColumn(Column column, float target, float seconds = -1f)
+        private void Slide(float target)
         {
+            var column = upgradeColumn;
             DOTween.Kill(column);
-            DOTween.To(() => column.width, w => { column.width = w; ApplyColumn(column); }, target, seconds > 0f ? seconds : slideSeconds)
-                .SetEase(Ease.OutCubic).SetId(column).SetLink(gameObject);
+            DOTween.To(() => column.hidden, h => { column.hidden = h; ApplyColumn(); }, target, slideSeconds)
+                .SetEase(target < column.hidden ? Ease.OutCubic : Ease.InOutCubic).SetId(column).SetLink(gameObject);
         }
 
-        private void SlideColumn(Column column, float target, float seconds = -1f)
+        // Across the middle of the screen from the bottom up to panelHeight, pushed below the screen by `hidden`
+        private void ApplyColumn()
         {
-            DOTween.Kill(column.root);
-            DOTween.To(() => column.hidden, h => { column.hidden = h; ApplyColumn(column); }, target, seconds > 0f ? seconds : slideSeconds)
-                .SetEase(target < column.hidden ? Ease.OutCubic : Ease.InOutCubic).SetId(column.root).SetLink(gameObject);
-        }
-
-        // Anchors from the column's width (the burn column grows rightward from the left edge, the upgrade column
-        // leftward from the right edge), pushed off its side by `hidden`; the smoky edge keeps its width in pixels
-        private void ApplyColumn(Column column)
-        {
+            var column = upgradeColumn;
             if (column.root == null) return;
-            bool left = column == burnColumn;
-            column.root.anchorMin = new Vector2(left ? 0f : 1f - column.width, 0f);
-            column.root.anchorMax = new Vector2(left ? column.width : 1f, 1f);
-            float screenWidth = canvasRect.rect.width > 0f ? canvasRect.rect.width : 1920f;
-            float px = column.width * screenWidth;
-            column.root.anchoredPosition = new Vector2((left ? -1f : 1f) * px * column.hidden, 0f);
+            float screenHeight = canvasRect.rect.height > 0f ? canvasRect.rect.height : 1080f;
+            column.root.anchorMin = new Vector2(panelSideMargin, 0f);
+            column.root.anchorMax = new Vector2(1f - panelSideMargin, panelHeight);
+            column.root.anchoredPosition = new Vector2(0f, -(panelHeight * screenHeight + 40f) * column.hidden);
             column.root.sizeDelta = Vector2.zero;
-
-            if (column.smoke != null)
-            {
-                float height = canvasRect.rect.height > 0f ? canvasRect.rect.height : 1080f;
-                column.smoke.SetFloat("_Edge", Mathf.Clamp(smokePixels / Mathf.Max(px, 1f), 0.01f, 0.6f));
-                column.smoke.SetFloat("_Aspect", px / height);
-            }
         }
 
-        private static void SetGroup(CanvasGroup g, bool on, bool instant)
+        private static void SetGroup(CanvasGroup g, bool on)
         {
             if (g == null) return;
             g.DOKill();
             g.interactable = g.blocksRaycasts = on;
-            if (instant) g.alpha = on ? 1f : 0f;
-            else g.DOFade(on ? 1f : 0f, 0.3f).SetDelay(on ? 0.2f : 0f).SetLink(g.gameObject);
-        }
-
-        // The black column's edge toward the furnace is rolling smoke. The shader draws the smoke on the quad's left
-        // side, so the burn column's background is mirrored (scale x = -1) to put it on the right.
-        private Material SmokeMaterial(Image background)
-        {
-            if (background == null) return null;
-            var shader = Resources.Load<Shader>("TawanOS_UISmokeEdge");
-            if (shader == null) return null;
-            var material = new Material(shader);
-            material.SetFloat("_Speed", smokeSpeed);
-            material.SetFloat("_Scale", smokeScale);
-            background.material = material;
-            return material;
+            g.alpha = on ? 1f : 0f;
         }
     }
 }

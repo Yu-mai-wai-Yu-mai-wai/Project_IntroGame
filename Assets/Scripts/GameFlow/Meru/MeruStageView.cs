@@ -10,38 +10,23 @@ using UnityEngine.UI;
 namespace TawanOS.GameFlow
 {
     /// <summary>
-    /// The เมรุ as a 3D place (Game Designer, 14 Oct). The scene opens outside on the เมรุ (the model's first camera);
-    /// pointing at it lights it up, and clicking it fades to black and back in inside, at eye height, looking straight
-    /// at the furnace door, with the burn and upgrade strips of <see cref="MeruViewUI"/> at the sides.
-    /// Choosing a side opens the door and slides the view sideways (no step back) until the door sits beside the
-    /// chosen column; going back closes it and slides back. The slide is a lens shift: the camera stays where it is
-    /// and the picture moves, so the pillars near the camera never swing across the door. Once a card is burnt or
-    /// upgraded it rises from the bottom of the screen as if held, is carried in through the door and laid on the
-    /// cart, the door shuts, and after a moment the fire (<see cref="MeruFireFx"/>) jets
-    /// out of the gaps round the door as it rattles, then smoke rolls up. A burnt card is gone: the screen fades and the
-    /// run goes on. An upgraded card comes back out of the reopened door and shows with the way on.
+    /// The เมรุ as a 3D place (Game Designer, 14 Oct; 24 Oct: no outside, upgrade only). The scene opens inside, at eye
+    /// height, looking straight at the furnace door. Pointing at the door cracks it open, the fire glowing through;
+    /// clicking it swings it open and brings up the upgrade panel of <see cref="MeruViewUI"/> from the bottom of the
+    /// screen; going back shuts it. Once a card is upgraded it rises from the bottom of the screen as if held, is carried
+    /// in through the door and laid on the cart, the door shuts, and after a moment the fire (<see cref="MeruFireFx"/>)
+    /// jets out of the gaps round the door as it rattles, then smoke rolls up. The upgraded card comes back out of the
+    /// reopened door and shows with the way on.
     /// Placed by Tools/TawanOS/Meru/Setup Meru Stage.
     /// </summary>
     public class MeruStageView : MonoBehaviour
     {
-        private enum Stage { Outside, Entering, Inside, Offering }
-
         [Header("Scene")]
         public Camera viewCamera;
-        [Tooltip("Where the camera stands outside (the model's first camera).")]
-        public Transform outsideView;
-        public float outsideFov = 42f;
-        [Tooltip("Where the camera stands inside: eye height, looking straight at the furnace door. Move it to tune.")]
+        [Tooltip("Where the camera stands: eye height, looking straight at the furnace door. Move it to tune.")]
         public Transform insideView;
         public float insideFov = 45f;
-        [Tooltip("Clicking this (the เมรุ building) goes inside.")]
-        public Collider meruClick;
         public MeruViewUI view;
-
-        [Header("Highlight outside")]
-        [Tooltip("A warm light on the เมรุ, off until the pointer is on it.")]
-        public Light meruLight;
-        public float meruLightHover = 4000f;
 
         [Header("Door")]
         public Transform door;
@@ -50,8 +35,8 @@ namespace TawanOS.GameFlow
         [Tooltip("How far the door swings open, in degrees (positive swings it toward the camera).")]
         public float doorOpenAngle = 105f;
         [Min(0.05f)] public float doorSeconds = 0.9f;
-        [Tooltip("How long the view takes to slide sideways when a side is chosen or given up.")]
-        [Min(0.05f)] public float cameraSlideSeconds = 0.6f;
+        [Tooltip("How far the door cracks open while the pointer is on it (0..1 of fully open).")]
+        [Range(0f, 0.5f)] public float doorHoverOpen = 0.12f;
 
         [Header("Fire")]
         public MeruFireFx fire;
@@ -78,65 +63,74 @@ namespace TawanOS.GameFlow
         [Tooltip("How far the shut door rattles open as the fire bursts against it, in degrees.")]
         public float doorRattle = 4f;
 
-        [Header("Fade")]
-        [Min(0.05f)] public float fadeSeconds = 0.45f;
-
         [Header("Hint")]
-        public string outsideHint = "คลิกที่เมรุเพื่อเข้าไปข้างใน";
+        public string doorHint = "คลิกที่ประตูเตาเพื่อชำระการ์ด";
 
-        private Stage stage;
-        private Image fade;
+        private bool offering;
+        private Collider doorClick;
+        private bool doorHovered;
         private TextMeshProUGUI hintText;
         private GameObject hintBand;
-        private bool hovering;
         private float lightLevel;
         private float lightTarget;
         private Vector3 doorPos0;
         private Quaternion doorRot0;
         private Vector3 doorCenter;
         private float doorOpen;
-        private float shift;   // lens shift across the screen, in viewport widths (0.3 = the picture moved 30% right)
         private Tween doorTween;
-        private Tween shiftTween;
 
         private void Awake()
         {
             if (viewCamera == null) viewCamera = Camera.main;
-            if (view != null) view.stage = this; // before MeruManager.Start shows the strips
+            if (view != null) view.stage = this; // before MeruManager.Start shows the screen
             if (door != null)
             {
                 doorPos0 = door.position;
                 doorRot0 = door.rotation;
-                var r = door.GetComponent<Renderer>();
+                var r = door.GetComponentInChildren<Renderer>();
                 doorCenter = r != null ? r.bounds.center : door.position;
+                doorClick = door.GetComponentInChildren<Collider>();
             }
             BuildOverlay();
         }
 
         private void Start()
         {
-            PlaceCamera(outsideView, outsideFov);
-            if (meruLight != null) meruLight.intensity = 0f;
+            PlaceCamera(insideView, insideFov);
             lightLevel = lightTarget = fireLightShut;
-            SetStage(Stage.Outside);
         }
 
         private void Update()
         {
             UpdateFireLight();
-            if (shift != 0f) ApplyShift(shift); // the screen's shape may have changed
-            if (PauseMenu.IsPaused || stage != Stage.Outside) return;
+            bool canOpen = !offering && view != null && view.CanOpenPanel;
+            if (hintBand != null && hintBand.activeSelf != canOpen) hintBand.SetActive(canOpen);
+            if (PauseMenu.IsPaused || !canOpen)
+            {
+                if (doorHovered) HoverDoor(false);
+                return;
+            }
 
-            bool over = meruClick != null && PointerOn(meruClick);
-            if (over != hovering) SetHover(over);
-            if (over && Input.GetMouseButtonDown(0)) GoInside();
+            bool over = doorClick != null && PointerOn(doorClick);
+            if (over != doorHovered) HoverDoor(over);
+            if (over && Input.GetMouseButtonDown(0)) OpenDoor();
         }
 
-        private void SetStage(Stage next)
+        // The door cracks open under the pointer, the fire glowing through
+        private void HoverDoor(bool on)
         {
-            stage = next;
-            if (hovering && next != Stage.Outside) SetHover(false);
-            if (hintBand != null) hintBand.SetActive(next == Stage.Outside);
+            doorHovered = on;
+            if (!offering && (view == null || !view.PanelOpen)) SwingDoor(on ? doorHoverOpen : 0f, 0.3f);
+            if (hintText != null) hintText.DOFade(on ? 1f : 0.8f, 0.2f).SetLink(hintText.gameObject);
+        }
+
+        // Clicked: the door swings open and the upgrade panel comes up from the bottom
+        private void OpenDoor()
+        {
+            doorHovered = false;
+            view.OpenPanel();
+            SwingDoor(1f, doorSeconds);
+            TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on");
         }
 
         private bool PointerOn(Collider target)
@@ -146,61 +140,26 @@ namespace TawanOS.GameFlow
             return target.Raycast(ray, out _, 5000f);
         }
 
-        // The เมรุ lights up under the pointer
-        private void SetHover(bool on)
-        {
-            hovering = on;
-            if (meruLight != null) meruLight.DOIntensity(on ? meruLightHover : 0f, 0.25f).SetLink(meruLight.gameObject);
-            if (hintText != null) hintText.DOFade(on ? 1f : 0.8f, 0.2f).SetLink(hintText.gameObject);
-        }
-
-        // Fade to black, stand in front of the furnace door, fade back in; then the two strips come in
-        private void GoInside()
-        {
-            SetStage(Stage.Entering);
-            DOTween.Sequence().SetLink(gameObject)
-                .Append(fade.DOFade(1f, fadeSeconds).SetEase(Ease.InQuad))
-                .AppendCallback(() => PlaceCamera(insideView, insideFov))
-                .AppendInterval(0.15f)
-                .Append(fade.DOFade(0f, fadeSeconds * 1.3f).SetEase(Ease.OutQuad))
-                .OnComplete(() =>
-                {
-                    SetStage(Stage.Inside);
-                    if (view != null) view.ShowChoices();
-                });
-        }
-
-        /// <summary>A side was chosen: the door opens and the view slides until the door sits beside the column.</summary>
-        public void OnChoose(MeruAction action, float columnWidth)
-        {
-            float doorX = action == MeruAction.Burn ? (columnWidth + 1f) * 0.5f : (1f - columnWidth) * 0.5f;
-            SwingDoor(1f, doorSeconds);
-            SlideView(doorX - DoorViewportX());
-            TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on");
-        }
-
-        /// <summary>The side was given up: the door shuts and the view slides back to face it.</summary>
+        /// <summary>The upgrade panel went back down: the door shuts.</summary>
         public void OnBack()
         {
             SwingDoor(0f, doorSeconds * 0.8f);
-            SlideView(0f);
         }
 
         /// <summary>
-        /// The card has been burnt or upgraded: it flies into the furnace, the door shuts, the fire bursts out round
-        /// it; then the run goes on (burnt) or the new card comes back out (upgraded).
+        /// The card has been upgraded: it flies into the furnace, the door shuts, the fire bursts out round it, then the
+        /// new card comes back out.
         /// </summary>
-        public void Offer(MeruAction action, CardDataSO card, RewardCardView picked)
+        public void Offer(CardDataSO card, RewardCardView picked)
         {
-            SetStage(Stage.Offering);
-            StartCoroutine(OfferRoutine(action, card, picked));
+            offering = true;
+            StartCoroutine(OfferRoutine(card, picked));
         }
 
-        private IEnumerator OfferRoutine(MeruAction action, CardDataSO card, RewardCardView picked)
+        private IEnumerator OfferRoutine(CardDataSO card, RewardCardView picked)
         {
-            // Face the door again, then the card is laid on the cart inside
-            SlideView(0f);
-            yield return new WaitForSeconds(cameraSlideSeconds);
+            // The panel slides down out of the way, then the card is laid on the cart inside
+            yield return new WaitForSeconds(view != null ? view.slideSeconds : 0.6f);
 
             var held = picked != null ? WorldCard(picked) : null;
             if (held != null) yield return LayOnCart(held);
@@ -211,14 +170,6 @@ namespace TawanOS.GameFlow
             // The fire takes the card behind the shut door
             if (held != null) Destroy(held.gameObject);
             yield return Burst();
-
-            if (action == MeruAction.Burn)
-            {
-                // The card is ash: fade out and go on
-                yield return fade.DOFade(1f, fadeSeconds * 1.5f).SetEase(Ease.InQuad).SetLink(gameObject).WaitForCompletion();
-                MeruManager.Instance?.Leave();
-                yield break;
-            }
 
             // The new card comes back out of the fire
             SwingDoor(1f, doorSeconds);
@@ -340,39 +291,6 @@ namespace TawanOS.GameFlow
             door.SetPositionAndRotation(doorHinge + turn * (doorPos0 - doorHinge), turn * doorRot0);
         }
 
-        private void SlideView(float target)
-        {
-            if (viewCamera == null) return;
-            shiftTween?.Kill();
-            shiftTween = DOTween.To(() => shift, ApplyShift, target, cameraSlideSeconds).SetEase(Ease.InOutCubic).SetLink(gameObject);
-        }
-
-        // Off-centre projection: the camera's picture moves `value` of the screen's width sideways
-        private void ApplyShift(float value)
-        {
-            shift = value;
-            if (viewCamera == null) return;
-            if (Mathf.Abs(value) < 0.0001f)
-            {
-                shift = 0f;
-                viewCamera.ResetProjectionMatrix();
-                return;
-            }
-            var projection = Matrix4x4.Perspective(viewCamera.fieldOfView, viewCamera.aspect, viewCamera.nearClipPlane, viewCamera.farClipPlane);
-            projection.m02 = -value * 2f;
-            viewCamera.projectionMatrix = projection;
-        }
-
-        // Where the door's middle is across the screen with the picture unshifted (0 = left, 1 = right)
-        private float DoorViewportX()
-        {
-            if (viewCamera == null || insideView == null) return 0.5f;
-            var local = insideView.InverseTransformPoint(doorCenter);
-            if (local.z <= 0.01f) return 0.5f;
-            float tanH = Mathf.Tan(insideFov * 0.5f * Mathf.Deg2Rad) * viewCamera.aspect;
-            return 0.5f + 0.5f * local.x / (local.z * tanH);
-        }
-
         private Vector2 DoorScreenPoint()
         {
             if (viewCamera == null) return new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
@@ -383,7 +301,6 @@ namespace TawanOS.GameFlow
         private void PlaceCamera(Transform at, float fov)
         {
             if (viewCamera == null || at == null) return;
-            ApplyShift(0f);
             viewCamera.transform.SetPositionAndRotation(at.position, at.rotation);
             viewCamera.fieldOfView = fov;
         }
@@ -410,18 +327,11 @@ namespace TawanOS.GameFlow
             bandRect.pivot = new Vector2(0.5f, 0f);
             bandRect.anchoredPosition = new Vector2(0f, 40f);
             bandRect.sizeDelta = new Vector2(0f, 76f);
-            hintText = UiFactory.CreateText(band.transform, "Hint", outsideHint, theme.bodySize * 1.25f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
+            hintText = UiFactory.CreateText(band.transform, "Hint", doorHint, theme.bodySize * 1.25f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
             hintText.raycastTarget = false;
             UiFactory.Stretch(hintText.rectTransform, 0f);
             hintText.alpha = 0.8f;
             hintBand = band.gameObject;
-
-            // Above every other canvas, so the walk inside is a clean cut to black
-            var fadeCanvas = UiFactory.CreateOverlayCanvas("MeruFadeCanvas", 900, transform);
-            fade = UiFactory.CreateImage("Fade", fadeCanvas.transform, Color.black);
-            fade.raycastTarget = false;
-            UiFactory.Stretch(fade.rectTransform, 0f);
-            fade.color = new Color(0f, 0f, 0f, 0f);
         }
     }
 }

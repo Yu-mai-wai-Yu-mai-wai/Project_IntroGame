@@ -48,7 +48,7 @@ namespace TawanOS.MapEngine
             {
                 case NodeType.MinorEnemy: return "การเผชิญหน้ากับบริวารผีร้าย เอาชนะเพื่อรับการ์ดรางวัล";
                 case NodeType.EliteEnemy: return "มินิบอสสุดอันตราย เอาชนะเพื่อรับเครื่องรางล้ำค่า";
-                case NodeType.RestSite:   return "ไฟเมรุไม่เคยดับ เผาการ์ดออกจากสำรับ หรือสวดชุบขวัญให้การ์ดแกร่งขึ้น (อัปเกรดการ์ด)";
+                case NodeType.RestSite:   return "ไฟเมรุไม่เคยดับ ชำระการ์ด 1 ใบในไฟให้แกร่งขึ้น (อัปเกรดการ์ด)";
                 case NodeType.Temple:     return "ลานวัดสงบกลางป่า กราบพระเพื่อฟื้นขวัญเต็มหลอด ไม่เสียธูป";
                 case NodeType.Treasure:   return "เครื่องเซ่นไหว้โบราณ บันทึกเรื่องเล่าและเลือกรับการ์ดใหม่";
                 case NodeType.Store:      return "ศาลบูชาเร้นลับ แลกเปลี่ยนธูปเพื่อซื้อการ์ดและเครื่องราง";

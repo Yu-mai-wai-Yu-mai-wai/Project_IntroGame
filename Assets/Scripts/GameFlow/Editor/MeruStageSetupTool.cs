@@ -9,8 +9,8 @@ namespace TawanOS.GameFlow
 {
     /// <summary>
     /// Turns MeruScene into the เมรุ stage (Game Designer, 14 Oct) without touching the model's placement:
-    /// the main camera starts at the model's outside camera; the building gets a click collider and a warm light that
-    /// comes on under the pointer; an inside view stands at eye height looking straight at the furnace door; a fire
+    /// an inside view stands at eye height looking straight at the furnace door and the main camera starts there (no
+    /// outside since 24 Oct); the door gets a click collider (clicking it brings up the upgrade panel); a fire
     /// burns inside the furnace and a second set of flames waits round the door to burst out; the screen
     /// (<see cref="MeruSetupTool.BuildCanvas"/>) replaces the old canvas; and a <see cref="MeruStageView"/> runs it all.
     /// Adds the model (Assets/ProjectAsset/Meru/Meru.fbx) if the scene has none. Safe to run again: the stage object is
@@ -95,19 +95,17 @@ namespace TawanOS.GameFlow
                 cam.enabled = false;
                 EditorUtility.SetDirty(cam);
             }
-            mainCamera.transform.SetPositionAndRotation(outsideCamera.transform.position, outsideCamera.transform.rotation);
-            mainCamera.fieldOfView = outsideCamera.fieldOfView;
             mainCamera.nearClipPlane = 0.1f;
             mainCamera.farClipPlane = 2000f;
             EditorUtility.SetDirty(mainCamera);
             EditorUtility.SetDirty(mainCamera.transform);
 
-            // Click target outside: the whole building. The door is no longer clicked (a side is chosen instead).
-            var meruClick = building.GetComponent<BoxCollider>();
-            if (meruClick == null) meruClick = building.gameObject.AddComponent<BoxCollider>();
-            EditorUtility.SetDirty(meruClick);
+            // The door is clicked to bring up the upgrade panel (Game Designer, 24 Oct); the building no longer is
+            var buildingCollider = building.GetComponent<BoxCollider>();
+            if (buildingCollider != null) Object.DestroyImmediate(buildingCollider);
             var doorCollider = door.GetComponent<BoxCollider>();
-            if (doorCollider != null) Object.DestroyImmediate(doorCollider);
+            if (doorCollider == null) doorCollider = door.gameObject.AddComponent<BoxCollider>();
+            EditorUtility.SetDirty(doorCollider);
 
             // The door: its middle, size, and the way it faces (toward where the model's inside camera stood)
             var doorBounds = door.GetComponent<Renderer>().bounds;
@@ -131,9 +129,10 @@ namespace TawanOS.GameFlow
             var eye = doorBounds.center + facing * distance;
             eye.y = doorBounds.min.y + doorHeight * EyeHeight;
             insideView.SetPositionAndRotation(eye, Quaternion.LookRotation(-facing, Vector3.up));
+            mainCamera.transform.SetPositionAndRotation(insideView.position, insideView.rotation);
+            mainCamera.fieldOfView = InsideFov;
 
             MakeNight(mainCamera, stage.transform, outsideCamera.transform);
-            var meruLight = BuildMeruLight(stage.transform, building.GetComponent<Renderer>().bounds, outsideCamera.transform.position);
             var fire = BuildFire(stage.transform, interior.bounds, doorBounds.center, facing, right, new Vector2(doorWidth, doorHeight), out var fireLight);
 
             // The screen replaces the old one
@@ -146,12 +145,8 @@ namespace TawanOS.GameFlow
 
             var stageView = stage.AddComponent<MeruStageView>();
             stageView.viewCamera = mainCamera;
-            stageView.outsideView = outsideCamera.transform;
-            stageView.outsideFov = outsideCamera.fieldOfView;
             stageView.insideView = insideView;
             stageView.insideFov = InsideFov;
-            stageView.meruClick = meruClick;
-            stageView.meruLight = meruLight;
             stageView.view = meruView;
             stageView.door = door;
             stageView.doorHinge = hinge;
@@ -212,23 +207,6 @@ namespace TawanOS.GameFlow
             moon.intensity = 0.35f;
             moon.shadows = LightShadows.Soft;
             moon.shadowStrength = 0.6f;
-        }
-
-        // A warm light in front of the เมรุ, toward the outside camera, off until the pointer is on the building
-        private static Light BuildMeruLight(Transform stage, Bounds building, Vector3 cameraPos)
-        {
-            var go = new GameObject("MeruLight");
-            go.transform.SetParent(stage, false);
-            var toCamera = Vector3.ProjectOnPlane(cameraPos - building.center, Vector3.up).normalized;
-            float reach = building.extents.magnitude;
-            go.transform.position = building.center + toCamera * reach * 0.65f + Vector3.up * building.extents.y * 0.4f;
-            var light = go.AddComponent<Light>();
-            light.type = LightType.Point;
-            light.color = new Color(1f, 0.78f, 0.5f);
-            light.range = reach * 2.2f;
-            light.intensity = 0f;
-            light.shadows = LightShadows.None;
-            return light;
         }
 
         // The fire (particles, built in play by MeruFireFx) on the furnace floor and round the door, and its light,

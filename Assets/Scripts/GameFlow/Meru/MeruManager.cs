@@ -5,15 +5,10 @@ using UnityEngine;
 
 namespace TawanOS.GameFlow
 {
-    public enum MeruAction
-    {
-        Burn,    // เผาการ์ดทิ้ง: the card leaves the run deck
-        Upgrade  // ชำระการ์ด: the card becomes its CardDataSO.upgradedCard
-    }
-
     /// <summary>
-    /// เมรุ (the map's rest node): the player does one of two things to the run deck, burn a card out of
-    /// it or upgrade a card, then leaves. Raises <see cref="OnMeruFinished"/> when the player leaves.
+    /// เมรุ (the map's rest node): the player upgrades one card of the run deck (it becomes its
+    /// CardDataSO.upgradedCard), then leaves (Game Designer, 24 Oct: upgrade only, no burning).
+    /// Raises <see cref="OnMeruFinished"/> when the player leaves.
     /// </summary>
     public class MeruManager : MonoBehaviour
     {
@@ -25,7 +20,7 @@ namespace TawanOS.GameFlow
 
         public event Action OnMeruFinished;
 
-        // One action per visit
+        // One upgrade per visit
         public bool Used { get; private set; }
 
         public IReadOnlyList<CardDataSO> Deck => RunState.Current.Deck;
@@ -60,23 +55,16 @@ namespace TawanOS.GameFlow
             return false;
         }
 
-        public bool CanApply(MeruAction action, CardDataSO card)
-        {
-            if (Used || card == null) return false;
-            return action == MeruAction.Burn ? Deck.Count > 1 : CanUpgrade(card); // never burn the last card
-        }
+        public bool CanApply(CardDataSO card) => !Used && CanUpgrade(card);
 
-        public void Apply(MeruAction action, CardDataSO card)
+        public void Apply(CardDataSO card)
         {
-            if (!CanApply(action, card)) return;
-
-            var run = RunState.Current;
-            bool done = action == MeruAction.Burn ? run.RemoveCard(card, countsAsPurchase: false) : run.UpgradeCard(card);
-            if (!done) return;
+            if (!CanApply(card)) return;
+            if (!RunState.Current.UpgradeCard(card)) return;
 
             Used = true;
             RunState.Current.SetMeruUsed(true);
-            if (view != null) view.ShowResult(action, card);
+            if (view != null) view.ShowResult(card);
         }
 
         public void Leave()
@@ -88,7 +76,7 @@ namespace TawanOS.GameFlow
                 OnMeruFinished.Invoke();
                 return;
             }
-            // Scene opened on its own: start over (from outside the เมรุ) so designers can keep testing
+            // Scene opened on its own: start over so designers can keep testing
             Debug.Log($"[MeruManager] Left the Meru (no GameFlow listener). Run deck: {Deck.Count} cards.");
             if (Application.isPlaying) UnityEngine.SceneManagement.SceneManager.LoadScene(gameObject.scene.name);
         }
