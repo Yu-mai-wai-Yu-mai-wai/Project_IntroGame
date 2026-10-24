@@ -64,16 +64,24 @@ namespace TawanOS.UI
         }
     }
 
-    /// <summary>Draws the notices as toasts under the turn banner. Created on first use and kept across scenes.</summary>
+    /// <summary>
+    /// Draws the notices as toasts low on the screen, a little above the bottom edge (Game Designer, 24 Oct: away from
+    /// the ghost's lines at the top; warnings red, with a short shake). Created on first use and kept across scenes.
+    /// </summary>
     public class NoticeHost : MonoBehaviour
     {
         private const int MaxVisible = 3;
         private const float FadeIn = 0.15f;
         private const float FadeOut = 0.4f;
-        private const float Width = 960f;
+        private const float Width = 860f;
         private const float Height = 72f;
         private const float Gap = 10f;
-        private const float TopOffset = 190f;
+        private const float BottomOffset = 150f;
+        private const float ShakeSeconds = 0.3f;
+
+        private static readonly Color WarnBorder = new Color(0.78f, 0.13f, 0.12f, 0.95f);
+        private static readonly Color WarnPanel = new Color(0.13f, 0.02f, 0.02f, 0.92f);
+        private static readonly Color WarnText = new Color(1f, 0.62f, 0.58f);
 
         public class Toast
         {
@@ -83,6 +91,7 @@ namespace TawanOS.UI
             public TextMeshProUGUI label;
             public float age;
             public float life;
+            public bool warning;
         }
 
         public static NoticeHost Instance => instance;
@@ -137,9 +146,9 @@ namespace TawanOS.UI
             }
             rootGroup = canvas.GetComponent<CanvasGroup>();
             container = UiFactory.CreateRect("Toasts", canvas.transform);
-            container.anchorMin = new Vector2(0.5f, 1f);
-            container.anchorMax = new Vector2(0.5f, 1f);
-            container.pivot = new Vector2(0.5f, 1f);
+            container.anchorMin = new Vector2(0.5f, 0f);
+            container.anchorMax = new Vector2(0.5f, 0f);
+            container.pivot = new Vector2(0.5f, 0f);
             container.sizeDelta = new Vector2(Width, 0f);
         }
 
@@ -180,27 +189,27 @@ namespace TawanOS.UI
 
             var theme = UIThemeSO.Current;
             bool warning = kind == NoticeKind.Warning;
-            Color border = warning ? theme.accent : theme.crimson;
+            Color border = warning ? WarnBorder : theme.crimson;
 
             EnsureContainer();
 
             var root = UiFactory.CreateRect("Toast", container);
-            root.anchorMin = new Vector2(0.5f, 1f);
-            root.anchorMax = new Vector2(0.5f, 1f);
-            root.pivot = new Vector2(0.5f, 1f);
+            root.anchorMin = new Vector2(0.5f, 0f);
+            root.anchorMax = new Vector2(0.5f, 0f);
+            root.pivot = new Vector2(0.5f, 0f);
             root.sizeDelta = new Vector2(Width, Height);
             var group = root.gameObject.AddComponent<CanvasGroup>();
             group.alpha = 0f;
 
             var outer = UiFactory.CreateImage("Border", root, border);
             UiFactory.Stretch(outer.rectTransform, 0f);
-            var inner = UiFactory.CreateImage("Panel", root, theme.panel);
+            var inner = UiFactory.CreateImage("Panel", root, warning ? WarnPanel : theme.panel);
             UiFactory.Stretch(inner.rectTransform, 3f);
 
             bool hasKhwanOrThup = message.Contains("ขวัญ") || message.Contains("ธูป");
             TMP_FontAsset fontToUse = (hasKhwanOrThup && theme.titleFont != null) ? theme.titleFont : theme.bodyFont;
             var label = UiFactory.CreateText(root, "Message", message, theme.bodySize + 2f,
-                warning ? theme.accent : theme.text, TextAlignmentOptions.Center, fontToUse);
+                warning ? WarnText : theme.text, TextAlignmentOptions.Center, fontToUse);
 
             // (b) Text must fit its box: auto-size within limits or wrap with the box growing; no overflow.
             label.enableAutoSizing = true;
@@ -223,22 +232,24 @@ namespace TawanOS.UI
                 group = group,
                 label = label,
                 age = 0f,
-                life = warning ? 3.8f : 3f
+                life = warning ? 3.8f : 3f,
+                warning = warning
             });
 
             Relayout();
         }
 
+        // Newest lowest, older ones pushed up; a new warning shakes for a moment
         public void Relayout()
         {
-            float y = -TopOffset;
-            for (int i = 0; i < toasts.Count; i++)
+            float y = BottomOffset;
+            for (int i = toasts.Count - 1; i >= 0; i--)
             {
-                if (toasts[i].root != null)
-                {
-                    toasts[i].root.anchoredPosition = new Vector2(0f, y);
-                    y -= toasts[i].root.sizeDelta.y + Gap;
-                }
+                var t = toasts[i];
+                if (t.root == null) continue;
+                float shake = t.warning && t.age < ShakeSeconds ? Mathf.Sin(t.age * 70f) * 9f * (1f - t.age / ShakeSeconds) : 0f;
+                t.root.anchoredPosition = new Vector2(shake, y);
+                y += t.root.sizeDelta.y + Gap;
             }
         }
 
@@ -270,10 +281,7 @@ namespace TawanOS.UI
                 toast.group.alpha = Mathf.Clamp01(alpha);
             }
 
-            for (int i = 0; i < toasts.Count; i++)
-            {
-                toasts[i].root.anchoredPosition = new Vector2(0f, -TopOffset - i * (Height + Gap));
-            }
+            Relayout();
         }
     }
 }
