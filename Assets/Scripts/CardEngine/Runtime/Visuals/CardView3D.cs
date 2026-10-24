@@ -56,6 +56,7 @@ namespace TawanOS.CardEngine
         private bool isPlacedOnBoard;
         private bool isHeld;
         private bool isHovered;
+        private float lastHoverSound = -1f;
         private bool wasIgnoringMouse;
 
         public bool IsHovered => isHovered;
@@ -480,8 +481,14 @@ namespace TawanOS.CardEngine
         private void OnMouseEnter()
         {
             if (IgnoresMouse) return;
-            // Only a real mouse-over sounds; Hover() is also called to resync after the card book closes
-            if (!isHovered) TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_card_hover");
+            // Every real mouse-over sounds (Hover() alone, used to resync, does not). Not gated on isHovered: that can stay
+            // true after an exit missed while input was blocked, which silenced the next hover. A short gap per card
+            // keeps a collider flicker from doubling the sound.
+            if (Time.unscaledTime - lastHoverSound > 0.1f)
+            {
+                lastHoverSound = Time.unscaledTime;
+                TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_card_hover");
+            }
             Hover();
         }
 
