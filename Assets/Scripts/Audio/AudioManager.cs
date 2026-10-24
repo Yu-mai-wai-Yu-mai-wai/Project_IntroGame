@@ -94,7 +94,16 @@ namespace TawanOS.Audio
             if (Instance == this) Instance = null;
         }
 
-        private void OnSceneLoadedMuteOtherListeners(Scene scene, LoadSceneMode mode) => MuteOtherListeners();
+        // An AudioMixer ignores SetFloat in Awake, so the saved volumes only took hold once a slider moved: the game
+        // started at full volume (Game Designer, 25 Oct: "set in the menu, very loud in the game"). Set them again here
+        // and on every scene load.
+        private void Start() => ApplyVolumes();
+
+        private void OnSceneLoadedMuteOtherListeners(Scene scene, LoadSceneMode mode)
+        {
+            MuteOtherListeners();
+            ApplyVolumes();
+        }
 
         private void MuteOtherListeners()
         {
@@ -121,10 +130,11 @@ namespace TawanOS.Audio
         {
             if (key == currentBgmKey) return;
             currentBgmKey = key;
-            var clip = Resolve(key);
+            var clip = Resolve(key, out float gain);
             var from = bgmActive;
             var to = bgmActive == bgmA ? bgmB : bgmA;
             bgmActive = to;
+            if (to == bgmA) bgmGainA = gain; else bgmGainB = gain;
             to.clip = clip;
             to.volume = 0f;
             if (clip != null) to.Play();
@@ -136,10 +146,10 @@ namespace TawanOS.Audio
         {
             if (key == currentAmbienceKey) return;
             currentAmbienceKey = key;
-            var clip = Resolve(key);
+            var clip = Resolve(key, out ambienceGain);
             ambience.Stop();
             ambience.clip = clip;
-            ambience.volume = AmbienceVolume();
+            ambience.volume = AmbienceVolume() * ambienceGain;
             if (clip != null) ambience.Play();
         }
 
@@ -148,19 +158,24 @@ namespace TawanOS.Audio
         /// <summary>A sound effect played quieter (volumeScale below 1) or louder than usual.</summary>
         public void PlaySfx(string key, float volumeScale)
         {
-            var clip = Resolve(key);
+            var clip = Resolve(key, out float gain);
             if (clip != null)
             {
                 float vol = mixer != null ? 1f : LoadVolume(AudioChannel.Sfx); // master = AudioListener.volume (GameSettings)
-                sfx.PlayOneShot(clip, vol * volumeScale);
+                sfx.PlayOneShot(clip, vol * volumeScale * gain); // gain evens it out with the other effects
             }
         }
 
-        private AudioClip Resolve(string key)
+        // Per-clip volume from the library's loudness pass (Tools/TawanOS/Audio/Even Out Loudness)
+        private float bgmGainA = 1f, bgmGainB = 1f, ambienceGain = 1f;
+        private float GainOf(AudioSource bgm) => bgm == bgmA ? bgmGainA : bgmGainB;
+
+        private AudioClip Resolve(string key, out float gain)
         {
+            gain = 1f;
             if (string.IsNullOrEmpty(key)) return null;
             if (library == null) library = AudioLibrarySO.Load();
-            var clip = library != null ? library.Pick(key) : null;
+            var clip = library != null ? library.Pick(key, out gain) : null;
             if (clip == null && warned.Add(key)) Debug.LogWarning($"[AudioManager] No clip for key '{key}'.");
             return clip;
         }
@@ -172,11 +187,11 @@ namespace TawanOS.Audio
             {
                 float k = t / CrossfadeSeconds;
                 if (from != null) from.volume = start * (1f - k);
-                to.volume = SourceVolumeBgm() * k;
+                to.volume = SourceVolumeBgm() * GainOf(to) * k;
                 yield return null;
             }
             if (from != null && from != to) { from.Stop(); from.volume = 0f; }
-            to.volume = SourceVolumeBgm();
+            to.volume = SourceVolumeBgm() * GainOf(to);
             crossfade = null;
         }
 
@@ -207,13 +222,15 @@ namespace TawanOS.Audio
             if (mixer != null)
             {
                 mixer.SetFloat(MixerParamMaster, 0f); // master is applied once, through AudioListener.volume
-                mixer.SetFloat(MixerParamBgm, VolumeToDb(LoadVolume(AudioChannel.Bgm)));
-                mixer.SetFloat(MixerParamSfx, VolumeToDb(LoadVolume(AudioChannel.Sfx)));
+                // The groups are lifted so the quietest clips reach their loudness (AudioLibrarySO); silent stays silent
+                float bgmDb = VolumeToDb(LoadVolume(AudioChannel.Bgm)), sfxDb = VolumeToDb(LoadVolume(AudioChannel.Sfx));
+                mixer.SetFloat(MixerParamBgm, bgmDb <= -80f ? -80f : bgmDb + (library != null ? library.musicBoostDb : 0f));
+                mixer.SetFloat(MixerParamSfx, sfxDb <= -80f ? -80f : sfxDb + (library != null ? library.sfxBoostDb : 0f));
             }
             // Source volume for crossfade and non-mixer fallback
             float bgmVol = SourceVolumeBgm();
-            if (crossfade == null && bgmActive != null) bgmActive.volume = bgmVol;
-            if (ambience != null) ambience.volume = AmbienceVolume();
+            if (crossfade == null && bgmActive != null) bgmActive.volume = bgmVol * GainOf(bgmActive);
+            if (ambience != null) ambience.volume = AmbienceVolume() * ambienceGain;
             // SFX uses PlayOneShot volume; when mixer is absent, scale is applied there.
         }
 

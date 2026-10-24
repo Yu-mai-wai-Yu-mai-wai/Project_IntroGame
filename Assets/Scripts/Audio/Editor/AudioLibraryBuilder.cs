@@ -61,6 +61,7 @@ namespace TawanOS.EditorTools
             EditorUtility.SetDirty(library);
             AssetDatabase.SaveAssets();
             Debug.Log($"[AudioLibraryBuilder] {library.entries.Count} keys written to {LibraryPath}.");
+            AudioLoudness.Apply(library); // the rebuilt entries need their loudness again
         }
 
         private static void ConfigureImport(string path)

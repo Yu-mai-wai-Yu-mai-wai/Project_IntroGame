@@ -18,7 +18,15 @@ namespace TawanOS.Audio
         {
             public string key;
             public AudioClip[] variants;
+            [Tooltip("Per variant: the gain (dB) that brings it to its kind's loudness. Written by Tools/TawanOS/Audio/Even Out Loudness.")]
+            public float[] gainDb;
         }
+
+        [Header("Loudness (Tools/TawanOS/Audio/Even Out Loudness)")]
+        [Tooltip("The effects mixer group is lifted by this much, so the quietest effects reach the target; every effect is turned down from there.")]
+        public float sfxBoostDb;
+        [Tooltip("The same for the music group.")]
+        public float musicBoostDb;
 
         public List<Entry> entries = new List<Entry>();
 
@@ -48,10 +56,20 @@ namespace TawanOS.Audio
         }
 
         /// <summary>A random variant for the key, or null when the key is unknown or empty.</summary>
-        public AudioClip Pick(string key)
+        public AudioClip Pick(string key) => Pick(key, out _);
+
+        /// <summary>A random variant and the volume (0..1) that evens it out with the others of its kind.</summary>
+        public AudioClip Pick(string key, out float gain)
         {
+            gain = 1f;
             if (!TryGet(key, out var e) || e.variants == null || e.variants.Length == 0) return null;
-            return e.variants[UnityEngine.Random.Range(0, e.variants.Length)];
+            int i = UnityEngine.Random.Range(0, e.variants.Length);
+            if (e.gainDb != null && i < e.gainDb.Length)
+            {
+                float lift = key.StartsWith("sfx_") ? sfxBoostDb : key.StartsWith("bgm_") ? musicBoostDb : 0f; // ambience has no group of its own
+                gain = Mathf.Clamp01(Mathf.Pow(10f, (e.gainDb[i] - lift) / 20f));
+            }
+            return e.variants[i];
         }
 
         private void OnValidate()
