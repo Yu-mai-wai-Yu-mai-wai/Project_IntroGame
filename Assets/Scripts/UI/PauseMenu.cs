@@ -227,6 +227,7 @@ namespace TawanOS.UI
 
             var text = UiFactory.CreateText(image.rectTransform, "Label", label, theme.bodySize * 1.25f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
             UiFactory.Stretch(text.rectTransform, 0f);
+            TawanOS.VFX.UiTalismanButton.Dress(button); // an old paper ยันต์ (Game Designer, 24 Oct)
             return button;
         }
 

@@ -211,6 +211,9 @@ namespace TawanOS.GameFlow
                 new Vector2(0.30f, 0.24f), new Vector2(0.48f, 0.34f));
             screen.menuButton = UiFactory.CreateButton(statsGo.transform, "MainMenuButton", "เมนูหลัก", theme,
                 new Vector2(0.52f, 0.24f), new Vector2(0.70f, 0.34f));
+            // Old paper ยันต์ (Game Designer, 24 Oct)
+            TawanOS.VFX.UiTalismanButton.Dress(screen.restartButton);
+            TawanOS.VFX.UiTalismanButton.Dress(screen.menuButton);
             screen.restartButton.onClick.AddListener(screen.Restart);
             screen.menuButton.onClick.AddListener(screen.GoToMainMenu);
 

@@ -721,14 +721,12 @@ namespace TawanOS.UI
             button.targetGraphic = image;
             button.onClick.AddListener(() => onClick());
             var size = image.gameObject.AddComponent<LayoutElement>();
-            size.minHeight = 52f;
-            size.minWidth = 200f;
+            size.minHeight = 60f;
+            size.minWidth = 250f;
 
             var text = UiFactory.CreateText(image.transform, "Label", label, 24f, textColor, TextAlignmentOptions.Center, theme.bodyFont);
             UiFactory.Stretch(text.rectTransform, 8f);
-            var outline = image.gameObject.AddComponent<Outline>();
-            outline.effectColor = theme.accent;
-            outline.effectDistance = new Vector2(1f, -1f);
+            TawanOS.VFX.UiTalismanButton.Dress(button); // an old paper ยันต์ (Game Designer, 24 Oct)
         }
     }
 }

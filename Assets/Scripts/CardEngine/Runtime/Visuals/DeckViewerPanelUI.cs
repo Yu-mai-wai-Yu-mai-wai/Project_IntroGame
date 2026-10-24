@@ -412,15 +412,17 @@ namespace TawanOS.CardEngine
 
             var close = NewImage("Close", panelRt, theme.crimson);
             close.raycastTarget = true;
-            SetRect(close.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-170f, -80f), new Vector2(-30f, -30f));
-            close.gameObject.AddComponent<Button>().onClick.AddListener(() => { if (ClickAllowed) Hide(); });
+            SetRect(close.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-250f, -86f), new Vector2(-30f, -26f));
+            var closeButton = close.gameObject.AddComponent<Button>();
+            closeButton.onClick.AddListener(() => { if (ClickAllowed) Hide(); });
             var closeText = NewText("Text", close.transform, 26, TextAlignmentOptions.Center);
             Stretch(closeText.rectTransform);
             closeText.text = "ปิด (Esc)";
+            TawanOS.VFX.UiTalismanButton.Dress(closeButton); // an old paper ยันต์ (Game Designer, 24 Oct)
 
             // Collection filter tabs, left of the close button (hidden outside the collection)
             tabsRow = NewRect("Tabs", panelRt);
-            SetRect(tabsRow, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-690f, -80f), new Vector2(-190f, -30f));
+            SetRect(tabsRow, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-770f, -80f), new Vector2(-270f, -30f));
             var tabLayout = tabsRow.gameObject.AddComponent<HorizontalLayoutGroup>();
             tabLayout.spacing = 10f;
             tabLayout.childControlWidth = tabLayout.childControlHeight = true;

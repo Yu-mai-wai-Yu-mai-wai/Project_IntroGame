@@ -50,6 +50,7 @@ namespace TawanOS.GameFlow
             if (mainMenuButton != null)
             {
                 mainMenuButton.onClick.AddListener(OnMainMenuClicked);
+                TawanOS.VFX.UiTalismanButton.Dress(mainMenuButton); // an old paper ยันต์ (Game Designer, 24 Oct)
             }
         }
 

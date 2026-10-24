@@ -890,15 +890,19 @@ namespace TawanOS.CardEngine
             prevArrow = Arrow("Prev", "‹", left: true);
             nextArrow = Arrow("Next", "›", left: false);
 
-            var close = NewText("Close", book, 26, TextAlignmentOptions.Right);
-            close.color = new Color(0.9f, 0.82f, 0.7f);
-            close.rectTransform.anchorMin = close.rectTransform.anchorMax = new Vector2(1f, 1f);
-            close.rectTransform.pivot = new Vector2(1f, 0f);
-            close.rectTransform.anchoredPosition = new Vector2(0f, m + 6f);
-            close.rectTransform.sizeDelta = new Vector2(300f, 40f);
-            close.raycastTarget = true;
+            // An old paper ยันต์ above the top-right corner of the book (Game Designer, 24 Oct)
+            var closeRect = new GameObject("Close", typeof(RectTransform), typeof(Image), typeof(Button)).GetComponent<RectTransform>();
+            closeRect.SetParent(book, false);
+            closeRect.anchorMin = closeRect.anchorMax = new Vector2(1f, 1f);
+            closeRect.pivot = new Vector2(1f, 0f);
+            closeRect.anchoredPosition = new Vector2(0f, m + 6f);
+            closeRect.sizeDelta = new Vector2(220f, 60f);
+            var closeButton = closeRect.GetComponent<Button>();
+            closeButton.targetGraphic = closeRect.GetComponent<Image>();
+            closeButton.onClick.AddListener(() => { if (ClickAllowed) Close(); });
+            var close = NewText("Label", closeRect, 26, TextAlignmentOptions.Center);
             close.text = "ปิด (Esc)";
-            close.gameObject.AddComponent<Button>().onClick.AddListener(() => { if (ClickAllowed) Close(); });
+            TawanOS.VFX.UiTalismanButton.Dress(closeButton);
 
             canvasGo.SetActive(false);
         }

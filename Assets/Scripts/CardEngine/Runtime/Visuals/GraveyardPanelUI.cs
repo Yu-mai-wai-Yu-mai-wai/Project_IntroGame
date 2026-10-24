@@ -285,11 +285,13 @@ namespace TawanOS.CardEngine
 
             var close = NewImage("Close", panelRt, new Color(1f, 1f, 1f, 0.08f));
             close.raycastTarget = true;
-            SetRect(close.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-170f, -80f), new Vector2(-30f, -30f));
-            close.gameObject.AddComponent<Button>().onClick.AddListener(() => { if (ClickAllowed) Hide(); });
+            SetRect(close.rectTransform, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-250f, -86f), new Vector2(-30f, -26f));
+            var closeButton = close.gameObject.AddComponent<Button>();
+            closeButton.onClick.AddListener(() => { if (ClickAllowed) Hide(); });
             var closeText = NewText("Text", close.transform, 26, TextAlignmentOptions.Center);
             Stretch(closeText.rectTransform);
             closeText.text = "ปิด (Esc)";
+            TawanOS.VFX.UiTalismanButton.Dress(closeButton); // an old paper ยันต์ (Game Designer, 24 Oct)
 
             var line = NewImage("Divider", panelRt, new Color(1f, 1f, 1f, 0.15f));
             SetRect(line.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(40f, -102f), new Vector2(-40f, -100f));

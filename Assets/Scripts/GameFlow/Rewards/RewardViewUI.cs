@@ -38,6 +38,7 @@ namespace TawanOS.GameFlow
             fx = RewardFxConfigSO.Load();
             if (cardTemplate != null) cardTemplate.gameObject.SetActive(false);
             if (skipButton != null) skipButton.onClick.AddListener(() => { if (rewards != null) rewards.Skip(); });
+            UiTalismanButton.Dress(skipButton); // an old paper ยันต์ (Game Designer, 24 Oct)
             BuildSmoke();
         }
 

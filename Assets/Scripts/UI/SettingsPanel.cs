@@ -133,8 +133,9 @@ namespace TawanOS.UI
             BuildDisplayPage(pages[1].transform);
             BuildGameplayPage(pages[2].transform);
 
-            TextButton(w, "ResetButton", "คืนค่าเริ่มต้น", new Vector2(-170f, -330f), new Vector2(280f, 60f), ResetCurrentTab);
-            TextButton(w, "CloseButton", "ปิด", new Vector2(170f, -330f), new Vector2(280f, 60f), Close);
+            // The action buttons are old paper ยันต์ (Game Designer, 24 Oct); the tabs and the < > steppers are not
+            TawanOS.VFX.UiTalismanButton.Dress(TextButton(w, "ResetButton", "คืนค่าเริ่มต้น", new Vector2(-170f, -330f), new Vector2(300f, 66f), ResetCurrentTab));
+            TawanOS.VFX.UiTalismanButton.Dress(TextButton(w, "CloseButton", "ปิด", new Vector2(170f, -330f), new Vector2(300f, 66f), Close));
 
             BuildConfirmDialog(w);
             ShowTab(0);
@@ -287,8 +288,8 @@ namespace TawanOS.UI
 
             confirmText = UiFactory.CreateText(box.rectTransform, "Question", string.Empty, theme.bodySize * 1.25f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
             Place(confirmText.rectTransform, new Vector2(0f, 50f), new Vector2(600f, 140f));
-            TextButton(box.rectTransform, "KeepButton", "เก็บไว้", new Vector2(-140f, -90f), new Vector2(240f, 60f), KeepDisplay);
-            TextButton(box.rectTransform, "RevertButton", "ย้อนกลับ", new Vector2(140f, -90f), new Vector2(240f, 60f), RevertDisplay);
+            TawanOS.VFX.UiTalismanButton.Dress(TextButton(box.rectTransform, "KeepButton", "เก็บไว้", new Vector2(-140f, -90f), new Vector2(250f, 64f), KeepDisplay));
+            TawanOS.VFX.UiTalismanButton.Dress(TextButton(box.rectTransform, "RevertButton", "ย้อนกลับ", new Vector2(140f, -90f), new Vector2(250f, 64f), RevertDisplay));
             confirmDialog.SetActive(false);
         }
 

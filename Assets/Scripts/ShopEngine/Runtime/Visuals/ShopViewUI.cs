@@ -50,6 +50,7 @@ namespace TawanOS.ShopEngine
         {
             if (itemTemplate != null) itemTemplate.gameObject.SetActive(false);
             if (leaveButton != null) leaveButton.onClick.AddListener(() => { if (shop != null) shop.Leave(); });
+            UiTalismanButton.Dress(leaveButton); // an old paper ยันต์ (Game Designer, 24 Oct)
         }
 
         private void OnEnable()
@@ -198,7 +199,7 @@ namespace TawanOS.ShopEngine
             var label = UiFactory.CreateText(rect, "Label", string.Empty, 30f, Color.white, TextAlignmentOptions.Center, theme.bodyFont);
             label.textWrappingMode = TextWrappingModes.NoWrap;
             UiFactory.Stretch(label.rectTransform, 0f);
-            rect.gameObject.AddComponent<UiSmokeButton>(); // after the label, which it colours
+            rect.gameObject.AddComponent<UiTalismanButton>(); // an old paper ยันต์ (Game Designer, 24 Oct); after the label, which it inks
             button.onClick.AddListener(() =>
             {
                 if (shop == null || blessingTargets[index] == null) return;
