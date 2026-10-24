@@ -35,6 +35,42 @@ namespace TawanOS.EditorTools
             EditorSceneManager.SaveScene(scene);
         }
 
+        [MenuItem("Tools/TawanOS/UI/Rebuild Enemy Speech")]
+        private static void Rebuild_Menu()
+        {
+            Rebuild();
+        }
+
+        // Batch: -executeMethod TawanOS.EditorTools.EnemySpeechSetupTool.RebuildInCombatScene
+        // Replaces the combat scene's speech box with a fresh one in the current look (24 Oct: red line over a black haze)
+        public static void RebuildInCombatScene()
+        {
+            var scene = EditorSceneManager.OpenScene(CombatScenePath, OpenSceneMode.Single);
+            if (!scene.IsValid())
+            {
+                Debug.LogError($"[EnemySpeechSetupTool] {CombatScenePath} could not be opened.");
+                if (Application.isBatchMode) EditorApplication.Exit(1);
+                return;
+            }
+            Rebuild();
+            EditorSceneManager.SaveScene(scene);
+        }
+
+        // Removes the open scene's speech box, keeping its timing and chance settings, and builds it again
+        public static void Rebuild()
+        {
+            var old = Object.FindFirstObjectByType<EnemySpeech>(FindObjectsInactive.Include);
+            string kept = old != null ? JsonUtility.ToJson(old) : null;
+            if (old != null) Undo.DestroyObjectImmediate(old.gameObject);
+            Add();
+            var fresh = Object.FindFirstObjectByType<EnemySpeech>(FindObjectsInactive.Include);
+            if (fresh == null || kept == null) return;
+            var parts = (fresh.group, fresh.speaker, fresh.line, fresh.font);
+            JsonUtility.FromJsonOverwrite(kept, fresh);
+            (fresh.group, fresh.speaker, fresh.line, fresh.font) = parts;
+            EditorUtility.SetDirty(fresh);
+        }
+
         // Adds it to the open scene
         public static void Add()
         {

@@ -8,7 +8,9 @@ using UnityEngine.UI;
 namespace TawanOS.UI
 {
     /// <summary>
-    /// The ghost speaks during a fight: a line typed out under the enemy's bar at the top of the screen, then gone.
+    /// The ghost speaks during a fight: a faint red line that seeps in letter by letter over a soft black haze under
+    /// the enemy's bar at the top of the screen, then fades (Game Designer, 24 Oct: no hard box; warnings are red
+    /// toasts at the bottom, so the two do not mix).
     /// Lines come from the enemy profile (EnemyProfileSO.lines, or EnemyLines.Defaults). It speaks when the fight
     /// starts, enters its next phase, first runs low on khwan, wins or loses, and now and then when it plays a card,
     /// is hurt or hurts the player. Text only for now; a voice can hook into <see cref="OnLine"/>.
@@ -26,6 +28,12 @@ namespace TawanOS.UI
         [Header("Timing")]
         [Tooltip("Letters per second at the normal text speed (the Settings text speed scales it).")]
         public float lettersPerSecond = 28f;
+        [Tooltip("Seconds each letter takes to fade in; several are fading at once, so the line seeps in.")]
+        public float letterFadeSeconds = 0.35f;
+        [Tooltip("Extra pause, in letters, at a space and at each dot of \"...\".")]
+        public float pauseLetters = 3f;
+        [Tooltip("How strong the line is once fully in (below 1 = faint).")]
+        [Range(0.2f, 1f)] public float lineAlpha = 0.85f;
         [Tooltip("Seconds a line stays after it is fully typed.")]
         public float holdSeconds = 2.4f;
         [Tooltip("Seconds after a line before a line that is not important may be said.")]
@@ -52,6 +60,9 @@ namespace TawanOS.UI
         {
             if (group == null || line == null) BuildDefaultUI();
             group.alpha = 0f;
+            // The haze is made in code, so a scene built by the editor tool saves the Back image without it
+            var back = group.transform.Find("Back") != null ? group.transform.Find("Back").GetComponent<Image>() : null;
+            if (back != null && back.sprite == null) back.sprite = Haze();
 
             combat = CombatManager.Instance;
             resolver = EffectResolver.Instance;
@@ -148,9 +159,22 @@ namespace TawanOS.UI
         {
             if (speaker != null) speaker.text = name;
             line.text = text;
-            line.maxVisibleCharacters = 0;
+            line.maxVisibleCharacters = int.MaxValue;
             line.ForceMeshUpdate();
             int total = line.textInfo.characterCount;
+
+            // When each letter starts to fade in: one after another, with a pause at spaces and dots
+            float perSecond = GameSettings.CharactersPerSecond(lettersPerSecond);
+            var starts = new float[total];
+            float clock = 0f;
+            for (int i = 0; i < total; i++)
+            {
+                starts[i] = clock / Mathf.Max(1f, perSecond);
+                char c = line.textInfo.characterInfo[i].character;
+                clock += c == ' ' || c == '.' || c == '…' ? 1f + pauseLetters : 1f;
+            }
+            float done = (total > 0 ? starts[total - 1] : 0f) + letterFadeSeconds;
+            SetLetterAlphas(starts, 0f);
 
             for (float t = 0f; t < 1f; t += Time.unscaledDeltaTime / 0.15f)
             {
@@ -159,15 +183,12 @@ namespace TawanOS.UI
             }
             group.alpha = 1f;
 
-            float perSecond = GameSettings.CharactersPerSecond(lettersPerSecond);
-            float shown = 0f;
-            while (shown < total)
+            for (float t = 0f; t < done; t += Time.unscaledDeltaTime)
             {
-                shown += perSecond * Time.unscaledDeltaTime;
-                line.maxVisibleCharacters = Mathf.Min(total, Mathf.FloorToInt(shown));
+                SetLetterAlphas(starts, t);
                 yield return null;
             }
-            line.maxVisibleCharacters = total;
+            SetLetterAlphas(starts, float.MaxValue);
 
             yield return new WaitForSecondsRealtime(holdSeconds);
             for (float t = 1f; t > 0f; t -= Time.unscaledDeltaTime / 0.4f)
@@ -180,8 +201,46 @@ namespace TawanOS.UI
             speaking = null;
         }
 
+        // Each letter's alpha from when it started (TMP rebuilds the mesh at full alpha, so it is set every frame)
+        private void SetLetterAlphas(float[] starts, float time)
+        {
+            line.ForceMeshUpdate();
+            var info = line.textInfo;
+            for (int i = 0; i < info.characterCount && i < starts.Length; i++)
+            {
+                var ch = info.characterInfo[i];
+                if (!ch.isVisible) continue;
+                float k = letterFadeSeconds > 0f ? Mathf.Clamp01((time - starts[i]) / letterFadeSeconds) : (time >= starts[i] ? 1f : 0f);
+                byte a = (byte)(255f * lineAlpha * k * k * (3f - 2f * k));
+                var colors = info.meshInfo[ch.materialReferenceIndex].colors32;
+                for (int v = 0; v < 4; v++) colors[ch.vertexIndex + v].a = a;
+            }
+            line.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
+        }
+
+        // A soft black haze: dark in the middle, fading out to nothing at every edge (no box, no border)
+        private static Sprite haze;
+        private static Sprite Haze()
+        {
+            if (haze != null) return haze;
+            const int w = 256, h = 64;
+            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            var px = new Color32[w * h];
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    float dx = Mathf.Abs(x + 0.5f - w * 0.5f) / (w * 0.5f), dy = Mathf.Abs(y + 0.5f - h * 0.5f) / (h * 0.5f);
+                    float ex = 1f - Mathf.SmoothStep(0.55f, 1f, dx), ey = 1f - Mathf.SmoothStep(0.25f, 1f, dy);
+                    px[y * w + x] = new Color32(0, 0, 0, (byte)(255f * ex * ey));
+                }
+            tex.SetPixels32(px);
+            tex.Apply();
+            haze = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 100f);
+            return haze;
+        }
+
         /// <summary>
-        /// Builds the speech box under this object: a dark smoky strip under the enemy's bar with the ghost's name
+        /// Builds the speech box under this object: a soft black haze under the enemy's bar with the ghost's name
         /// and its line. Used by the editor tool (so the parts can be tuned in the scene) and for parts left empty.
         /// </summary>
         public void BuildDefaultUI()
@@ -199,13 +258,15 @@ namespace TawanOS.UI
             group.blocksRaycasts = false;
             group.interactable = false;
 
-            var back = UiFactory.CreateImage("Back", box, new Color(0.04f, 0.02f, 0.03f, 0.82f));
+            var back = UiFactory.CreateImage("Back", box, new Color(1f, 1f, 1f, 0.75f));
+            back.sprite = Haze();
             UiFactory.Stretch(back.rectTransform, 0f);
+            back.rectTransform.offsetMin = new Vector2(-160f, -30f); // the haze reaches past the text and fades out
+            back.rectTransform.offsetMax = new Vector2(160f, 30f);
             back.raycastTarget = false;
 
             var useFont = font != null ? font : theme != null ? theme.bodyFont : null;
-            Color accent = theme != null ? theme.accent : new Color(0.94f, 0.68f, 0.48f);
-            speaker = UiFactory.CreateText(box, "Speaker", "", 24f, accent, TextAlignmentOptions.TopLeft, useFont);
+            speaker = UiFactory.CreateText(box, "Speaker", "", 24f, new Color(0.75f, 0.32f, 0.3f, 0.7f), TextAlignmentOptions.Top, useFont);
             var sr = speaker.rectTransform;
             sr.anchorMin = new Vector2(0f, 1f);
             sr.anchorMax = new Vector2(1f, 1f);
@@ -213,7 +274,7 @@ namespace TawanOS.UI
             sr.offsetMin = new Vector2(28f, -40f);
             sr.offsetMax = new Vector2(-28f, -8f);
 
-            line = UiFactory.CreateText(box, "Line", "", 34f, new Color(0.92f, 0.86f, 0.86f), TextAlignmentOptions.Center, useFont);
+            line = UiFactory.CreateText(box, "Line", "", 34f, new Color(0.9f, 0.2f, 0.18f), TextAlignmentOptions.Center, useFont);
             var lr = line.rectTransform;
             lr.anchorMin = Vector2.zero;
             lr.anchorMax = Vector2.one;
