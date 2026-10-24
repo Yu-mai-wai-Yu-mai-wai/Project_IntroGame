@@ -31,6 +31,15 @@ namespace TawanOS.UI
         {
             if (string.IsNullOrEmpty(message)) return;
 
+            // Khwan lost in a fight ("−3 ขวัญ ..."): a small line over the khwan bar instead (KhwanHitPopups)
+            if (NoticeHost.IsKhwanLoss(message))
+            {
+                Debug.Log($"[Notice] {message}");
+                OnNotice?.Invoke(message, NoticeKind.Info); // the combat log still hears it
+                KhwanHitPopups.Show(message);
+                return;
+            }
+
             NoticeHost.EnsureExists();
 
             if (NoticeHost.Instance != null && NoticeHost.Instance.TryExtend(message))
@@ -93,6 +102,9 @@ namespace TawanOS.UI
             public float life;
             public bool warning;
         }
+
+        /// <summary>"−3 ขวัญ ..." from a hit in a fight.</summary>
+        public static bool IsKhwanLoss(string message) => message.StartsWith("−") && message.Contains("ขวัญ");
 
         public static NoticeHost Instance => instance;
         private static NoticeHost instance;
@@ -172,6 +184,7 @@ namespace TawanOS.UI
         public void Add(string message, NoticeKind kind)
         {
             if (string.IsNullOrEmpty(message)) return;
+            if (IsKhwanLoss(message)) return; // shown over the khwan bar (KhwanHitPopups)
 
             // (a) If the same text is already visible, do not add a new row; extend that row's display time instead.
             if (TryExtend(message)) return;
