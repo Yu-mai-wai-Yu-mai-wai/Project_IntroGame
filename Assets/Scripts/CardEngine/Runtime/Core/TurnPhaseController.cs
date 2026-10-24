@@ -129,7 +129,9 @@ namespace TawanOS.CardEngine
         {
             if (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver) return;
             if (Input.GetKeyDown(endTurnKey) && !TawanOS.UI.PauseMenu.IsPaused && !TawanOS.UI.TutorialCoach.Blocking
-                && !TawanOS.VFX.BossPhaseCutscene.Playing) RequestEndTurn();
+                && !TawanOS.VFX.BossPhaseCutscene.Playing
+                && !(CombatCameraRig3D.Instance != null && CombatCameraRig3D.Instance.IsTopView))
+                RequestEndTurn(); // Space ends the turn only in the normal view with the hand; from above it zooms the camera (CombatCameraRig3D)
         }
 
         private IEnumerator TurnLoop()

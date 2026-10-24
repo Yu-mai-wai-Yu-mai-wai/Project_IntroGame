@@ -75,6 +75,16 @@ namespace TawanOS.CardEngine
             new GameObject("CenterPit3D").AddComponent<CenterPitView3D>();
         }
 
+        /// <summary>Where the pit's cards lie (world), empty when the pit shows none; the camera zooms onto them.</summary>
+        public static List<Vector3> CardSpots()
+        {
+            var spots = new List<Vector3>();
+            if (Instance == null) return spots;
+            foreach (var slot in Instance.slots)
+                if (slot.root != null) spots.Add(slot.rest);
+            return spots;
+        }
+
         // True for a card lying in the pit (its details can be opened)
         public static bool Shows(CardView3D view)
         {

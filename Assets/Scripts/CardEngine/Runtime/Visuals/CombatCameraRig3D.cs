@@ -32,8 +32,16 @@ namespace TawanOS.CardEngine
         [Tooltip("How much of the screen the board rows fill in the C (board-only) view, where UI and hands are hidden.")]
         [Range(0.3f, 1f)] public float boardOnlyScreenFraction = 0.95f;
         [Tooltip("How long the hands take to slide off / back on screen when the board-only view opens / closes.")]
-        public float handSlideDuration = 0.35f;
-        public float moveDuration = 0.45f;
+        public float handSlideDuration = 0.2f;
+        [Tooltip("How long the camera takes between views (Game Designer, 24 Oct: W/S quick, was 0.45).")]
+        public float moveDuration = 0.22f;
+
+        [Header("Row Zoom (W view)")]
+        [Tooltip("In the W view: zooms onto the player's row (the centre pit while picking from it), and back to the whole board. While zoomed, W / S step toward the enemy / the player.")]
+        public KeyCode rowZoomKey = KeyCode.Space;
+        [Tooltip("How much of the screen the zoomed row fills.")]
+        [Range(0.3f, 1f)] public float rowScreenFraction = 0.92f;
+        public float rowZoomDuration = 0.2f;
 
         private Camera cam;
         private Vector3 homePosition;
@@ -42,6 +50,12 @@ namespace TawanOS.CardEngine
         private bool hasHome;
 
         private bool userTop;
+
+        // The W view's own pose, and what it is zoomed onto (ZoomNone / ZoomPlayer / ZoomPit / ZoomEnemy)
+        private Vector3 topPos;
+        private Quaternion topRot;
+        private float topFov;
+        private int zoomZone;
         private int topRequests;
         private bool locked;
 
@@ -173,7 +187,9 @@ namespace TawanOS.CardEngine
             if (!CardDetailPanelUI.IsOpen && !GraveyardPanelUI.IsOpen && !DeckViewerPanelUI.IsOpen
                 && !TawanOS.UI.TutorialCoach.Blocking && !TawanOS.VFX.BossPhaseCutscene.Playing)
             {
-                if (Input.GetKeyDown(topKey) && !userTop) ToggleTopView();
+                bool zoomKeys = IsBoardOnlyView && (zoomZone != ZoomNone || Input.GetKeyDown(rowZoomKey));
+                if (zoomKeys) HandleRowZoomKeys();
+                else if (Input.GetKeyDown(topKey) && !userTop) ToggleTopView();
                 else if (Input.GetKeyDown(homeKey)) ReturnHome();
             }
 
@@ -225,7 +241,9 @@ namespace TawanOS.CardEngine
                 float fraction = want == View.BoardOnly ? boardOnlyScreenFraction : boardScreenFraction;
                 if (!TryTopPose(fraction, out Vector3 pos, out Quaternion rot, out float fov)) return;
                 MoveCamera(pos, rot, fov);
+                if (want == View.BoardOnly) { topPos = pos; topRot = rot; topFov = fov; }
             }
+            zoomZone = 0;
 
             appliedView = want;
             SetUiHidden(want == View.BoardOnly);
@@ -254,13 +272,83 @@ namespace TawanOS.CardEngine
             }
         }
 
-        private void MoveCamera(Vector3 pos, Quaternion rot, float fov)
+        private void MoveCamera(Vector3 pos, Quaternion rot, float fov) => MoveCamera(pos, rot, fov, moveDuration, Ease.InOutQuad);
+
+        private void MoveCamera(Vector3 pos, Quaternion rot, float fov, float duration, Ease ease)
         {
             cam.transform.DOKill();
             cam.DOKill();
-            cam.transform.DOMove(pos, moveDuration).SetEase(Ease.InOutQuad);
-            cam.transform.DORotateQuaternion(rot, moveDuration).SetEase(Ease.InOutQuad);
-            cam.DOFieldOfView(fov, moveDuration).SetEase(Ease.InOutQuad);
+            cam.transform.DOMove(pos, duration).SetEase(ease);
+            cam.transform.DORotateQuaternion(rot, duration).SetEase(ease);
+            cam.DOFieldOfView(fov, duration).SetEase(ease);
+        }
+
+        // ---------------------------------------------------------------- row zoom (W view)
+
+        // In the W view, Space zooms in and back out; while zoomed, W / S step up (toward the enemy) and down. A normal
+        // turn has two steps, the player's row and the enemy's; while the player picks from the centre pit there are
+        // three, the pit in the middle, and Space starts there (Game Designer, 24 Oct).
+        private const int ZoomNone = 0, ZoomPlayer = 1, ZoomPit = 2, ZoomEnemy = 3;
+
+        private static bool PitPicking => CenterPit.Instance != null && CenterPit.Instance.WaitingForPlayer
+            && CenterPitView3D.CardSpots().Count > 0;
+
+        private void HandleRowZoomKeys()
+        {
+            if (!IsBoardOnlyView) return;
+            if (Input.GetKeyDown(rowZoomKey))
+            {
+                SetRowZoom(zoomZone != ZoomNone ? ZoomNone : PitPicking ? ZoomPit : ZoomPlayer);
+                return;
+            }
+            if (zoomZone == ZoomNone) return;
+
+            int[] steps = PitPicking ? new[] { ZoomPlayer, ZoomPit, ZoomEnemy } : new[] { ZoomPlayer, ZoomEnemy };
+            int at = System.Array.IndexOf(steps, zoomZone);
+            if (Input.GetKeyDown(topKey)) SetRowZoom(at < 0 ? ZoomEnemy : steps[Mathf.Min(at + 1, steps.Length - 1)]);
+            else if (Input.GetKeyDown(homeKey)) SetRowZoom(at < 0 ? ZoomPlayer : steps[Mathf.Max(at - 1, 0)]);
+        }
+
+        private void SetRowZoom(int zone)
+        {
+            if (cam == null || appliedView != View.BoardOnly) return;
+            zoomZone = zone;
+            Vector3 pos = topPos;
+            if (zone == ZoomPit) TryFitPose(CenterPitView3D.CardSpots(), out pos);
+            else if (zone != ZoomNone) TryFitPose(RowSpots(zone == ZoomEnemy ? BoardSlotView.SlotSide.Enemy : BoardSlotView.SlotSide.Player), out pos);
+            MoveCamera(pos, topRot, topFov, rowZoomDuration, Ease.OutCubic);
+        }
+
+        private static System.Collections.Generic.List<Vector3> RowSpots(BoardSlotView.SlotSide side)
+        {
+            var spots = new System.Collections.Generic.List<Vector3>();
+            foreach (var slot in FindObjectsByType<BoardSlotView>(FindObjectsSortMode.None))
+                if (IsBoardSlot(slot) && slot.side == side) spots.Add(slot.transform.position);
+            return spots;
+        }
+
+        // Straight above these card spots, as low as lets them all (with a margin) fit the screen
+        private bool TryFitPose(System.Collections.Generic.List<Vector3> spots, out Vector3 pos)
+        {
+            pos = topPos;
+            if (spots == null || spots.Count == 0) return false;
+            Vector3 r = topRot * Vector3.right, u = topRot * Vector3.up;
+            Vector3 center = Vector3.zero;
+            foreach (var p in spots) center += p;
+            center /= spots.Count;
+
+            float halfRight = 0f, halfUp = 0f;
+            foreach (var p in spots)
+            {
+                halfRight = Mathf.Max(halfRight, Mathf.Abs(Vector3.Dot(p - center, r)) + 1f);   // + half a card
+                halfUp = Mathf.Max(halfUp, Mathf.Abs(Vector3.Dot(p - center, u)) + 1.45f);
+            }
+
+            float tan = Mathf.Tan(topFov * 0.5f * Mathf.Deg2Rad);
+            float height = Mathf.Max(halfUp, halfRight / Mathf.Max(0.1f, cam.aspect)) / (tan * rowScreenFraction);
+            height = Mathf.Min(height, topPos.y - center.y); // never higher than the W view itself
+            pos = center + Vector3.up * height;
+            return true;
         }
 
         // Straight down over the middle of the board, the enemy's row at the top of the screen, with a
