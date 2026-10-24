@@ -252,9 +252,9 @@ namespace TawanOS.CardEngine
             bool face = strike.overhead;
 
             Vector3 aPos = aSlot.transform.position;
-            // Hitting the player (no target card): the card goes past the middle of the opposing side's row,
-            // toward the character behind it
-            Vector3 tPos = strike.target != null ? tSlot.transform.position : FaceHitPoint(attackerSlots, opposingSlots);
+            // Hitting the player (no target card): the card goes straight across its own lane, past the opposing
+            // side's slot in that column, toward the character behind it (Game Designer, 24 Oct: not to the middle)
+            Vector3 tPos = strike.target != null ? tSlot.transform.position : FaceHitPoint(aSlot, attackerSlots, opposingSlots);
             Vector3 dir = Direction(aPos, tPos);
             Vector3 chargeTo = tPos + Vector3.up * liftHeight - dir * collisionGap;
 
@@ -377,10 +377,15 @@ namespace TawanOS.CardEngine
             }
         }
 
-        private Vector3 FaceHitPoint(Dictionary<int, BoardSlotView> attackerSlots, Dictionary<int, BoardSlotView> opposingSlots)
+        private Vector3 FaceHitPoint(BoardSlotView attackerSlot, Dictionary<int, BoardSlotView> attackerSlots,
+            Dictionary<int, BoardSlotView> opposingSlots)
         {
-            Vector3 row = RowCenter(opposingSlots);
-            return row + Direction(RowCenter(attackerSlots), row) * faceHitReach;
+            Vector3 across = Direction(RowCenter(attackerSlots), RowCenter(opposingSlots));
+            // The slot across in the same column; without one, the attacker's own spot carried over to that row
+            Vector3 lane = opposingSlots.TryGetValue(attackerSlot.slotIndex, out var opposite) && opposite != null
+                ? opposite.transform.position
+                : attackerSlot.transform.position + across * Vector3.Distance(RowCenter(attackerSlots), RowCenter(opposingSlots));
+            return lane + across * faceHitReach;
         }
 
         private static Vector3 RowCenter(Dictionary<int, BoardSlotView> slots)
