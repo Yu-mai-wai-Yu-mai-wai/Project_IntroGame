@@ -39,6 +39,9 @@ namespace TawanOS.CardEngine
                  "Designer, 24 Oct); the 'upper' gauge is the left one and Upper Y / Lower Y are not used. Off: stacked " +
                  "at the left side, at Upper Y / Lower Y.")]
         public bool topLeftRow = true;
+        [Tooltip("Top-left corner: the two gauges one above the other instead of side by side (Game Designer, 25 Oct). " +
+                 "Keep the lower one above a raised hand card: Top Margin + Size * 2 + Row Gap about 380 or less.")]
+        public bool stackVertically = true;
         [Tooltip("Top-left row: distance from the top of the screen to the top of the gauges' squares.")]
         public float topMargin = 0f;
         [Tooltip("Top-left row: space between the two gauges' squares (negative = they overlap).")]

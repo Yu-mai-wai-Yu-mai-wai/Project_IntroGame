@@ -262,8 +262,11 @@ namespace TawanOS.CardEngine
                 // A row at the top-left corner: the 'upper' gauge on the left
                 float y = -(style.topMargin + size * 0.5f);
                 float left = style.leftMargin + size * 0.5f, right = left + size + style.rowGap;
-                Apply(merit, style.merit, new Vector2(0f, 1f), new Vector2(style.meritOnTop ? left : right, y));
-                Apply(corruption, style.corruption, new Vector2(0f, 1f), new Vector2(style.meritOnTop ? right : left, y));
+                // One above the other: the 'upper' gauge on top, the other a gauge (less the gap) below
+                var first = new Vector2(left, y);
+                var second = style.stackVertically ? new Vector2(left, y - (size + style.rowGap)) : new Vector2(right, y);
+                Apply(merit, style.merit, new Vector2(0f, 1f), style.meritOnTop ? first : second);
+                Apply(corruption, style.corruption, new Vector2(0f, 1f), style.meritOnTop ? second : first);
                 return;
             }
             float upper = style.upperY, lower = style.lowerY, x = style.leftMargin + size * 0.5f;

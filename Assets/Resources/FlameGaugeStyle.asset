@@ -13,10 +13,14 @@ MonoBehaviour:
   m_Name: FlameGaugeStyle
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.FlameGaugeStyleSO
   size: 200
-  leftMargin: 30
+  leftMargin: -15
   upperY: 115
   lowerY: -50
   meritOnTop: 0
+  topLeftRow: 1
+  stackVertically: 1
+  topMargin: 20
+  rowGap: -40
   innerRadius: 0.226
   outerRadius: 0.236
   flameHeight: 1.34
