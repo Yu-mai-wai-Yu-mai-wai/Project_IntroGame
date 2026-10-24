@@ -70,6 +70,15 @@ namespace TawanOS.EditorTools
                 if (Application.isBatchMode) EditorApplication.Exit(1);
                 return;
             }
+            // A cursor is drawn square (Windows stretches it to its own square size), so the art goes on a square
+            // sheet, kept to its shape in the top-left corner where the hotspot is (Game Designer, 25 Oct: it looked squeezed)
+            int side = Mathf.Max(tex.width, tex.height);
+            var square = new Texture2D(side, side, TextureFormat.RGBA32, false);
+            square.SetPixels32(new Color32[side * side]);
+            square.SetPixels(0, side - tex.height, tex.width, tex.height, tex.GetPixels());
+            square.Apply();
+            Object.DestroyImmediate(tex);
+            tex = square;
             int width = tex.width;
 
             Directory.CreateDirectory(Path.GetDirectoryName(OutputPath));
