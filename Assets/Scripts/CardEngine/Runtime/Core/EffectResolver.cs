@@ -17,6 +17,23 @@ namespace TawanOS.CardEngine
         public event Action<int> OnEnemySlotCleared;
         public event Action<CardInstance, int> OnFamiliarDamaged; // familiar, damage
         public event Action<CardInstance> OnFamiliarDied;
+        /// <summary>
+        /// A card's skill just did something, for the skill feed at the screen's side (SkillFeedHUD, Game Designer 24 Oct):
+        /// the card, its owner is the player, the ability (null for a passive reacting), either the short result to
+        /// show or null to word it from the ability, and the cards it was used on (null or empty: none named).
+        /// Display only: nothing in the fight listens to it.
+        /// </summary>
+        public event Action<CardInstance, bool, CardAbility, string, IReadOnlyList<CardInstance>> OnSkillShown;
+
+        /// <summary>Tells the skill feed a card's skill did something (see <see cref="OnSkillShown"/>).</summary>
+        private void ShowSkill(CardInstance card, bool ownerIsPlayer, CardAbility ability = null, string result = null,
+            IReadOnlyList<CardInstance> targets = null)
+        {
+            if (card != null) OnSkillShown?.Invoke(card, ownerIsPlayer, ability, result, targets);
+        }
+
+        // The cards an ability is being used on while it runs (ApplyToCard adds them), for the skill feed
+        private List<CardInstance> skillTargets;
         // A card put on the board by an ability rather than played from the hand (คาถาเรียกผี); the player's
         // board has no view for it yet. card, onPlayerSide
         public event Action<CardInstance, bool> OnCardSummoned;

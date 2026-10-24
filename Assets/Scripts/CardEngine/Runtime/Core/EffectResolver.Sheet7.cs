@@ -67,6 +67,7 @@ namespace TawanOS.CardEngine
                 int loss = Mathf.Min(amount, room);
                 if (loss <= 0) continue;
                 c.usedThisTurn += loss;
+                ShowSkill(c, isPlayer, result: $"ฮีลแล้วศัตรูเสียขวัญ {loss}");
                 combat.TakeDamage(loss, toPlayer: !isPlayer, cause: $"{c.cardNameThai}");
             }
 
@@ -75,6 +76,7 @@ namespace TawanOS.CardEngine
             {
                 if (UsedThisTurn(c) >= KeywordValue(c, AbilityEffect.AttackOnHeal) || !CanFamiliarAttack(c)) continue;
                 c.usedThisTurn++;
+                ShowSkill(c, isPlayer, result: "ฮีลแล้วโจมตีทันที");
                 ResolveFamiliarStrike(c, ChooseStrikeTarget(c, c.boardSlot, isPlayer), isPlayer);
             }
             RemoveDeadFamiliars();
@@ -87,6 +89,7 @@ namespace TawanOS.CardEngine
             {
                 var a = c.abilities.Find(x => x.trigger == AbilityTrigger.Passive && x.effect == AbilityEffect.EndRoundHealOrDraw);
                 bool healed = healedThisTurn[Side(isPlayer)];
+                ShowSkill(c, isPlayer, result: healed && a.duration <= 0 ? "จบรอบ: จั่ว 1 ใบ" : !healed && a.duration <= 0 ? $"จบรอบ: ฮีล +{a.value}" : $"จบรอบ: จั่ว 1 ใบ และฮีล +{a.value}");
                 if (healed || a.duration > 0) DrawFor(isPlayer, 1);
                 if (!healed || a.duration > 0) HealSide(isPlayer, a.value);
             }
@@ -121,6 +124,7 @@ namespace TawanOS.CardEngine
                 var other = CardAt(BoardOf(!deadIsPlayer), dead.boardSlot);
                 if (other == null || other.IsDead || other.cardType != CardType.Familiar) continue;
                 Debug.Log($"[Sheet7] {amulet.cardNameThai}: {dead.cardNameThai} died, so {other.cardNameThai} goes too");
+                ShowSkill(amulet, side, result: $"{dead.cardNameThai} ตาย พา {other.cardNameThai} ไปด้วย");
                 bool otherIsOwners = !deadIsPlayer == side;
                 if (link.value > 0 && otherIsOwners) ReturnCardToHand(other, !deadIsPlayer);
                 else DamageCard(other, other.familiarHealth, ignoreArmor: true, source: null, sourceIsPlayer: deadIsPlayer,
@@ -130,6 +134,7 @@ namespace TawanOS.CardEngine
             // ตะกรุดดำ: the enemy loses Khwan, a set number of times
             foreach (var c in LiveWith(deadIsPlayer, AbilityEffect.AllyDeathHurtsEnemy))
             {
+                ShowSkill(c, deadIsPlayer, result: $"บริวารตาย ศัตรูเสียขวัญ {KeywordValue(c, AbilityEffect.AllyDeathHurtsEnemy)}");
                 combat.TakeDamage(KeywordValue(c, AbilityEffect.AllyDeathHurtsEnemy), toPlayer: !deadIsPlayer, cause: c.cardNameThai);
                 UseUp(c, AbilityEffect.AllyDeathHurtsEnemy);
             }
@@ -141,6 +146,7 @@ namespace TawanOS.CardEngine
                 var a = c.abilities.Find(x => x.trigger == AbilityTrigger.Passive && x.effect == AbilityEffect.AllyDeathSummon);
                 if (a?.relatedCard == null) continue;
                 c.usedThisTurn++;
+                ShowSkill(c, deadIsPlayer, result: $"เรียก {a.relatedCard.cardNameThai} ลงช่องที่ตาย");
                 pendingSummons.Add((a.relatedCard, deadIsPlayer, dead.boardSlot));
             }
 
@@ -151,6 +157,7 @@ namespace TawanOS.CardEngine
                 var a = c.abilities.Find(x => x.trigger == AbilityTrigger.Passive && x.effect == AbilityEffect.AllyDeathBuff);
                 c.familiarDamage += a.value;
                 if (a.duration > 0) { c.maxKhwan += a.duration; c.familiarHealth += a.duration; }
+                ShowSkill(c, deadIsPlayer, result: a.duration > 0 ? $"เพื่อนตาย ตี +{a.value} ขวัญ +{a.duration}" : $"เพื่อนตาย ตี +{a.value}");
                 NotifyChanged(c);
             }
         }
@@ -186,6 +193,7 @@ namespace TawanOS.CardEngine
                 target.familiarHealth = 1;
                 target.savedFromDeath = true;
                 UseUp(c, AbilityEffect.DeathSave);
+                ShowSkill(c, isPlayer, result: $"{target.cardNameThai} รอด เหลือขวัญ 1");
                 Debug.Log($"[Sheet7] {c.cardNameThai} keeps {target.cardNameThai} at 1 Khwan");
                 return true;
             }
@@ -227,7 +235,10 @@ namespace TawanOS.CardEngine
             {
                 var facing = CardAt(BoardOf(!isPlayer), card.boardSlot);
                 if (facing != null && !facing.IsDead && facing.cardType == CardType.Familiar)
+                {
+                    ShowSkill(c, isPlayer, result: $"สาป {KeywordValue(c, AbilityEffect.CurseOnAllyEnter)} → {facing.cardNameThai}");
                     AddCardStatus(facing, CardStatusType.DoneKhong, KeywordValue(c, AbilityEffect.CurseOnAllyEnter), 99);
+                }
             }
 
             // ผีเฝ้าทรัพย์ (GrowOnAllyPlayed): every other familiar played makes it sturdier
@@ -238,6 +249,7 @@ namespace TawanOS.CardEngine
                 c.maxKhwan += a.value;
                 c.familiarHealth += a.value;
                 c.familiarDamage += a.duration;
+                ShowSkill(c, isPlayer, result: a.duration > 0 ? $"ขวัญ +{a.value} ตี +{a.duration}" : $"ขวัญ +{a.value}");
                 NotifyChanged(c);
             }
         }
@@ -267,6 +279,7 @@ namespace TawanOS.CardEngine
             foreach (var c in LiveWith(!cardIsPlayer, AbilityEffect.CurseNoDecay))
             {
                 int heal = KeywordValue(c, AbilityEffect.CurseNoDecay);
+                if (heal > 0) ShowSkill(c, !cardIsPlayer, result: $"ศัตรูตายเพราะสาป ฮีล +{heal}");
                 if (heal > 0) HealSide(!cardIsPlayer, heal);
             }
         }
@@ -284,6 +297,7 @@ namespace TawanOS.CardEngine
         {
             if (!target.IsDead || !HasKeyword(attacker, AbilityEffect.Pierce)) return;
             int overflow = hit - khwanBefore;
+            if (overflow > 0) ShowSkill(attacker, fromPlayer, result: $"ทะลวง {overflow} เข้าขวัญศัตรู");
             if (overflow > 0) HitOpposingPlayer(attacker, overflow, fromPlayer);
         }
 
@@ -292,8 +306,11 @@ namespace TawanOS.CardEngine
         {
             if (target == null || target.cardType != CardType.Familiar || attacker.IsDead) return;
             foreach (var c in LiveWith(!attackerIsPlayer, AbilityEffect.Thorns))
+            {
+                ShowSkill(c, !attackerIsPlayer, result: $"สะท้อน {KeywordValue(c, AbilityEffect.Thorns)} → {attacker.cardNameThai}");
                 DamageCard(attacker, KeywordValue(c, AbilityEffect.Thorns), ignoreArmor: true, source: null, sourceIsPlayer: !attackerIsPlayer,
                     cause: $"thorns of {c.cardNameThai}");
+            }
         }
 
         private static bool SideBlocksFlying(bool defenderIsPlayer)

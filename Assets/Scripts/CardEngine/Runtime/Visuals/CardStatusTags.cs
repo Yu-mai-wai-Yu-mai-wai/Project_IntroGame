@@ -72,7 +72,7 @@ namespace TawanOS.CardEngine
             return string.IsNullOrEmpty(def) ? lasts : def + "\n" + lasts;
         }
 
-        private static string Name(CardStatusType type)
+        internal static string Name(CardStatusType type)
         {
             switch (type)
             {

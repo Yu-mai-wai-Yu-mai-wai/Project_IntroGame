@@ -505,7 +505,23 @@ namespace TawanOS.CardEngine
 
         // ---------------------------------------------------------------- executing abilities
 
+        // Runs an ability, noting which cards it is used on; anything triggered (passive keywords are read where they
+        // matter) is then shown in the skill feed, with those cards
         private void ExecuteAbility(CardAbility a, CardInstance source, bool ownerIsPlayer, CardInstance other, object explicitTarget)
+        {
+            var outer = skillTargets;
+            var targets = new List<CardInstance>();
+            skillTargets = targets;
+            try { ExecuteAbilityCore(a, source, ownerIsPlayer, other, explicitTarget); }
+            finally
+            {
+                skillTargets = outer;
+                if (targets.Count == 0 && explicitTarget is CardInstance picked) targets.Add(picked);
+                if (a.trigger != AbilityTrigger.Passive) ShowSkill(source, ownerIsPlayer, a, null, targets);
+            }
+        }
+
+        private void ExecuteAbilityCore(CardAbility a, CardInstance source, bool ownerIsPlayer, CardInstance other, object explicitTarget)
         {
             var combat = CombatManager.Instance;
             if (ExecuteSheet7(a, source, ownerIsPlayer, other, explicitTarget)) return;
@@ -539,6 +555,7 @@ namespace TawanOS.CardEngine
 
         private void ApplyToCard(CardAbility a, CardInstance target, CardInstance source, bool ownerIsPlayer)
         {
+            if (skillTargets != null && target != null && !skillTargets.Contains(target)) skillTargets.Add(target);
             switch (a.effect)
             {
                 case AbilityEffect.BuffKhwan:
