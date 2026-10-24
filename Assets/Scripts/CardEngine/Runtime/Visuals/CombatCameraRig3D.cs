@@ -19,8 +19,10 @@ namespace TawanOS.CardEngine
         public static CombatCameraRig3D Instance { get; private set; }
 
         [Header("Controls")]
-        public KeyCode toggleKey = KeyCode.C;
-        public bool showToggleButton = true;
+        [Tooltip("Looks down on the board from above (Game Designer, 24 Oct: W up, S back; no on-screen button).")]
+        public KeyCode topKey = KeyCode.W;
+        [Tooltip("Back to the normal view.")]
+        public KeyCode homeKey = KeyCode.S;
 
         [Header("Top View")]
         [Tooltip("Camera height above the board. Keep it above the hands' distance from the camera (about 10).")]
@@ -168,8 +170,12 @@ namespace TawanOS.CardEngine
         private void Update()
         {
             if (TawanOS.UI.PauseMenu.IsPaused || (CombatManager.Instance != null && CombatManager.Instance.IsCombatOver)) return;
-            if (Input.GetKeyDown(toggleKey) && !CardDetailPanelUI.IsOpen && !GraveyardPanelUI.IsOpen && !DeckViewerPanelUI.IsOpen
-                && !TawanOS.UI.TutorialCoach.Blocking && !TawanOS.VFX.BossPhaseCutscene.Playing) ToggleTopView();
+            if (!CardDetailPanelUI.IsOpen && !GraveyardPanelUI.IsOpen && !DeckViewerPanelUI.IsOpen
+                && !TawanOS.UI.TutorialCoach.Blocking && !TawanOS.VFX.BossPhaseCutscene.Playing)
+            {
+                if (Input.GetKeyDown(topKey) && !userTop) ToggleTopView();
+                else if (Input.GetKeyDown(homeKey)) ReturnHome();
+            }
 
             // Right-click a card: its detail screen. A held card or a target choice uses right-click to cancel.
             if (!Input.GetMouseButtonDown(1) || BlocksInput
@@ -379,13 +385,6 @@ namespace TawanOS.CardEngine
                     enemyHand = null; // not set up yet; try again next frame
                 }
             }
-        }
-
-        private void OnGUI()
-        {
-            if (!showToggleButton || locked || topRequests > 0 || CardDetailPanelUI.IsOpen || GraveyardPanelUI.IsOpen || DeckViewerPanelUI.IsOpen || IsBoardOnlyView) return;
-            string label = IsTopView ? $"มุมปกติ ({toggleKey})" : $"มุมบน ({toggleKey})";
-            if (GUI.Button(new Rect(Screen.width - 150, 10, 140, 30), label)) ToggleTopView();
         }
     }
 }

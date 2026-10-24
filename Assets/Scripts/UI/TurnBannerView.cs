@@ -74,7 +74,7 @@ namespace TawanOS.UI
             var rig = CombatCameraRig3D.Instance;
             bool inTopView = rig != null && rig.IsBoardOnlyView && !combatOver;
             if (topViewRoot.activeSelf != inTopView) topViewRoot.SetActive(inTopView);
-            if (inTopView) topViewText.text = $"มุมบน · กด {rig.toggleKey} อีกครั้งเพื่อกลับมุมปกติ";
+            if (inTopView) topViewText.text = $"มุมบน · กด {rig.homeKey} เพื่อกลับมุมปกติ";
         }
     }
 

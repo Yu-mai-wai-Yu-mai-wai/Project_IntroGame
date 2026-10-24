@@ -37,7 +37,6 @@ namespace TawanOS.CardEngine
         private BarPanel enemy;
         private BarPanel player;
         private TMP_Text actionText;
-        private TMP_Text controlHint; // "กด Space ... / คลิกขวา ..." under the end-turn button
         private CombatManager combat;
         private float lastEnemyRatio = -1f;
         private float lastPlayerRatio = -1f;
@@ -180,8 +179,9 @@ namespace TawanOS.CardEngine
 
                 // A card waiting where the player's held card goes (picked from the hand, or the enemy's card on
                 // show) sits on the button's spot: the button fades out of its way until it is gone
+                // ... and while a hand card is raised, like the Khwan bar (Game Designer, 24 Oct)
                 bool cardThere = (CardPlayController3D.Instance != null && CardPlayController3D.Instance.IsHoldingAny)
-                    || Time.time < EnemyHandView3D.ShowcaseUntil;
+                    || Time.time < EnemyHandView3D.ShowcaseUntil || cardRaised;
                 var group = player.button.GetComponent<CanvasGroup>();
                 if (group == null) group = player.button.gameObject.AddComponent<CanvasGroup>();
                 float alpha = Mathf.MoveTowards(group.alpha, cardThere ? 0f : 1f, Time.unscaledDeltaTime * 6f);
@@ -192,12 +192,6 @@ namespace TawanOS.CardEngine
             {
                 player.buttonLabel.text = btnText;
             }
-            if (controlHint != null) controlHint.text = ControlHintText(btnText);
-        }
-
-        private static string ControlHintText(string endAction)
-        {
-            return $"กด Space เพื่อ{endAction}\nคลิกขวาที่การ์ดเพื่อดูรายละเอียด";
         }
 
         private void SetFill(RectTransform fill, float t, ref float last, RectTransform shakeRoot)
@@ -314,37 +308,29 @@ namespace TawanOS.CardEngine
             fillImg.raycastTarget = false;
             p.tempStrip = KhwanDisplay.AddTempStrip(trackRt);
 
-            // End Turn Button: on its own at the middle of the screen's right edge, clear of the hand and the piles
+            // End Turn Button: at the right edge, level with the player's Khwan bar on the left (Game Designer, 24 Oct)
             var btnGo = new GameObject("EndTurnButton", typeof(RectTransform));
             btnGo.transform.SetParent(parent, false);
             var btnRt = (RectTransform)btnGo.transform;
-            btnRt.anchorMin = btnRt.anchorMax = new Vector2(1f, 0.5f);
+            btnRt.anchorMin = btnRt.anchorMax = new Vector2(1f, 0f);
             btnRt.pivot = new Vector2(1f, 0.5f);
-            btnRt.anchoredPosition = new Vector2(-40f, 0f);
-            btnRt.sizeDelta = new Vector2(300f, 64f);
+            btnRt.anchoredPosition = new Vector2(-40f, p.root.anchoredPosition.y + p.root.sizeDelta.y * 0.5f);
+            btnRt.sizeDelta = new Vector2(330f, 86f);
 
             var btnImg = btnGo.AddComponent<Image>();
             btnImg.color = Color.white;
             p.button = btnGo.AddComponent<Button>();
             p.button.targetGraphic = btnImg;
 
-            var smokeBtn = btnGo.AddComponent<UiSmokeButton>();
-            // Dimmer than the other smoke buttons: it stays on screen the whole fight (hover still lights it up)
-            smokeBtn.normalColor = new Color(0.55f, 0.48f, 0.58f, 0.4f);
-            smokeBtn.labelNormalColor = new Color(0.82f, 0.78f, 0.74f);
-
-            p.buttonLabel = MakeText(btnGo.transform, "Label", 24, FontStyles.Normal, Color.white,
-                Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            // Between the paper's two seals. No key hints under it (Game Designer, 24 Oct)
+            p.buttonLabel = MakeText(btnGo.transform, "Label", 26, FontStyles.Bold, Color.white,
+                new Vector2(0.2f, 0f), new Vector2(0.8f, 1f), Vector2.zero, Vector2.zero);
             p.buttonLabel.alignment = TextAlignmentOptions.Center;
             if (theme != null && theme.titleFont != null) p.buttonLabel.font = theme.titleFont;
             p.buttonLabel.text = "จบช่วงลงบริวาร";
 
-            // Key hints under the button; a child of it so they fade out with it when a card waits on its spot
-            controlHint = MakeText(btnGo.transform, "ControlHint", 20, FontStyles.Normal, new Color(0.78f, 0.74f, 0.70f, 0.85f),
-                Vector2.zero, new Vector2(1f, 0f), new Vector2(-20f, -66f), new Vector2(20f, -8f));
-            controlHint.alignment = TextAlignmentOptions.Top;
-            if (theme != null && theme.bodyFont != null) controlHint.font = theme.bodyFont;
-            controlHint.text = ControlHintText("จบเทิร์น");
+            // An old paper ยันต์ (Game Designer, 24 Oct: the smoke did not suit the game); after the label, which it inks
+            btnGo.AddComponent<UiTalismanButton>();
 
             p.button.onClick.AddListener(() =>
             {
