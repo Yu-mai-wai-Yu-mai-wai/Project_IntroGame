@@ -13,12 +13,20 @@ namespace TawanOS.UI
     /// Update. The hand is Windows' own link cursor, read from the system at start; elsewhere the arrow stays.
     /// Created by itself at start and kept across scenes.
     /// </summary>
+    /// For now (Game Designer, 24 Oct) the game's own cursor (Resources/Cursor/cursor_normal, baked from
+    /// Art/Cursor/Normal.svg by Tools > TawanOS > UI > Bake Cursor) is shown everywhere, clickable or not; set
+    /// <see cref="HandOverClickables"/> to bring the hand back over clickables.
     [DefaultExecutionOrder(10000)] // after everything that calls Hover in its Update
     public class PointerCursor : MonoBehaviour
     {
         private static PointerCursor instance;
         private static int hoverFrame = -1;
 
+        /// <summary>The hand over clickables (off: one cursor everywhere).</summary>
+        public static bool HandOverClickables = false;
+        private static readonly Vector2 NormalHotspot = new Vector2(1f, 1f); // the tip at the top left
+
+        private Texture2D normal;
         private Texture2D hand;
         private Vector2 handHotspot;
         private bool showingHand;
@@ -43,12 +51,14 @@ namespace TawanOS.UI
 
         private void Awake()
         {
-            hand = SystemHandCursor(out handHotspot);
+            normal = Resources.Load<Texture2D>("Cursor/cursor_normal");
+            if (normal != null) Cursor.SetCursor(normal, NormalHotspot, CursorMode.Auto);
+            if (HandOverClickables) hand = SystemHandCursor(out handHotspot);
         }
 
         private void OnDestroy()
         {
-            if (showingHand) Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+            if (showingHand || normal != null) Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
             if (hand != null) Destroy(hand);
             if (instance == this) instance = null;
         }
@@ -59,7 +69,8 @@ namespace TawanOS.UI
             bool want = Cursor.visible && (hoverFrame == Time.frameCount || UiClickableUnderPointer());
             if (want == showingHand) return;
             showingHand = want;
-            Cursor.SetCursor(want ? hand : null, want ? handHotspot : Vector2.zero, CursorMode.Auto);
+            if (want) Cursor.SetCursor(hand, handHotspot, CursorMode.Auto);
+            else Cursor.SetCursor(normal, normal != null ? NormalHotspot : Vector2.zero, CursorMode.Auto);
         }
 
         // The top UI element under the pointer takes a click and can be pressed now
