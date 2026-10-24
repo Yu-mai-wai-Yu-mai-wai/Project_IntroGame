@@ -218,6 +218,13 @@ namespace TawanOS.UI
             line.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
         }
 
+        // 0 below a, 1 above b, smooth between (Mathf.SmoothStep interpolates a..b instead, which is not this)
+        private static float Ramp(float a, float b, float x)
+        {
+            float t = Mathf.Clamp01((x - a) / (b - a));
+            return t * t * (3f - 2f * t);
+        }
+
         // A soft black haze: dark in the middle, fading out to nothing at every edge (no box, no border)
         private static Sprite haze;
         private static Sprite Haze()
@@ -230,7 +237,7 @@ namespace TawanOS.UI
                 for (int x = 0; x < w; x++)
                 {
                     float dx = Mathf.Abs(x + 0.5f - w * 0.5f) / (w * 0.5f), dy = Mathf.Abs(y + 0.5f - h * 0.5f) / (h * 0.5f);
-                    float ex = 1f - Mathf.SmoothStep(0.55f, 1f, dx), ey = 1f - Mathf.SmoothStep(0.25f, 1f, dy);
+                    float ex = 1f - Ramp(0.55f, 1f, dx), ey = 1f - Ramp(0.25f, 1f, dy);
                     px[y * w + x] = new Color32(0, 0, 0, (byte)(255f * ex * ey));
                 }
             tex.SetPixels32(px);
