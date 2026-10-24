@@ -251,6 +251,13 @@ namespace TawanOS.ShopEngine
             deckPile.pivot = new Vector2(0.5f, 0.5f);
             deckPile.sizeDelta = new Vector2(64f, 64f / CardAspect);
             deckPile.anchoredPosition = new Vector2(0f, 62f);
+            // Clicking the pile (or its label) opens the run deck, like the pile on the other screens (Game Designer, 24 Oct)
+            var hit = go.AddComponent<Image>();
+            hit.color = Color.clear;
+            var open = go.AddComponent<Button>();
+            open.targetGraphic = hit;
+            open.transition = Selectable.Transition.None;
+            open.onClick.AddListener(TawanOS.UI.RunDeckButton.OpenDeck);
 
             // Three cards, each a little offset, so it reads as a pile
             for (int i = 0; i < 3; i++)
@@ -282,7 +289,7 @@ namespace TawanOS.ShopEngine
             deckCount.fontSize = 24f;
             deckCount.color = new Color(0.96f, 0.92f, 0.82f);
             deckCount.alignment = TextAlignmentOptions.MidlineLeft;
-            deckCount.raycastTarget = false;
+            deckCount.raycastTarget = true; // part of the pile's click area
             UiFactory.EnableThaiMarks(deckCount);
         }
     }

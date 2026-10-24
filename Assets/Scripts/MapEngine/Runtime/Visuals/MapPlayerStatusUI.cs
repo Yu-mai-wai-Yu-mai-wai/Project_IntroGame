@@ -20,7 +20,6 @@ namespace TawanOS.MapEngine
         private RectTransform tempStrip;
         private Image hpBarFill;
         private TextMeshProUGUI incenseText;
-        private TextMeshProUGUI deckText;
 
         public Image HpBarFill => hpBarFill;
         public float FillAmount => hpBarFill != null ? hpBarFill.fillAmount : 0f;
@@ -89,7 +88,6 @@ namespace TawanOS.MapEngine
             int hp = CurrentHp;
             int maxHp = MaxHp > 0 ? MaxHp : RunState.DefaultMaxHp;
             int incense = Incense;
-            int deck = DeckCount;
 
             if (hpText != null)
             {
@@ -120,10 +118,6 @@ namespace TawanOS.MapEngine
                 incenseText.text = $"{incense}";
             }
 
-            if (deckText != null)
-            {
-                deckText.text = $"สำรับ ({deck})";
-            }
         }
 
         private void BuildUI()
@@ -139,8 +133,6 @@ namespace TawanOS.MapEngine
                 hpBarFill.fillMethod = Image.FillMethod.Horizontal;
                 hpText = transform.Find("HpText")?.GetComponent<TextMeshProUGUI>();
                 incenseText = transform.Find("IncenseText")?.GetComponent<TextMeshProUGUI>();
-                deckText = transform.Find("DeckButton/Inner/Label")?.GetComponent<TextMeshProUGUI>()
-                    ?? transform.Find("DeckButton/Label")?.GetComponent<TextMeshProUGUI>();
                 return;
             }
 
@@ -153,7 +145,8 @@ namespace TawanOS.MapEngine
             rootRect.anchorMax = new Vector2(0f, 1f);
             rootRect.pivot = new Vector2(0f, 1f);
             rootRect.anchoredPosition = new Vector2(28f, -18f);
-            rootRect.sizeDelta = new Vector2(660f, 56f);
+            // Khwan and incense; the deck is the pile at the bottom of the screen (RunDeckButton, Game Designer 24 Oct)
+            rootRect.sizeDelta = new Vector2(450f, 56f);
 
             // Outer Border
             var border = UiFactory.CreateImage("Border", transform, theme.crimson);
@@ -225,39 +218,6 @@ namespace TawanOS.MapEngine
             incenseText.rectTransform.pivot = new Vector2(0f, 0.5f);
             incenseText.rectTransform.anchoredPosition = new Vector2(360f, 0f);
             incenseText.rectTransform.sizeDelta = new Vector2(80f, 36f);
-
-            // --- 3. Deck Button (สำรับ) Section ---
-            var deckBtnGo = new GameObject("DeckButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            deckBtnGo.transform.SetParent(transform, false);
-            var deckBtnRect = deckBtnGo.GetComponent<RectTransform>();
-            deckBtnRect.anchorMin = new Vector2(0f, 0.5f);
-            deckBtnRect.anchorMax = new Vector2(0f, 0.5f);
-            deckBtnRect.pivot = new Vector2(0f, 0.5f);
-            deckBtnRect.anchoredPosition = new Vector2(454f, 0f);
-            deckBtnRect.sizeDelta = new Vector2(186f, 38f);
-
-            var deckBtnImg = deckBtnGo.GetComponent<Image>();
-            deckBtnImg.color = theme.crimson;
-
-            var btn = deckBtnGo.GetComponent<Button>();
-            btn.targetGraphic = deckBtnImg;
-            btn.onClick.AddListener(OnDeckClicked);
-
-            var smokeBtn = deckBtnGo.AddComponent<UiSmokeButton>();
-
-            var deckInner = new GameObject("Inner", typeof(RectTransform));
-            deckInner.transform.SetParent(deckBtnGo.transform, false);
-            UiFactory.Stretch(deckInner.GetComponent<RectTransform>(), 0f);
-
-            deckText = UiFactory.CreateText(deckInner.transform, "Label", $"สำรับ ({DeckCount})",
-                theme.labelSize + 2f, theme.accent, TextAlignmentOptions.Center, theme.bodyFont);
-            UiFactory.Stretch(deckText.rectTransform, 0f);
-        }
-
-        private void OnDeckClicked()
-        {
-            if (PauseMenu.IsPaused) return;
-            DeckViewerPanelUI.Ensure().Show("สำรับ", RunState.Current.Deck, "ยังไม่มีการ์ดในสำรับ");
         }
     }
 }

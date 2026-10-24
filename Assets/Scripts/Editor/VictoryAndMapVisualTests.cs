@@ -87,7 +87,7 @@ namespace TawanOS.Tests
                 statusUI.EnsureUI();
 
                 var statusRect = statusGo.GetComponent<RectTransform>();
-                Check("MapPlayerStatusUI root size is (660, 56)", statusRect.sizeDelta == new Vector2(660f, 56f));
+                Check("MapPlayerStatusUI root size is (450, 56): Khwan and incense, no deck button", statusRect.sizeDelta == new Vector2(450f, 56f));
                 Check("MapPlayerStatusUI root anchoredPosition is (28, -18)", statusRect.anchoredPosition == new Vector2(28f, -18f));
 
                 var border = statusGo.transform.Find("Border");
@@ -99,10 +99,8 @@ namespace TawanOS.Tests
                 var hpBarBg = statusGo.transform.Find("HpBarBg") as RectTransform;
                 Check("MapPlayerStatusUI HpBarBg size is (130, 22)", hpBarBg != null && hpBarBg.sizeDelta == new Vector2(130f, 22f));
 
-                var deckBtn = statusGo.transform.Find("DeckButton") as RectTransform;
-                Check("MapPlayerStatusUI DeckButton exists", deckBtn != null);
-                Check("MapPlayerStatusUI DeckButton size is (186, 38)", deckBtn != null && deckBtn.sizeDelta == new Vector2(186f, 38f));
-                Check("MapPlayerStatusUI DeckButton has UiSmokeButton", deckBtn != null && deckBtn.GetComponent<UiSmokeButton>() != null);
+                // The deck is the pile at the bottom of the screen now (RunDeckButton), not a button in the status bar
+                Check("MapPlayerStatusUI has no DeckButton", statusGo.transform.Find("DeckButton") == null);
 
                 // ==========================================
                 // 4. P1-9: MapLegendUI SoftEdge Polish
