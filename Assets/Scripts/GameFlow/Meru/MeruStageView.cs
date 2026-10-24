@@ -103,6 +103,7 @@ namespace TawanOS.GameFlow
         private void Update()
         {
             UpdateFireLight();
+            if (shift != 0f) ApplyShift(shift); // the screen's shape may have changed
             bool canOpen = !offering && view != null && view.CanOpenPanel;
             if (hintBand != null && hintBand.activeSelf != canOpen) hintBand.SetActive(canOpen);
             if (PauseMenu.IsPaused || !canOpen)
@@ -131,6 +132,8 @@ namespace TawanOS.GameFlow
             doorHovered = false;
             view.OpenPanel();
             SwingDoor(1f, doorSeconds);
+            // The furnace slides left into the space beside the panel (Game Designer, 25 Oct)
+            SlideView((1f - view.PanelWidth) * 0.5f - DoorViewportX());
             TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on");
         }
 
@@ -145,6 +148,48 @@ namespace TawanOS.GameFlow
         public void OnBack()
         {
             SwingDoor(0f, doorSeconds * 0.8f);
+            SlideView(0f);
+        }
+
+        // ---- sliding the picture sideways ----
+
+        [Tooltip("How long the view takes to slide the furnace aside when the panel comes in, and back.")]
+        [Min(0.05f)] public float cameraSlideSeconds = 0.6f;
+        private float shift;   // lens shift across the screen, in viewport widths (0.3 = the picture moved 30% right)
+        private Tween shiftTween;
+
+        private void SlideView(float target)
+        {
+            if (viewCamera == null) return;
+            shiftTween?.Kill();
+            shiftTween = DOTween.To(() => shift, ApplyShift, target, cameraSlideSeconds).SetEase(Ease.InOutCubic).SetLink(gameObject);
+        }
+
+        // Off-centre projection: the camera's picture moves `value` of the screen's width sideways; the camera itself
+        // stays where it is, so the furnace is seen from the same spot
+        private void ApplyShift(float value)
+        {
+            shift = value;
+            if (viewCamera == null) return;
+            if (Mathf.Abs(value) < 0.0001f)
+            {
+                shift = 0f;
+                viewCamera.ResetProjectionMatrix();
+                return;
+            }
+            var projection = Matrix4x4.Perspective(viewCamera.fieldOfView, viewCamera.aspect, viewCamera.nearClipPlane, viewCamera.farClipPlane);
+            projection.m02 = -value * 2f;
+            viewCamera.projectionMatrix = projection;
+        }
+
+        // Where the door's middle is across the screen with the picture unshifted (0 = left, 1 = right)
+        private float DoorViewportX()
+        {
+            if (viewCamera == null || insideView == null) return 0.5f;
+            var local = insideView.InverseTransformPoint(doorCenter);
+            if (local.z <= 0.01f) return 0.5f;
+            float tanH = Mathf.Tan(insideFov * 0.5f * Mathf.Deg2Rad) * viewCamera.aspect;
+            return 0.5f + 0.5f * local.x / (local.z * tanH);
         }
 
         /// <summary>
@@ -154,6 +199,7 @@ namespace TawanOS.GameFlow
         public void Offer(CardDataSO card, RewardCardView picked)
         {
             offering = true;
+            SlideView(0f); // the furnace back in the middle for the card going in
             StartCoroutine(OfferRoutine(card, picked));
         }
 

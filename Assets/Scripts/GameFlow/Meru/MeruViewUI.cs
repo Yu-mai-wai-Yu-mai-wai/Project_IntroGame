@@ -10,9 +10,10 @@ using UnityEngine.UI;
 namespace TawanOS.GameFlow
 {
     /// <summary>
-    /// เมรุ screen (Game Designer, 24 Oct). The camera faces the furnace door; clicking the door
-    /// (<see cref="MeruStageView"/>) slides the upgrade panel up from the bottom of the screen over its middle. In it:
-    /// click a card to pick it (right-click for details), then อัพเกรด; ย้อนกลับ or Esc slides it back down. After the
+    /// เมรุ screen (Game Designer, 25 Oct). The camera faces the furnace door; clicking the door
+    /// (<see cref="MeruStageView"/>) slides the upgrade panel in at the right of the screen while the view slides the
+    /// furnace to the left. In the panel: click a card to pick it (right-click for details) and the space at the left
+    /// shows it before and after the upgrade side by side; then อัพเกรด; ย้อนกลับ or Esc slides it away. After the
     /// upgrade the stage plays the card into the furnace and the upgraded card comes back out and shows here with the
     /// way on. Without a stage the panel is up at once and the result shows straight away.
     /// </summary>
@@ -48,7 +49,11 @@ namespace TawanOS.GameFlow
         public Button continueButton;
 
         [Header("Look")]
-        [Tooltip("Height of the upgrade panel once up, as a fraction of the screen; it sits in the middle.")]
+        [Tooltip("Width of the upgrade panel at the right of the screen, as a fraction of the screen (25 Oct).")]
+        [Range(0.3f, 0.7f)] public float rightPanelWidth = 0.46f;
+        [Tooltip("How dark the screen goes behind the panel while it is up; light, so the furnace and the before / after cards show.")]
+        [Range(0f, 1f)] public float backdropDim = 0.45f;
+        [Tooltip("Height of the upgrade panel once up, as a fraction of the screen.")]
         [Range(0.3f, 1f)] public float panelHeight = 0.8f;
         [Tooltip("Space left at each side of the panel, as a fraction of the screen width.")]
         [Range(0f, 0.3f)] public float panelSideMargin = 0.08f;
@@ -70,6 +75,8 @@ namespace TawanOS.GameFlow
         private Vector2 resultCardHome;
         private Image dim; // darkens the whole screen behind the panel, with the panel's slide
         private RewardCardView pickedView;
+        private CanvasGroup compareGroup;          // before / after, in the space left of the panel
+        private RewardCardView compareBefore, compareAfter;
 
         /// <summary>The upgrade panel can be brought up (something to upgrade, not up already, nothing playing).</summary>
         public bool CanOpenPanel => meru != null && canUpgrade && !open && !busy;
@@ -98,6 +105,9 @@ namespace TawanOS.GameFlow
             dim = dimGo.AddComponent<Image>();
             dim.color = Color.clear;
             dim.raycastTarget = false;
+
+            BuildCompare();
+            FitGridToPanel();
 
             if (upgradeColumn.confirmButton != null) upgradeColumn.confirmButton.onClick.AddListener(Confirm);
             if (upgradeColumn.backButton != null) upgradeColumn.backButton.onClick.AddListener(Back);
@@ -153,7 +163,7 @@ namespace TawanOS.GameFlow
             if (stage == null) OpenPanel();
         }
 
-        /// <summary>The furnace door was clicked: the upgrade panel slides up from the bottom.</summary>
+        /// <summary>The furnace door was clicked: the upgrade panel slides in at the right.</summary>
         public void OpenPanel()
         {
             if (!CanOpenPanel) return;
@@ -163,7 +173,7 @@ namespace TawanOS.GameFlow
             Slide(0f);
         }
 
-        // The panel slides back down; the stage shuts the door
+        // The panel slides away; the stage shuts the door and slides the furnace back
         private void Back()
         {
             if (!open || busy) return;
@@ -216,6 +226,73 @@ namespace TawanOS.GameFlow
                     ? $"ชำระ \"{card.cardNameThai}\" เป็น \"{card.upgradedCard.cardNameThai}\"?"
                     : "เลือกการ์ด 1 ใบ ชำระให้แกร่งขึ้น";
             if (upgradeColumn.confirmButton != null) upgradeColumn.confirmButton.interactable = card != null;
+            ShowCompare(open ? card : null);
+        }
+
+        // ---- Before / after ----
+
+        // Two cards side by side in the space left of the panel, an arrow between, no captions (25 Oct), built from the card template
+        private void BuildCompare()
+        {
+            if (cardTemplate == null) return;
+            var theme = UIThemeSO.Current;
+            var root = new GameObject("Compare", typeof(RectTransform), typeof(CanvasGroup));
+            root.transform.SetParent(transform, false);
+            var rt = (RectTransform)root.transform;
+            rt.anchorMin = new Vector2(0.02f, 0.12f);
+            rt.anchorMax = new Vector2(1f - rightPanelWidth - 0.02f, 0.88f);
+            rt.offsetMin = rt.offsetMax = Vector2.zero;
+            compareGroup = root.GetComponent<CanvasGroup>();
+            compareGroup.alpha = 0f;
+            compareGroup.blocksRaycasts = compareGroup.interactable = false;
+
+            const float w = 300f, h = w * 1312f / 939f;
+            compareBefore = CompareCard(rt, -w * 0.5f - 60f, w, h);
+            compareAfter = CompareCard(rt, w * 0.5f + 60f, w, h);
+            var arrow = UiFactory.CreateText(rt, "Arrow", "»", 90f, theme != null ? theme.accent : Color.white, TextAlignmentOptions.Center,
+                theme != null ? theme.titleFont : null);
+            var art = arrow.rectTransform;
+            art.anchorMin = art.anchorMax = new Vector2(0.5f, 0.5f);
+            art.sizeDelta = new Vector2(120f, 120f);
+        }
+
+        private RewardCardView CompareCard(RectTransform parent, float x, float w, float h)
+        {
+            var view = Instantiate(cardTemplate, parent);
+            view.gameObject.SetActive(true);
+            var rt = (RectTransform)view.transform;
+            rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(w, h);
+            rt.anchoredPosition = new Vector2(x, 0f);
+            if (view.button != null) view.button.interactable = false;
+            if (view.pickedHighlight != null) view.pickedHighlight.SetActive(false);
+            return view;
+        }
+
+        private void ShowCompare(CardDataSO card)
+        {
+            if (compareGroup == null) return;
+            bool show = card != null && card.upgradedCard != null;
+            if (show)
+            {
+                compareBefore.Setup(card, null);
+                compareAfter.Setup(card.upgradedCard, null);
+                if (compareBefore.button != null) compareBefore.button.interactable = false;
+                if (compareAfter.button != null) compareAfter.button.interactable = false;
+            }
+            compareGroup.DOKill();
+            compareGroup.DOFade(show ? 1f : 0f, 0.2f).SetLink(compareGroup.gameObject);
+        }
+
+        // The panel is narrower than the old middle one: as many card columns as fit its width
+        private void FitGridToPanel()
+        {
+            var grid = upgradeColumn.cardGrid != null ? upgradeColumn.cardGrid.GetComponent<GridLayoutGroup>() : null;
+            if (grid == null) return;
+            float width = rightPanelWidth * 1920f - grid.padding.left - grid.padding.right - 40f;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = Mathf.Max(2, Mathf.FloorToInt((width + grid.spacing.x) / (grid.cellSize.x + grid.spacing.x)));
         }
 
         private void Confirm()
@@ -291,18 +368,21 @@ namespace TawanOS.GameFlow
                 .SetEase(target < column.hidden ? Ease.OutCubic : Ease.InOutCubic).SetId(column).SetLink(gameObject);
         }
 
-        // In the middle of the screen, panelHeight tall, pushed below the screen by `hidden` (Game Designer, 24 Oct)
+        // At the right of the screen, rightPanelWidth wide and panelHeight tall, pushed off the right edge by `hidden`
+        // (Game Designer, 25 Oct: back at the right, as it first was)
+        public float PanelWidth => rightPanelWidth;
+
         private void ApplyColumn()
         {
             var column = upgradeColumn;
             if (column.root == null) return;
-            float screenHeight = canvasRect.rect.height > 0f ? canvasRect.rect.height : 1080f;
+            float screenWidth = canvasRect.rect.width > 0f ? canvasRect.rect.width : 1920f;
             float bottom = (1f - panelHeight) * 0.5f, top = (1f + panelHeight) * 0.5f;
-            column.root.anchorMin = new Vector2(panelSideMargin, bottom);
-            column.root.anchorMax = new Vector2(1f - panelSideMargin, top);
-            column.root.anchoredPosition = new Vector2(0f, -(top * screenHeight + 40f) * column.hidden);
+            column.root.anchorMin = new Vector2(1f - rightPanelWidth, bottom);
+            column.root.anchorMax = new Vector2(1f, top);
+            column.root.anchoredPosition = new Vector2((rightPanelWidth * screenWidth + 40f) * column.hidden, 0f);
             column.root.sizeDelta = Vector2.zero;
-            if (dim != null) dim.color = new Color(0f, 0f, 0f, screenDim * (1f - Mathf.Clamp01(column.hidden)));
+            if (dim != null) dim.color = new Color(0f, 0f, 0f, backdropDim * (1f - Mathf.Clamp01(column.hidden)));
         }
 
         private static void SetGroup(CanvasGroup g, bool on)
