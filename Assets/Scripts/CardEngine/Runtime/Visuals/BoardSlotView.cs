@@ -88,6 +88,16 @@ namespace TawanOS.CardEngine
             amuletIcon = go.transform;
         }
 
+        // The sigil lies under a card placed in the slot, either side (the card is parented to the slot): drawn as a
+        // sprite it would show through the card, so it is hidden while a live card covers it
+        private void LateUpdate()
+        {
+            if (amuletIcon == null) return;
+            var card = GetComponentInChildren<CardView3D>();
+            bool covered = card != null && !card.IsDying;
+            if (amuletIcon.gameObject.activeSelf == covered) amuletIcon.gameObject.SetActive(!covered);
+        }
+
         // A ยันต์-like sigil drawn once in code: two rings, a square turned on its corner, and a ตะกรุด (a rolled
         // tube on a cord) in the middle
         private static Sprite SigilSprite()
