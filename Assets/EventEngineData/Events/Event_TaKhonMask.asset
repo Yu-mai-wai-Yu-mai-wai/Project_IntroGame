@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.EventEngine.EventDataSO
   eventId: ta_khon_mask
   title: "\u0E2B\u0E19\u0E49\u0E32\u0E01\u0E32\u0E01\u0E15\u0E32\u0E42\u0E02\u0E19"
-  speakerName: "\u0E02\u0E27\u0E31\u0E0D"
+  speakerName: 
   illustration: {fileID: 21300000, guid: 3b7fd97ad9002e74d9043fcf5fdb41a1, type: 3}
   minFloor: 0
   repeatable: 0

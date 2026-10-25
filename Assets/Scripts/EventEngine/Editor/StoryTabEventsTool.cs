@@ -9,7 +9,7 @@ namespace TawanOS.EventEngine
     /// <summary>
     /// Adds the หมอกดำ events written in the team's story sheet (Google Sheet, tab "story", Oct 2026) that the game
     /// does not have yet: ดวงไฟประหลาด and หน้ากากตาโขน. วอดส์ is already in (Event_Wods); the sheet's untitled
-    /// เงาตะคุ่ม row was left out by the team.
+    /// เงาตะคุ่ม row was left out by the team. Added on 25 Oct: ยามผีตากผ้าอ้อม and บ่อน้ำร้าง, each with its own picture.
     /// Each becomes an EventDataSO in Assets/EventEngineData/Events and joins the EventCatalog's random pool.
     /// Only missing events are made: an event already there (perhaps tuned by hand) is left as it is.
     /// Menu: Tools/TawanOS/Event Engine/Add Story Sheet Events.
@@ -19,6 +19,7 @@ namespace TawanOS.EventEngine
     {
         private const string Folder = "Assets/EventEngineData/Events";
         private const string WodsPath = "Assets/EventEngineData/Events/Event_Wods.asset"; // its illustration is reused
+        private const string ArtFolder = "Assets/Art/Events/";
         private const string KrasuePath = "Assets/CardEngineData/Enemies/NewEnemyProfile.asset";
 
         [MenuItem("Tools/TawanOS/Event Engine/Add Story Sheet Events")]
@@ -46,6 +47,8 @@ namespace TawanOS.EventEngine
             int made = 0;
             made += Make(catalog, "Event_StrangeLight", e => StrangeLight(e, krasue), art);
             made += Make(catalog, "Event_TaKhonMask", TaKhonMask, art);
+            made += Make(catalog, "Event_SoulOutOfBody", SoulOutOfBody, LoadSprite(ArtFolder + "SoulOutOfBody.png"));
+            made += Make(catalog, "Event_AbandonedWell", AbandonedWell, LoadSprite(ArtFolder + "AbandonedWell.png"));
 
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
@@ -61,7 +64,7 @@ namespace TawanOS.EventEngine
             if (evt == null)
             {
                 evt = ScriptableObject.CreateInstance<EventDataSO>();
-                evt.speakerName = "ขวัญ";
+                evt.speakerName = ""; // narration: no name above the text (Game Designer, 25 Oct)
                 evt.illustration = art;
                 evt.minFloor = 0;
                 evt.repeatable = false;
@@ -132,11 +135,105 @@ namespace TawanOS.EventEngine
             };
         }
 
+        // Asleep under a tree at dusk, the soul wakes outside its body (Game Designer, 25 Oct: a bad end costs 3 khwan,
+        // never the last one, a good end restores 5)
+        private static void SoulOutOfBody(EventDataSO e)
+        {
+            e.eventId = "soul_out_of_body";
+            e.title = "ยามผีตากผ้าอ้อม";
+            e.pages = new List<EventPage>
+            {
+                Page("start",
+                    "หลังจากเดินอยู่ในป่ามาจนเหนื่อย คุณได้นั่งพักลงที่ต้นไม้ใหญ่ต้นหนึ่ง รอบข้างถูกย้อมไปด้วยสีส้ม "
+                    + "รู้ได้ว่าอีกไม่นานพระอาทิตย์กำลังจะลับขอบฟ้า ด้วยความเหนื่อยคุณจึงเผลอหลับไป\n"
+                    + "ไม่รู้ว่าหลับไปนานเท่าไหร่ พอรู้สึกตัวอีกที คุณก็รู้สึกแขนขาชาแปลก ๆ คุณสะดุ้งตื่นขึ้นมองรอบข้างที่เริ่มมืดกว่าเก่า "
+                    + "ก่อนจะลุกขึ้นยืนเพื่อเดินทางต่อ แต่เมื่อคุณหันหลังกลับไปดูต้นไม้ต้นนั้น กลับพบร่างของคุณเองที่กำลังนอนอยู่",
+                    Choice("รีบพุ่งเข้าไปเพื่อจะกลับเข้าร่าง", null,
+                        Outcome("คุณกระโจนเข้าหาร่างของตัวเองที่นอนหลับอยู่ใต้ต้นไม้ทันที แต่กลับเหมือนชนเข้ากับกำแพงที่มองไม่เห็น "
+                            + "คุณกระเด็นถอยหลังลงไปกองกับพื้นดิน และเมื่อมองกลับไปที่ร่างตัวเองอีกครั้ง "
+                            + "ก็พบว่ามีวิญญาณสัมภเวสีมากมายกำลังรุมร่างของคุณอยู่", next: "swarm")),
+                    Choice("เดินไปดูรอบข้างด้วยร่างวิญญาณ", null,
+                        Outcome("คุณก้าวถอยออกมาสำรวจรอบ ๆ และพบขบวนวิญญาณเจ้าที่กำลังเดินสัญจร วิญญาณตนหนึ่งหันมาเห็นคุณแล้วเอ่ยเตือนว่า "
+                            + "\"วิญญาณคนเป็นที่หลุดออกจากร่างยามผีตากผ้าอ้อม หากไม่รีบกลับเข้าร่างก่อนท้องฟ้าจะดำสนิท "
+                            + "วิญญาณก็จะหลุดออกจากร่างตลอดกาล\"", next: "procession"))),
+                Page("swarm",
+                    "เหล่าสัมภเวสีรุมล้อมร่างของคุณอยู่ใต้ต้นไม้ แสงสีส้มบนท้องฟ้าเริ่มจางลงทุกที",
+                    Choice("ตั้งสติ และหาวิธีกำจัดผี", "ฟื้นฟูขวัญ 5",
+                        Outcome("คุณเหลือบไปเห็นพระเครื่องที่คอ จึงตั้งจิตอธิษฐาน และขับไล่สัมภเวสีจนแตกกระเจิง "
+                            + "เกิดแรงดึงดูดผูกจิตพุ่งกลับเข้าร่าง คุณสะดุ้งตื่นได้ทันเวลาก่อนฟ้ามืดสนิท",
+                            Heal(5))),
+                    Choice("ฝืนพุ่งเข้าหาสัมภเวสีตรง ๆ โดยไม่ตั้งสติ", "เสียขวัญ 3",
+                        Outcome("เหล่าสัมภเวสีช่วยกันยื้อฉุดและรั้งร่างวิญญาณของคุณไว้ จนแสงอาทิตย์สุดท้ายดับลง ท้องฟ้ามืดสนิท "
+                            + "ร่างของคุณใต้ต้นไม้ค่อย ๆ ลุกขึ้นยืนและยิ้มด้วยสายตาว่างเปล่าก่อนจะเดินออกไป "
+                            + "โดยที่คุณได้แต่มองร่างของตัวเองค่อย ๆ เดินจากไปจนลับตา",
+                            Damage(3)))),
+                Page("procession",
+                    "ขบวนวิญญาณเจ้าที่ยังคงเดินผ่านไปช้า ๆ ขณะที่ท้องฟ้าเริ่มมืดลงทุกที",
+                    Choice("ขอร้องให้วิญญาณเจ้าที่ช่วย", "ฟื้นฟูขวัญ 5",
+                        Outcome("วิญญาณเจ้าที่ขับไล่สัมภเวสีให้ พร้อมเตือนให้ตั้งจิตระลึกถึงร่าง "
+                            + "คุณจึงตั้งสติและสวดภาวนา แล้วกลับเข้าร่างได้อย่างปลอดภัย",
+                            Heal(5))),
+                    Choice("ยืนมองขบวนเจ้าที่ค่อย ๆ เดินไปจนจบขบวน", "เสียขวัญ 3",
+                        Outcome("รู้ตัวอีกทีแสงแดดสีส้มก็ดับวูบลง ท้องฟ้ามืดสนิท เมื่อรีบวิ่งกลับมาที่ต้นไม้ใหญ่กลับพบเพียงความว่างเปล่า "
+                            + "ร่างกายของคุณเดินหายออกไปแล้ว ทิ้งให้คุณกลายเป็นวิญญาณเร่ร่อนไปตลอดกาล",
+                            Damage(3)))),
+            };
+        }
+
+        // A dry well in the woods with something dark at the bottom
+        private static void AbandonedWell(EventDataSO e)
+        {
+            e.eventId = "abandoned_well";
+            e.title = "บ่อน้ำร้าง";
+            e.pages = new List<EventPage>
+            {
+                Page("start",
+                    "คุณเดินตามแนวต้นไม้สูงลึกเข้าไปในป่าเรื่อย ๆ บรรยากาศรอบ ๆ เงียบเชียบ เมื่อแสงจันทร์เริ่มสว่างขึ้น "
+                    + "คุณบังเอิญมองเห็นบ่อน้ำที่ตั้งอยู่กลางป่าอย่างโดดเด่น คาดเดาว่าเคยมีบ้านตั้งอยู่แถวนั้น",
+                    Choice("ออกสำรวจรอบ ๆ เพื่อดูว่ามีใครอาศัยอยู่ไหม", "ไม่ได้อะไร",
+                        Outcome("ไม่พบอะไรที่เหมือนกับว่ามีคนอาศัยอยู่ มองไปรอบ ๆ ก็มีเพียงป่าทึบ คุณจึงเดินจากไป")),
+                    Choice("เดินตรงไปที่บ่อน้ำ", null,
+                        Outcome("เมื่อก้มมองด้านในก็พบว่าบ่อน้ำนี้แห้งเหือดมานานจนมีต้นอ่อนโตขึ้นตามซอกอิฐ "
+                            + "และเมื่อสายตาปรับโฟกัสได้ ก็พบกับร่างเงาดำที่อยู่ในบ่อน้ำ กำลังส่งเสียงพึมพำแผ่วเบาจนฟังไม่รู้เรื่อง",
+                            next: "well"))),
+                Page("well",
+                    "ร่างเงาดำที่ก้นบ่อยังคงพึมพำอยู่อย่างนั้น",
+                    Choice("ตกใจและเลือกที่จะเดินผ่านไป", "ไม่ได้อะไร",
+                        Outcome("คุณรู้สึกกลัวและหวาดผวา เพราะมองไม่เห็นใบหน้าว่าเป็นคนจริงไหม อีกทั้งเป็นสถานที่ที่ไม่น่ามีคนตกลงไปในเวลาแบบนี้ "
+                            + "คุณจึงทำเหมือนไม่เคยมีอะไรเกิดขึ้นและเดินจากไป")),
+                    Choice("ตกใจแต่เลือกที่จะให้ความช่วยเหลือ", "ได้เลือกการ์ด",
+                        Outcome("คุณชะงักอยู่ครู่หนึ่ง แต่ด้วยความเป็นห่วงจึงรวบรวมความกล้าตะโกนถามลงไปว่าบาดเจ็บหรือเปล่า "
+                            + "แถวนี้มีของอะไรพอจะช่วยได้บ้าง ร่างดำไม่ตอบอะไร และเมื่อคุณมองไปรอบ ๆ เพื่อหาของมาช่วย "
+                            + "พอหันกลับมาอีกทีก็ไม่พบอะไรอยู่ที่ก้นบ่อน้ำอีกแล้ว",
+                            new EventEffect { type = EventEffectType.CardReward }))),
+            };
+        }
+
         // ---------------------------------------------------------------- builders
+
+        // An event picture, imported as a sprite
+        private static Sprite LoadSprite(string path)
+        {
+            if (AssetImporter.GetAtPath(path) is TextureImporter importer && importer.textureType != TextureImporterType.Sprite)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.SaveAndReimport();
+            }
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        // "รอบ ๆ" with a no-break space, so a line never starts with ๆ
+        private static string KeepMaiYamok(string text) => text.Replace(" ๆ", "\u00A0ๆ");
+
+        private static EventEffect Heal(int amount) => new EventEffect { type = EventEffectType.Heal, amount = amount };
+
+        // RunState.TakeDamage never goes below 1 khwan, so an event cannot kill
+        private static EventEffect Damage(int amount) => new EventEffect { type = EventEffectType.TakeDamage, amount = amount };
 
         private static EventPage Page(string id, string body, params EventChoice[] choices)
         {
-            return new EventPage { pageId = id, body = body, choices = new List<EventChoice>(choices) };
+            return new EventPage { pageId = id, body = KeepMaiYamok(body), choices = new List<EventChoice>(choices) };
         }
 
         private static EventChoice Choice(string label, string hint, params EventOutcome[] outcomes)
@@ -146,12 +243,12 @@ namespace TawanOS.EventEngine
 
         private static EventOutcome Outcome(string text, params EventEffect[] effects)
         {
-            return new EventOutcome { resultText = text, effects = new List<EventEffect>(effects) };
+            return new EventOutcome { resultText = KeepMaiYamok(text), effects = new List<EventEffect>(effects) };
         }
 
         private static EventOutcome Outcome(string text, string next)
         {
-            return new EventOutcome { resultText = text, nextPageId = next };
+            return new EventOutcome { resultText = KeepMaiYamok(text), nextPageId = next };
         }
 
         private static EventEffect Fight(EnemyProfileSO enemy)
