@@ -671,14 +671,17 @@ namespace TawanOS.CardEngine
                 if (on) shown++;
             }
 
-            // An amulet on the board: an hourglass at the lower left with the turns it has left (Game Designer, 25 Oct)
+            // An amulet on the board: an hourglass with the turns it has left, under the card so it covers none of the
+            // face (Game Designer, 25 Oct); one that breaks after a few uses (ตะกรุดดำ, ผ้ายันต์มหาอุด) has tally marks
+            // with the uses left beside it, the two centred under the card
             bool life = faceVisible && ShowsLife;
-            Symbol(LifeSymbol, life, StatusSymbols.Hourglass, LifeCorner, LifeIconSize, faceAspect);
-            BadgeNumber("LifeTurns", life, CardData.currentDurability, LifeCorner, faceAspect, LifeIconSize);
-
-            // One that breaks after a few uses (ตะกรุดดำ, ผ้ายันต์มหาอุด): tally marks with the uses left, right of the hourglass
             int uses = life ? EffectResolver.UsesLeft(CardData) : 0;
-            var usesCorner = LifeCorner + new Vector2(LifeIconSize * 1.5f / faceAspect, 0f); // clear of the hourglass's number
+            float pair = uses > 0 ? LifeIconSize * 0.75f / faceAspect : 0f; // half the distance between the two, clear of the numbers
+            var lifeCorner = new Vector2(-pair, LifeRowY);
+            Symbol(LifeSymbol, life, StatusSymbols.Hourglass, lifeCorner, LifeIconSize, faceAspect);
+            BadgeNumber("LifeTurns", life, CardData.currentDurability, lifeCorner, faceAspect, LifeIconSize);
+
+            var usesCorner = new Vector2(pair, LifeRowY);
             Symbol(UsesSymbol, uses > 0, StatusSymbols.Tally, usesCorner, LifeIconSize, faceAspect);
             BadgeNumber("UsesLeft", uses > 0, uses, usesCorner, faceAspect, LifeIconSize);
         }
@@ -686,7 +689,8 @@ namespace TawanOS.CardEngine
         private const string LifeSymbol = "AmuletLife", UsesSymbol = "AmuletUses";
         // Bigger than the status icons: an amulet on a board slot is small, and its turns left matter (Game Designer, 25 Oct)
         private const float LifeIconSize = 0.17f;
-        private static readonly Vector2 LifeCorner = new Vector2(-0.3f, -0.36f);
+        // Just below the card's bottom edge (the face spans -0.5..0.5)
+        private const float LifeRowY = -0.5f - LifeIconSize * 0.5f - 0.03f;
         private bool ShowsLife => isPlacedOnBoard && CardData != null && CardData.cardType == CardType.Amulet && CardData.currentDurability > 0;
 
         /// <summary>True when the mouse is on an amulet's hourglass (its turns left).</summary>
@@ -709,7 +713,12 @@ namespace TawanOS.CardEngine
             if (Mathf.Abs(local.x - p.x) > s.x * 0.5f || Mathf.Abs(local.y - p.y) > s.y * 0.5f) return false;
             var events = UnityEngine.EventSystems.EventSystem.current;
             if (events != null && events.IsPointerOverGameObject()) return false;
-            return IsPointerOverCard(Input.mousePosition);
+            // The icons hang below the card, off its collider: only another card in front hides them
+            var hits = Physics.RaycastAll(ray, 200f);
+            if (hits == null || hits.Length == 0) return true;
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            var front = hits[0].collider.GetComponentInParent<CardView3D>();
+            return front == null || front == this;
         }
 
         // The status whose icon is under the mouse, or null. The mouse ray meets the face's plane and the hit is tested
