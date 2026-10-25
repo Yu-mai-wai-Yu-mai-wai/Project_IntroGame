@@ -26,7 +26,7 @@ namespace TawanOS.UI
 
         private static SettingsPanel current;
 
-        private static readonly string[] TabNames = { "เสียง", "ภาพ", "เกมเพลย์" };
+        private static readonly string[] TabNames = { "เสียง", "ภาพ", "เกมเพลย์", "ปุ่มควบคุม" };
         private static readonly string[] VolumeLabels = { "เสียงรวม", "เพลง", "เสียงบรรยากาศ", "เสียงประกอบ" };
         private static readonly string[] DisplayModeNames = { "เต็มจอ", "เต็มจอแบบไร้ขอบ", "หน้าต่าง" };
         private static readonly string[] TextSpeedNames = { "ช้า", "ปกติ", "เร็ว", "ทันที" };
@@ -40,6 +40,7 @@ namespace TawanOS.UI
         private readonly List<Image> tabImages = new List<Image>();
         private readonly List<Action> refreshers = new List<Action>();
         private int currentTab;
+        private Button resetButton, closeButton;
 
         // Pending display change, reverted unless confirmed
         private GameObject confirmDialog;
@@ -122,7 +123,7 @@ namespace TawanOS.UI
             for (int i = 0; i < TabNames.Length; i++)
             {
                 int tab = i;
-                var button = TextButton(w, "Tab_" + TabNames[i], TabNames[i], new Vector2(-260f + i * 260f, 265f), new Vector2(240f, 58f), () => ShowTab(tab));
+                var button = TextButton(w, "Tab_" + TabNames[i], TabNames[i], new Vector2((i - (TabNames.Length - 1) * 0.5f) * 250f, 265f), new Vector2(230f, 58f), () => ShowTab(tab));
                 tabImages.Add((Image)button.targetGraphic);
                 var page = UiFactory.CreateRect("Page_" + TabNames[i], w);
                 UiFactory.Stretch(page, 0f);
@@ -132,10 +133,13 @@ namespace TawanOS.UI
             BuildAudioPage(pages[0].transform);
             BuildDisplayPage(pages[1].transform);
             BuildGameplayPage(pages[2].transform);
+            BuildControlsPage(pages[3].transform);
 
             // The action buttons are old paper ยันต์ (Game Designer, 24 Oct); the tabs and the < > steppers are not
-            TawanOS.VFX.UiTalismanButton.Dress(TextButton(w, "ResetButton", "คืนค่าเริ่มต้น", new Vector2(-170f, -330f), new Vector2(300f, 66f), ResetCurrentTab));
-            TawanOS.VFX.UiTalismanButton.Dress(TextButton(w, "CloseButton", "ปิด", new Vector2(170f, -330f), new Vector2(300f, 66f), Close));
+            resetButton = TextButton(w, "ResetButton", "คืนค่าเริ่มต้น", new Vector2(-170f, -330f), new Vector2(300f, 66f), ResetCurrentTab);
+            TawanOS.VFX.UiTalismanButton.Dress(resetButton);
+            closeButton = TextButton(w, "CloseButton", "ปิด", new Vector2(170f, -330f), new Vector2(300f, 66f), Close);
+            TawanOS.VFX.UiTalismanButton.Dress(closeButton);
 
             BuildConfirmDialog(w);
             ShowTab(0);
@@ -195,6 +199,41 @@ namespace TawanOS.UI
             ToggleRow(page, RowY(1), "ลดการสั่นของหน้าจอ", () => GameSettings.ReduceMotion, v => GameSettings.ReduceMotion = v);
         }
 
+        // What each key and mouse button does, to read only (Game Designer, 25 Oct): the keys cannot be changed
+        private static readonly (string key, string action)[] Controls =
+        {
+            ("คลิกซ้าย", "เลือก / ลากการ์ดลงช่อง / กดปุ่ม"),
+            ("คลิกขวาที่การ์ด", "เปิดตำราไสยเวทที่การ์ดใบนั้น"),
+            ("คลิกขวา / Esc", "ยกเลิกการ์ดที่ถืออยู่ หรือการเลือกเป้าหมาย"),
+            ("A D  / ← →", "เลื่อนเป้าหมายตอนเลือกเป้า · พลิกหน้าตำรา"),
+            ("Enter", "ยืนยันเป้าหมาย · ปุ่มต่อไปในบทสอน"),
+            ("W", "มองกระดานจากด้านบน"),
+            ("S", "กลับมุมปกติ"),
+            ("Space (มุมบน)", "ซูมแถว แล้วใช้ W / S เลื่อนดูแถวศัตรู / แถวเรา"),
+            ("ปุ่มจบช่วง / จบเทิร์น", "ไปช่วงต่อไป"),
+            ("Space / Enter", "เนื้อเรื่องหน้าต่อไป"),
+            ("Esc", "เปิดเมนูหยุด / ปิดหน้าต่าง / ข้ามเนื้อเรื่อง"),
+            ("ลูกกลิ้งเมาส์", "พลิกหน้าตำรา"),
+        };
+
+        private void BuildControlsPage(Transform page)
+        {
+            const float Top = 200f, Step = 36f;
+            for (int i = 0; i < Controls.Length; i++)
+            {
+                float y = Top - i * Step;
+                var key = UiFactory.CreateText(page, "Key_" + i, Controls[i].key, theme.bodySize, theme.accent, TextAlignmentOptions.MidlineRight, theme.bodyFont);
+                Place(key.rectTransform, new Vector2(-235f, y), new Vector2(390f, Step));
+                var action = UiFactory.CreateText(page, "Action_" + i, Controls[i].action, theme.bodySize, theme.text, TextAlignmentOptions.MidlineLeft, theme.bodyFont);
+                Place(action.rectTransform, new Vector2(225f, y), new Vector2(510f, Step));
+                action.enableAutoSizing = true;
+                action.fontSizeMin = 14f;
+                action.fontSizeMax = theme.bodySize;
+            }
+            var note = UiFactory.CreateText(page, "Note", "ปุ่มเหล่านี้เปลี่ยนไม่ได้", theme.labelSize, theme.text * 0.8f, TextAlignmentOptions.Center, theme.bodyFont);
+            Place(note.rectTransform, new Vector2(0f, Top - Controls.Length * Step - 10f), new Vector2(1000f, 32f));
+        }
+
         private static float RowY(int row) => 180f - row * 78f;
 
         private static int Wrap(int value, int count) => ((value % count) + count) % count;
@@ -210,6 +249,8 @@ namespace TawanOS.UI
         private void ShowTab(int tab)
         {
             currentTab = tab;
+            if (resetButton != null) resetButton.gameObject.SetActive(tab != 3); // nothing to reset on the controls list
+            if (closeButton != null) ((RectTransform)closeButton.transform).anchoredPosition = new Vector2(tab == 3 ? 0f : 170f, -330f);
             for (int i = 0; i < pages.Count; i++)
             {
                 pages[i].SetActive(i == tab);
@@ -236,7 +277,7 @@ namespace TawanOS.UI
             {
                 case 0: GameSettings.ResetAudio(); break;
                 case 1: GameSettings.ResetDisplay(); break;
-                default: GameSettings.ResetGameplay(); break;
+                case 2: GameSettings.ResetGameplay(); break;
             }
             Refresh();
         }
