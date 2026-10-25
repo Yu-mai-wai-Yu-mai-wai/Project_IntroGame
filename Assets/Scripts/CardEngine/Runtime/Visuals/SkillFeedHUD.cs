@@ -267,8 +267,8 @@ namespace TawanOS.CardEngine
             switch (a.effect)
             {
                 case AbilityEffect.HealKhwan:
-                case AbilityEffect.HealPlayer: return $"ฮีล +{v}";
-                case AbilityEffect.HealPerAlly: return $"ฮีล +{v} ต่อบริวาร 1 ตัว";
+                case AbilityEffect.HealPlayer: return $"ฟื้นฟูขวัญ +{v}";
+                case AbilityEffect.HealPerAlly: return $"ฟื้นฟูขวัญ +{v} ต่อบริวาร 1 ตัว";
                 case AbilityEffect.BuffKhwan: return $"ขวัญ +{v}";
                 case AbilityEffect.BuffAttack: return v >= 0 ? $"ตี +{v}" : $"ตี {v}";
                 case AbilityEffect.DamageCard:
@@ -279,7 +279,7 @@ namespace TawanOS.CardEngine
                 case AbilityEffect.DrawCheaper: return $"จั่ว {v} ใบ ลดราคา 1";
                 case AbilityEffect.GiveCardToHand: return $"ได้ {related} ขึ้นมือ";
                 case AbilityEffect.SacrificeForAttack: return "สังเวย รับพลังตีของบริวาร";
-                case AbilityEffect.SacrificeForHeal: return "สังเวย ฮีลตามขวัญบริวาร";
+                case AbilityEffect.SacrificeForHeal: return "สังเวย ฟื้นฟูขวัญเท่ากับขวัญบริวาร";
                 case AbilityEffect.ReviveLast: return "คืนชีพบริวารที่ตายล่าสุด";
                 case AbilityEffect.ReturnToHand: return "ส่งบริวารกลับขึ้นมือ";
                 case AbilityEffect.MoveCurses: return "ย้ายสาปไปฝั่งศัตรู";

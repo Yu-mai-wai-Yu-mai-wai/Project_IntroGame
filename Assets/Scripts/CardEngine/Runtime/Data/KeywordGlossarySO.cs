@@ -63,7 +63,7 @@ namespace TawanOS.CardEngine
             entries.Add(new KeywordEntry("บิน", "โจมตีข้ามบริวารตรงหน้าเข้าใส่ขวัญฝ่ายตรงข้ามโดยตรง ยกเว้นฝ่ายนั้นมีบริวารดักบิน"));
             entries.Add(new KeywordEntry("ดักบิน", "รับการโจมตีของบริวารบินฝ่ายตรงข้ามแทนขวัญของเรา"));
             entries.Add(new KeywordEntry("สาป", "จบรอบ บริวารที่ติดสาปเสียขวัญเท่าจำนวนสาป แล้วสาปลดลง 1"));
-            entries.Add(new KeywordEntry("ฮีล", "ฟื้นขวัญของเจ้าของการ์ด ไม่เกินขวัญสูงสุด"));
+            entries.Add(new KeywordEntry("ฟื้นฟูขวัญ", "เพิ่มขวัญของเจ้าของการ์ด ไม่เกินขวัญสูงสุด"));
             entries.Add(new KeywordEntry("ทะลวง", "ตีบริวารตายแล้ว ดาเมจที่เหลือเข้าขวัญฝ่ายตรงข้าม"));
             entries.Add(new KeywordEntry("สังเวย", "ทำลายบริวารฝั่งเรา 1 ตัวที่เลือก เพื่อรับผลของการ์ด"));
             entries.Add(new KeywordEntry("อัปมงคล", "[ชั่วคราว] สถานะทางลบของการ์ด (ผวา, ผีบังตา)"));
@@ -110,7 +110,7 @@ namespace TawanOS.CardEngine
             "ผวา",
             "สาป",
             "บิน",
-            "ฮีล",
+            "ฟื้นฟูขวัญ",
         };
 
         private static Regex wrapRegex;

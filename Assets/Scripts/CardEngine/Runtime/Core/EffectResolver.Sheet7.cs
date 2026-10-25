@@ -67,7 +67,7 @@ namespace TawanOS.CardEngine
                 int loss = Mathf.Min(amount, room);
                 if (loss <= 0) continue;
                 c.usedThisTurn += loss;
-                ShowSkill(c, isPlayer, result: $"ฮีลแล้วศัตรูเสียขวัญ {loss}");
+                ShowSkill(c, isPlayer, result: $"ฟื้นฟูขวัญแล้วศัตรูเสียขวัญ {loss}");
                 combat.TakeDamage(loss, toPlayer: !isPlayer, cause: $"{c.cardNameThai}");
             }
 
@@ -76,7 +76,7 @@ namespace TawanOS.CardEngine
             {
                 if (UsedThisTurn(c) >= KeywordValue(c, AbilityEffect.AttackOnHeal) || !CanFamiliarAttack(c)) continue;
                 c.usedThisTurn++;
-                ShowSkill(c, isPlayer, result: "ฮีลแล้วโจมตีทันที");
+                ShowSkill(c, isPlayer, result: "ฟื้นฟูขวัญแล้วโจมตีทันที");
                 ResolveFamiliarStrike(c, ChooseStrikeTarget(c, c.boardSlot, isPlayer), isPlayer);
             }
             RemoveDeadFamiliars();
@@ -89,7 +89,7 @@ namespace TawanOS.CardEngine
             {
                 var a = c.abilities.Find(x => x.trigger == AbilityTrigger.Passive && x.effect == AbilityEffect.EndRoundHealOrDraw);
                 bool healed = healedThisTurn[Side(isPlayer)];
-                ShowSkill(c, isPlayer, result: healed && a.duration <= 0 ? "จบรอบ: จั่ว 1 ใบ" : !healed && a.duration <= 0 ? $"จบรอบ: ฮีล +{a.value}" : $"จบรอบ: จั่ว 1 ใบ และฮีล +{a.value}");
+                ShowSkill(c, isPlayer, result: healed && a.duration <= 0 ? "จบรอบ: จั่ว 1 ใบ" : !healed && a.duration <= 0 ? $"จบรอบ: ฟื้นฟูขวัญ +{a.value}" : $"จบรอบ: จั่ว 1 ใบ และฟื้นฟูขวัญ +{a.value}");
                 if (healed || a.duration > 0) DrawFor(isPlayer, 1);
                 if (!healed || a.duration > 0) HealSide(isPlayer, a.value);
             }
@@ -279,7 +279,7 @@ namespace TawanOS.CardEngine
             foreach (var c in LiveWith(!cardIsPlayer, AbilityEffect.CurseNoDecay))
             {
                 int heal = KeywordValue(c, AbilityEffect.CurseNoDecay);
-                if (heal > 0) ShowSkill(c, !cardIsPlayer, result: $"ศัตรูตายเพราะสาป ฮีล +{heal}");
+                if (heal > 0) ShowSkill(c, !cardIsPlayer, result: $"ศัตรูตายเพราะสาป ฟื้นฟูขวัญ +{heal}");
                 if (heal > 0) HealSide(!cardIsPlayer, heal);
             }
         }

@@ -102,7 +102,7 @@ namespace TawanOS.CardEngine
                 c.familiarHealth = 0;
                 c.familiarDamage = 0;
             }
-            c.descriptionFormat = text.Trim().Replace("ไฟต์", "การต่อสู้"); // "จนจบไฟต์" reads "จนจบการต่อสู้" (Game Designer, 22 Oct)
+            c.descriptionFormat = CardTextClarity.Clarify(text.Trim().Replace("ไฟต์", "การต่อสู้")); // "จนจบไฟต์" reads "จนจบการต่อสู้" (Game Designer, 22 Oct); units after the numbers (25 Oct)
         }
 
         private static bool ApplyEnemies()
