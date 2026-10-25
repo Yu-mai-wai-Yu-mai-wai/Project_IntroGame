@@ -64,7 +64,7 @@ which lets the CLI drive an editor that is open.
 | Compile check | `unity run . --no-tail -l Logs/compile.log -- -nographics` then search `Logs/compile.log` for `error CS` |
 | Run an editor method | `unity run . --no-tail -l Logs/run.log -- -nographics -executeMethod <Namespace.Class.Method>` |
 | EditMode tests | `unity test . --mode EditMode --output tests.xml` |
-| Windows build | `unity build . --target StandaloneWindows64 --execute-method TawanOS.EditorTools.BuildScript.BuildWindows -o Build/Windows` |
+| Windows build | `unity build . --target StandaloneWindows64 --execute-method TawanOS.EditorTools.BuildScript.BuildWindows -o Build/ThereThereMyDear` |
 
 `unity run` already adds `-batchmode -quit -projectPath -logFile`; passing `-quit` after `--` is an error (exit 6).
 Write logs under `Logs/` (git-ignored): Unity logs the Hub access token in the command-line section.
