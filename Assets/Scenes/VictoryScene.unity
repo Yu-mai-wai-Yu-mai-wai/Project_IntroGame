@@ -881,6 +881,13 @@ MonoBehaviour:
   cutsceneVideoImage: {fileID: 0}
   cutsceneVideoPlayer: {fileID: 0}
   cutsceneCaptionText: {fileID: 0}
+  playCutscene: 0
+  blackEnding: 1
+  logo: {fileID: 21300000, guid: 3329b912603cb954ba438e2ad23c4025, type: 3}
+  thankYouPicture: {fileID: 0}
+  logoFadeSeconds: 1.2
+  logoHoldSeconds: 1.6
+  endFadeSeconds: 1.2
 --- !u!114 &1433702327
 MonoBehaviour:
   m_ObjectHideFlags: 0

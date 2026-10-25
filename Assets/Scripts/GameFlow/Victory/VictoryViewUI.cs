@@ -41,7 +41,7 @@ namespace TawanOS.GameFlow
         [Tooltip("On: a black screen, the ขวัญเอ้ย ขวัญมา logo fades in and out, then จบเกม / ขอบคุณที่เล่น, the stats and " +
                  "a plain กลับสู่หน้าหลัก in the middle, the thank-you picture small in the lower right. Off: the old panel.")]
         public bool blackEnding = true;
-        [Tooltip("Empty loads Resources/Victory/KhwanLogo.")]
+        [Tooltip("The ขวัญเอ้ย ขวัญมา logo (Art/Logo/KhwanLogo, set by the Victory setup tool).")]
         public Sprite logo;
         [Tooltip("Empty loads Resources/Victory/ThankYou.")]
         public Sprite thankYouPicture;
@@ -232,7 +232,7 @@ namespace TawanOS.GameFlow
             UiFactory.Stretch(black.rectTransform, 0f);
             var root = black.transform;
 
-            var logoSprite = logo != null ? logo : Resources.Load<Sprite>("Victory/KhwanLogo");
+            var logoSprite = logo;
             var logoImage = UiFactory.CreateImage("Logo", root, Color.white);
             logoImage.sprite = logoSprite;
             logoImage.preserveAspect = true;
