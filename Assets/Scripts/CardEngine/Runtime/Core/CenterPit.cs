@@ -33,6 +33,11 @@ namespace TawanOS.CardEngine
         public event Action OnDealt;
         public event Action<CardInstance, bool> OnTaken; // card, taken by the player
         public event Action OnCleared;
+        public event Action<CardInstance> OnReserved; // the enemy has claimed this card; it takes it after the player's pick
+
+        // On a turn the enemy picks first, the card it claimed: shown to the player, who cannot take it
+        // (Game Designer, 25 Oct: the enemy does not snatch a card before the player has read the pit)
+        public CardInstance ReservedForEnemy { get; private set; }
 
         public static CenterPit Ensure(GameObject host)
         {
@@ -120,12 +125,19 @@ namespace TawanOS.CardEngine
             offer.Add(new CardInstance(kind[UnityEngine.Random.Range(0, kind.Count)]));
         }
 
-        public void BeginPlayerPick() => WaitingForPlayer = offer.Count > 0;
+        public void BeginPlayerPick() => WaitingForPlayer = offer.Count > (ReservedForEnemy != null ? 1 : 0);
+
+        public void ReserveForEnemy(CardInstance card)
+        {
+            if (card == null || !offer.Contains(card)) return;
+            ReservedForEnemy = card;
+            OnReserved?.Invoke(card);
+        }
 
         // The player clicked a card in the pit
         public bool TakeForPlayer(CardInstance card)
         {
-            if (!WaitingForPlayer || card == null || !offer.Contains(card)) return false;
+            if (!WaitingForPlayer || card == null || !offer.Contains(card) || card == ReservedForEnemy) return false;
             WaitingForPlayer = false;
             Take(card, true);
             card.fromPit = true;
@@ -145,6 +157,7 @@ namespace TawanOS.CardEngine
         private void Take(CardInstance card, bool byPlayer)
         {
             offer.Remove(card);
+            if (card == ReservedForEnemy) ReservedForEnemy = null;
             Debug.Log($"[CenterPit] {(byPlayer ? "Player" : "Enemy")} took {card.cardNameThai}");
             OnTaken?.Invoke(card, byPlayer);
         }
@@ -153,6 +166,7 @@ namespace TawanOS.CardEngine
         public void Clear()
         {
             WaitingForPlayer = false;
+            ReservedForEnemy = null;
             if (offer.Count == 0) return;
             offer.Clear();
             OnCleared?.Invoke();

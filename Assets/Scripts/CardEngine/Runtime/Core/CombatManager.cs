@@ -275,10 +275,20 @@ namespace TawanOS.CardEngine
         public bool EnemyTakeFromPit(CenterPit pit)
         {
             if (pit == null || pit.Offer.Count == 0 || !enemyCards.CanTakeFromPit) return false;
-            var card = enemyCards.ChoosePitCard(pit.Offer, state, enemyAI.CurrentPlayStyle);
+            // The card it claimed before the player's pick, or its choice of what is left
+            var card = pit.ReservedForEnemy ?? enemyCards.ChoosePitCard(pit.Offer, state, enemyAI.CurrentPlayStyle);
             if (!pit.TakeForEnemy(card, enemyCards)) return false;
             ReportEnemyAction($"ศัตรูหยิบ {card.cardNameThai} จากหลุมกลาง");
             return true;
+        }
+
+        // On a turn the enemy picks first it claims its card now and takes it after the player's pick. False when it
+        // claims nothing.
+        public bool EnemyReservePitCard(CenterPit pit)
+        {
+            if (pit == null || pit.Offer.Count == 0 || !enemyCards.CanTakeFromPit) return false;
+            pit.ReserveForEnemy(enemyCards.ChoosePitCard(pit.Offer, state, enemyAI.CurrentPlayStyle));
+            return pit.ReservedForEnemy != null;
         }
 
         // An enemy without a card deck uses its telegraphed move instead

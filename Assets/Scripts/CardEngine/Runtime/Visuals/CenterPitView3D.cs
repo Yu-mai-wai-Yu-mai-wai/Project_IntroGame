@@ -52,7 +52,15 @@ namespace TawanOS.CardEngine
             public CardView3D card;
             public Vector3 rest;
             public Vector3 scale;
+            public Vector2 size;      // the card's width and length on the table
+            public Vector3 toEnemy;   // flat, from the player's row toward the enemy's
+            public GameObject hand;   // the enemy's shadow hand on a claimed card
         }
+
+        [Header("Enemy claim")]
+        [ColorUsage(true, true)] public Color claimColor = new Color(0.95f, 0.15f, 0.12f, 0.9f);
+        [Range(0f, 1f)] public float handAlpha = 0.92f;
+        private static Texture2D handTexture;
 
         private CenterPit subscribed;
         private CardView3D cardPrefab;
@@ -136,6 +144,7 @@ namespace TawanOS.CardEngine
             wasWaiting = waiting;
 
             var under = waiting ? SlotUnderMouse() : null;
+            if (under != null && under.card != null && under.card.CardData == subscribed.ReservedForEnemy) under = null; // the enemy's
             if (under != null) TawanOS.UI.PointerCursor.Hover();
             if (under != hovered)
             {
@@ -163,6 +172,7 @@ namespace TawanOS.CardEngine
             subscribed.OnDealt += HandleDealt;
             subscribed.OnTaken += HandleTaken;
             subscribed.OnCleared += HandleCleared;
+            subscribed.OnReserved += HandleReserved;
             if (subscribed.Offer.Count > 0) HandleDealt();
         }
 
@@ -172,6 +182,7 @@ namespace TawanOS.CardEngine
             subscribed.OnDealt -= HandleDealt;
             subscribed.OnTaken -= HandleTaken;
             subscribed.OnCleared -= HandleCleared;
+            subscribed.OnReserved -= HandleReserved;
             subscribed = null;
         }
 
@@ -226,6 +237,8 @@ namespace TawanOS.CardEngine
                 view.transform.position = slot.rest;
                 view.transform.localScale = slot.scale * 0.2f;
                 Vector2 size = CardSize(view, slot.scale);
+                slot.size = size;
+                slot.toEnemy = (Flat(enemy.transform.position) - Flat(player.transform.position)).normalized;
 
                 Vector3 along = Vector3.ProjectOnPlane(player.transform.up, Vector3.up);
                 if (along.sqrMagnitude < 0.0001f) along = Vector3.forward;
@@ -244,6 +257,7 @@ namespace TawanOS.CardEngine
             if (slot == null) return;
             takenFrom[card] = slot.card.transform.position;
             if (slot == hovered) hovered = null;
+            if (slot.hand != null) FadeHand(slot);
             slot.card.transform.DOKill();
             Destroy(slot.card.gameObject);
             slot.card = null; // the empty slot stays until the picking is over
@@ -258,6 +272,7 @@ namespace TawanOS.CardEngine
                 var root = slot.root;
                 var card = slot.card;
                 if (card != null) card.transform.DOKill();
+                if (slot.hand != null) FadeHand(slot);
                 if (!fade)
                 {
                     if (card != null) Destroy(card.gameObject);
@@ -282,6 +297,98 @@ namespace TawanOS.CardEngine
             }
             slots.Clear();
             hovered = null;
+        }
+
+        // ---------------------------------------------------------------- the enemy's claim
+
+        // The enemy picks first this turn: its card lights red and a shadow hand reaches across the table to it, the
+        // fingertips at the card's edge so the card stays readable (Game Designer, 25 Oct)
+        private void HandleReserved(CardInstance card)
+        {
+            var slot = slots.Find(s => s.card != null && s.card.CardData == card);
+            if (slot == null) return;
+            if (slot == hovered) { Rest(slot); hovered = null; }
+            if (slot.frame != null)
+            {
+                var mat = slot.frame.material;
+                DOTween.Kill(slot.frame.gameObject);
+                mat.SetColor(ColorId, claimColor);
+            }
+
+            float length = slot.size.y * 1.35f, width = slot.size.x * 0.85f;
+            var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            go.name = "EnemyHand";
+            Destroy(go.GetComponent<Collider>());
+            go.transform.SetParent(slot.root.transform, true);
+            // Lying on the table, the fingertips (the texture's top) toward the card
+            go.transform.rotation = Quaternion.LookRotation(Vector3.down, -slot.toEnemy);
+            go.transform.localScale = new Vector3(width, length, 1f);
+            Vector3 edge = Flat(slot.rest) + slot.toEnemy * (slot.size.y * 0.5f * frameScale);
+            Vector3 target = edge + slot.toEnemy * (length * 0.5f - length * 0.06f) + Vector3.up * (slot.rest.y - height * 0.6f);
+            go.transform.position = target + slot.toEnemy * length * 0.5f;
+
+            var r = go.GetComponent<Renderer>();
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            var mat2 = new Material(Shader.Find("Sprites/Default")) { mainTexture = HandTexture() };
+            mat2.color = new Color(1f, 1f, 1f, 0f); // the colour is in the texture: black with a dark red rim
+            r.material = mat2;
+            slot.hand = go;
+
+            go.transform.DOMove(target, 0.6f).SetEase(Ease.OutCubic).SetTarget(go)
+                .OnComplete(() => go.transform.DOMove(target - slot.toEnemy * length * 0.03f, 0.9f)
+                    .SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo).SetTarget(go));
+            DOTween.To(() => 0f, a => mat2.color = new Color(1f, 1f, 1f, a), handAlpha, 0.6f).SetTarget(go);
+        }
+
+        private void FadeHand(PitSlot slot)
+        {
+            var go = slot.hand;
+            slot.hand = null;
+            if (go == null) return;
+            DOTween.Kill(go);
+            var mat = go.GetComponent<Renderer>().material;
+            var c = mat.color;
+            DOTween.To(() => c.a, a => mat.color = new Color(c.r, c.g, c.b, a), 0f, fadeTime).SetTarget(go)
+                .OnComplete(() => { if (go != null) Destroy(go); });
+        }
+
+        // A soft dark hand from the wrist up: an arm fading out at the bottom, a palm, four fingers (drawn once in code)
+        private static Texture2D HandTexture()
+        {
+            if (handTexture != null) return handTexture;
+            const int W = 128, H = 256;
+            handTexture = new Texture2D(W, H, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "EnemyHand" };
+            var px = new Color32[W * H];
+            for (int j = 0; j < H; j++)
+            {
+                for (int i = 0; i < W; i++)
+                {
+                    float u = (i + 0.5f) / W, v = (j + 0.5f) / H;
+                    float arm = Mathf.Min(0.17f - Mathf.Abs(u - 0.5f), 0.55f - v);
+                    float pu = (u - 0.5f) / 0.3f, pv = (v - 0.58f) / 0.17f;
+                    float palm = (1f - Mathf.Sqrt(pu * pu + pv * pv)) * 0.15f;
+                    float fingers = -1f;
+                    float[] xs = { 0.29f, 0.43f, 0.57f, 0.71f };
+                    float[] tips = { 0.86f, 0.95f, 0.93f, 0.84f };
+                    for (int f = 0; f < 4; f++)
+                    {
+                        float top = tips[f] - 0.045f;
+                        float dy = v > top ? v - top : v < 0.6f ? 0.6f - v : 0f;
+                        float d = Mathf.Sqrt((u - xs[f]) * (u - xs[f]) + dy * dy);
+                        fingers = Mathf.Max(fingers, 0.045f - d);
+                    }
+                    float inside = Mathf.Max(arm, Mathf.Max(palm, fingers));
+                    float a = Mathf.Clamp01(inside / 0.035f + 0.5f);
+                    a *= Mathf.Clamp01(v / 0.3f); // the arm comes out of the dark
+                    // Black inside, a dark red rim so it reads on the dark wood
+                    float rim = 1f - Mathf.Clamp01(inside / 0.03f);
+                    px[j * W + i] = new Color32((byte)(150 * rim), (byte)(14 * rim), (byte)(12 * rim), (byte)(a * 255));
+                }
+            }
+            handTexture.SetPixels32(px);
+            handTexture.Apply(false, true);
+            return handTexture;
         }
 
         // ---------------------------------------------------------------- hover

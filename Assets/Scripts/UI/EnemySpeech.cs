@@ -84,11 +84,32 @@ namespace TawanOS.UI
                 combat.EnemyCards.OnCardPlayed -= HandlePlayed;
             }
             if (resolver != null) resolver.OnDamageDealt -= HandleDamage;
+            if (pit != null) pit.OnReserved -= HandleClaim;
+        }
+
+        private CenterPit pit;
+
+        // The enemy claims a pit card before the player picks (Game Designer, 25 Oct)
+        private void HandleClaim(CardInstance card)
+        {
+            if (combat == null || combat.IsCombatOver) return;
+            var profile = combat.currentEnemyProfile;
+            string name = profile != null ? profile.enemyName : "";
+            const string text = "ฉันเอาใบนี้";
+            if (speaking != null) StopCoroutine(speaking);
+            speaking = StartCoroutine(Speak(name, text));
+            OnLine?.Invoke(name, text, EnemyLines.Moment.PlayCard);
         }
 
         // A new fight (or a new enemy): it greets the player once it is under way
         private void Update()
         {
+            // The centre pit is made by the turn loop after this starts: hook its claim once it exists
+            if (pit == null && CenterPit.Instance != null)
+            {
+                pit = CenterPit.Instance;
+                pit.OnReserved += HandleClaim;
+            }
             if (combat == null || combat.currentEnemyProfile == null || combat.IsCombatOver) return;
             if (spokenFor == combat.currentEnemyProfile || combat.EnemyPhase > 1) return;
             spokenFor = combat.currentEnemyProfile;

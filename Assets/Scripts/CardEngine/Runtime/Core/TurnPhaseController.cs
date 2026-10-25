@@ -26,6 +26,8 @@ namespace TawanOS.CardEngine
         public float pitDealDelay = 0.5f;
         [Tooltip("Pause after each pick")]
         public float pitPickDelay = 0.5f;
+        [Tooltip("Seconds the enemy's claimed pit card (the shadow hand and its line) shows before the player may pick")]
+        public float pitClaimDelay = 1.2f;
 
         [Header("End Phase")]
         public bool discardHandAtEnd = false;
@@ -241,13 +243,15 @@ namespace TawanOS.CardEngine
             SetPhase(TurnPhase.PitPick);
             yield return new WaitForSeconds(pitDealDelay);
 
+            // The first pick alternates. When the enemy is first it claims its card, which waits in the pit (lit, a
+            // shadow hand on it, a line) while the player picks from the rest; it is taken only after that
+            // (Game Designer, 25 Oct)
             bool playerFirst = CenterPit.PlayerPicksFirst(TurnNumber);
-            for (int i = 0; i < 2; i++)
-            {
-                if (combat != null && combat.IsCombatOver) yield break;
-                if ((i == 0) == playerFirst) yield return PlayerPitPick(pit);
-                else if (enemyActs && combat.EnemyTakeFromPit(pit)) yield return new WaitForSeconds(pitPickDelay);
-            }
+            if (!playerFirst && enemyActs && combat.EnemyReservePitCard(pit)) yield return new WaitForSeconds(pitClaimDelay);
+            if (combat != null && combat.IsCombatOver) yield break;
+            yield return PlayerPitPick(pit);
+            if (combat != null && combat.IsCombatOver) yield break;
+            if (enemyActs && combat.EnemyTakeFromPit(pit)) yield return new WaitForSeconds(pitPickDelay);
 
             yield return new WaitForSeconds(pitPickDelay);
             pit.Clear();
