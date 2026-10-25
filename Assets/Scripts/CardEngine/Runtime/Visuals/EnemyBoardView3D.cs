@@ -108,6 +108,8 @@ namespace TawanOS.CardEngine
                 view.transform.localRotation = Quaternion.identity;
             }
 
+            // On the board: an amulet shows its hourglass like the player's (Game Designer, 25 Oct)
+            view.MarkOnBoard();
             // A card reused from the enemy's hand still shows its hand numbers; auras in play may have changed them
             view.RefreshLabel();
 
