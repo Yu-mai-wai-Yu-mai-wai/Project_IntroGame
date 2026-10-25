@@ -33,9 +33,11 @@ namespace TawanOS.CardEngine
 
         [Header("Mist")]
         public Color mistColor = new Color(0.75f, 0.75f, 0.8f, 0.12f);
-        public float mistRate = 6f;
+        public float mistRate = 4f;
         [Tooltip("Mist puff size against the card's width")]
-        public float mistSize = 0.6f;
+        public float mistSize = 0.4f;
+        [Tooltip("How long the mist takes to fade out when the pit closes")]
+        public float mistFadeTime = 0.8f;
 
         private const string SlotGlowShader = "Shaders/SlotGlow";
         private static readonly int ColorId = Shader.PropertyToID("_Color");
@@ -293,8 +295,16 @@ namespace TawanOS.CardEngine
                     continue;
                 }
 
-                // The slot, its mist and the card left in it fade into the table
-                if (slot.mist != null) slot.mist.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                // The slot, its mist and the card left in it fade into the table. The mist's puffs fade out together
+                // (they outlive the slot otherwise and vanish mid-air when it goes, Game Designer, 25 Oct)
+                if (slot.mist != null)
+                {
+                    slot.mist.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+                    var mistMat = slot.mist.GetComponent<ParticleSystemRenderer>().material; // this slot's own copy
+                    var tint = Color.white;
+                    DOTween.To(() => 1f, a => { tint.a = a; mistMat.SetColor(ColorId, tint); }, 0f, mistFadeTime)
+                        .SetEase(Ease.InOutSine).SetTarget(root).OnComplete(() => Destroy(mistMat));
+                }
                 if (slot.frame != null)
                 {
                     var mat = slot.frame.material;
@@ -306,7 +316,7 @@ namespace TawanOS.CardEngine
                     card.transform.DOScale(Vector3.zero, fadeTime).SetEase(Ease.InBack)
                         .OnComplete(() => { if (card != null) Destroy(card.gameObject); });
                 }
-                Destroy(root, fadeTime + 1f); // lets the last mist drift away
+                Destroy(root, Mathf.Max(fadeTime, mistFadeTime) + 0.1f); // once the mist has faded
             }
             slots.Clear();
             hovered = null;
@@ -623,8 +633,9 @@ namespace TawanOS.CardEngine
             main.loop = true;
             main.duration = 2f;
             main.startLifetime = new ParticleSystem.MinMaxCurve(1.6f, 2.6f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(0.02f, 0.08f);
-            main.startSize = new ParticleSystem.MinMaxCurve(size.x * mistSize * 0.7f, size.x * mistSize * 1.3f);
+            // Slow and close to the slot, so it does not spread over the board (Game Designer, 25 Oct: was too hazy)
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.01f, 0.04f);
+            main.startSize = new ParticleSystem.MinMaxCurve(size.x * mistSize * 0.8f, size.x * mistSize * 1.15f);
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
             main.startColor = mistColor;
             main.simulationSpace = ParticleSystemSimulationSpace.World;

@@ -342,8 +342,9 @@ MonoBehaviour:
   frameColor: {r: 0.55, g: 0.55, b: 0.58, a: 0.55}
   frameFill: 0.06
   mistColor: {r: 0.75, g: 0.75, b: 0.8, a: 0.12}
-  mistRate: 6
-  mistSize: 0.6
+  mistRate: 4
+  mistSize: 0.4
+  mistFadeTime: 0.8
   claimColor: {r: 0.95, g: 0.15, b: 0.12, a: 0.9}
   handAlpha: 0.92
   claimHandPrefab: {fileID: 6677433262662131873, guid: 0d292856d4862e4459b0ffc02d1f77d1, type: 3}
