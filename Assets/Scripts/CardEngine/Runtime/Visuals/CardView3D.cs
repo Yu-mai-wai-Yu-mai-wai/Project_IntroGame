@@ -676,10 +676,10 @@ namespace TawanOS.CardEngine
             Symbol(LifeSymbol, life, StatusSymbols.Hourglass, LifeCorner, LifeIconSize, faceAspect);
             BadgeNumber("LifeTurns", life, CardData.currentDurability, LifeCorner, faceAspect, LifeIconSize);
 
-            // One that breaks after a few uses (ตะกรุดดำ, ผ้ายันต์มหาอุด): tally marks with the uses left, right of the hourglass
+            // One that breaks after a few uses (ตะกรุดดำ, ผ้ายันต์มหาอุด): a power symbol with the uses left, right of the hourglass
             int uses = life ? EffectResolver.UsesLeft(CardData) : 0;
             var usesCorner = LifeCorner + new Vector2(LifeIconSize * 1.5f / faceAspect, 0f); // clear of the hourglass's number
-            Symbol(UsesSymbol, uses > 0, StatusSymbols.Tally, usesCorner, LifeIconSize, faceAspect);
+            Symbol(UsesSymbol, uses > 0, StatusSymbols.Uses, usesCorner, LifeIconSize, faceAspect);
             BadgeNumber("UsesLeft", uses > 0, uses, usesCorner, faceAspect, LifeIconSize);
         }
 
@@ -692,7 +692,7 @@ namespace TawanOS.CardEngine
         /// <summary>True when the mouse is on an amulet's hourglass (its turns left).</summary>
         public bool LifeUnderPointer() => SymbolUnderPointer(LifeSymbol);
 
-        /// <summary>True when the mouse is on an amulet's tally marks (its uses left).</summary>
+        /// <summary>True when the mouse is on an amulet's power symbol (its uses left).</summary>
         public bool UsesUnderPointer() => SymbolUnderPointer(UsesSymbol);
 
         private bool SymbolUnderPointer(string name)

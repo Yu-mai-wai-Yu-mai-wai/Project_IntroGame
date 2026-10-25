@@ -9,12 +9,12 @@ namespace TawanOS.CardEngine
     {
         private const int Size = 128;
 
-        private static Sprite protect, taunt, blinded, phawa, curse, hourglass, tally;
+        private static Sprite protect, taunt, blinded, phawa, curse, hourglass, uses;
 
         // An amulet's turns left: an hourglass in sand gold (not a status; CardView3D draws it on amulets on the board)
         public static Sprite Hourglass => hourglass != null ? hourglass : hourglass = MakeBadge(HourglassShape, new Color(0.95f, 0.78f, 0.45f));
-        // The uses left on an amulet that breaks after a few: tally marks struck through, in blood red, beside the hourglass
-        public static Sprite Tally => tally != null ? tally : tally = MakeBadge(TallyShape, new Color(0.9f, 0.32f, 0.28f));
+        // The uses left on an amulet that breaks after a few: a power (shutdown) symbol, in blood red, beside the hourglass
+        public static Sprite Uses => uses != null ? uses : uses = MakeBadge(PowerShape, new Color(0.9f, 0.32f, 0.28f));
 
         // เกราะคุ้มภัย: a shield (the theme's accent pushed to gold)
         public static Sprite Protect => protect != null ? protect : protect = MakeBadge(ShieldShape, new Color(0.97f, 0.7f, 0.36f));
@@ -125,16 +125,16 @@ namespace TawanOS.CardEngine
             return Mathf.Max(glass, bars);
         }
 
-        // Four upright tally marks with a slash across them
-        private static float TallyShape(float x, float y)
+        // A power (shutdown) symbol: a ring broken at the top with an upright bar through the gap
+        private static float PowerShape(float x, float y)
         {
-            float marks = -1f;
-            foreach (float mx in new[] { 0.23f, 0.41f, 0.59f, 0.77f })
-                marks = Mathf.Max(marks, Mathf.Min(0.055f - Mathf.Abs(x - mx), 0.36f - Mathf.Abs(y - 0.5f)));
-            // From the lower left to the upper right, a little longer than the marks are wide
-            float along = ((x - 0.5f) + (y - 0.5f)) * 0.7071f, across = ((x - 0.5f) - (y - 0.5f)) * 0.7071f;
-            float slash = Mathf.Min(0.055f - Mathf.Abs(across), 0.46f - Mathf.Abs(along));
-            return Mathf.Max(marks, slash);
+            float dx = x - 0.5f, dy = y - 0.46f;
+            float r = Mathf.Sqrt(dx * dx + dy * dy);
+            // The gap: the ring is cut where it points within about 40 degrees of straight up
+            float gap = dy > 0f ? (Mathf.Abs(dx) / Mathf.Max(r, 0.0001f) - 0.62f) * 0.4f : 1f;
+            float ring = Mathf.Min(0.065f - Mathf.Abs(r - 0.32f), gap);
+            float bar = Mathf.Min(0.065f - Mathf.Abs(dx), Mathf.Min(y - 0.5f, 0.92f - y));
+            return Mathf.Max(ring, bar);
         }
 
         // An arrow pointing down: a shaft and a triangular head

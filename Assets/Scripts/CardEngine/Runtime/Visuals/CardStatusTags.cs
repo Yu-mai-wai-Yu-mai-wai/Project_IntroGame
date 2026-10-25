@@ -63,7 +63,7 @@ namespace TawanOS.CardEngine
             }
             else if (view.UsesUnderPointer())
             {
-                // The tally marks: the uses left before the amulet breaks
+                // The power symbol: the uses left before the amulet breaks
                 var tip = KeywordTooltipView.Instance;
                 if (tip == null) return;
                 int left = EffectResolver.UsesLeft(view.CardData);
