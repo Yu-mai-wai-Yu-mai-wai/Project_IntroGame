@@ -843,10 +843,10 @@ namespace TawanOS.CardEngine
             transform.DOScale(baseLocalScale, 0.25f);
         }
 
-        // Called once the engine has put the card in its column
         /// <summary>An enemy card set in a board slot by EnemyBoardView3D: it shows what a board card shows (an amulet's hourglass).</summary>
         public void MarkOnBoard() => isPlacedOnBoard = true;
 
+        // Called once the engine has put the card in its column
         public void PlaceOnBoard()
         {
             // Auras already in play (amulets) changed this card's Khwan / attack the moment it was played,
