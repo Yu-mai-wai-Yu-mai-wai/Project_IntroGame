@@ -620,7 +620,7 @@ namespace TawanOS.CardEngine
                 if (s == null || s.stacks <= 0) continue;
                 b.Append((int)s.type).Append('x').Append(s.stacks).Append(' ');
             }
-            if (life) b.Append("life").Append(CardData.currentDurability).Append(' ');
+            if (life) b.Append("life").Append(CardData.currentDurability).Append('u').Append(EffectResolver.UsesLeft(CardData)).Append(' ');
             if (b.Length > 0 && !faceVisible) b.Append("hidden");
             string key = b.ToString();
             // The icons are also redrawn when the card's shape on screen changes (it was moved onto a board slot)
@@ -675,18 +675,29 @@ namespace TawanOS.CardEngine
             bool life = faceVisible && ShowsLife;
             Symbol(LifeSymbol, life, StatusSymbols.Hourglass, LifeCorner, LifeIconSize, faceAspect);
             BadgeNumber("LifeTurns", life, CardData.currentDurability, LifeCorner, faceAspect, LifeIconSize);
+
+            // One that breaks after a few uses (ตะกรุดดำ, ผ้ายันต์มหาอุด): tally marks with the uses left, right of the hourglass
+            int uses = life ? EffectResolver.UsesLeft(CardData) : 0;
+            var usesCorner = LifeCorner + new Vector2(LifeIconSize * 1.5f / faceAspect, 0f); // clear of the hourglass's number
+            Symbol(UsesSymbol, uses > 0, StatusSymbols.Tally, usesCorner, LifeIconSize, faceAspect);
+            BadgeNumber("UsesLeft", uses > 0, uses, usesCorner, faceAspect, LifeIconSize);
         }
 
-        private const string LifeSymbol = "AmuletLife";
+        private const string LifeSymbol = "AmuletLife", UsesSymbol = "AmuletUses";
         // Bigger than the status icons: an amulet on a board slot is small, and its turns left matter (Game Designer, 25 Oct)
         private const float LifeIconSize = 0.17f;
         private static readonly Vector2 LifeCorner = new Vector2(-0.3f, -0.36f);
         private bool ShowsLife => isPlacedOnBoard && CardData != null && CardData.cardType == CardType.Amulet && CardData.currentDurability > 0;
 
         /// <summary>True when the mouse is on an amulet's hourglass (its turns left).</summary>
-        public bool LifeUnderPointer()
+        public bool LifeUnderPointer() => SymbolUnderPointer(LifeSymbol);
+
+        /// <summary>True when the mouse is on an amulet's tally marks (its uses left).</summary>
+        public bool UsesUnderPointer() => SymbolUnderPointer(UsesSymbol);
+
+        private bool SymbolUnderPointer(string name)
         {
-            if (CardData == null || !faceVisible || !symbols.TryGetValue(LifeSymbol, out var sr) || sr == null || !sr.gameObject.activeSelf) return false;
+            if (CardData == null || !faceVisible || !symbols.TryGetValue(name, out var sr) || sr == null || !sr.gameObject.activeSelf) return false;
             var cam = Camera.main;
             if (cam == null) return false;
             var ray = cam.ScreenPointToRay(Input.mousePosition);

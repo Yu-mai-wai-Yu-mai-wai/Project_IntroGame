@@ -200,13 +200,28 @@ namespace TawanOS.CardEngine
             return false;
         }
 
+        // The keywords whose amulet breaks after a number of uses: ผ้ายันต์มหาอุด counts in its value, ตะกรุดดำ in its duration
+        private static int UseCount(CardInstance amulet, AbilityEffect keyword)
+        {
+            var a = amulet.abilities.Find(x => x.trigger == AbilityTrigger.Passive && x.effect == keyword);
+            if (a == null) return 0;
+            return keyword == AbilityEffect.DeathSave ? a.value : a.duration;
+        }
+
+        /// <summary>Uses an amulet has left before it breaks (its full count before the first use), 0 for one without a count.</summary>
+        public static int UsesLeft(CardInstance amulet)
+        {
+            if (amulet == null || amulet.cardType != CardType.Amulet) return 0;
+            if (amulet.usesLeft >= 0) return amulet.usesLeft;
+            return Mathf.Max(0, Mathf.Max(UseCount(amulet, AbilityEffect.DeathSave), UseCount(amulet, AbilityEffect.AllyDeathHurtsEnemy)));
+        }
+
         // An amulet with a use count breaks once the count is used up
         private void UseUp(CardInstance amulet, AbilityEffect keyword)
         {
             if (amulet.usesLeft < 0)
             {
-                var a = amulet.abilities.Find(x => x.trigger == AbilityTrigger.Passive && x.effect == keyword);
-                int uses = keyword == AbilityEffect.DeathSave ? a.value : a.duration;
+                int uses = UseCount(amulet, keyword);
                 if (uses <= 0) return; // no count: lasts its turns
                 amulet.usesLeft = uses;
             }

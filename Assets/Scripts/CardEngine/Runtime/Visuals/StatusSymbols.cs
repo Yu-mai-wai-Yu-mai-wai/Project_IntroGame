@@ -9,10 +9,12 @@ namespace TawanOS.CardEngine
     {
         private const int Size = 128;
 
-        private static Sprite protect, taunt, blinded, phawa, curse, hourglass;
+        private static Sprite protect, taunt, blinded, phawa, curse, hourglass, tally;
 
         // An amulet's turns left: an hourglass in sand gold (not a status; CardView3D draws it on amulets on the board)
         public static Sprite Hourglass => hourglass != null ? hourglass : hourglass = MakeBadge(HourglassShape, new Color(0.95f, 0.78f, 0.45f));
+        // The uses left on an amulet that breaks after a few: tally marks struck through, in blood red, beside the hourglass
+        public static Sprite Tally => tally != null ? tally : tally = MakeBadge(TallyShape, new Color(0.9f, 0.32f, 0.28f));
 
         // เกราะคุ้มภัย: a shield (the theme's accent pushed to gold)
         public static Sprite Protect => protect != null ? protect : protect = MakeBadge(ShieldShape, new Color(0.97f, 0.7f, 0.36f));
@@ -121,6 +123,18 @@ namespace TawanOS.CardEngine
             float glass = Mathf.Min(0.05f + cy * 0.85f - cx, 0.38f - cy);
             float bars = Mathf.Min(0.36f - cx, 0.05f - Mathf.Abs(cy - 0.4f));
             return Mathf.Max(glass, bars);
+        }
+
+        // Four upright tally marks with a slash across them
+        private static float TallyShape(float x, float y)
+        {
+            float marks = -1f;
+            foreach (float mx in new[] { 0.23f, 0.41f, 0.59f, 0.77f })
+                marks = Mathf.Max(marks, Mathf.Min(0.055f - Mathf.Abs(x - mx), 0.36f - Mathf.Abs(y - 0.5f)));
+            // From the lower left to the upper right, a little longer than the marks are wide
+            float along = ((x - 0.5f) + (y - 0.5f)) * 0.7071f, across = ((x - 0.5f) - (y - 0.5f)) * 0.7071f;
+            float slash = Mathf.Min(0.055f - Mathf.Abs(across), 0.46f - Mathf.Abs(along));
+            return Mathf.Max(marks, slash);
         }
 
         // An arrow pointing down: a shaft and a triangular head
