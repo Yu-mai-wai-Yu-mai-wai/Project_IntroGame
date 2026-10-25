@@ -66,7 +66,8 @@ namespace TawanOS.CardEngine
             var glossary = KeywordGlossarySO.Current;
             string def = glossary != null ? glossary.GetDefinition(Name(s.type)) : null;
             if (!string.IsNullOrEmpty(def)) def = def.Replace(" เป็นเวลา X เทิร์น", "").Replace("X เทิร์น", "").Trim();
-            string lasts = s.fromAura ? "มาจากออร่าของการ์ดบนสนาม อยู่จนกว่าการ์ดนั้นจะออกจากสนาม"
+            string lasts = s.type == CardStatusType.DoneKhong ? $"จบรอบนี้จะเสียขวัญ {s.stacks}"
+                : s.fromAura ? "มาจากออร่าของการ์ดบนสนาม อยู่จนกว่าการ์ดนั้นจะออกจากสนาม"
                 : s.duration >= 99 ? "อยู่จนกว่าจะถูกใช้"
                 : $"เหลืออีก {s.duration} เทิร์น";
             return string.IsNullOrEmpty(def) ? lasts : def + "\n" + lasts;

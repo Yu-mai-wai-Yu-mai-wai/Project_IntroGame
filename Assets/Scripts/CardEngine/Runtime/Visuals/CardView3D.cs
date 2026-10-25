@@ -650,7 +650,7 @@ namespace TawanOS.CardEngine
             new System.Collections.Generic.Dictionary<string, SpriteRenderer>();
 
         private static readonly CardStatusType[] IconOrder =
-            { CardStatusType.Protect, CardStatusType.Taunt, CardStatusType.Blinded, CardStatusType.Phawa };
+            { CardStatusType.DoneKhong, CardStatusType.Protect, CardStatusType.Taunt, CardStatusType.Blinded, CardStatusType.Phawa };
         private static readonly Vector2 IconCorner = new Vector2(0.35f, -0.4f);  // the right-most icon's centre
         private const float IconSize = 0.1f, IconGap = 0.012f;
 
@@ -664,6 +664,7 @@ namespace TawanOS.CardEngine
                 bool on = faceVisible && CardData.statuses.Exists(x => x != null && x.type == type && x.stacks > 0);
                 var center = IconCorner - new Vector2(step * shown, 0f);
                 Symbol(type.ToString(), on, StatusSymbols.For(type), center, IconSize, faceAspect);
+                if (type == CardStatusType.DoneKhong) CurseStacks(on, center, faceAspect);
                 if (on) shown++;
             }
         }
@@ -697,6 +698,35 @@ namespace TawanOS.CardEngine
             if (checkUi && events != null && events.IsPointerOverGameObject()) return null;
             if (!IsPointerOverCard(screenPosition)) return null;
             return CardData.statuses.Find(x => x != null && x.type == hit.Value && x.stacks > 0);
+        }
+
+        private TMP_Text curseStacks;
+
+        // สาป's number of stacks, hanging at the lower right of its skull (Game Designer, 25 Oct)
+        private void CurseStacks(bool on, Vector2 iconCenter, float faceAspect)
+        {
+            if (!on)
+            {
+                if (curseStacks != null) curseStacks.gameObject.SetActive(false);
+                return;
+            }
+            if (curseStacks == null)
+            {
+                curseStacks = CloneLabel("CurseStacks");
+                var r = curseStacks.GetComponent<Renderer>();
+                if (r != null) r.sortingOrder = SymbolOrder + 1; // over the skull
+                CardFaceLayout.MakeReadable(curseStacks);
+            }
+            curseStacks.gameObject.SetActive(true);
+            var curse = CardData.statuses.Find(x => x != null && x.type == CardStatusType.DoneKhong && x.stacks > 0);
+            curseStacks.text = curse != null ? curse.stacks.ToString() : "";
+            curseStacks.color = Color.white;
+            curseStacks.fontStyle = FontStyles.Bold;
+            PlaceLabel(curseStacks, new CardFaceLayout.Box(iconCenter.x + IconSize * 0.45f / faceAspect, iconCenter.y - IconSize * 0.42f, 0.14f, 0.1f), 2.4f, 1f);
+            curseStacks.enableAutoSizing = false; // one or two digits: a fixed size, about the stat numbers
+            curseStacks.fontSize = 0.5f;
+            var t = curseStacks.transform;
+            t.localPosition = new Vector3(t.localPosition.x, t.localPosition.y, FaceZ - 0.004f);
         }
 
         // height: a fraction of the face's height. The square icon keeps its shape (its width follows the card's aspect).

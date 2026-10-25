@@ -9,7 +9,7 @@ namespace TawanOS.CardEngine
     {
         private const int Size = 128;
 
-        private static Sprite protect, taunt, blinded, phawa;
+        private static Sprite protect, taunt, blinded, phawa, curse;
 
         // เกราะคุ้มภัย: a shield (the theme's accent pushed to gold)
         public static Sprite Protect => protect != null ? protect : protect = MakeBadge(ShieldShape, new Color(0.97f, 0.7f, 0.36f));
@@ -19,6 +19,8 @@ namespace TawanOS.CardEngine
         public static Sprite Blinded => blinded != null ? blinded : blinded = MakeBadge(CrossShape, new Color(0.85f, 0.2f, 0.2f));
         // ผวา: an arrow down (its attack drops)
         public static Sprite Phawa => phawa != null ? phawa : phawa = MakeBadge(ArrowDownShape, new Color(0.74f, 0.6f, 0.86f));
+        // สาป: a skull in bone white (Game Designer, 25 Oct); its stacks hang under it as a number (CardView3D)
+        public static Sprite Curse => curse != null ? curse : curse = MakeBadge(SkullShape, new Color(0.93f, 0.86f, 0.74f));
 
         public static Sprite For(CardStatusType type)
         {
@@ -28,6 +30,7 @@ namespace TawanOS.CardEngine
                 case CardStatusType.Taunt: return Taunt;
                 case CardStatusType.Blinded: return Blinded;
                 case CardStatusType.Phawa: return Phawa;
+                case CardStatusType.DoneKhong: return Curse;
                 default: return null;
             }
         }
@@ -89,6 +92,23 @@ namespace TawanOS.CardEngine
             float ring = 0.09f - Mathf.Abs(r - 0.36f);
             float dot = 0.14f - r;
             return Mathf.Max(ring, dot);
+        }
+
+        // A skull: a round cranium over a square jaw, two eye holes, a nose hole and gaps between the teeth
+        private static float SkullShape(float x, float y)
+        {
+            float cranium = 0.31f - Mathf.Sqrt((x - 0.5f) * (x - 0.5f) + (y - 0.6f) * (y - 0.6f));
+            float jaw = Mathf.Min(Mathf.Min(x - 0.33f, 0.67f - x), Mathf.Min(y - 0.16f, 0.45f - y));
+            float body = Mathf.Max(cranium, jaw);
+
+            float eyeL = 0.09f - Mathf.Sqrt((x - 0.385f) * (x - 0.385f) + (y - 0.57f) * (y - 0.57f));
+            float eyeR = 0.09f - Mathf.Sqrt((x - 0.615f) * (x - 0.615f) + (y - 0.57f) * (y - 0.57f));
+            float nose = 0.04f - Mathf.Sqrt((x - 0.5f) * (x - 0.5f) + (y - 0.42f) * (y - 0.42f));
+            float teeth = -1f;
+            if (y < 0.31f)
+                foreach (float gap in new[] { 0.415f, 0.5f, 0.585f }) teeth = Mathf.Max(teeth, 0.014f - Mathf.Abs(x - gap));
+            float holes = Mathf.Max(Mathf.Max(eyeL, eyeR), Mathf.Max(nose, teeth));
+            return Mathf.Min(body, -holes);
         }
 
         // An arrow pointing down: a shaft and a triangular head
