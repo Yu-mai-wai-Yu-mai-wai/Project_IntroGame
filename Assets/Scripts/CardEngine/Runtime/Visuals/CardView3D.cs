@@ -687,8 +687,8 @@ namespace TawanOS.CardEngine
         }
 
         private const string LifeSymbol = "AmuletLife", UsesSymbol = "AmuletUses";
-        // Bigger than the status icons: an amulet on a board slot is small, and its turns left matter (Game Designer, 25 Oct)
-        private const float LifeIconSize = 0.17f;
+        // A little bigger than the status icons: an amulet on a board slot is small, and its turns left matter (Game Designer, 25 Oct; made smaller under the card)
+        private const float LifeIconSize = 0.12f;
         // Just below the card's bottom edge (the face spans -0.5..0.5)
         private const float LifeRowY = -0.5f - LifeIconSize * 0.5f - 0.03f;
         private bool ShowsLife => isPlacedOnBoard && CardData != null && CardData.cardType == CardType.Amulet && CardData.currentDurability > 0;
