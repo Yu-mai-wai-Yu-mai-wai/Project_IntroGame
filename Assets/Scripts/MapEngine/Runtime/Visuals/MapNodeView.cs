@@ -54,6 +54,7 @@ namespace TawanOS.MapEngine
         {
             this.NodeData = nodeData;
             this.Profile = profile;
+            isStart = false; // a pooled view may have been the start before
             transform.position = worldPosition;
             transform.rotation = Quaternion.Euler(90f, 180f, 0f); // Lie flat on paper board facing flipped camera
 
@@ -95,6 +96,44 @@ namespace TawanOS.MapEngine
         }
 
         private static Sprite fallbackCircleSprite;
+        // ---- the start: a plain ink circle, not a node type's icon (Game Designer, 25 Oct) ----
+
+        private bool isStart;
+        private static Sprite startRingSprite;
+        private static readonly Color StartInk = new Color(0.22f, 0.11f, 0.08f, 0.9f);
+
+        /// <summary>Shows this node as the map's starting point: a plain circle drawn on the paper.</summary>
+        public void MarkAsStart()
+        {
+            isStart = true;
+            if (iconRenderer == null) return;
+            iconRenderer.sprite = StartRing();
+            float fit = iconWorldSize * 0.5f / Mathf.Max(iconRenderer.sprite.bounds.size.x, 0.001f);
+            iconRenderer.transform.localScale = new Vector3(fit, fit, 1f);
+            iconRenderer.color = StartInk;
+        }
+
+        private static Sprite StartRing()
+        {
+            if (startRingSprite != null) return startRingSprite;
+            const int res = 128;
+            var tex = new Texture2D(res, res, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, name = "MapStartRing" };
+            var px = new Color32[res * res];
+            for (int y = 0; y < res; y++)
+            {
+                for (int x = 0; x < res; x++)
+                {
+                    float r = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(res * 0.5f, res * 0.5f)) / (res * 0.5f);
+                    float ring = 1f - Mathf.Clamp01(Mathf.Abs(r - 0.82f) / 0.09f); // an ink line, soft at its edges
+                    px[y * res + x] = new Color32(255, 255, 255, (byte)(Mathf.SmoothStep(0f, 1f, ring) * 255));
+                }
+            }
+            tex.SetPixels32(px);
+            tex.Apply(false, true);
+            startRingSprite = Sprite.Create(tex, new Rect(0, 0, res, res), new Vector2(0.5f, 0.5f), res);
+            return startRingSprite;
+        }
+
         private static Sprite GetFallbackCircleSprite()
         {
             if (fallbackCircleSprite == null)
@@ -125,6 +164,13 @@ namespace TawanOS.MapEngine
             if (NodeData == null) return;
 
             KillTweens();
+            if (isStart)
+            {
+                if (iconRenderer != null) iconRenderer.color = StartInk; // the same ink whatever its status
+                transform.localScale = baseScale;
+                ShowHoverRing(false, instant: true);
+                return;
+            }
             Color targetColor = Profile != null ? Profile.baseColor : Color.white;
             Color bgColor = new Color(0.12f, 0.12f, 0.16f, 0.95f);
 
@@ -165,7 +211,7 @@ namespace TawanOS.MapEngine
         private void OnMouseEnter()
         {
             if (CardEngine.DeckViewerPanelUI.BlocksInput) return; // the deck screen is over the map
-            if (NodeData != null) PointerEntered?.Invoke(this);
+            if (NodeData != null && !isStart) PointerEntered?.Invoke(this); // the start has no pop-up: it is no place to visit
             if (NodeData != null && NodeData.status == NodeStatus.Attainable)
             {
                 ShowHoverRing(true);

@@ -176,7 +176,8 @@ namespace TawanOS.MapEngine
                 Vector3 startWorldPos = CalculateWorldPosition(graphData.startNode, startX, configData);
                 MapNodeView startNodeView = nodePool != null ? nodePool.Get() : Instantiate(nodePrefab, nodeParentTransform);
                 startNodeView.Setup(graphData.startNode, configData.GetProfileForType(graphData.startNode.type), startWorldPos);
-                
+                startNodeView.MarkAsStart(); // a plain circle, not the meru it is stored as (Game Designer, 25 Oct)
+
                 startNodeView.OnNodeClicked += HandleNodeClicked;
                 startNodeView.OnNodeHoverEnter += HandleNodeHoverEnter;
                 startNodeView.OnNodeHoverExit += HandleNodeHoverExit;

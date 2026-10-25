@@ -1662,6 +1662,7 @@ MonoBehaviour:
   burstShake: 0.6
   doorRattle: 4
   doorHint: "\u0E04\u0E25\u0E34\u0E01\u0E17\u0E35\u0E48\u0E1B\u0E23\u0E30\u0E15\u0E39\u0E40\u0E15\u0E32\u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E0A\u0E33\u0E23\u0E30\u0E01\u0E32\u0E23\u0E4C\u0E14"
+  cameraSlideSeconds: 0.6
 --- !u!4 &749790548
 Transform:
   m_ObjectHideFlags: 0
@@ -1795,6 +1796,10 @@ MonoBehaviour:
   disabledTint: {r: 0.55, g: 0.52, b: 0.5, a: 0.55}
   fadeTime: 0.12
   fitLabel: 1
+  inkShake: 0.9
+  inkShakeRate: 10
+  floatAmount: 2.5
+  floatSeconds: 3.2
 --- !u!222 &750851484
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2582,6 +2587,10 @@ MonoBehaviour:
   disabledTint: {r: 0.55, g: 0.52, b: 0.5, a: 0.55}
   fadeTime: 0.12
   fitLabel: 1
+  inkShake: 0.9
+  inkShakeRate: 10
+  floatAmount: 2.5
+  floatSeconds: 3.2
 --- !u!222 &1028275965
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4446,6 +4455,10 @@ MonoBehaviour:
   disabledTint: {r: 0.55, g: 0.52, b: 0.5, a: 0.55}
   fadeTime: 0.12
   fitLabel: 1
+  inkShake: 0.9
+  inkShakeRate: 10
+  floatAmount: 2.5
+  floatSeconds: 3.2
 --- !u!114 &1843460923
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5310,6 +5323,8 @@ MonoBehaviour:
   resultText: {fileID: 1948583212}
   resultCard: {fileID: 1968552142}
   continueButton: {fileID: 1028275962}
+  rightPanelWidth: 0.46
+  backdropDim: 0.45
   panelHeight: 0.8
   panelSideMargin: 0.08
   screenDim: 0.75
@@ -5525,6 +5540,10 @@ MonoBehaviour:
   disabledTint: {r: 0.55, g: 0.52, b: 0.5, a: 0.55}
   fadeTime: 0.12
   fitLabel: 1
+  inkShake: 0.9
+  inkShakeRate: 10
+  floatAmount: 2.5
+  floatSeconds: 3.2
 --- !u!222 &2141511137
 CanvasRenderer:
   m_ObjectHideFlags: 0
