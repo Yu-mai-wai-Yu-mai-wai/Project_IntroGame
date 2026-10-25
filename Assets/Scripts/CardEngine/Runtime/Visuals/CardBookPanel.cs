@@ -482,7 +482,13 @@ namespace TawanOS.CardEngine
             heading.text = "สารบัญ";
             Rule(page, 0.85f, 0.25f, 0.75f);
 
-            float y = 0.8f;
+            // The words come before the cards (Game Designer, 25 Oct)
+            float y = 0.82f;
+            if (glossarySpread > 0) { BookRow(page, "คำสำคัญ <size=70%>(อธิบายคำศัพท์)</size>", glossarySpread, y); y -= 0.062f; }
+            y -= 0.01f;
+            Rule(page, y, 0.15f, 0.85f);
+            y -= 0.02f;
+
             for (int s = 0; s < Sections.Length; s++)
             {
                 var (school, _) = Sections[s];
@@ -490,30 +496,29 @@ namespace TawanOS.CardEngine
                 {
                     var schoolText = NewText("School", page, 34, TextAlignmentOptions.Left);
                     schoolText.color = SchoolInk(school);
-                    PlaceRow(schoolText.rectTransform, y, 0.08f, 0.04f, 0.96f);
+                    PlaceRow(schoolText.rectTransform, y, 0.07f, 0.04f, 0.96f);
                     schoolText.text = school == MagicSchool.WhiteMagic ? "การ์ดมนต์ขาว" : "การ์ดมนต์ดำ";
-                    y -= 0.09f;
+                    y -= 0.07f;
                 }
                 ContentsRow(page, s, y);
-                y -= 0.075f;
-                if (s == 2) y -= 0.04f;
+                y -= 0.062f;
+                if (s == 2) y -= 0.025f;
             }
+        }
 
-            if (glossarySpread > 0)
-            {
-                y -= 0.02f;
-                Rule(page, y + 0.04f, 0.15f, 0.85f);
-                var row = NewText("GlossaryRow", page, 28, TextAlignmentOptions.Left);
-                row.textWrappingMode = TextWrappingModes.NoWrap;
-                row.color = style.ink;
-                PlaceRow(row.rectTransform, y, 0.07f, 0.14f, 0.96f);
-                row.text = $"คำสำคัญ <size=70%>(อธิบายคำศัพท์)</size><pos=70%>หน้า {glossarySpread}";
-                row.raycastTarget = true;
-                var button = row.gameObject.AddComponent<Button>();
-                button.transition = Selectable.Transition.None;
-                button.onClick.AddListener(() => { if (ClickAllowed) TurnTo(glossarySpread); });
-                row.gameObject.AddComponent<CardBookHover>().ink = row;
-            }
+        // A contents line that turns to one spread
+        private void BookRow(RectTransform page, string label, int target, float y)
+        {
+            var row = NewText("BookRow", page, 28, TextAlignmentOptions.Left);
+            row.textWrappingMode = TextWrappingModes.NoWrap;
+            row.color = style.ink;
+            PlaceRow(row.rectTransform, y, 0.07f, 0.07f, 0.96f);
+            row.text = $"{label}<pos=70%>หน้า {target}";
+            row.raycastTarget = true;
+            var button = row.gameObject.AddComponent<Button>();
+            button.transition = Selectable.Transition.None;
+            button.onClick.AddListener(() => { if (ClickAllowed) TurnTo(target); });
+            row.gameObject.AddComponent<CardBookHover>().ink = row;
         }
 
         private void GlossaryLeftPage(RectTransform page, int spreadIndex)
