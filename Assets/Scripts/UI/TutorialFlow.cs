@@ -181,6 +181,9 @@ namespace TawanOS.UI
             // 9: the camera, up and back (the zoom is taught at the centre pit, where it is needed)
             var rig = CombatCameraRig3D.Ensure();
             yield return KeyTask(words.doUp, KeyCode.W, () => rig.IsBoardOnlyView);
+            // and the zoom on the row, from up there (Game Designer, 25 Oct)
+            yield return KeyTask(words.doZoom, KeyCode.Space, () => rig.ZoomedOnPlayer);
+            yield return KeyTask(words.doUnzoom, KeyCode.Space, () => !rig.Zoomed);
             yield return KeyTask(words.doDown, KeyCode.S, () => !rig.IsTopView);
 
             // 11-12: the clash, slowed down, explained as it happens
