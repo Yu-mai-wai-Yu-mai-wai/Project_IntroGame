@@ -681,12 +681,14 @@ namespace TawanOS.CardEngine
 
             // An amulet on the board: an hourglass at the lower left with the turns it has left (Game Designer, 25 Oct)
             bool life = faceVisible && ShowsLife;
-            Symbol(LifeSymbol, life, StatusSymbols.Hourglass, LifeCorner, IconSize, faceAspect);
-            BadgeNumber("LifeTurns", life, CardData.currentDurability, LifeCorner, faceAspect);
+            Symbol(LifeSymbol, life, StatusSymbols.Hourglass, LifeCorner, LifeIconSize, faceAspect);
+            BadgeNumber("LifeTurns", life, CardData.currentDurability, LifeCorner, faceAspect, LifeIconSize);
         }
 
         private const string LifeSymbol = "AmuletLife";
-        private static readonly Vector2 LifeCorner = new Vector2(-0.35f, -0.4f);
+        // Bigger than the status icons: an amulet on a board slot is small, and its turns left matter (Game Designer, 25 Oct)
+        private const float LifeIconSize = 0.17f;
+        private static readonly Vector2 LifeCorner = new Vector2(-0.3f, -0.36f);
         private bool ShowsLife => isPlacedOnBoard && CardData != null && CardData.cardType == CardType.Amulet && CardData.currentDurability > 0;
 
         /// <summary>True when the mouse is on an amulet's hourglass (its turns left).</summary>
@@ -742,7 +744,7 @@ namespace TawanOS.CardEngine
             new System.Collections.Generic.Dictionary<string, TMP_Text>();
 
         // A number hanging at the lower right of an icon: สาป's stacks, an amulet's turns left (Game Designer, 25 Oct)
-        private void BadgeNumber(string name, bool on, int value, Vector2 iconCenter, float faceAspect)
+        private void BadgeNumber(string name, bool on, int value, Vector2 iconCenter, float faceAspect, float iconSize = IconSize)
         {
             badgeNumbers.TryGetValue(name, out var label);
             if (!on)
@@ -762,9 +764,9 @@ namespace TawanOS.CardEngine
             label.text = value.ToString();
             label.color = Color.white;
             label.fontStyle = FontStyles.Bold;
-            PlaceLabel(label, new CardFaceLayout.Box(iconCenter.x + IconSize * 0.45f / faceAspect, iconCenter.y - IconSize * 0.42f, 0.14f, 0.1f), 2.4f, 1f);
+            PlaceLabel(label, new CardFaceLayout.Box(iconCenter.x + iconSize * 0.45f / faceAspect, iconCenter.y - iconSize * 0.42f, 0.14f, 0.1f), 2.4f, 1f);
             label.enableAutoSizing = false; // one or two digits: a fixed size, about the stat numbers
-            label.fontSize = 0.5f;
+            label.fontSize = 0.5f * iconSize / IconSize;
             var t = label.transform;
             t.localPosition = new Vector3(t.localPosition.x, t.localPosition.y, FaceZ - 0.004f);
         }
