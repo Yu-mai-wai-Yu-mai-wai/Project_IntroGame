@@ -302,6 +302,67 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 108837748}
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &179514454
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 179514456}
+  - component: {fileID: 179514455}
+  m_Layer: 0
+  m_Name: CenterPit3D
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &179514455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 179514454}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1968c2f0bd3e4ad48e792e8d96c0a77a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TawanOS.CardEngine.CenterPitView3D
+  cardScale: 1
+  height: 0.03
+  hoverLift: 0.25
+  hoverScale: 1.12
+  dealTime: 0.35
+  dealStagger: 0.08
+  fadeTime: 0.35
+  frameScale: 1.08
+  frameColor: {r: 0.55, g: 0.55, b: 0.58, a: 0.55}
+  frameFill: 0.06
+  mistColor: {r: 0.75, g: 0.75, b: 0.8, a: 0.12}
+  mistRate: 6
+  mistSize: 0.6
+  claimColor: {r: 0.95, g: 0.15, b: 0.12, a: 0.9}
+  handAlpha: 0.92
+  claimHandPrefab: {fileID: 6677433262662131873, guid: 0d292856d4862e4459b0ffc02d1f77d1, type: 3}
+  claimHandLength: 1.1
+--- !u!4 &179514456
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 179514454}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &202345594
 GameObject:
   m_ObjectHideFlags: 0
@@ -4392,6 +4453,7 @@ MonoBehaviour:
   drawPhaseStartDelay: 0.3
   pitDealDelay: 0.5
   pitPickDelay: 0.5
+  pitClaimDelay: 1.2
   discardHandAtEnd: 0
   endPhaseDelay: 0.6
   enemyActsAfterEnd: 1
@@ -6054,3 +6116,4 @@ SceneRoots:
   - {fileID: 1483918684}
   - {fileID: 659100293}
   - {fileID: 1079606141}
+  - {fileID: 179514456}

@@ -60,6 +60,10 @@ namespace TawanOS.CardEngine
         [Header("Enemy claim")]
         [ColorUsage(true, true)] public Color claimColor = new Color(0.95f, 0.15f, 0.12f, 0.9f);
         [Range(0f, 1f)] public float handAlpha = 0.92f;
+        [Tooltip("The enemy's 3D hand on a claimed card (the map's pointing hand, made by Tools/TawanOS/Card Engine/Hook Up Enemy Claim Hand). Its local +Y points at the card, +Z (the palm) down, 1 unit long. Empty = the flat shadow hand")]
+        public GameObject claimHandPrefab;
+        [Tooltip("The 3D hand's length against the card's length")]
+        public float claimHandLength = 1.1f;
         private static Texture2D handTexture;
 
         private CenterPit subscribed;
@@ -314,6 +318,7 @@ namespace TawanOS.CardEngine
                 DOTween.Kill(slot.frame.gameObject);
                 mat.SetColor(ColorId, claimColor);
             }
+            if (claimHandPrefab != null) { ReachWith3DHand(slot); return; }
 
             float length = slot.size.y * 1.35f, width = slot.size.x * 0.85f;
             var go = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -341,12 +346,50 @@ namespace TawanOS.CardEngine
             DOTween.To(() => 0f, a => mat2.color = new Color(1f, 1f, 1f, a), handAlpha, 0.6f).SetTarget(go);
         }
 
+        // The 3D hand slides in from the enemy's side, palm down, and points at the card's edge
+        private void ReachWith3DHand(PitSlot slot)
+        {
+            float length = slot.size.y * claimHandLength;
+            var go = Instantiate(claimHandPrefab, slot.root.transform);
+            go.name = "EnemyHand";
+            foreach (var c in go.GetComponentsInChildren<Collider>()) Destroy(c);
+            go.transform.rotation = Quaternion.LookRotation(Vector3.down, -slot.toEnemy);
+            var scale = Vector3.one * length;
+            go.transform.localScale = Vector3.zero;
+
+            // Lift it by half its thickness so the knuckles sit on the table, not in it
+            float thickness = 0f;
+            foreach (var r in go.GetComponentsInChildren<Renderer>())
+            {
+                var b = r.localBounds;
+                thickness = Mathf.Max(thickness, b.size.z * Mathf.Abs(r.transform.localScale.z));
+            }
+            Vector3 edge = Flat(slot.rest) + slot.toEnemy * (slot.size.y * 0.5f * frameScale);
+            Vector3 target = edge + slot.toEnemy * (length * 0.5f - length * 0.04f) + Vector3.up * (slot.rest.y + thickness * length * 0.5f);
+            go.transform.position = target + slot.toEnemy * length;
+            slot.hand = go;
+
+            go.transform.DOScale(scale, 0.45f).SetEase(Ease.OutCubic).SetTarget(go);
+            go.transform.DOMove(target, 0.6f).SetEase(Ease.OutCubic).SetTarget(go)
+                .OnComplete(() => go.transform.DOMove(target - slot.toEnemy * length * 0.04f, 0.9f)
+                    .SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo).SetTarget(go));
+        }
+
         private void FadeHand(PitSlot slot)
         {
             var go = slot.hand;
             slot.hand = null;
             if (go == null) return;
             DOTween.Kill(go);
+            if (claimHandPrefab != null)
+            {
+                // Lit 3D materials do not fade: the hand pulls back to the enemy's side and shrinks away
+                var back = slot.toEnemy * go.transform.localScale.x;
+                go.transform.DOMove(go.transform.position + back, fadeTime).SetEase(Ease.InCubic).SetTarget(go);
+                go.transform.DOScale(Vector3.zero, fadeTime).SetEase(Ease.InCubic).SetTarget(go)
+                    .OnComplete(() => { if (go != null) Destroy(go); });
+                return;
+            }
             var mat = go.GetComponent<Renderer>().material;
             var c = mat.color;
             DOTween.To(() => c.a, a => mat.color = new Color(c.r, c.g, c.b, a), 0f, fadeTime).SetTarget(go)
