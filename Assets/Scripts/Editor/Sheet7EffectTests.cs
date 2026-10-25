@@ -114,6 +114,16 @@ namespace TawanOS.EditorTools
                 resolver.ResolveCardEffect(popp, ally, casterIsPlayer: true);
                 return ally.IsDead && popp.familiarDamage == poppAtk + allyAtk;
             });
+            failures += Case("ผีปอบ and พิธีฝังรูปฝังรอย cannot be played with no familiar of ours to sacrifice", () =>
+            {
+                Board(false, "s_bf07", 1); // an enemy familiar is no sacrifice
+                var popp = new CardInstance(cards["s_bf05"]);
+                var rite = new CardInstance(cards["s_bi06"]);
+                bool blocked = !resolver.CanResolve(popp, casterIsPlayer: true) && !resolver.CanResolve(rite, casterIsPlayer: true);
+                Board(true, "s_bf07", 2);
+                bool allowed = resolver.CanResolve(popp, casterIsPlayer: true) && resolver.CanResolve(rite, casterIsPlayer: true);
+                return blocked && allowed;
+            });
             failures += Case("สายสิญจน์: an enemy flyer must hit the card in front of it", () =>
             {
                 Board(true, "s_wa05", 0);

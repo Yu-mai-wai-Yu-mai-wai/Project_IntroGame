@@ -264,6 +264,10 @@ namespace TawanOS.CardEngine
             // Four familiars fill the board; an amulet always fits (it replaces the one in the amulet slot)
             if (card.cardType == CardType.Familiar && IsBoardFull(casterIsPlayer)) return false;
 
+            // สังเวย is the card's price: with no familiar of ours to give up it cannot be played at all, a familiar
+            // (ผีปอบ) as much as an incantation
+            if (!HasSacrifice(card, casterIsPlayer)) return false;
+
             if (card.cardType != CardType.Incantation || card.abilities == null || card.abilities.Count == 0) return true;
 
             foreach (var a in card.abilities)
@@ -282,6 +286,19 @@ namespace TawanOS.CardEngine
                 {
                     if (AutoPickFor(a, casterIsPlayer) == null) return false;
                 }
+            }
+            return true;
+        }
+
+        /// <summary>False for a card with สังเวย when the caster has no familiar on the board to give up.</summary>
+        public bool HasSacrifice(CardInstance card, bool casterIsPlayer)
+        {
+            if (card == null || card.abilities == null) return true;
+            foreach (var a in card.abilities)
+            {
+                if (a.trigger != AbilityTrigger.OnPlay) continue;
+                if (a.effect != AbilityEffect.SacrificeForAttack && a.effect != AbilityEffect.SacrificeForHeal) continue;
+                if (Sheet7Pool(a, null, casterIsPlayer).Count == 0) return false;
             }
             return true;
         }

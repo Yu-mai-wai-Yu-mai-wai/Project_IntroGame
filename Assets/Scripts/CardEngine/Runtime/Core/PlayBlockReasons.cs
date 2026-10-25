@@ -9,6 +9,7 @@ namespace TawanOS.CardEngine
         public const string NoTarget = "ไม่มีเป้าหมายให้ใช้อาคมนี้";
         public const string BoardFull = "กระดานเต็ม ลงบริวารหรือเครื่องรางเพิ่มไม่ได้";
         public const string HandFull = "มือเต็ม จั่วการ์ดเพิ่มไม่ได้";
+        public const string NoSacrifice = "ต้องมีบริวารฝั่งเราให้สังเวยก่อน ถึงจะเล่นการ์ดนี้ได้";
 
         /// <summary>Null when a card of this type may be played in this phase, otherwise the reason.</summary>
         public static string ForPhase(TurnPhase phase, CardType type)

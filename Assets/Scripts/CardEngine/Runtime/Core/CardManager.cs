@@ -166,6 +166,7 @@ namespace TawanOS.CardEngine
             var resolver = EffectResolver.Instance;
             if (resolver != null && !resolver.CanResolve(card, casterIsPlayer: true))
             {
+                if (!resolver.HasSacrifice(card, casterIsPlayer: true)) return PlayBlockReasons.NoSacrifice;
                 return card.cardType == CardType.Incantation ? PlayBlockReasons.NoTarget : PlayBlockReasons.BoardFull;
             }
 
