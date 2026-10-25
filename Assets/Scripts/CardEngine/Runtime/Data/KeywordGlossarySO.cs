@@ -146,10 +146,10 @@ namespace TawanOS.CardEngine
 
         // The card face's skull before a สะเทือนขวัญ number and its blood drop before a ขวัญ number, in card text
         // ("สะเทือนขวัญ +1", "ฟื้นฟูขวัญเรา 2", Game Designer, 25 Oct: the icon goes in front of the number, the words
-        // stay whole so keyword links still find them). Sprites: Resources/Sprite Assets/StatIcons
-        // (Tools/TawanOS/UI/Build Stat Icon Sprites).
-        private const string AttackIcon = "<sprite=\"StatIcons\" name=\"atk\">";
-        private const string KhwanIcon = "<sprite=\"StatIcons\" name=\"khwan\">";
+        // stay whole so keyword links still find them). Sprites: Resources/Sprite Assets/StatIconAttack and StatIconKhwan
+        // (Tools/TawanOS/UI/Build Stat Icon Sprites), white and tinted by the text's colour.
+        private const string AttackIcon = "<sprite=\"StatIconAttack\" index=0 tint=1>";
+        private const string KhwanIcon = "<sprite=\"StatIconKhwan\" index=0 tint=1>";
         private static readonly Regex StatWordRegex = new Regex(
             @"(<[^>]+>)|(สะเทือนขวัญ)(\s*)(?=[+\-]?\d|\{0\})|(ขวัญ[฀-๿]*)(\s*)(?=[+\-]?\d|\{0\})", RegexOptions.Compiled);
 
