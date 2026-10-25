@@ -573,7 +573,8 @@ namespace TawanOS.MapEngine
         }
 
         // Node count of each floor on the 8-floor map, floor 0 first (the boss comes after, on floor 8)
-        public static readonly int[] EightFloorWidths = { 3, 2, 3, 1, 3, 3, 2, 2 };
+        // The last floor has three: วัด, ศาลตายาย and เมรุ, each once (Game Designer, 25 Oct)
+        public static readonly int[] EightFloorWidths = { 3, 2, 3, 1, 3, 3, 2, 3 };
 
         // Fight floors: floors 1, 4 and 7 counted from 1 (Game Designer, 11 Oct). Every node there is a fight, so no
         // path gets past one without a fight (like Inscryption's battle rows, 23 Oct)
@@ -588,11 +589,11 @@ namespace TawanOS.MapEngine
             new[] { new[] { 0, 1, 2 } },                                 // floor 3 (1) -> floor 4 (3)
             new[] { new[] { 0, 1 }, new[] { 1 }, new[] { 1, 2 } },       // floor 4 (3) -> floor 5 (3)
             new[] { new[] { 0 }, new[] { 0, 1 }, new[] { 1 } },          // floor 5 (3) -> floor 6 (2)
-            new[] { new[] { 0, 1 }, new[] { 1 } },                       // floor 6 (2) -> floor 7 (2)
+            new[] { new[] { 0, 1 }, new[] { 2 } },                       // floor 6 (2) -> floor 7 (3)
         };
 
         /// <summary>
-        /// The 8-floor map (Game Designer, 11 Oct): start, 8 floors of 3,2,3,1,3,3,2,2 nodes, then the boss.
+        /// The 8-floor map (Game Designer, 11 Oct): start, 8 floors of 3,2,3,1,3,3,2,3 nodes, then the boss.
         /// Floors 1, 4 and 7 (counted from 1) have one fight each; floor 8 (just before the boss) deals วัด, ศาลตายาย, เมรุ; every other node rolls หมอกดำ, กองของเซ่น, ศาลตายาย,
         /// เมรุ and วัด with the same chance, with no fixed nodes. The board has pedestals for 7 floors only, so
         /// MapManager places these nodes by floor (TableFloorX) instead of on pedestals.
@@ -750,6 +751,25 @@ namespace TawanOS.MapEngine
                     node = next;
                 }
                 Connect(node, boss);
+            }
+
+            // The floor before the boss has a node on every row: วัด, ศาลตายาย and เมรุ, all three (Game Designer, 25 Oct).
+            // A row the walks missed is reached from a node one floor down, on its row or the next, by a link that crosses none.
+            for (int lane = 0; lane < TableLanes; lane++)
+            {
+                var target = new Vector2Int(lane, preBoss);
+                if (graph.GetNode(target) != null) continue;
+                NodeBlueprint from = null;
+                foreach (var cand in graph.floors[preBoss - 1])
+                {
+                    if (Math.Abs(cand.gridPosition.x - lane) > 1 || LinkBlocked(graph, links, cand.gridPosition, target)) continue;
+                    if (from == null || Math.Abs(cand.gridPosition.x - lane) < Math.Abs(from.gridPosition.x - lane)) from = cand;
+                }
+                if (from == null) return null;
+                var stop = GetOrAddNode(graph, target);
+                links.Add((from.gridPosition, target));
+                Connect(from, stop);
+                Connect(stop, boss);
             }
 
             // Every floor has a node, the run opens with a choice, the floor before the boss offers one too, at least one

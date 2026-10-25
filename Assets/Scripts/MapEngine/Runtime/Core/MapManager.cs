@@ -305,8 +305,10 @@ namespace TawanOS.MapEngine
             var names = new Dictionary<Vector2Int, string>();
             foreach (var kvp in TableNodeFbxNames)
                 if (kvp.Key.y < 7) names[kvp.Key] = kvp.Value;
-            names[new Vector2Int(0, 7)] = "Node.016";
-            names[new Vector2Int(1, 7)] = "Node.017";
+            // Floor 8 (y 7) has three stops, วัด, ศาลตายาย, เมรุ: the rows of a 3-node floor (25 Oct)
+            names[new Vector2Int(0, 7)] = "Node";
+            names[new Vector2Int(1, 7)] = "Node.003";
+            names[new Vector2Int(2, 7)] = "Node.002";
             names[new Vector2Int(0, 8)] = "Node.018";
             names[new Vector2Int(1, 8)] = "Node.018";
             return names;

@@ -23,7 +23,7 @@ namespace TawanOS.EditorTools
     {
         private const string MapConfigPath = "Assets/MapEngineData/Profiles/DefaultMapConfig.asset";
         private const int Seeds = 300;
-        private static readonly int[] Widths = { 3, 2, 3, 1, 3, 3, 2, 2 };
+        private static readonly int[] Widths = { 3, 2, 3, 1, 3, 3, 2, 3 };
         private static readonly int[] CombatFloors = { 0, 3, 6 };
 
         [MenuItem("Tools/TawanOS/Tests/Eight Floor Map")]
@@ -97,13 +97,13 @@ namespace TawanOS.EditorTools
                     }
                 }
                 var boss = graph.floors[8];
-                if (boss.Count != 1 || boss[0].type != NodeType.Boss || boss[0].incomingConnections.Count != 2) badShape++;
+                if (boss.Count != 1 || boss[0].type != NodeType.Boss || boss[0].incomingConnections.Count != 3) badShape++;
                 if (!MapManager.TryGetTableNodeFbxName(boss[0].gridPosition, config.totalFloors, out _)) badBoard++;
                 if (graph.startNode == null || graph.startNode.outgoingConnections.Count != 3) badLinks++;
                 if (CanReachBossWithoutTemple(graph)) noTempleBeforeBoss++;
             }
 
-            failures += Expect($"Fixed: {Seeds} maps: floors 3,2,3,1,3,3,2,2 then one boss", badShape == 0);
+            failures += Expect($"Fixed: {Seeds} maps: floors 3,2,3,1,3,3,2,3 then one boss", badShape == 0);
             failures += Expect("Fixed: floors 1, 4, 7 are all fights, no other fights, floor 8 deals วัด, ศาลตายาย, เมรุ", badCombat == 0);
             failures += Expect("Fixed: every node has a way in and a way on to the next floor", badLinks == 0);
             failures += Expect("Fixed: every node has a place on the board", badBoard == 0);
