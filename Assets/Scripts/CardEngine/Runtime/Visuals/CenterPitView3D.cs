@@ -395,8 +395,7 @@ namespace TawanOS.CardEngine
 
         private void Lift(PitSlot slot)
         {
-            if (slot.card == null) return;
-            TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_card_hover");
+            if (slot.card == null) return; // silent, like a hand card's hover (Game Designer, 25 Oct)
             slot.card.transform.DOKill();
             slot.card.transform.DOMove(slot.rest + Vector3.up * hoverLift, 0.15f);
             slot.card.transform.DOScale(slot.scale * hoverScale, 0.15f);
