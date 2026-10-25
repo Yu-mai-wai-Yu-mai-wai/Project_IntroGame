@@ -135,7 +135,14 @@ namespace TawanOS.CardEngine
             view.Bind(card);
             activeViews.Add(view);
 
-            if (card.fromPit && CenterPitView3D.TryGetSpawnPosition(card, out var pitPosition))
+            var returnedFrom = card.returnedFrom;
+            card.returnedFrom = null;
+            if (CardView3D.TakeOverFromBoard(returnedFrom, view))
+            {
+                // Sent back from the board: it rises off its slot into the hand
+                newlyDrawn.Add(view);
+            }
+            else if (card.fromPit && CenterPitView3D.TryGetSpawnPosition(card, out var pitPosition))
             {
                 // Taken from the center pit: fly out of its slot instead of the deck
                 card.fromPit = false;

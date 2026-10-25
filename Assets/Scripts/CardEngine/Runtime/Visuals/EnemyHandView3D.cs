@@ -279,7 +279,14 @@ namespace TawanOS.CardEngine
             Vector3 pitPosition = Vector3.zero;
             bool fromPit = card.fromPit && CenterPitView3D.TryGetSpawnPosition(card, out pitPosition);
             card.fromPit = false;
-            if (card.conjured)
+            var returnedFrom = card.returnedFrom;
+            card.returnedFrom = null;
+            if (CardView3D.TakeOverFromBoard(returnedFrom, view))
+            {
+                // Sent back from the board: it rises off its slot into the hand
+                fromPit = false;
+            }
+            else if (card.conjured)
             {
                 // Made out of nothing: it appears in fire right in the hand, from its bottom edge up
                 card.conjured = false;

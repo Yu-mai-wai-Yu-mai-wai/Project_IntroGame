@@ -900,6 +900,36 @@ namespace TawanOS.CardEngine
             enabled = false;
         }
 
+        /// <summary>
+        /// A card sent back to the hand (CardInstance.returnedFrom): puts `handView` where the board card lies, at its
+        /// angle and size, and removes the board card without a death, so the hand's layout flies the card up from the
+        /// table instead of it burning away and a new one coming off the deck. False when the board card is not on the table.
+        /// </summary>
+        public static bool TakeOverFromBoard(CardInstance boardCard, CardView3D handView)
+        {
+            if (boardCard == null || handView == null) return false;
+            foreach (var view in FindObjectsByType<CardView3D>(FindObjectsSortMode.None))
+            {
+                if (view == handView || view.CardData != boardCard || view.isDying) continue;
+                var from = view.transform;
+                var to = handView.transform;
+                to.SetPositionAndRotation(from.position, from.rotation);
+                var handSize = to.localScale;
+                var parent = to.parent != null ? to.parent.lossyScale : Vector3.one;
+                var size = from.lossyScale;
+                to.localScale = new Vector3(size.x / parent.x, size.y / parent.y, size.z / parent.z);
+                // Back to hand size on the way up; targeted at the view, not the transform, so the hand's layout
+                // (which kills the transform's tweens) leaves it running
+                to.DOScale(handSize, 0.4f).SetEase(Ease.OutCubic).SetTarget(handView);
+                // Gone from the table at once; the slot that clears it later finds it dying and leaves it alone
+                view.isDying = true;
+                from.DOKill();
+                Destroy(view.gameObject);
+                return true;
+            }
+            return false;
+        }
+
         private static float lastDeathFireSfxTime = -1f;
 
         public float PlayDeathAnimation(BoardSlotView slot = null)

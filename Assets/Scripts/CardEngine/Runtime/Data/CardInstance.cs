@@ -54,6 +54,10 @@ namespace TawanOS.CardEngine
         // Made in the hand out of nothing (EnemyCardPlayer.CreateInHand): hand views show it appearing in fire, then clear this
         [NonSerialized] public bool conjured;
 
+        // Sent back to the hand from the board (ส่งกลับขึ้นมือ): the board card this copy replaces. Hand views take over
+        // that card on the table and fly it into the hand, then clear this
+        [NonSerialized] public CardInstance returnedFrom;
+
         // The card whose hit a เกราะคุ้มภัย stack last blocked, and in which turn: the rest of what that card does to this
         // one in the same turn (its share of a head-on trade, its explosion as it dies) is blocked by the same stack
         [NonSerialized] public CardInstance protectedFrom;

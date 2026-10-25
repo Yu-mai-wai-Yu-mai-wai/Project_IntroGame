@@ -236,7 +236,7 @@ namespace TawanOS.CardEngine
         {
             card.pendingRemoval = true;
             card.exileOnDeath = true; // leaves the board without going to the graveyard
-            GiveToHand(isPlayer, card.source);
+            GiveToHand(isPlayer, card.source, returnedFrom: card);
         }
 
         // ---------------------------------------------------------------- entering the board

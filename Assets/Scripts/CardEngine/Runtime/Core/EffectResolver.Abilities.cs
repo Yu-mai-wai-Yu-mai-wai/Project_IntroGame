@@ -718,10 +718,10 @@ namespace TawanOS.CardEngine
             else CombatManager.Instance?.EnemyCards.DrawExtra(count);
         }
 
-        private void GiveToHand(bool isPlayer, CardDataSO template)
+        private void GiveToHand(bool isPlayer, CardDataSO template, CardInstance returnedFrom = null)
         {
             if (template == null) return;
-            var card = new CardInstance(template);
+            var card = new CardInstance(template) { returnedFrom = returnedFrom };
             if (isPlayer) CardManager.Instance?.AddToHand(card);
             else CombatManager.Instance?.EnemyCards.AddToHand(card);
         }
