@@ -24,7 +24,7 @@ namespace TawanOS.UI
 
         /// <summary>The hand over clickables (off: one cursor everywhere).</summary>
         public static bool HandOverClickables = false;
-        private static readonly Vector2 NormalHotspot = new Vector2(1f, 1f); // the tip at the top left
+        private static readonly Vector2 NormalHotspot = new Vector2(7f, 8f); // the red arrow's tip (the smoke reaches past it, up and left)
 
         private Texture2D normal;
         private Texture2D hand;
