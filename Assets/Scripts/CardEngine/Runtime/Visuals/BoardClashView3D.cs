@@ -15,7 +15,6 @@ namespace TawanOS.CardEngine
         public CardInstance attacker;
         public CardInstance target; // opposing familiar being hit, or null for the player
         public int targetColumn;    // column of the target familiar (== column when hitting the player)
-        public bool isCrit;         // critical hit: double damage, and the card pulls back to charge first
         public bool overhead;       // ตีข้ามหัว over a card in the opposite slot: plays the *Face clips
     }
 
@@ -197,8 +196,7 @@ namespace TawanOS.CardEngine
             var pRig = new CardClashRig(playerView.transform, pSlot.transform, dir);
             var eRig = new CardClashRig(enemyView.transform, eSlot.transform, -dir);
 
-            // Both get ready in their slots first: critical strikers pull back and charge up (WindUp), the
-            // others play Ready
+            // Both get ready in their slots first (Ready)
             float windUp = Mathf.Max(GetReady(pRig, playerStrike, false), GetReady(eRig, enemyStrike, false));
             if (windUp > 0f) yield return new WaitForSeconds(windUp);
 
@@ -270,11 +268,11 @@ namespace TawanOS.CardEngine
                 tRig = new CardClashRig(targetView.transform, tSlot.transform, -dir); // +Z toward the attacker
             }
 
-            // Get ready in the slot before the lunge (critical strikers pull back and charge up)
+            // Get ready in the slot before the lunge
             float ready = GetReady(aRig, strike, face);
             if (ready > 0f) yield return new WaitForSeconds(ready);
 
-            float charge = aRig.Play(Pick(face, strike.isCrit ? CardClashRig.ChargeFaceCrit : CardClashRig.ChargeFace, ChargeState(strike)), chargeSpeed);
+            float charge = aRig.Play(Pick(face, CardClashRig.ChargeFace, ChargeState(strike)), chargeSpeed);
             Quaternion aimFrom = aRig.CurrentAim;
             Quaternion aimTo = CardClashRig.AimRotation(dir);
             // The card's head turns the same way, so it points where it lunges
@@ -291,15 +289,15 @@ namespace TawanOS.CardEngine
             aRig.SetAim(aimTo);
             aRig.SetHeading(headTo);
 
-            float impact = aRig.Play(Pick(face, strike.isCrit ? CardClashRig.ImpactFaceCrit : CardClashRig.ImpactFace, ImpactState(strike)));
+            float impact = aRig.Play(Pick(face, CardClashRig.ImpactFace, ImpactState(strike)));
             yield return WaitForImpact(impact, aRig);
             apply(strike);
             // A direct hit on the player: hit-stop and shake; the screen edges burst in the attacker's school
             // only when the hit ends the game
             if (strike.target == null && strike.attacker != null)
-                FaceHitVfx.Play(tPos + Vector3.up * faceHitHeight, dir, strike.attacker.magicSchool == MagicSchool.BlackMagic, strike.isCrit,
+                FaceHitVfx.Play(tPos + Vector3.up * faceHitHeight, dir, strike.attacker.magicSchool == MagicSchool.BlackMagic,
                     IsFinisher(strike), gameObject.scene);
-            float hit = tRig != null ? tRig.Play(strike.isCrit ? CardClashRig.HitCrit : CardClashRig.Hit) : 0f;
+            float hit = tRig != null ? tRig.Play(CardClashRig.Hit) : 0f;
             float rest = Mathf.Max(impact - impactWaited, hit);
             if (rest > 0f) yield return new WaitForSeconds(rest);
 
@@ -332,23 +330,22 @@ namespace TawanOS.CardEngine
             return strike.fromPlayer ? combat.State.enemyKhwan <= 0 : combat.State.playerKhwan <= 0;
         }
 
-        // Plays WindUp (critical) or Ready in the slot and returns how long it lasts; 0 when the controller
+        // Plays Ready in the slot and returns how long it lasts; 0 when the controller
         // has no Ready clip (the card then lunges at once)
         private static float GetReady(CardClashRig rig, ClashStrike strike, bool face)
         {
-            if (strike.isCrit) return rig.Play(Pick(face, CardClashRig.WindUpFace, CardClashRig.WindUp));
             string ready = Pick(face, CardClashRig.ReadyFace, CardClashRig.Ready);
             return CardClashRig.Has(ready) ? rig.Play(ready) : 0f;
         }
 
         private static string ChargeState(ClashStrike strike)
         {
-            return strike.isCrit ? CardClashRig.ChargeCrit : CardClashRig.Charge;
+            return CardClashRig.Charge;
         }
 
         private static string ImpactState(ClashStrike strike)
         {
-            return strike.isCrit ? CardClashRig.ImpactCrit : CardClashRig.Impact;
+            return CardClashRig.Impact;
         }
 
         // The over-the-head (Overhead keyword) state when the controller has its clip, else the usual one

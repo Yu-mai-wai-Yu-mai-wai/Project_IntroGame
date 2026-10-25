@@ -341,8 +341,8 @@ namespace TawanOS.CardEngine
         // A familiar strikes: the target card loses Khwan (armor first); with no target the hit lands on the
         // opposing player's Khwan. Attackers are not checked for being alive so that two familiars can
         // trade blows at the same moment. Multi-strikers also hit the cards beside the target.
-        // isCrit (rolled beforehand with RollCrit) doubles the damage.
-        public void ResolveFamiliarStrike(CardInstance attacker, CardInstance targetFamiliar, bool fromPlayer, bool isCrit = false)
+        // No critical hits (Game Designer, 25 Oct).
+        public void ResolveFamiliarStrike(CardInstance attacker, CardInstance targetFamiliar, bool fromPlayer)
         {
             if (!CanStrike(attacker)) return;
 
@@ -350,12 +350,6 @@ namespace TawanOS.CardEngine
                 ? ApplyDamageStatusModifier(EffectiveAttack(attacker), attackerIsPlayer: fromPlayer)
                 : EffectiveAttack(attacker);
             if (attack <= 0) return;
-
-            if (isCrit)
-            {
-                attack *= CritDamageMultiplier;
-                Debug.Log($"[Clash] {attacker.cardNameThai} lands a critical hit ({attack})");
-            }
 
             var targets = CollectStrikeTargets(attacker, targetFamiliar, fromPlayer, out int faceHits);
             if (targets.Count == 0 && faceHits == 0)
@@ -421,7 +415,7 @@ namespace TawanOS.CardEngine
         public void ResolveFamiliarAttack(CardInstance card, bool fromPlayer)
         {
             if (!IsStrikerType(card)) return;
-            ResolveFamiliarStrike(card, null, fromPlayer, RollCrit(card, fromPlayer));
+            ResolveFamiliarStrike(card, null, fromPlayer);
         }
 
         private void HitOpposingPlayer(CardInstance card, int damage, bool fromPlayer)

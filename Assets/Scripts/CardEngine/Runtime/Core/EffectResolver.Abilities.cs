@@ -13,10 +13,6 @@ namespace TawanOS.CardEngine
         private const int CommonFamiliarMaxCost = 3;
         private const int DefaultStatusDuration = 2;
 
-        // คริ: every familiar starts at 5%; a critical hit deals double damage
-        public const float BaseCritPercent = 0f; // no critical hits (Game Designer, 25 Oct); was 5%
-        public const int CritDamageMultiplier = 2;
-
         private CardCatalogSO catalog;
 
         // ---------------------------------------------------------------- helpers
@@ -156,18 +152,6 @@ namespace TawanOS.CardEngine
         private bool CanStrike(CardInstance card)
         {
             return card != null && !card.summonedThisRound && EffectiveAttack(card) > 0 && !HasCardStatus(card, CardStatusType.PhiAm);
-        }
-
-        // Base crit for any card that strikes: a familiar, or an amulet that has สะเทือนขวัญ
-        public float CritChancePercent(CardInstance attacker, bool fromPlayer)
-        {
-            return IsStrikerType(attacker) ? BaseCritPercent : 0f;
-        }
-
-        // Decided before the strike is animated so the view can wind up for a critical hit
-        public bool RollCrit(CardInstance attacker, bool fromPlayer)
-        {
-            return Random.Range(0f, 100f) < CritChancePercent(attacker, fromPlayer);
         }
 
         public bool CanFamiliarAttack(CardInstance card)

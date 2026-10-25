@@ -20,9 +20,8 @@ namespace TawanOS.VFX
         /// <summary>Seconds before the effect object is removed; longer than any of its particles live.</summary>
         public const float Lifetime = 2.5f;
 
-        // Real seconds the game freezes on the impact (a critical hit freezes longer)
+        // Real seconds the game freezes on the impact
         public const float HitStop = 0.09f;
-        public const float HitStopCrit = 0.16f;
         public const float ShakeTime = 0.45f;
         public const float ShakeStrength = 0.45f;
         public const float ZoomKick = 5f; // degrees of field of view
@@ -37,7 +36,7 @@ namespace TawanOS.VFX
 
         /// <summary>Plays the hit at <paramref name="point"/>; <paramref name="direction"/> is the way the attack went.
         /// <paramref name="finisher"/>: the hit took the last of the opponent's khwan (adds the screen-edge burst).</summary>
-        public static void Play(Vector3 point, Vector3 direction, bool blackMagic, bool crit, bool finisher, UnityEngine.SceneManagement.Scene scene)
+        public static void Play(Vector3 point, Vector3 direction, bool blackMagic, bool finisher, UnityEngine.SceneManagement.Scene scene)
         {
             var prefab = blackMagic
                 ? (blackPrefab != null ? blackPrefab : blackPrefab = Resources.Load<GameObject>(BlackResource))
@@ -52,11 +51,11 @@ namespace TawanOS.VFX
             }
 
             var r = GetRunner();
-            if (finisher) r.EdgeBurst(blackMagic ? BlackEdge : WhiteEdge, crit);
+            if (finisher) r.EdgeBurst(blackMagic ? BlackEdge : WhiteEdge);
             if (!TawanOS.Settings.GameSettings.ReduceMotion)
             {
-                r.Freeze(crit ? HitStopCrit : HitStop);
-                ShakeCamera(crit ? 1.5f : 1f);
+                r.Freeze(HitStop);
+                ShakeCamera(1f);
             }
         }
 
@@ -162,10 +161,10 @@ namespace TawanOS.VFX
             private float edgeTime = -1f;
             private float freezeLeft, frozenScale = -1f, scaleBefore = 1f;
 
-            public void EdgeBurst(Color edgeTint, bool crit)
+            public void EdgeBurst(Color edgeTint)
             {
                 edgeColor = edgeTint;
-                edgePeak = crit ? 0.5f : 0.35f;
+                edgePeak = 0.35f;
                 edgeTime = 0f;
                 edge.enabled = true;
                 Apply();

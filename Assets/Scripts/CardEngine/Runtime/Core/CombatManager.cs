@@ -360,7 +360,7 @@ namespace TawanOS.CardEngine
             int phaseAtStart = EnemyPhase;
 
             var view = BoardClashView3D.Instance;
-            Action<ClashStrike> apply = s => resolver.ResolveFamiliarStrike(s.attacker, s.target, s.fromPlayer, s.isCrit);
+            Action<ClashStrike> apply = s => resolver.ResolveFamiliarStrike(s.attacker, s.target, s.fromPlayer);
 
             // Column 0 is the amulet slot: amulets do not clash
             for (int col = EffectResolver.FirstFamiliarSlot; col < EffectResolver.MaxBoardSlots; col++)
@@ -449,7 +449,6 @@ namespace TawanOS.CardEngine
                 attacker = attacker,
                 target = target,
                 targetColumn = targetCol >= 0 ? targetCol : col,
-                isCrit = resolver != null && resolver.RollCrit(attacker, fromPlayer),
                 overhead = EffectResolver.HasKeyword(attacker, AbilityEffect.Overhead) && EffectResolver.IsStrikeable(opposite)
             };
         }
