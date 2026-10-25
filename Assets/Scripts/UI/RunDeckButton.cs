@@ -20,14 +20,11 @@ namespace TawanOS.UI
     /// </summary>
     public class RunDeckButton : MonoBehaviour
     {
-        // Scenes it shows in, and how high its middle sits above the bottom of the screen (1920x1080 units). The เมรุ
-        // and กองของเซ่น have a hint band along the bottom, the temple its pray button and Khwan bar: it sits above them
+        // Scenes it shows in, and how high its middle sits above the bottom of the screen (1920x1080 units). กองของเซ่น
+        // has a hint band along the bottom: it sits above it. Not in หมอกดำ, เมรุ, วัด or the story (Game Designer, 25 Oct)
         private static readonly Dictionary<string, float> Places = new Dictionary<string, float>
         {
             { "MapTestScene", 78f },
-            { "EventScene", 78f },
-            { "TempleScene", 300f },
-            { "MeruScene", 190f },
             { "OfferingScene", 190f },
             { "RewardScene", 78f },
         };

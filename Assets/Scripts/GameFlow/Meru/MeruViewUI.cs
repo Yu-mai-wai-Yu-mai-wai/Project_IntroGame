@@ -308,6 +308,7 @@ namespace TawanOS.GameFlow
         {
             busy = true;
             Slide(1f);
+            ShowCompare(null); // the before / after goes with the panel, not left over the burning (Game Designer, 25 Oct)
             if (stage != null)
             {
                 // The stage carries the picked card into the furnace
