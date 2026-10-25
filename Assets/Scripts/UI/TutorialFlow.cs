@@ -84,6 +84,7 @@ namespace TawanOS.UI
 
         private void EndFlow()
         {
+            CardView3D.PinnedHover = null;
             if (TurnPhaseController.HoldBeforeEnemyBoard != null) TurnPhaseController.HoldBeforeEnemyBoard = null;
             if (cards != null) cards.OnCardPlayed -= NotePlayed;
             if (resolver != null)
@@ -127,10 +128,15 @@ namespace TawanOS.UI
             yield return Explain("hand", words.tHand, HandRect);
             yield return DoTask(words.doHoverKuman, () => CardRect(kuman), () => HoveredIs(kuman));
             var kumanView = View(kuman);
+            // Keep the card raised through its three explanations, however the mouse moves to the next button
+            CardView3D.PinnedHover = kumanView;
+            if (kumanView != null && !kumanView.IsHovered) kumanView.Hover();
             yield return Explain("costMerit", words.tCostMerit, () => Union(LabelRect(kumanView != null ? kumanView.CostLabel : null), UiRect("MeritGauge")),
                 ("cost", kuman != null ? kuman.meritCost : 1), ("merit", combat != null ? combat.CurrentMerit : 4));
             yield return Explain("attackKhwan", words.tAttackKhwan, () => Union(LabelRect(kumanView != null ? kumanView.AttackLabel : null), LabelRect(kumanView != null ? kumanView.KhwanLabel : null)));
             yield return Explain("skill", words.tSkill, () => LabelRect(kumanView != null ? kumanView.DescriptionLabel : null));
+            CardView3D.PinnedHover = null;
+            if (kumanView != null) kumanView.Unhover();
 
             // 6: the enemy lays its กุมารทอง, then the board turn
             holdOpening = false;
@@ -164,8 +170,9 @@ namespace TawanOS.UI
             // first clash shows a strike reaching the enemy)
             yield return WaitPhase(TurnPhase.PlayerSpell);
             yield return new WaitForSecondsRealtime(0.6f);
-            yield return Explain("spellTurn", words.tEnemySpell, () => CardRect(curse));
+            // The curse and its target lit together, so the box goes beside them, never over the enemy's card
             var enemyKuman = EnemyFamiliar();
+            yield return Explain("spellTurn", words.tEnemySpell, () => Union(CardRect(curse), CardRect(enemyKuman)));
             Allow(play: c => c == curse, target: (c, t) => enemyKuman == null || t == enemyKuman);
             yield return DoTask(words.doCast, () => Holding ? CardRect(enemyKuman) : CardRect(curse), () => lastPlayed == curse);
             yield return new WaitForSecondsRealtime(1f);
@@ -449,9 +456,10 @@ namespace TawanOS.UI
             taskArrow.gameObject.SetActive(at.HasValue);
             if (taskText != null && taskBar.gameObject.activeSelf)
                 taskText.alpha = 0.75f + 0.25f * Mathf.Sin(Time.unscaledTime * 5f);
+            float scale = taskCanvas.scaleFactor > 0f ? taskCanvas.scaleFactor : 1f;
+            PlaceTaskBar(at, scale);
             if (!at.HasValue) return;
 
-            float scale = taskCanvas.scaleFactor > 0f ? taskCanvas.scaleFactor : 1f;
             var r = at.Value;
             float bob = Mathf.Abs(Mathf.Sin(Time.unscaledTime * 4f)) * 18f;
             taskArrow.anchoredPosition = new Vector2(r.center.x, Mathf.Min(r.yMax, Screen.height - 90f * scale)) / scale + new Vector2(0f, 8f + bob);
@@ -459,6 +467,20 @@ namespace TawanOS.UI
             var c = img.color;
             c.a = 0.55f + 0.45f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 5f));
             img.color = c;
+        }
+
+        // Under the enemy's khwan bar, or, when what the arrow points at (an enemy card) is under there, just below it
+        private void PlaceTaskBar(Rect? target, float scale)
+        {
+            var home = new Vector2(0f, -175f);
+            if (!target.HasValue || !taskBar.gameObject.activeSelf) { taskBar.anchoredPosition = home; return; }
+            var t = target.Value;
+            Vector2 size = taskBar.rect.size * scale;
+            float top = Screen.height + home.y * scale;
+            var bar = Rect.MinMaxRect((Screen.width - size.x) * 0.5f, top - size.y, (Screen.width + size.x) * 0.5f, top);
+            float pad = 110f * scale; // the arrow above the target too
+            bool covers = bar.xMin < t.xMax && bar.xMax > t.xMin && bar.yMin < t.yMax + pad && bar.yMax > t.yMin;
+            taskBar.anchoredPosition = covers ? new Vector2(0f, -(Screen.height - t.yMin) / scale - 24f) : home;
         }
 
         // A downward triangle with a dark rim, drawn once

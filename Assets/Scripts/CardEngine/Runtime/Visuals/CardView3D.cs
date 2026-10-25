@@ -62,6 +62,9 @@ namespace TawanOS.CardEngine
         public bool IsHovered => isHovered;
         /// <summary>The hand card under the mouse, raised (null: none). The player's Khwan bar fades out of its way.</summary>
         public static CardView3D HoveredInHand { get; private set; }
+        /// <summary>A hand card the tutorial keeps raised while it explains it: the mouse leaving it, or going over
+        /// another card (to reach the tutorial's next button), does not drop it. Null = normal hovering.</summary>
+        public static CardView3D PinnedHover;
 
         private SpriteRenderer backgroundFace;
         private SpriteRenderer artworkFace;
@@ -486,6 +489,7 @@ namespace TawanOS.CardEngine
         private void OnMouseEnter()
         {
             if (IgnoresMouse) return;
+            if (PinnedHover != null && PinnedHover != this) return;
             // Every real mouse-over sounds (Hover() alone, used to resync, does not). Not gated on isHovered: that can stay
             // true after an exit missed while input was blocked, which silenced the next hover. A short gap per card
             // keeps a collider flicker from doubling the sound.
@@ -559,6 +563,7 @@ namespace TawanOS.CardEngine
         private void OnMouseExit()
         {
             if (IgnoresMouse) return;
+            if (PinnedHover == this) return;
             Unhover();
         }
 
