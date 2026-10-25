@@ -32,16 +32,16 @@ namespace TawanOS.CardEngine
         [Tooltip("How much of the screen the board rows fill in the C (board-only) view, where UI and hands are hidden.")]
         [Range(0.3f, 1f)] public float boardOnlyScreenFraction = 0.95f;
         [Tooltip("How long the hands take to slide off / back on screen when the board-only view opens / closes.")]
-        public float handSlideDuration = 0.2f;
-        [Tooltip("How long the camera takes between views (Game Designer, 24 Oct: W/S quick, was 0.45).")]
-        public float moveDuration = 0.22f;
+        public float handSlideDuration = 0.35f;
+        [Tooltip("How long the camera takes between views (Game Designer, 25 Oct: slower and eased, against motion sickness; was 0.22).")]
+        public float moveDuration = 0.6f;
 
         [Header("Row Zoom (W view)")]
         [Tooltip("In the W view: zooms onto the player's row (the centre pit while picking from it), and back to the whole board. While zoomed, W / S step toward the enemy / the player.")]
         public KeyCode rowZoomKey = KeyCode.Space;
         [Tooltip("How much of the screen the zoomed row fills.")]
         [Range(0.3f, 1f)] public float rowScreenFraction = 0.92f;
-        public float rowZoomDuration = 0.2f;
+        public float rowZoomDuration = 0.5f;
 
         private Camera cam;
         private Vector3 homePosition;
@@ -284,7 +284,7 @@ namespace TawanOS.CardEngine
             }
         }
 
-        private void MoveCamera(Vector3 pos, Quaternion rot, float fov) => MoveCamera(pos, rot, fov, moveDuration, Ease.InOutQuad);
+        private void MoveCamera(Vector3 pos, Quaternion rot, float fov) => MoveCamera(pos, rot, fov, moveDuration, Ease.InOutSine);
 
         private void MoveCamera(Vector3 pos, Quaternion rot, float fov, float duration, Ease ease)
         {
@@ -328,7 +328,7 @@ namespace TawanOS.CardEngine
             Vector3 pos = topPos;
             if (zone == ZoomPit) TryFitPose(CenterPitView3D.CardSpots(), out pos);
             else if (zone != ZoomNone) TryFitPose(RowSpots(zone == ZoomEnemy ? BoardSlotView.SlotSide.Enemy : BoardSlotView.SlotSide.Player), out pos);
-            MoveCamera(pos, topRot, topFov, rowZoomDuration, Ease.OutCubic);
+            MoveCamera(pos, topRot, topFov, rowZoomDuration, Ease.InOutSine);
         }
 
         private static System.Collections.Generic.List<Vector3> RowSpots(BoardSlotView.SlotSide side)

@@ -148,10 +148,11 @@ namespace TawanOS.CardEngine
             SetFill(player.fill, KhwanDisplay.Fill(s.playerKhwan, s.maxPlayerKhwan), ref lastPlayerRatio, player.root);
             KhwanDisplay.SetTempStrip(player.tempStrip, s.playerKhwan, s.maxPlayerKhwan);
 
-            // A raised hand card shows whole: the Khwan bar fades out of its way and back once the hover ends
-            // (Game Designer, 24 Oct)
+            // A raised hand card shows whole: the Khwan bar fades out of its way while the mouse is over the hand, and
+            // back once it leaves the hand (Game Designer, 25 Oct: the whole hand's area, not each card, so the bar does
+            // not blink while the mouse moves from card to card)
             var hovered = CardView3D.HoveredInHand;
-            bool cardRaised = hovered != null && hovered.IsHovered;
+            bool cardRaised = HandLayoutController3D.PointerOverHand || (hovered != null && hovered.IsHovered);
             var panelGroup = player.root.GetComponent<CanvasGroup>();
             if (panelGroup == null) panelGroup = player.root.gameObject.AddComponent<CanvasGroup>();
             panelGroup.alpha = Mathf.MoveTowards(panelGroup.alpha, cardRaised ? 0f : 1f, Time.unscaledDeltaTime * 6f);

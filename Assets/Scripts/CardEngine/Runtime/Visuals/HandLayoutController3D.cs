@@ -40,6 +40,50 @@ namespace TawanOS.CardEngine
         private Vector2 cardSize; // one card's width and height in the hand container's units, measured once
         private CardView3D spreadFor; // the hovered card the others last slid aside for (null: none)
 
+        // ---- the hand's area on screen ----
+
+        private static HandLayoutController3D instance;
+        private bool pointerOver;
+        private int pointerFrame = -1;
+
+        /// <summary>
+        /// True while the mouse is over the hand: the screen box around every hand card (a raised card's box reaches up
+        /// to it), with a margin, and a little more to leave it once inside, so the HUD that makes way for the hand does
+        /// not blink as the mouse crosses the gaps between cards (Game Designer, 25 Oct).
+        /// </summary>
+        public static bool PointerOverHand => instance != null && instance.UpdatePointerOver();
+
+        private bool UpdatePointerOver()
+        {
+            if (pointerFrame == Time.frameCount) return pointerOver;
+            pointerFrame = Time.frameCount;
+            var cam = Camera.main;
+            if (cam == null || activeViews.Count == 0) return pointerOver = false;
+
+            bool any = false;
+            var box = new Rect();
+            foreach (var view in activeViews)
+            {
+                if (view == null || !view.gameObject.activeInHierarchy) continue;
+                var col = view.GetComponent<Collider>();
+                if (col == null) continue;
+                var b = col.bounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    var corner = new Vector3((i & 1) == 0 ? b.min.x : b.max.x, (i & 2) == 0 ? b.min.y : b.max.y, (i & 4) == 0 ? b.min.z : b.max.z);
+                    Vector3 p = cam.WorldToScreenPoint(corner);
+                    if (p.z <= 0f) continue;
+                    if (!any) { box = new Rect(p.x, p.y, 0f, 0f); any = true; }
+                    else box = Rect.MinMaxRect(Mathf.Min(box.xMin, p.x), Mathf.Min(box.yMin, p.y), Mathf.Max(box.xMax, p.x), Mathf.Max(box.yMax, p.y));
+                }
+            }
+            if (!any) return pointerOver = false;
+
+            float margin = Screen.height * (pointerOver ? 0.06f : 0.02f);
+            box = Rect.MinMaxRect(box.xMin - margin, Mathf.Min(box.yMin, 0f) - margin, box.xMax + margin, box.yMax + margin);
+            return pointerOver = box.Contains(Input.mousePosition);
+        }
+
         // The next batch of drawn cards flies in all at once instead of staggered (opening hand)
         public void BeginSimultaneousDraw()
         {
@@ -48,6 +92,7 @@ namespace TawanOS.CardEngine
 
         private void Start()
         {
+            instance = this;
             if (handContainer == null) handContainer = transform;
             if (deckPile == null) deckPile = FindFirstObjectByType<DeckPileView3D>();
 
