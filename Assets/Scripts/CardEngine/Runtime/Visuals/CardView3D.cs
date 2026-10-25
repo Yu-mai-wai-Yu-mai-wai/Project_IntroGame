@@ -684,9 +684,9 @@ namespace TawanOS.CardEngine
         }
 
         private const string LifeSymbol = "AmuletLife", UsesSymbol = "AmuletUses";
-        // Bigger than the status icons: an amulet on a board slot is small, and its turns left matter (Game Designer, 25 Oct)
-        private const float LifeIconSize = 0.17f;
-        private static readonly Vector2 LifeCorner = new Vector2(-0.3f, -0.36f);
+        // A little bigger than the status icons: an amulet on a board slot is small, and its turns left matter (Game Designer, 25 Oct; made smaller later the same day)
+        private const float LifeIconSize = 0.12f;
+        private static readonly Vector2 LifeCorner = new Vector2(-0.33f, -0.39f);
         private bool ShowsLife => isPlacedOnBoard && CardData != null && CardData.cardType == CardType.Amulet && CardData.currentDurability > 0;
 
         /// <summary>True when the mouse is on an amulet's hourglass (its turns left).</summary>
