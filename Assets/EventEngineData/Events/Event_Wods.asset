@@ -30,7 +30,7 @@ MonoBehaviour:
       \u0E42\u0E2D\u0E42\u0E2B\u0E48 \u0E2D\u0E30\u0E44\u0E23\u0E27\u0E30\u0E04\u0E19\u0E44\u0E17\u0E22"
     choices:
     - label: "\u0E27\u0E2D\u0E14\u0E2A\u0E4C"
-      hint: 
+      hint: "\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E2D\u0E30\u0E44\u0E23"
       incenseCost: 0
       hpCost: 0
       outcomes:
@@ -40,7 +40,7 @@ MonoBehaviour:
         effects: []
         nextPageId: 
     - label: "\u0E02\u0E2D\u0E42\u0E17\u0E29\u0E04\u0E23\u0E31\u0E1A"
-      hint: 
+      hint: "\u0E44\u0E14\u0E49\u0E18\u0E39\u0E1B 5"
       incenseCost: 0
       hpCost: 0
       outcomes:
@@ -54,7 +54,7 @@ MonoBehaviour:
         nextPageId: 
     - label: "\u0E40\u0E07\u0E35\u0E22\u0E1A \u0E40\u0E14\u0E34\u0E19\u0E15\u0E48\u0E2D
         \u0E44\u0E21\u0E48\u0E2A\u0E19\u0E43\u0E08"
-      hint: 
+      hint: "\u0E15\u0E49\u0E2D\u0E07\u0E15\u0E48\u0E2D\u0E2A\u0E39\u0E49 \u0E0A\u0E19\u0E30\u0E41\u0E25\u0E49\u0E27\u0E44\u0E14\u0E49\u0E18\u0E39\u0E1B\u0E41\u0E25\u0E30\u0E40\u0E25\u0E37\u0E2D\u0E01\u0E01\u0E32\u0E23\u0E4C\u0E14"
       incenseCost: 0
       hpCost: 0
       outcomes:
