@@ -14,7 +14,7 @@ namespace TawanOS.CardEngine
         private const int DefaultStatusDuration = 2;
 
         // คริ: every familiar starts at 5%; a critical hit deals double damage
-        public const float BaseCritPercent = 5f;
+        public const float BaseCritPercent = 0f; // no critical hits (Game Designer, 25 Oct); was 5%
         public const int CritDamageMultiplier = 2;
 
         private CardCatalogSO catalog;
@@ -674,7 +674,7 @@ namespace TawanOS.CardEngine
         // ---------------------------------------------------------------- strikes
 
         // Who a familiar in column `col` hits: null = the opposing player.
-        // Overhead skips the cards (only a magnet like เปรต can catch it), taunt pulls every hit onto
+        // Overhead skips the cards (only a magnet like เปรต in the same lane can catch it), taunt pulls every other hit onto
         // itself, otherwise it is the live familiar (or amulet with Khwan) in the opposite slot.
         public CardInstance ChooseStrikeTarget(CardInstance attacker, int col, bool fromPlayer)
         {
@@ -682,7 +682,8 @@ namespace TawanOS.CardEngine
 
             if (HasKeyword(attacker, AbilityEffect.Overhead) && !SideBlocksFlying(!fromPlayer))
             {
-                return defenders.Find(c => !c.IsDead && HasKeyword(c, AbilityEffect.OverheadMagnet));
+                // ดักบิน catches a flyer only in its own lane (Game Designer, 25 Oct); elsewhere it flies over
+                return defenders.Find(c => !c.IsDead && HasKeyword(c, AbilityEffect.OverheadMagnet) && c.boardSlot == col);
             }
 
             var taunt = defenders.Find(c => IsStrikeable(c) && HasTaunt(c));

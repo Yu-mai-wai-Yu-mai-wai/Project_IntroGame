@@ -309,7 +309,6 @@ namespace TawanOS.CardEngine
 
             var defenders = s.enemyBoardCards;
             bool taunt = defenders.Exists(c => EffectResolver.IsStrikeable(c) && EffectResolver.HasTaunt(c));
-            bool magnet = defenders.Exists(c => c != null && !c.IsDead && EffectResolver.HasKeyword(c, AbilityEffect.OverheadMagnet));
 
             foreach (var attacker in s.activeBoardCards)
             {
@@ -317,7 +316,10 @@ namespace TawanOS.CardEngine
                 int attack = resolver.EffectiveAttack(attacker);
                 if (EffectResolver.HasKeyword(attacker, AbilityEffect.Overhead))
                 {
-                    if (!magnet) unblockable += attack;
+                    // ดักบิน catches only the flyer in its own lane
+                    bool caught = defenders.Exists(c => c != null && !c.IsDead && c.boardSlot == attacker.boardSlot
+                                                        && EffectResolver.HasKeyword(c, AbilityEffect.OverheadMagnet));
+                    if (!caught) unblockable += attack;
                     continue;
                 }
                 if (taunt) continue; // everything goes into the taunting card

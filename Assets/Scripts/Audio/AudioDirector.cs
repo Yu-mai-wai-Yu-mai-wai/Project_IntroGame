@@ -104,8 +104,9 @@ namespace TawanOS.Audio
                     else audio.PlaySfx("sfx_attack");
                 };
                 // Two familiars meeting in a lane (both take damage at once: one clash, not two)
-                EffectResolver.Instance.OnFamiliarDamaged += (_, __) =>
+                EffectResolver.Instance.OnFamiliarDamaged += (_, damage) =>
                 {
+                    if (damage <= 0) return; // a status or value change, not a hit
                     if (Time.unscaledTime - lastClash < 0.12f) return;
                     lastClash = Time.unscaledTime;
                     audio.PlaySfx("sfx_card_clash");
