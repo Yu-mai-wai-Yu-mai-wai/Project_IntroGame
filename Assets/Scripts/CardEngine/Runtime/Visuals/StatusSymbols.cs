@@ -9,7 +9,10 @@ namespace TawanOS.CardEngine
     {
         private const int Size = 128;
 
-        private static Sprite protect, taunt, blinded, phawa, curse;
+        private static Sprite protect, taunt, blinded, phawa, curse, hourglass;
+
+        // An amulet's turns left: an hourglass in sand gold (not a status; CardView3D draws it on amulets on the board)
+        public static Sprite Hourglass => hourglass != null ? hourglass : hourglass = MakeBadge(HourglassShape, new Color(0.95f, 0.78f, 0.45f));
 
         // เกราะคุ้มภัย: a shield (the theme's accent pushed to gold)
         public static Sprite Protect => protect != null ? protect : protect = MakeBadge(ShieldShape, new Color(0.97f, 0.7f, 0.36f));
@@ -109,6 +112,15 @@ namespace TawanOS.CardEngine
                 foreach (float gap in new[] { 0.415f, 0.5f, 0.585f }) teeth = Mathf.Max(teeth, 0.014f - Mathf.Abs(x - gap));
             float holes = Mathf.Max(Mathf.Max(eyeL, eyeR), Mathf.Max(nose, teeth));
             return Mathf.Min(body, -holes);
+        }
+
+        // An hourglass: two triangles meeting at the middle, a bar across the top and the bottom
+        private static float HourglassShape(float x, float y)
+        {
+            float cx = Mathf.Abs(x - 0.5f), cy = Mathf.Abs(y - 0.5f);
+            float glass = Mathf.Min(0.05f + cy * 0.85f - cx, 0.38f - cy);
+            float bars = Mathf.Min(0.36f - cx, 0.05f - Mathf.Abs(cy - 0.4f));
+            return Mathf.Max(glass, bars);
         }
 
         // An arrow pointing down: a shaft and a triangular head

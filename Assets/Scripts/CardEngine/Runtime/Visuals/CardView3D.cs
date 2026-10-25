@@ -329,9 +329,8 @@ namespace TawanOS.CardEngine
 
             if (costLabel != null)
             {
-                costLabel.text = CardData.magicSchool == MagicSchool.WhiteMagic
-                    ? CardData.meritCost.ToString()
-                    : CardData.corruptionGain.ToString();
+                shownCost = ShownCost(CardData);
+                costLabel.text = shownCost.ToString();
             }
             if (typeLabel != null) typeLabel.text = TypeLine(CardData);
 
@@ -483,8 +482,9 @@ namespace TawanOS.CardEngine
 
         // Board cards, the enemy's cards (disabled views), held cards and dying cards never react to the mouse.
         // A hovered board card lifts off its collider and loops enter/exit (jitter), and its DOKill stops the clash tweens.
+        // While a tutorial explanation is up the hand stays down, so no card rises over the box (Game Designer, 25 Oct)
         public bool IgnoresMouse => !enabled || isPlacedOnBoard || isHeld || isDying || CardTargeting3D.BlocksInput
-            || CombatCameraRig3D.BlocksInput;
+            || CombatCameraRig3D.BlocksInput || TawanOS.UI.TutorialCoach.Blocking;
 
         private void OnMouseEnter()
         {
@@ -611,10 +611,16 @@ namespace TawanOS.CardEngine
         // Redraws the symbols when the card's statuses, their stacks or the face change. The full list with turns left
         // is in the card book. Cheap when nothing changed: a short string compare, and nothing at all for a card
         // without statuses.
+        private int shownCost = int.MinValue;
+        private static int ShownCost(CardInstance card) => card.magicSchool == MagicSchool.WhiteMagic ? card.meritCost : card.corruptionGain;
+
         public void RefreshStatusTags()
         {
             if (CardData == null || nameLabel == null) return;
-            if (CardData.statuses.Count == 0 && shownStatuses.Length == 0) return;
+            // A cost changed after the face was drawn (กุมารทอง+ makes the card it draws cheaper)
+            if (costLabel != null && ShownCost(CardData) != shownCost) RefreshLabel();
+            bool life = ShowsLife;
+            if (CardData.statuses.Count == 0 && shownStatuses.Length == 0 && !life) return;
 
             var b = new System.Text.StringBuilder();
             foreach (var s in CardData.statuses)
@@ -622,6 +628,7 @@ namespace TawanOS.CardEngine
                 if (s == null || s.stacks <= 0) continue;
                 b.Append((int)s.type).Append('x').Append(s.stacks).Append(' ');
             }
+            if (life) b.Append("life").Append(CardData.currentDurability).Append(' ');
             if (b.Length > 0 && !faceVisible) b.Append("hidden");
             string key = b.ToString();
             // The icons are also redrawn when the card's shape on screen changes (it was moved onto a board slot)
@@ -664,9 +671,40 @@ namespace TawanOS.CardEngine
                 bool on = faceVisible && CardData.statuses.Exists(x => x != null && x.type == type && x.stacks > 0);
                 var center = IconCorner - new Vector2(step * shown, 0f);
                 Symbol(type.ToString(), on, StatusSymbols.For(type), center, IconSize, faceAspect);
-                if (type == CardStatusType.DoneKhong) CurseStacks(on, center, faceAspect);
+                if (type == CardStatusType.DoneKhong)
+                {
+                    var curse = on ? CardData.statuses.Find(x => x != null && x.type == type && x.stacks > 0) : null;
+                    BadgeNumber("CurseStacks", on, curse != null ? curse.stacks : 0, center, faceAspect);
+                }
                 if (on) shown++;
             }
+
+            // An amulet on the board: an hourglass at the lower left with the turns it has left (Game Designer, 25 Oct)
+            bool life = faceVisible && ShowsLife;
+            Symbol(LifeSymbol, life, StatusSymbols.Hourglass, LifeCorner, IconSize, faceAspect);
+            BadgeNumber("LifeTurns", life, CardData.currentDurability, LifeCorner, faceAspect);
+        }
+
+        private const string LifeSymbol = "AmuletLife";
+        private static readonly Vector2 LifeCorner = new Vector2(-0.35f, -0.4f);
+        private bool ShowsLife => isPlacedOnBoard && CardData != null && CardData.cardType == CardType.Amulet && CardData.currentDurability > 0;
+
+        /// <summary>True when the mouse is on an amulet's hourglass (its turns left).</summary>
+        public bool LifeUnderPointer()
+        {
+            if (CardData == null || !faceVisible || !symbols.TryGetValue(LifeSymbol, out var sr) || sr == null || !sr.gameObject.activeSelf) return false;
+            var cam = Camera.main;
+            if (cam == null) return false;
+            var ray = cam.ScreenPointToRay(Input.mousePosition);
+            var plane = new Plane(transform.forward, transform.TransformPoint(new Vector3(0f, 0f, FaceZ)));
+            if (!plane.Raycast(ray, out float enter)) return false;
+            Vector3 local = transform.InverseTransformPoint(ray.GetPoint(enter));
+            var p = sr.transform.localPosition;
+            var s = sr.transform.localScale;
+            if (Mathf.Abs(local.x - p.x) > s.x * 0.5f || Mathf.Abs(local.y - p.y) > s.y * 0.5f) return false;
+            var events = UnityEngine.EventSystems.EventSystem.current;
+            if (events != null && events.IsPointerOverGameObject()) return false;
+            return IsPointerOverCard(Input.mousePosition);
         }
 
         // The status whose icon is under the mouse, or null. The mouse ray meets the face's plane and the hit is tested
@@ -700,32 +738,34 @@ namespace TawanOS.CardEngine
             return CardData.statuses.Find(x => x != null && x.type == hit.Value && x.stacks > 0);
         }
 
-        private TMP_Text curseStacks;
+        private readonly System.Collections.Generic.Dictionary<string, TMP_Text> badgeNumbers =
+            new System.Collections.Generic.Dictionary<string, TMP_Text>();
 
-        // สาป's number of stacks, hanging at the lower right of its skull (Game Designer, 25 Oct)
-        private void CurseStacks(bool on, Vector2 iconCenter, float faceAspect)
+        // A number hanging at the lower right of an icon: สาป's stacks, an amulet's turns left (Game Designer, 25 Oct)
+        private void BadgeNumber(string name, bool on, int value, Vector2 iconCenter, float faceAspect)
         {
+            badgeNumbers.TryGetValue(name, out var label);
             if (!on)
             {
-                if (curseStacks != null) curseStacks.gameObject.SetActive(false);
+                if (label != null) label.gameObject.SetActive(false);
                 return;
             }
-            if (curseStacks == null)
+            if (label == null)
             {
-                curseStacks = CloneLabel("CurseStacks");
-                var r = curseStacks.GetComponent<Renderer>();
-                if (r != null) r.sortingOrder = SymbolOrder + 1; // over the skull
-                CardFaceLayout.MakeReadable(curseStacks);
+                label = CloneLabel(name);
+                var r = label.GetComponent<Renderer>();
+                if (r != null) r.sortingOrder = SymbolOrder + 1; // over the icon
+                CardFaceLayout.MakeReadable(label);
+                badgeNumbers[name] = label;
             }
-            curseStacks.gameObject.SetActive(true);
-            var curse = CardData.statuses.Find(x => x != null && x.type == CardStatusType.DoneKhong && x.stacks > 0);
-            curseStacks.text = curse != null ? curse.stacks.ToString() : "";
-            curseStacks.color = Color.white;
-            curseStacks.fontStyle = FontStyles.Bold;
-            PlaceLabel(curseStacks, new CardFaceLayout.Box(iconCenter.x + IconSize * 0.45f / faceAspect, iconCenter.y - IconSize * 0.42f, 0.14f, 0.1f), 2.4f, 1f);
-            curseStacks.enableAutoSizing = false; // one or two digits: a fixed size, about the stat numbers
-            curseStacks.fontSize = 0.5f;
-            var t = curseStacks.transform;
+            label.gameObject.SetActive(true);
+            label.text = value.ToString();
+            label.color = Color.white;
+            label.fontStyle = FontStyles.Bold;
+            PlaceLabel(label, new CardFaceLayout.Box(iconCenter.x + IconSize * 0.45f / faceAspect, iconCenter.y - IconSize * 0.42f, 0.14f, 0.1f), 2.4f, 1f);
+            label.enableAutoSizing = false; // one or two digits: a fixed size, about the stat numbers
+            label.fontSize = 0.5f;
+            var t = label.transform;
             t.localPosition = new Vector3(t.localPosition.x, t.localPosition.y, FaceZ - 0.004f);
         }
 
@@ -757,6 +797,7 @@ namespace TawanOS.CardEngine
 
         public void ResyncHover()
         {
+            if (PinnedHover == this) return; // the tutorial holds it up
             if (isHovered || Vector3.Distance(transform.localScale, baseLocalScale) > 0.01f)
             {
                 if (!IsPointerOverCard())

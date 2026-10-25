@@ -43,14 +43,34 @@ namespace TawanOS.CardEngine
                 }
                 else tip.UpdatePosition(Input.mousePosition);
             }
+            else if (view.LifeUnderPointer())
+            {
+                // An amulet's hourglass: the turns it has left (and the uses, for one that breaks after a few)
+                var tip = KeywordTooltipView.Instance;
+                if (tip == null) return;
+                var card = view.CardData;
+                int turns = card.currentDurability;
+                if (tooltipOwner != this || shownStatus != null || shownTurns != turns)
+                {
+                    string uses = card.usesLeft > 0 ? $"\nใช้ได้อีก {card.usesLeft} ครั้ง แล้วพัง" : "";
+                    tip.Show("อายุเครื่องราง", $"เหลืออีก {turns} เทิร์น แล้วเครื่องรางนี้จะหมดไป{uses}", Input.mousePosition);
+                    tooltipOwner = this;
+                    shownStatus = null;
+                    shownTurns = turns;
+                }
+                else tip.UpdatePosition(Input.mousePosition);
+            }
             else if (tooltipOwner == this) HideTooltip();
         }
+
+        private int shownTurns = -1;
 
         private void HideTooltip()
         {
             KeywordTooltipView.Instance?.Hide();
             tooltipOwner = null;
             shownStatus = null;
+            shownTurns = -1;
         }
 
         private static string Title(CardStatus s)

@@ -59,9 +59,9 @@ namespace TawanOS.CardEngine
             entries.Add(new KeywordEntry("ผีบังตา", "ความสามารถของการ์ดใช้ไม่ได้ (ทริกเกอร์ คำสำคัญ ออร่า) แต่ยังโจมตีได้ตามปกติ"));
             entries.Add(new KeywordEntry("เกราะคุ้มภัย", "กันความเสียหายทั้งก้อนได้ 1 ครั้งต่อ stack รวมถึงการระเบิด"));
             entries.Add(new KeywordEntry("ชำระล้าง", "เมื่อได้รับมลทิน จะป้องกันมลทินนั้น 1 หน่วยต่อ 1 stack"));
-            entries.Add(new KeywordEntry("คุ้มกัน", "บริวารศัตรูต้องโจมตีการ์ดใบนี้ก่อน"));
-            entries.Add(new KeywordEntry("บิน", "โจมตีข้ามบริวารตรงหน้าเข้าใส่ขวัญฝ่ายตรงข้ามโดยตรง ยกเว้นฝ่ายนั้นมีบริวารดักบิน"));
-            entries.Add(new KeywordEntry("ดักบิน", "รับการโจมตีของบริวารบินฝ่ายตรงข้ามแทนขวัญของเรา"));
+            entries.Add(new KeywordEntry("คุ้มกัน", "บริวารศัตรูทุกตัวต้องโจมตีการ์ดใบนี้ก่อน ยกเว้นบริวารบินที่บินข้ามไป"));
+            entries.Add(new KeywordEntry("บิน", "โจมตีข้ามบริวารตรงหน้าเข้าใส่ขวัญฝ่ายตรงข้ามโดยตรง ยกเว้นฝ่ายนั้นมีบริวารดักบินในเลนเดียวกัน"));
+            entries.Add(new KeywordEntry("ดักบิน", "รับการโจมตีของบริวารบินฝ่ายตรงข้ามในเลนเดียวกันแทนขวัญของเรา (ไม่ดึงบริวารตัวอื่นมาตี)"));
             entries.Add(new KeywordEntry("สาป", "จบรอบ บริวารที่ติดสาปเสียขวัญเท่าจำนวนสาป แล้วสาปลดลง 1"));
             entries.Add(new KeywordEntry("ฟื้นฟูขวัญ", "เพิ่มขวัญของเจ้าของการ์ด ไม่เกินขวัญสูงสุด"));
             entries.Add(new KeywordEntry("ทะลวง", "ตีบริวารตายแล้ว ดาเมจที่เหลือเข้าขวัญฝ่ายตรงข้าม"));
@@ -136,12 +136,30 @@ namespace TawanOS.CardEngine
                 wrapRegex = new Regex($"(<[^>]+>)|({alternation})", RegexOptions.Compiled);
             }
 
-            return wrapRegex.Replace(text, match =>
+            return wrapRegex.Replace(WithStatIcons(text), match =>
             {
                 if (match.Groups[1].Success) return match.Value;
                 string term = match.Groups[2].Value;
                 return $"<link=\"kw:{term}\"><u><color=#{colorHex}>{term}</color></u></link>";
             });
+        }
+
+        // The card face's skull before a สะเทือนขวัญ number and its blood drop before a ขวัญ number, in card text
+        // ("สะเทือนขวัญ +1", "ฟื้นฟูขวัญเรา 2", Game Designer, 25 Oct: the icon goes in front of the number, the words
+        // stay whole so keyword links still find them). Sprites: Resources/Sprite Assets/StatIcons
+        // (Tools/TawanOS/UI/Build Stat Icon Sprites).
+        private const string AttackIcon = "<sprite=\"StatIcons\" name=\"atk\">";
+        private const string KhwanIcon = "<sprite=\"StatIcons\" name=\"khwan\">";
+        private static readonly Regex StatWordRegex = new Regex(
+            @"(<[^>]+>)|(สะเทือนขวัญ)(\s*)(?=[+\-]?\d|\{0\})|(ขวัญ[฀-๿]*)(\s*)(?=[+\-]?\d|\{0\})", RegexOptions.Compiled);
+
+        public static string WithStatIcons(string text)
+        {
+            if (string.IsNullOrEmpty(text) || !text.Contains("ขวัญ")) return text;
+            return StatWordRegex.Replace(text, m =>
+                m.Groups[1].Success ? m.Value
+                : m.Groups[2].Success ? m.Groups[2].Value + m.Groups[3].Value + AttackIcon
+                : m.Groups[4].Value + m.Groups[5].Value + KhwanIcon);
         }
 
         /// <summary>
