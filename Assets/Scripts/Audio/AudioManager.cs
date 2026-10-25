@@ -28,7 +28,8 @@ namespace TawanOS.Audio
         private AudioSource bgmA, bgmB, ambience, sfx;
         private AudioSource bgmActive;
         private string currentBgmKey, currentAmbienceKey;
-        private Coroutine crossfade;
+        private Coroutine crossfade, ambienceFade;
+        private AudioSource ambienceOld; // the ambience fading out under the new one
         private AudioLibrarySO library;
         private UnityEngine.Audio.AudioMixer mixer;
         private UnityEngine.Audio.AudioMixerGroup masterGroup, bgmGroup, sfxGroup;
@@ -74,6 +75,7 @@ namespace TawanOS.Audio
             bgmB = NewSource("BgmB", loop: true, bgmGroup ?? masterGroup);
             // Ambience has its own slider in Settings, so it skips the music group (the music slider would scale it too)
             ambience = NewSource("Ambience", loop: true, masterGroup);
+            ambienceOld = NewSource("AmbienceOld", loop: true, masterGroup);
             sfx = NewSource("Sfx", loop: false, sfxGroup ?? masterGroup);
             bgmActive = bgmA;
             ApplyVolumes();
@@ -147,10 +149,14 @@ namespace TawanOS.Audio
             if (key == currentAmbienceKey) return;
             currentAmbienceKey = key;
             var clip = Resolve(key, out ambienceGain);
+            // The old ambience fades out while the new one fades in, like the music (Game Designer, 25 Oct: no hard cut)
+            (ambience, ambienceOld) = (ambienceOld, ambience);
             ambience.Stop();
             ambience.clip = clip;
-            ambience.volume = AmbienceVolume() * ambienceGain;
+            ambience.volume = 0f;
             if (clip != null) ambience.Play();
+            if (ambienceFade != null) StopCoroutine(ambienceFade);
+            ambienceFade = StartCoroutine(FadeAmbience());
         }
 
         public void PlaySfx(string key) => PlaySfx(key, 1f);
@@ -178,6 +184,22 @@ namespace TawanOS.Audio
             var clip = library != null ? library.Pick(key, out gain) : null;
             if (clip == null && warned.Add(key)) Debug.LogWarning($"[AudioManager] No clip for key '{key}'.");
             return clip;
+        }
+
+        private IEnumerator FadeAmbience()
+        {
+            float start = ambienceOld.volume;
+            for (float t = 0f; t < CrossfadeSeconds; t += Time.unscaledDeltaTime)
+            {
+                float k = t / CrossfadeSeconds;
+                ambienceOld.volume = start * (1f - k);
+                ambience.volume = AmbienceVolume() * ambienceGain * k;
+                yield return null;
+            }
+            ambienceOld.Stop();
+            ambienceOld.volume = 0f;
+            ambience.volume = AmbienceVolume() * ambienceGain;
+            ambienceFade = null;
         }
 
         private IEnumerator Crossfade(AudioSource from, AudioSource to)
@@ -230,7 +252,7 @@ namespace TawanOS.Audio
             // Source volume for crossfade and non-mixer fallback
             float bgmVol = SourceVolumeBgm();
             if (crossfade == null && bgmActive != null) bgmActive.volume = bgmVol * GainOf(bgmActive);
-            if (ambience != null) ambience.volume = AmbienceVolume() * ambienceGain;
+            if (ambience != null && ambienceFade == null) ambience.volume = AmbienceVolume() * ambienceGain;
             // SFX uses PlayOneShot volume; when mixer is absent, scale is applied there.
         }
 

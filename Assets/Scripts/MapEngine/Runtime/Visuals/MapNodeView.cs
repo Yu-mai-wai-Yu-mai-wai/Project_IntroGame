@@ -169,6 +169,7 @@ namespace TawanOS.MapEngine
             if (NodeData != null && NodeData.status == NodeStatus.Attainable)
             {
                 ShowHoverRing(true);
+                TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_node_hover");
                 OnNodeHoverEnter?.Invoke(this);
             }
         }

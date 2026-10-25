@@ -59,6 +59,7 @@ namespace TawanOS.GameFlow
             if (run.CurrentHp < run.MaxHp) run.Heal(run.MaxHp - run.CurrentHp);
             else run.AddTempKhwan(tempKhwanOnFull);
             Used = true;
+            TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_temple_heal");
             return run.CurrentHp - before;
         }
 

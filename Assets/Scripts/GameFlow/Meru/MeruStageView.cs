@@ -135,6 +135,7 @@ namespace TawanOS.GameFlow
             // The furnace slides left into the space beside the panel (Game Designer, 25 Oct)
             SlideView((1f - view.PanelWidth) * 0.5f - DoorViewportX());
             TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_fire_on");
+            TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_meru_open");
         }
 
         private bool PointerOn(Collider target)
@@ -149,6 +150,7 @@ namespace TawanOS.GameFlow
         {
             SwingDoor(0f, doorSeconds * 0.8f);
             SlideView(0f);
+            TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_meru_close");
         }
 
         // ---- sliding the picture sideways ----
@@ -212,6 +214,7 @@ namespace TawanOS.GameFlow
             if (held != null) yield return LayOnCart(held);
 
             SwingDoor(0f, doorSeconds * 0.8f);
+            TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_meru_slam"); // the door slams on the card going in
             yield return new WaitForSeconds(doorSeconds * 0.8f + burstDelay);
 
             // The fire takes the card behind the shut door

@@ -135,6 +135,7 @@ namespace TawanOS.GameFlow
 
         public static GameOverScreen Show(GameOverSummary summary)
         {
+            TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_game_over");
             if (Instance != null)
             {
                 if (Application.isPlaying) Destroy(Instance.gameObject);

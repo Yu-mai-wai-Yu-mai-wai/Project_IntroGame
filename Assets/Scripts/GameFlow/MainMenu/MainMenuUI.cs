@@ -45,6 +45,10 @@ namespace TawanOS.GameFlow
             if (confirmYesButton != null) confirmYesButton.onClick.AddListener(OnConfirmYes);
             if (confirmNoButton != null) confirmNoButton.onClick.AddListener(() => confirmPanel.SetActive(false));
 
+            // The smoke buttons' own click (Game Designer, 25 Oct: main menu only)
+            foreach (var b in new[] { newGameButton, continueButton, collectionButton, settingsButton, quitButton, confirmYesButton, confirmNoButton })
+                if (b != null) b.onClick.AddListener(() => TawanOS.Audio.AudioManager.Instance?.PlaySfx("sfx_smoke_ui_click"));
+
             // The stage behind the menu turns gently with the cursor (tune it by adding the component to the camera)
             var cam = Camera.main;
             if (cam != null && cam.GetComponent<MouseParallaxCamera>() == null) cam.gameObject.AddComponent<MouseParallaxCamera>();

@@ -13,6 +13,7 @@ namespace TawanOS.Audio
     {
         private const string CombatScene = "CombatTestScene";
         private int lastMerit = -1;
+        private float lastClash = -1f;
 
         private void OnEnable() => SceneManager.sceneLoaded += OnSceneLoaded;
         private void OnDisable() => SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -39,7 +40,9 @@ namespace TawanOS.Audio
                 case "TempleScene":
                 case "OfferingScene": audio.PlayBgm("bgm_map"); audio.PlayAmbience("amb_map"); break;
                 case "EventScene": audio.PlayBgm("bgm_event"); audio.PlayAmbience("amb_event"); break;
-                case "VictoryScene": audio.PlayBgm("bgm_title"); audio.PlayAmbience(null); break;
+                // The story scenes (intro, ending) and the end screen after the ending share the หมอกดำ music
+                case "StoryScene":
+                case "VictoryScene": audio.PlayBgm("bgm_event"); audio.PlayAmbience("amb_event"); break;
                 case CombatScene: StartCoroutine(RouteCombat(audio)); break;
             }
 
@@ -88,6 +91,8 @@ namespace TawanOS.Audio
             };
             // The enemy's มลทิน breaking: the same thunder, quieter, over there
             combat.OnEnemyCurseBackfireTriggered += () => audio.PlaySfx("sfx_corruption_thunder", 0.5f);
+            // The boss coming back in its second form: its second theme
+            combat.OnEnemyPhaseChanged += (phase, _) => { if (boss && phase >= 2) audio.PlayBgm("bgm_boss2"); };
             combat.OnCombatEnded += victory => audio.PlaySfx(victory ? "sfx_scream" : "sfx_fire_off");
 
             if (EffectResolver.Instance != null)
@@ -97,6 +102,13 @@ namespace TawanOS.Audio
                 {
                     if (playerHit) { audio.PlaySfx("sfx_hit_taken"); audio.PlaySfx("sfx_khwan_shake"); }
                     else audio.PlaySfx("sfx_attack");
+                };
+                // Two familiars meeting in a lane (both take damage at once: one clash, not two)
+                EffectResolver.Instance.OnFamiliarDamaged += (_, __) =>
+                {
+                    if (Time.unscaledTime - lastClash < 0.12f) return;
+                    lastClash = Time.unscaledTime;
+                    audio.PlaySfx("sfx_card_clash");
                 };
             }
             if (TurnPhaseController.Instance != null)

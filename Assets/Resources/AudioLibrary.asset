@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b06a7a4cc7374b429293ded0e69d641, type: 3}
   m_Name: AudioLibrary
   m_EditorClassIdentifier: Assembly-CSharp::TawanOS.Audio.AudioLibrarySO
-  sfxBoostDb: 9.934568
+  sfxBoostDb: 15
   musicBoostDb: 0
   entries:
   - key: amb_boss
@@ -40,6 +40,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: b5e0e510eac999547938897e302297fe, type: 3}
     gainDb:
     - -6.4266834
+  - key: bgm_boss2
+    variants:
+    - {fileID: 8300000, guid: af4ecce279eda134f97a2244e6bb02cd, type: 3}
+    gainDb:
+    - -14.709744
   - key: bgm_combat
     variants:
     - {fileID: 8300000, guid: ab31ef2e2b274344cbd78fc39f5de0f9, type: 3}
@@ -65,6 +70,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 7300cdd8f2b6a914b998ad6626378898, type: 3}
     gainDb:
     - -3.2385883
+  - key: sfx_card_clash
+    variants:
+    - {fileID: 8300000, guid: 1fe31202741acfa429e1f691d8162d98, type: 3}
+    gainDb:
+    - -0.32615817
   - key: sfx_card_draw
     variants:
     - {fileID: 8300000, guid: e8a648e3f9b4c4e4f9a44e5bf3d56306, type: 3}
@@ -109,6 +119,11 @@ MonoBehaviour:
     - {fileID: 8300000, guid: 3288021319de4854a83e5c71bdd3ceeb, type: 3}
     gainDb:
     - -2.7085533
+  - key: sfx_game_over
+    variants:
+    - {fileID: 8300000, guid: 05abde476eadbfe41987c260d51512c6, type: 3}
+    gainDb:
+    - -3.3198757
   - key: sfx_hit_taken
     variants:
     - {fileID: 8300000, guid: 20200879d7e4eb942beea1d4c7a4ccaa, type: 3}
@@ -126,6 +141,26 @@ MonoBehaviour:
     - {fileID: 8300000, guid: def71fa3db90c2e43aac43d2c06c9d8a, type: 3}
     gainDb:
     - -0.28970194
+  - key: sfx_meru_close
+    variants:
+    - {fileID: 8300000, guid: b757dd779003e6441be8ba7f1c500ada, type: 3}
+    gainDb:
+    - 1.1047077
+  - key: sfx_meru_open
+    variants:
+    - {fileID: 8300000, guid: 100fada7967ca9746a452fe5998ba41a, type: 3}
+    gainDb:
+    - -0.29574072
+  - key: sfx_meru_slam
+    variants:
+    - {fileID: 8300000, guid: c8475d3a00ea9b64a88dd70dd8a2a6fd, type: 3}
+    gainDb:
+    - -0.5462091
+  - key: sfx_node_hover
+    variants:
+    - {fileID: 8300000, guid: a83b1972586818d418ed8ddc03540eb7, type: 3}
+    gainDb:
+    - 22.994442
   - key: sfx_scream
     variants:
     - {fileID: 8300000, guid: 3391df9ededca6b47961f164982b80c7, type: 3}
@@ -133,6 +168,16 @@ MonoBehaviour:
     gainDb:
     - 6.746872
     - 5.493084
+  - key: sfx_smoke_ui_click
+    variants:
+    - {fileID: 8300000, guid: 61cc240651601c441b1d3ebe07181904, type: 3}
+    gainDb:
+    - -6.512024
+  - key: sfx_temple_heal
+    variants:
+    - {fileID: 8300000, guid: a6c389ff6f1cade44a9e63b6c1129971, type: 3}
+    gainDb:
+    - 6.379616
   - key: sfx_turn_end
     variants:
     - {fileID: 8300000, guid: 2ace604462294f948b251509f930f8bb, type: 3}
