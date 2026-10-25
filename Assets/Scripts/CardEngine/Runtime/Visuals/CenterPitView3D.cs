@@ -55,6 +55,7 @@ namespace TawanOS.CardEngine
             public Vector2 size;      // the card's width and length on the table
             public Vector3 toEnemy;   // flat, from the player's row toward the enemy's
             public GameObject hand;   // the enemy's shadow hand on a claimed card
+            public Light handLight;   // the red light under the enemy's 3D hand
         }
 
         [Header("Enemy claim")]
@@ -64,7 +65,15 @@ namespace TawanOS.CardEngine
         public GameObject claimHandPrefab;
         [Tooltip("The 3D hand's length against the card's length")]
         public float claimHandLength = 1.1f;
+        [Tooltip("Smoke seeping from the 3D hand's wrist (alpha = how thick)")]
+        public Color claimSmokeColor = new Color(0.12f, 0.01f, 0.02f, 0.55f);
+        [Tooltip("The dim light under the 3D hand that tints the claimed card")]
+        public Color claimLightColor = new Color(1f, 0.08f, 0.05f);
+        public float claimLightIntensity = 1.2f;
+        [Tooltip("How far the 3D hand trembles, against its length")]
+        public float claimTremble = 0.012f;
         private static Texture2D handTexture;
+        private Material smokeMaterial;
 
         private CenterPit subscribed;
         private CardView3D cardPrefab;
@@ -346,7 +355,8 @@ namespace TawanOS.CardEngine
             DOTween.To(() => 0f, a => mat2.color = new Color(1f, 1f, 1f, a), handAlpha, 0.6f).SetTarget(go);
         }
 
-        // The 3D hand slides in from the enemy's side, palm down, and points at the card's edge
+        // The 3D hand lunges in from the enemy's side, palm down, overshoots a little, then hangs over the card's edge
+        // trembling, with dark smoke off the wrist and a dim red light on the card
         private void ReachWith3DHand(PitSlot slot)
         {
             float length = slot.size.y * claimHandLength;
@@ -369,10 +379,94 @@ namespace TawanOS.CardEngine
             go.transform.position = target + slot.toEnemy * length;
             slot.hand = go;
 
-            go.transform.DOScale(scale, 0.45f).SetEase(Ease.OutCubic).SetTarget(go);
-            go.transform.DOMove(target, 0.6f).SetEase(Ease.OutCubic).SetTarget(go)
-                .OnComplete(() => go.transform.DOMove(target - slot.toEnemy * length * 0.04f, 0.9f)
-                    .SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo).SetTarget(go));
+            var model = go.GetComponentInChildren<Renderer>().transform;
+            AddClaimSmoke(go.transform);
+            var light = slot.handLight = AddClaimLight(slot.root.transform, edge + Vector3.up * slot.rest.y, length);
+
+            go.transform.DOScale(scale, 0.25f).SetEase(Ease.OutQuad).SetTarget(go);
+            go.transform.DOMove(target, 0.35f).SetEase(Ease.OutBack, 1.6f).SetTarget(go)
+                .OnComplete(() =>
+                {
+                    // A slow creep toward the card under a constant small tremble
+                    go.transform.DOMove(target - slot.toEnemy * length * 0.03f, 1.4f)
+                        .SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo).SetTarget(go);
+                    go.transform.DOShakeRotation(1f, new Vector3(0f, 0f, 2.5f), 18, 90f, false)
+                        .SetLoops(-1, LoopType.Restart).SetTarget(go);
+                    model.DOShakePosition(1f, claimTremble, 25, 90f, false, false) // hand-local: a share of its length
+                        .SetLoops(-1, LoopType.Restart).SetTarget(go);
+                });
+            if (light != null)
+                DOTween.To(() => 0f, i => { if (light != null) light.intensity = i; }, claimLightIntensity, 0.35f).SetTarget(light)
+                    .OnComplete(() => DOTween.To(() => claimLightIntensity, i => { if (light != null) light.intensity = i; },
+                        claimLightIntensity * 0.45f, 0.7f).SetEase(Ease.InOutSine).SetLoops(-1, LoopType.Yoyo).SetTarget(light));
+        }
+
+        // Dark smoke seeping off the wrist and curling up, left behind as the hand moves
+        private void AddClaimSmoke(Transform hand)
+        {
+            if (claimSmokeColor.a <= 0f) return;
+            if (smokeMaterial == null) smokeMaterial = new Material(Shader.Find("Sprites/Default")) { mainTexture = SoftDot(32) };
+
+            var go = new GameObject("Smoke");
+            go.transform.SetParent(hand, false);
+            go.transform.localPosition = new Vector3(0f, -0.4f, 0f); // the wrist end
+            go.transform.rotation = Quaternion.LookRotation(Vector3.up);
+            var ps = go.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            var main = ps.main;
+            main.loop = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.9f, 1.6f);
+            // Hand-local units (the hand is 1 long); Hierarchy scaling grows them with the hand
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.08f, 0.25f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.25f, 0.5f);
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.startColor = claimSmokeColor;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+            main.maxParticles = 60;
+
+            var emission = ps.emission;
+            emission.rateOverTime = 22f;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Sphere;
+            shape.radius = 0.18f;
+
+            var grow = ps.sizeOverLifetime;
+            grow.enabled = true;
+            grow.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 0.6f, 1f, 1.6f));
+
+            var fade = ps.colorOverLifetime;
+            fade.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.black, 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.25f), new GradientAlphaKey(0f, 1f) });
+            fade.color = gradient;
+
+            var r = go.GetComponent<ParticleSystemRenderer>();
+            r.sharedMaterial = smokeMaterial;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            ps.Play();
+        }
+
+        // A dim red light over the card's edge under the fingertip, so the card's face stays readable; it goes when
+        // the hand goes (FadeHand) or with the slot
+        private Light AddClaimLight(Transform parent, Vector3 edge, float length)
+        {
+            if (claimLightIntensity <= 0f) return null;
+            var go = new GameObject("ClaimLight");
+            go.transform.SetParent(parent, false);
+            go.transform.position = edge + Vector3.up * length * 0.3f;
+            var light = go.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = claimLightColor;
+            light.range = length * 0.9f;
+            light.intensity = 0f;
+            light.shadows = LightShadows.None;
+            return light;
         }
 
         private void FadeHand(PitSlot slot)
@@ -383,7 +477,16 @@ namespace TawanOS.CardEngine
             DOTween.Kill(go);
             if (claimHandPrefab != null)
             {
-                // Lit 3D materials do not fade: the hand pulls back to the enemy's side and shrinks away
+                // Lit 3D materials do not fade: the hand pulls back to the enemy's side and shrinks away, its light dims
+                var light = slot.handLight;
+                slot.handLight = null;
+                if (light != null)
+                {
+                    DOTween.Kill(light);
+                    DOTween.To(() => light.intensity, i => { if (light != null) light.intensity = i; }, 0f, fadeTime).SetTarget(light)
+                        .OnComplete(() => { if (light != null) Destroy(light.gameObject); });
+                }
+                foreach (var ps in go.GetComponentsInChildren<ParticleSystem>()) ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
                 var back = slot.toEnemy * go.transform.localScale.x;
                 go.transform.DOMove(go.transform.position + back, fadeTime).SetEase(Ease.InCubic).SetTarget(go);
                 go.transform.DOScale(Vector3.zero, fadeTime).SetEase(Ease.InCubic).SetTarget(go)

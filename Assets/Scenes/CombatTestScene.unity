@@ -348,6 +348,10 @@ MonoBehaviour:
   handAlpha: 0.92
   claimHandPrefab: {fileID: 6677433262662131873, guid: 0d292856d4862e4459b0ffc02d1f77d1, type: 3}
   claimHandLength: 1.1
+  claimSmokeColor: {r: 0.12, g: 0.01, b: 0.02, a: 0.55}
+  claimLightColor: {r: 1, g: 0.08, b: 0.05, a: 1}
+  claimLightIntensity: 1.2
+  claimTremble: 0.012
 --- !u!4 &179514456
 Transform:
   m_ObjectHideFlags: 0
