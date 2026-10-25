@@ -52,6 +52,9 @@ namespace TawanOS.GameFlow
         // the story at storyResumePage. It costs no Khwan, pays nothing and a loss does not end the run.
         private bool tutorialFightActive;
         private StoryDataSO storyToResume;
+        // The ending story (Resources/Story/Story_Ending) plays in StoryScene after the boss, then the victory screen
+        private const string EndingStoryResource = "Story/Story_Ending";
+        private bool endingStoryPlaying;
         private int storyResumePage = -1;
         private System.Collections.Generic.List<CardDataSO> tutorialOpeningHand;
 
@@ -157,6 +160,7 @@ namespace TawanOS.GameFlow
         private void ResetPendingState()
         {
             StopAllCoroutines();
+            endingStoryPlaying = false;
             currentCombatNodeType = NodeType.MinorEnemy;
             pendingEnemyProfile = null;
             pendingEventFloor = null;
@@ -425,6 +429,12 @@ namespace TawanOS.GameFlow
 
         private void HandleStoryFinished()
         {
+            if (endingStoryPlaying)
+            {
+                endingStoryPlaying = false;
+                LoadVictoryScene();
+                return;
+            }
             SceneTransition.Load(MapSceneName);
         }
 
@@ -606,6 +616,17 @@ namespace TawanOS.GameFlow
         private System.Collections.IEnumerator GoToVictoryAfterDelay()
         {
             yield return new WaitForSeconds(VictoryPanelDelaySeconds);
+
+            // The ending story first (Game Designer, 25 Oct), the victory screen after it
+            var ending = Resources.Load<StoryDataSO>(EndingStoryResource);
+            if (ending != null && Application.CanStreamedLevelBeLoaded(StorySceneName))
+            {
+                storyToResume = ending;
+                storyResumePage = 0;
+                endingStoryPlaying = true;
+                SceneTransition.Load(StorySceneName);
+                yield break;
+            }
             LoadVictoryScene();
         }
 

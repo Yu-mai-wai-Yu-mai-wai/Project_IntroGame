@@ -69,6 +69,60 @@ namespace TawanOS.StoryEngine
             }
         }
 
+        private const string EndingStoryPath = "Assets/Resources/Story/Story_Ending.asset";
+        private const string EndingRunPicture = BaseFolder + "/IMG_8132.JPG";
+        private const string EndingDadVideo = BaseFolder + "/dad_end.mp4";
+
+        /// <summary>
+        /// The story after the boss (Game Designer, 25 Oct, เนื้อเรื่อง.docx): ขวัญ runs home, finds the father a little
+        /// better, and the father sends them deeper into the graveyard. Rewritten on every run; GameFlowManager loads it
+        /// from Resources.
+        /// </summary>
+        [MenuItem("Tools/TawanOS/Story/Create Ending Story")]
+        public static void CreateEndingStory()
+        {
+            try
+            {
+                if (AssetImporter.GetAtPath(EndingRunPicture) is TextureImporter importer && importer.textureType != TextureImporterType.Sprite)
+                {
+                    importer.textureType = TextureImporterType.Sprite;
+                    importer.spriteImportMode = SpriteImportMode.Single;
+                    importer.SaveAndReimport();
+                }
+                var running = AssetDatabase.LoadAssetAtPath<Sprite>(EndingRunPicture);
+                var dad = AssetDatabase.LoadAssetAtPath<VideoClip>(EndingDadVideo);
+                if (running == null || dad == null) throw new Exception($"Missing {EndingRunPicture} or {EndingDadVideo}");
+
+                var story = AssetDatabase.LoadAssetAtPath<StoryDataSO>(EndingStoryPath);
+                bool isNew = story == null;
+                if (isNew) story = ScriptableObject.CreateInstance<StoryDataSO>();
+                story.storyId = "ending";
+                story.pages = new List<StoryPage>
+                {
+                    new StoryPage { background = running, text = "ขวัญที่ปลดปล่อยดวงวิญญาณอาฆาตตนนั้นสำเร็จก็รีบเร่งออกจากป่าช้า และตรงกลับบ้านเพื่อไปดูอาการของพ่อทันที" },
+                    new StoryPage { backgroundVideo = dad, text = "เมื่อขวัญกลับมาถึงบ้าน กลับพบว่าพ่อก็ยังไม่หายดี แต่อาการก็ดูจะทุเลาลง" },
+                    new StoryPage { text = "พ่อได้ลืมตาตื่นมาเจอกับขวัญที่กำลังทำหน้าตาตื่นตกใจ จึงพูดกับขวัญด้วยเสียงที่แหบพร่าว่า" },
+                    new StoryPage { speaker = "พ่อ", text = "“วิญญาณตนนั้นที่ขวัญพึ่งเอาชนะมา เป็นเพียงบริวารตนหนึ่งของคนผู้นั้นที่ยังคงบงการอยู่เบื้องหลัง”" },
+                    new StoryPage { speaker = "พ่อ", text = "“รีบออกตามทางเพื่อจัดการคนที่บงการอยู่ ในป่าช้าที่ลึกเข้าไปยิ่งกว่าเดิม ที่นั่นมีสถานพำนักของพวกมันตั้งอยู่... รีบไปหยุดมัน ก่อนที่พ่อจะทนไม่ไหวอีกต่อไป”" },
+                };
+
+                if (isNew)
+                {
+                    if (!AssetDatabase.IsValidFolder("Assets/Resources/Story")) AssetDatabase.CreateFolder("Assets/Resources", "Story");
+                    AssetDatabase.CreateAsset(story, EndingStoryPath);
+                }
+                else EditorUtility.SetDirty(story);
+                AssetDatabase.SaveAssets();
+                Debug.Log($"<color=green>[StorySetupTool] Wrote {EndingStoryPath} ({story.pages.Count} pages).</color>");
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                if (Application.isBatchMode) EditorApplication.Exit(1);
+                else throw;
+            }
+        }
+
         private static StoryDataSO CreateOrGetIntroStory()
         {
             var existing = AssetDatabase.LoadAssetAtPath<StoryDataSO>(IntroStoryPath);

@@ -34,6 +34,18 @@ namespace TawanOS.GameFlow
         public RawImage cutsceneVideoImage;
         public VideoPlayer cutsceneVideoPlayer;
         public TextMeshProUGUI cutsceneCaptionText;
+        [Tooltip("Play the dad_khwan cutscene first. Off: the ending story (StoryScene) already told the end (Game Designer, 25 Oct).")]
+        public bool playCutscene;
+
+        [Header("Black Ending (Game Designer, 25 Oct)")]
+        [Tooltip("On: a black screen, the ขวัญเอ้ย ขวัญมา logo fades in and out, then จบเกม / ขอบคุณที่เล่น, the stats and " +
+                 "a plain กลับสู่หน้าหลัก in the middle, the thank-you picture small in the lower right. Off: the old panel.")]
+        public bool blackEnding = true;
+        [Tooltip("Empty loads Resources/Victory/KhwanLogo.")]
+        public Sprite logo;
+        [Tooltip("Empty loads Resources/Victory/ThankYou.")]
+        public Sprite thankYouPicture;
+        public float logoFadeSeconds = 1.2f, logoHoldSeconds = 1.6f, endFadeSeconds = 1.2f;
 
         private bool isCutscenePlaying;
         private Coroutine cutsceneCoroutine;
@@ -73,7 +85,12 @@ namespace TawanOS.GameFlow
         {
             DisplaySummary();
 
-            if (cutsceneGroup != null && !Application.isBatchMode)
+            if (blackEnding)
+            {
+                BuildBlackEnding();
+                endingCoroutine = StartCoroutine(PlayBlackEnding());
+            }
+            else if (playCutscene && cutsceneGroup != null && !Application.isBatchMode)
             {
                 cutsceneCoroutine = StartCoroutine(PlayVictorySequence());
             }
@@ -88,6 +105,12 @@ namespace TawanOS.GameFlow
             if (isCutscenePlaying && (Input.anyKeyDown || Input.GetMouseButtonDown(0)))
             {
                 SkipCutscene();
+            }
+            if (endingCoroutine != null && (Input.anyKeyDown || Input.GetMouseButtonDown(0)))
+            {
+                StopCoroutine(endingCoroutine);
+                endingCoroutine = null;
+                ShowEndText(0.4f);
             }
         }
 
@@ -193,6 +216,115 @@ namespace TawanOS.GameFlow
             }
         }
 
+        // ---- the black ending ----
+
+        private Coroutine endingCoroutine;
+        private CanvasGroup logoGroup, endGroup;
+
+        // Over everything in this canvas: black, the logo, the end text with the stats and a plain button, the picture
+        private void BuildBlackEnding()
+        {
+            var theme = UIThemeSO.Current;
+            if (contentGroup != null) contentGroup.gameObject.SetActive(false);
+            if (cutsceneGroup != null) cutsceneGroup.gameObject.SetActive(false);
+
+            var black = UiFactory.CreateImage("BlackEnding", transform, Color.black);
+            UiFactory.Stretch(black.rectTransform, 0f);
+            var root = black.transform;
+
+            var logoSprite = logo != null ? logo : Resources.Load<Sprite>("Victory/KhwanLogo");
+            var logoImage = UiFactory.CreateImage("Logo", root, Color.white);
+            logoImage.sprite = logoSprite;
+            logoImage.preserveAspect = true;
+            logoImage.raycastTarget = false;
+            var lr = logoImage.rectTransform;
+            lr.anchorMin = lr.anchorMax = lr.pivot = new Vector2(0.5f, 0.5f);
+            lr.sizeDelta = new Vector2(640f, 720f);
+            logoGroup = logoImage.gameObject.AddComponent<CanvasGroup>();
+            logoGroup.alpha = 0f;
+
+            var end = UiFactory.CreateRect("EndText", root);
+            UiFactory.Stretch(end, 0f);
+            endGroup = end.gameObject.AddComponent<CanvasGroup>();
+            endGroup.alpha = 0f;
+            endGroup.interactable = endGroup.blocksRaycasts = false;
+
+            var title = UiFactory.CreateText(end, "Title", "จบเกม", 110f, theme.accent, TextAlignmentOptions.Center, theme.titleFont);
+            Place(title.rectTransform, 0.7f, 150f);
+            var thanks = UiFactory.CreateText(end, "Thanks", "ขอบคุณที่เล่น", 44f, Color.white, TextAlignmentOptions.Center, theme.bodyFont);
+            Place(thanks.rectTransform, 0.595f, 70f);
+            var stats = UiFactory.CreateText(end, "Stats", statsText != null ? statsText.text : "", 28f, theme.text, TextAlignmentOptions.Center, theme.bodyFont);
+            stats.lineSpacing = 18f;
+            Place(stats.rectTransform, 0.43f, 220f);
+
+            // The same plain text button as the defeat screen, without the shake
+            var button = UiFactory.CreateButton(end, "MainMenu", "กลับสู่หน้าหลัก", theme, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f));
+            var br = (RectTransform)button.transform;
+            br.anchorMin = br.anchorMax = br.pivot = new Vector2(0.5f, 0.5f);
+            br.anchoredPosition = new Vector2(0f, -0.3f * 1080f);
+            br.sizeDelta = new Vector2(520f, 90f);
+            var image = button.GetComponent<Image>();
+            if (image != null) image.color = new Color(0f, 0f, 0f, 0f); // still takes the click
+            var label = button.GetComponentInChildren<TMP_Text>();
+            label.font = theme.titleFont != null ? theme.titleFont : label.font;
+            label.fontSize = theme.titleSize * 1.1f;
+            label.color = Color.white;
+            label.outlineWidth = 0.2f;
+            label.outlineColor = new Color32(0, 0, 0, 255);
+            button.targetGraphic = label;
+            var colors = button.colors;
+            colors.normalColor = theme.text;
+            colors.highlightedColor = theme.accent;
+            colors.selectedColor = theme.text;
+            colors.pressedColor = Color.Lerp(theme.accent, Color.white, 0.4f);
+            button.colors = colors;
+            button.onClick.AddListener(OnMainMenuClicked);
+            mainMenuButton = button;
+
+            var thanksSprite = thankYouPicture != null ? thankYouPicture : Resources.Load<Sprite>("Victory/ThankYou");
+            if (thanksSprite != null)
+            {
+                var pic = UiFactory.CreateImage("ThankYou", end, Color.white);
+                pic.sprite = thanksSprite;
+                pic.preserveAspect = true;
+                pic.raycastTarget = false;
+                var pr = pic.rectTransform;
+                pr.anchorMin = pr.anchorMax = pr.pivot = new Vector2(1f, 0f);
+                pr.anchoredPosition = new Vector2(-30f, 24f);
+                pr.sizeDelta = new Vector2(260f, 260f);
+            }
+        }
+
+        // Centred across the screen at a height (0 = bottom, 1 = top), in the 1920 x 1080 layout
+        private static void Place(RectTransform rt, float y, float height)
+        {
+            rt.anchorMin = new Vector2(0.1f, y);
+            rt.anchorMax = new Vector2(0.9f, y);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = Vector2.zero;
+            rt.sizeDelta = new Vector2(0f, height);
+        }
+
+        private IEnumerator PlayBlackEnding()
+        {
+            yield return new WaitForSeconds(0.8f);
+            yield return logoGroup.DOFade(1f, logoFadeSeconds).WaitForCompletion();
+            yield return new WaitForSeconds(logoHoldSeconds);
+            yield return logoGroup.DOFade(0f, logoFadeSeconds).WaitForCompletion();
+            yield return new WaitForSeconds(0.4f);
+            endingCoroutine = null;
+            ShowEndText(endFadeSeconds);
+        }
+
+        private void ShowEndText(float seconds)
+        {
+            logoGroup.DOKill();
+            logoGroup.alpha = 0f;
+            endGroup.DOKill();
+            endGroup.DOFade(1f, seconds).SetEase(Ease.OutCubic);
+            endGroup.interactable = endGroup.blocksRaycasts = true;
+        }
+
         public void DisplaySummary()
         {
             var theme = UIThemeSO.Current;
@@ -205,13 +337,13 @@ namespace TawanOS.GameFlow
 
             if (titleText != null)
             {
-                titleText.text = "สู่สุขคติ";
+                titleText.text = "จบเกม";
                 if (theme != null && theme.titleFont != null) titleText.font = theme.titleFont;
             }
 
             if (subtitleText != null)
             {
-                subtitleText.text = "ชัยชนะอันสมบูรณ์เหนือวิญญาณร้าย";
+                subtitleText.text = "ขอบคุณที่เล่น";
                 if (theme != null && theme.bodyFont != null) subtitleText.font = theme.bodyFont;
             }
 
@@ -223,7 +355,7 @@ namespace TawanOS.GameFlow
 
             if (statsText != null)
             {
-                statsText.text = $"ขวัญคงเหลือ: {TawanOS.UI.KhwanDisplay.Text(khwan, maxKhwan)}   •   ธูปสะสม: {incense}   •   สำรับการ์ด: {deckCount} ใบ   •   เวลาที่ใช้: {RunState.FormatPlayTime(run != null ? run.PlaySeconds : 0f)}";
+                statsText.text = $"ขวัญคงเหลือ: {TawanOS.UI.KhwanDisplay.Text(khwan, maxKhwan)}\nธูปสะสม: {incense}\nสำรับการ์ด: {deckCount} ใบ\nเวลาที่ใช้:{RunState.FormatPlayTime(run != null ? run.PlaySeconds : 0f)}";
                 if (theme != null && theme.bodyFont != null) statsText.font = theme.bodyFont;
                 PlaytestCaptureBanner.Add(statsText.canvas.rootCanvas.transform);
             }
