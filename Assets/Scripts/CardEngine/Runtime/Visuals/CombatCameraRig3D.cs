@@ -32,16 +32,16 @@ namespace TawanOS.CardEngine
         [Tooltip("How much of the screen the board rows fill in the C (board-only) view, where UI and hands are hidden.")]
         [Range(0.3f, 1f)] public float boardOnlyScreenFraction = 0.95f;
         [Tooltip("How long the hands take to slide off / back on screen when the board-only view opens / closes.")]
-        public float handSlideDuration = 0.35f;
-        [Tooltip("How long the camera takes between views (Game Designer, 25 Oct: slower and eased, against motion sickness; was 0.22).")]
-        public float moveDuration = 0.6f;
+        public float handSlideDuration = 0.28f;
+        [Tooltip("How long the camera takes between views (Game Designer, 25 Oct: eased, between the old 0.22 and a too-slow 0.6).")]
+        public float moveDuration = 0.38f;
 
         [Header("Row Zoom (W view)")]
         [Tooltip("In the W view: zooms onto the player's row (the centre pit while picking from it), and back to the whole board. While zoomed, W / S step toward the enemy / the player.")]
         public KeyCode rowZoomKey = KeyCode.Space;
         [Tooltip("How much of the screen the zoomed row fills.")]
         [Range(0.3f, 1f)] public float rowScreenFraction = 0.92f;
-        public float rowZoomDuration = 0.5f;
+        public float rowZoomDuration = 0.35f;
 
         private Camera cam;
         private Vector3 homePosition;
