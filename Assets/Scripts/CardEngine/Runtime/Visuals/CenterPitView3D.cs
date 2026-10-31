@@ -300,10 +300,14 @@ namespace TawanOS.CardEngine
                 if (slot.mist != null)
                 {
                     slot.mist.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-                    var mistMat = slot.mist.GetComponent<ParticleSystemRenderer>().material; // this slot's own copy
+                    var mistRenderer = slot.mist.GetComponent<ParticleSystemRenderer>();
+                    var mistMat = mistRenderer.material; // this slot's own copy
                     var tint = Color.white;
+                    // The renderer is hidden before its material goes: puffs still alive until the root is destroyed
+                    // would otherwise draw with no material, in magenta
                     DOTween.To(() => 1f, a => { tint.a = a; mistMat.SetColor(ColorId, tint); }, 0f, mistFadeTime)
-                        .SetEase(Ease.InOutSine).SetTarget(root).OnComplete(() => Destroy(mistMat));
+                        .SetEase(Ease.InOutSine).SetTarget(root)
+                        .OnComplete(() => { if (mistRenderer != null) mistRenderer.enabled = false; Destroy(mistMat); });
                 }
                 if (slot.frame != null)
                 {
